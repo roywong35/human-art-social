@@ -1,0 +1,45 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-2xl mx-auto">
+    <div class="border-b border-gray-200 p-4">
+      <h1 class="text-xl font-bold">Bookmarks</h1>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex justify-center items-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="bg-red-50 text-red-500 p-4 rounded-lg text-center my-4">
+      {{ error }}
+    </div>
+
+    <!-- No Bookmarks State -->
+    <div *ngIf="!loading && !error && bookmarkedItems.length === 0" 
+         class="bg-white rounded-lg shadow p-8 text-center my-4">
+      <p class="text-gray-500 text-lg">No bookmarks yet.</p>
+      <p class="text-gray-400 mt-2">Posts and comments you bookmark will appear here.</p>
+    </div>
+
+    <!-- Bookmarks List -->
+    <div *ngIf="!loading && !error && bookmarkedItems.length > 0" class="space-y-4 p-4">
+      <!-- Combined list of bookmarked items -->
+      <ng-container *ngFor="let bookmarkedItem of bookmarkedItems">
+        <!-- Post -->
+        <app-post *ngIf="bookmarkedItem.type === 'post'"
+          [post]="bookmarkedItem.item"
+          (postUpdated)="refreshContent()"
+          (bookmarkUpdated)="onPostBookmarkUpdate($event)">
+        </app-post>
+
+        <!-- Comment -->
+        <app-comment *ngIf="bookmarkedItem.type === 'comment'"
+          [comment]="bookmarkedItem.item"
+          [postId]="bookmarkedItem.item.post_id"
+          (commentUpdated)="refreshContent()"
+          (bookmarkUpdated)="onCommentBookmarkUpdate($event)">
+        </app-comment>
+      </ng-container>
+    </div>
+  </div>
+</div> 

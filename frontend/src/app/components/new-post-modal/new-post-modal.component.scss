@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+textarea {
+  &::placeholder {
+    color: rgb(83, 100, 113);
+  }
+} 

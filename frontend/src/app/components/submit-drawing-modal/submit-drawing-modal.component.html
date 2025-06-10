@@ -1,0 +1,128 @@
+<div class="bg-white rounded-xl w-full max-w-xl mx-4 max-h-[80vh] flex flex-col">
+  <div class="flex items-center justify-between p-4 border-b border-gray-200">
+    <button (click)="closeModal()" class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors">
+      <i class="fas fa-times"></i>
+    </button>
+    <h2 class="text-xl font-bold">Share Your Human Art</h2>
+    <button 
+      (click)="submitArt()" 
+      [disabled]="!artFile || !evidenceFiles.length || isSubmitting"
+      class="px-4 py-1.5 bg-blue-500 text-white rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+    >
+      <span *ngIf="!isSubmitting">Submit</span>
+      <span *ngIf="isSubmitting" class="flex items-center">
+        <i class="fas fa-spinner fa-spin mr-2"></i>
+        Submitting...
+      </span>
+    </button>
+  </div>
+
+  <div class="overflow-y-auto flex-1 p-4">
+    <div class="space-y-6">
+      <!-- Art Upload Section -->
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold text-lg mb-3">Your Artwork</h3>
+        
+        <!-- Art Upload Area -->
+        <div *ngIf="!artFile" 
+             class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
+             (click)="artInput.click()">
+          <i class="fas fa-image text-3xl text-gray-400 mb-2"></i>
+          <p class="text-gray-500">Click to upload your artwork</p>
+          <p class="text-sm text-gray-400 mt-1">PNG, JPG, PSD, GIF up to 50MB</p>
+        </div>
+
+        <!-- Art Preview -->
+        <div *ngIf="artFile" class="relative">
+          <img [src]="artPreview" 
+               alt="Your artwork" 
+               class="w-full rounded-lg shadow-sm" />
+          <button 
+            (click)="removeArt()"
+            class="absolute top-2 right-2 bg-black bg-opacity-75 text-white p-2 rounded-full hover:bg-opacity-100 transition-opacity"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <input
+          #artInput
+          type="file"
+          (change)="onArtSelected($event)"
+          accept="image/*,.psd"
+          class="hidden"
+        />
+      </div>
+
+      <!-- Evidence Upload Section -->
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold text-lg mb-2">Verification Evidence</h3>
+        <p class="text-sm text-gray-500 mb-3">
+          Please provide evidence that this is your human-created art (work-in-progress shots, source files, etc.)
+        </p>
+        
+        <!-- Evidence Upload Area -->
+        <div *ngIf="evidenceFiles.length === 0" 
+             class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
+             (click)="evidenceInput.click()">
+          <i class="fas fa-file-upload text-3xl text-gray-400 mb-2"></i>
+          <p class="text-gray-500">Upload evidence files</p>
+          <p class="text-sm text-gray-400 mt-1">Images, PSD, or video files up to 100MB total</p>
+        </div>
+
+        <!-- Evidence Files List -->
+        <div *ngIf="evidenceFiles.length > 0" class="space-y-2">
+          <div *ngFor="let file of evidenceFiles; let i = index" 
+               class="flex items-center justify-between p-2 bg-gray-50 rounded">
+            <span class="text-sm truncate">{{ file.name }}</span>
+            <button 
+              (click)="removeEvidence(i)"
+              class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <button 
+            (click)="evidenceInput.click()"
+            class="text-blue-500 hover:text-blue-700 text-sm mt-2 flex items-center"
+          >
+            <i class="fas fa-plus mr-1"></i>
+            Add more evidence
+          </button>
+        </div>
+
+        <input
+          #evidenceInput
+          type="file"
+          (change)="onEvidenceSelected($event)"
+          accept="image/*,video/*,.psd"
+          multiple
+          class="hidden"
+        />
+      </div>
+
+      <!-- Description -->
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold text-lg mb-3">Description</h3>
+        <textarea
+          [(ngModel)]="content"
+          placeholder="Tell us about your artwork..."
+          class="w-full resize-none border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="text-red-500 text-sm bg-red-50 p-3 rounded-lg flex items-center">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        {{ error }}
+      </div>
+
+      <!-- Submission Note -->
+      <div class="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg flex items-center">
+        <i class="fas fa-info-circle mr-2"></i>
+        Your artwork will be reviewed before appearing in the Human Art section.
+      </div>
+    </div>
+  </div>
+</div> 

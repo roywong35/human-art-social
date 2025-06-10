@@ -1,0 +1,87 @@
+<div class="bg-white w-full">
+  <!-- Close Button -->
+  <div class="h-14 relative">
+    <button class="absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100" (click)="closeModal()">
+      <i class="fas fa-times text-lg"></i>
+    </button>
+  </div>
+
+  <!-- Post Content -->
+  <div class="px-4 flex gap-4">
+    <div class="flex-shrink-0">
+      <img [src]="(authService.currentUser$ | async)?.profile_picture || defaultAvatar" 
+           alt="User Avatar" 
+           class="w-10 h-10 rounded-full">
+    </div>
+    
+    <div class="flex-1">
+      <div class="flex items-center min-h-[40px]">
+        <textarea
+          #postTextarea
+          [(ngModel)]="content"
+          placeholder="What's happening?"
+          class="w-full border-none resize-none text-xl focus:outline-none min-h-[150px] pt-2"
+          [maxlength]="280"
+          (input)="adjustTextareaHeight($event)">
+        </textarea>
+      </div>
+
+      <!-- Image Preview -->
+      <div *ngIf="selectedImagePreview" class="mt-3 relative">
+        <img [src]="selectedImagePreview" class="max-h-80 rounded-2xl object-cover w-full">
+        <button 
+          (click)="removeImage()"
+          class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="mt-3 px-4 flex justify-between items-center border-t pt-3 pb-2">
+    <div class="flex gap-4">
+      <input
+        #fileInput
+        type="file"
+        (change)="onImageSelected($event)"
+        accept="image/*"
+        class="hidden">
+      <button 
+        (click)="fileInput.click()"
+        class="text-blue-500 p-1.5 rounded-full hover:bg-blue-50">
+        <i class="far fa-image text-base"></i>
+      </button>
+      <button 
+        (click)="toggleEmojiPicker($event)"
+        class="text-blue-500 p-1.5 rounded-full hover:bg-blue-50">
+        <i class="far fa-smile text-base"></i>
+      </button>
+    </div>
+    <button
+      (click)="createPost()"
+      [disabled]="!content.trim() && !selectedImage || isSubmitting"
+      class="px-6 py-2 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+      Post
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="px-4 pb-2 text-red-500 text-sm">
+    {{ error }}
+  </div>
+
+  <!-- Emoji Picker -->
+  <div *ngIf="showEmojiPicker" 
+       class="absolute z-50"
+       [style.top.px]="emojiPickerPosition.top"
+       [style.left.px]="emojiPickerPosition.left">
+    <emoji-mart
+      [darkMode]="false"
+      [enableSearch]="false"
+      [showPreview]="false"
+      [style]="{ border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }"
+      (emojiSelect)="addEmoji($event)">
+    </emoji-mart>
+  </div>
+</div> 

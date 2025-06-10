@@ -1,0 +1,47 @@
+<div class="bg-white shadow-lg">
+  <div class="px-4 py-3">
+    <!-- Search Bar -->
+    <div class="bg-gray-50 rounded-lg mb-4">
+      <div class="flex items-center px-4 py-3">
+        <i class="fas fa-search text-gray-600"></i>
+        <input type="text" placeholder="Search" class="bg-transparent ml-4 outline-none w-full text-gray-900 placeholder-gray-600">
+      </div>
+    </div>
+
+    <!-- Trending Topics -->
+    <div class="bg-white rounded-lg mb-4 shadow-sm">
+      <h2 class="text-xl font-bold px-4 py-3 border-b">Trending</h2>
+      <div class="divide-y divide-gray-100">
+        <div *ngFor="let topic of trendingTopics" class="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+          <div class="text-sm text-gray-500">{{ topic.category }}</div>
+          <div class="font-bold text-gray-900">#{{ topic.name }}</div>
+          <div class="text-sm text-gray-500">{{ formatCount(topic.postCount) }} posts</div>
+        </div>
+      </div>
+      <a href="#" class="block px-4 py-3 text-blue-500 hover:bg-gray-50 transition-colors border-t">Show more</a>
+    </div>
+
+    <!-- Recommended Users -->
+    <div class="bg-white rounded-lg shadow-sm">
+      <h2 class="text-xl font-bold px-4 py-3 border-b">Who to follow</h2>
+      <div class="divide-y divide-gray-100">
+        <div *ngFor="let user of recommendedUsers" class="px-4 py-3 hover:bg-gray-50 transition-colors">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <img [src]="user.avatar" alt="User avatar" class="w-12 h-12 rounded-full bg-gray-200">
+              <div class="ml-3">
+                <div class="font-bold text-gray-900">{{ user.name }}</div>
+                <div class="text-gray-500">{{ user.username }}</div>
+                <div class="text-sm text-gray-600 mt-1">{{ user.bio }}</div>
+              </div>
+            </div>
+            <button class="bg-indigo-600 text-white px-4 py-1.5 rounded-full font-bold hover:bg-indigo-700 transition-colors">
+              Follow
+            </button>
+          </div>
+        </div>
+      </div>
+      <a href="#" class="block px-4 py-3 text-blue-500 hover:bg-gray-50 transition-colors border-t">Show more</a>
+    </div>
+  </div>
+</div> 

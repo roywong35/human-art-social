@@ -1,0 +1,81 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Tab Navigation -->
+  <div class="bg-white border-b sticky top-0 z-10">
+    <div class="flex">
+      <button 
+        [class.border-b-2]="activeTab === 'for-you'"
+        [class.border-blue-500]="activeTab === 'for-you'"
+        [class.text-blue-500]="activeTab === 'for-you'"
+        class="flex-1 py-4 text-center font-bold hover:bg-gray-50 transition-colors"
+        (click)="setActiveTab('for-you')"
+      >
+        For You
+      </button>
+      <button 
+        [class.border-b-2]="activeTab === 'human-drawing'"
+        [class.border-blue-500]="activeTab === 'human-drawing'"
+        [class.text-blue-500]="activeTab === 'human-drawing'"
+        class="flex-1 py-4 text-center font-bold hover:bg-gray-50 transition-colors"
+        (click)="setActiveTab('human-drawing')"
+      >
+        Human Art
+      </button>
+    </div>
+  </div>
+
+  <!-- Inline Create Post Box (For You tab only) -->
+  <div *ngIf="activeTab === 'for-you'" class="bg-white border-b">
+    <div class="max-w-[598px] mx-auto">
+      <app-post-input-box
+        [userAvatar]="(authService.currentUser$ | async)?.profile_picture || ''"
+        [defaultAvatar]="defaultAvatar"
+        [showCard]="false"
+        (submit)="onPostSubmit($event)"
+        (imageSelected)="onImageSelected($event)">
+      </app-post-input-box>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center items-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="max-w-[598px] mx-auto">
+    <div class="bg-red-50 text-red-500 p-4 rounded-lg text-center my-3">
+      {{ error }}
+    </div>
+  </div>
+
+  <!-- No Posts State -->
+  <div *ngIf="!loading && !error && posts.length === 0" class="max-w-[598px] mx-auto">
+    <div class="bg-white rounded-lg shadow p-8 text-center my-3">
+      <p class="text-gray-500 text-lg">
+        {{ activeTab === 'human-drawing' 
+          ? 'No verified human art available yet.'
+          : 'No posts yet. Be the first to post something!' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Posts List -->
+  <div class="max-w-[598px] mx-auto">
+    <!-- For You Tab: X-style posts -->
+    <div *ngIf="activeTab === 'for-you'" class="space-y-[0.5px]">
+      <app-post
+        *ngFor="let post of posts"
+        [post]="post"
+        (postUpdated)="onPostUpdated()">
+      </app-post>
+    </div>
+
+    <!-- Human Art Tab: Instagram-style posts -->
+    <div *ngIf="activeTab === 'human-drawing'" class="space-y-3">
+      <app-instagram-post
+        *ngFor="let post of posts"
+        [post]="post">
+      </app-instagram-post>
+    </div>
+  </div>
+</div> 

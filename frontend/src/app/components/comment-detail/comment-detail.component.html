@@ -1,0 +1,133 @@
+<div class="max-w-2xl mx-auto">
+  <!-- Back Button -->
+  <div class="bg-white border-b p-4">
+    <button (click)="goBack()" class="text-gray-500 hover:text-gray-700 flex items-center">
+      <i class="fas fa-arrow-left mr-2"></i>
+      Back
+    </button>
+  </div>
+
+  <!-- Post with conditional thread line -->
+  <div *ngIf="post" class="relative">
+    <!-- Thread Line (show if there are parent comments OR sibling comments) -->
+    <div *ngIf="parentChain.length > 0 || replies.length" 
+         class="absolute left-5 top-0 bottom-[-1px] w-0.5 bg-gray-200"></div>
+    
+    <div class="bg-white border-b" [class.ml-10]="parentChain.length > 0 || replies.length">
+      <app-post [post]="post" [isDetailView]="true"></app-post>
+    </div>
+  </div>
+
+  <!-- Main Thread (Parent Chain + Current Comment) -->
+  <div class="relative">
+    <!-- Vertical Thread Line -->
+    <div class="absolute left-5 top-[-1px] bottom-0 w-0.5 bg-gray-200"></div>
+
+    <!-- Parent Chain -->
+    <div *ngIf="parentChain.length > 0" class="bg-white border-b">
+      <div class="ml-10">
+        <app-comment
+          *ngFor="let parentComment of parentChain"
+          [comment]="parentComment"
+          [postId]="postId"
+          (commentUpdated)="loadCommentWithParentChain(postId, comment?.id || 0)"
+        ></app-comment>
+      </div>
+    </div>
+
+    <!-- Main Comment -->
+    <div *ngIf="comment" class="bg-white border-b">
+      <div class="ml-10">
+        <div class="p-4">
+          <div class="flex gap-3">
+            <img [src]="comment.author.profile_picture || defaultAvatar" 
+                 alt="User avatar" 
+                 class="w-10 h-10 rounded-full bg-gray-100">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <span class="font-bold">{{ comment.author.username }}</span>
+                <span class="text-gray-500">{{'@'}}{{ comment.author.handle || comment.author.username }}</span>
+                <span class="text-gray-500">·</span>
+                <span class="text-gray-500">{{ comment.created_at | timeAgo }}</span>
+              </div>
+              
+              <!-- Comment Content -->
+              <p class="whitespace-pre-wrap mt-1">{{ comment.content }}</p>
+              
+              <!-- Engagement buttons -->
+              <div class="flex items-center justify-between mt-3 w-full pr-2">
+                <!-- Left side engagement icons -->
+                <div class="flex items-center justify-between w-[80%] ml-1">
+                  <!-- Reply button -->
+                  <div class="flex items-center gap-2 text-gray-500">
+                    <i class="far fa-comment text-[18px]"></i>
+                    <span class="text-sm">{{ comment.replies_count || 0 }}</span>
+                  </div>
+                  
+                  <!-- Like button -->
+                  <button class="flex items-center gap-2 text-gray-500 hover:text-red-500 p-1.5 rounded-full transition-colors group"
+                          (click)="onLike()">
+                    <i [class]="comment.is_liked ? 'fas fa-heart text-red-500' : 'far fa-heart'" class="text-[18px] group-hover:text-red-500"></i>
+                    <span class="text-sm" [ngClass]="{'text-red-500': comment.is_liked}">{{ comment.likes_count }}</span>
+                  </button>
+                  
+                  <!-- Repost button -->
+                  <button class="flex items-center gap-2 text-gray-500 hover:text-green-500 p-1.5 rounded-full transition-colors group"
+                          (click)="onRepost()">
+                    <i [class]="comment.is_reposted ? 'fas fa-retweet text-green-500' : 'fas fa-retweet'" class="text-[18px] group-hover:text-green-500"></i>
+                    <span class="text-sm" [ngClass]="{'text-green-500': comment.is_reposted}">{{ comment.reposts_count || 0 }}</span>
+                  </button>
+                  
+                  <!-- Share button -->
+                  <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
+                          (click)="onShare()">
+                    <i class="far fa-share-square text-[18px] group-hover:text-blue-500"></i>
+                  </button>
+                </div>
+                
+                <!-- Bookmark button -->
+                <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
+                        (click)="onBookmark()">
+                  <i class="fa-bookmark text-[18px] group-hover:text-blue-500" 
+                     [ngClass]="{
+                       'fas': comment.is_bookmarked,
+                       'far': !comment.is_bookmarked,
+                       'text-blue-500': comment.is_bookmarked,
+                       'text-gray-500': !comment.is_bookmarked
+                     }"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reply Input Box -->
+    <div class="bg-white border-b">
+      <div class="ml-10 p-4">
+        <app-post-input-box
+          [userAvatar]="currentUser?.profile_picture || defaultAvatar"
+          [defaultAvatar]="defaultAvatar"
+          [showCard]="false"
+          [startCompact]="true"
+          placeholder="Post your reply"
+          submitButtonText="Reply"
+          (submit)="onCommentSubmit($event)">
+        </app-post-input-box>
+      </div>
+    </div>
+
+    <!-- Replies -->
+    <div *ngIf="replies.length > 0" class="bg-white">
+      <div class="ml-10">
+        <app-comment
+          *ngFor="let reply of replies"
+          [comment]="reply"
+          [postId]="postId"
+          (commentUpdated)="loadReplies()"
+        ></app-comment>
+      </div>
+    </div>
+  </div>
+</div> 

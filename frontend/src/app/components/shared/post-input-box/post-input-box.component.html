@@ -1,0 +1,90 @@
+<div [class.bg-white]="showCard" [class.p-4]="showCard" [class.border-b]="showCard">
+    <!-- Compact Mode -->
+    <div *ngIf="isCompact" 
+         class="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-text transition-colors"
+         (click)="expandInput()">
+      <img [src]="userAvatar || defaultAvatar" 
+           alt="User avatar" 
+           class="w-8 h-8 rounded-full bg-gray-100">
+      <span class="text-gray-500 flex-1">{{ placeholder }}</span>
+      <button 
+        class="px-4 py-1.5 bg-blue-500 text-white rounded-full text-[14px] font-semibold hover:bg-blue-600 transition-colors">
+        {{ submitButtonText }}
+      </button>
+    </div>
+  
+    <!-- Expanded Mode -->
+    <div *ngIf="!isCompact" class="flex gap-3 pt-4 pb-2 px-3">
+      <img [src]="userAvatar || defaultAvatar" 
+           alt="User avatar" 
+           class="w-9 h-9 rounded-full bg-gray-100">
+      <div class="flex-1">
+        <div class="flex items-center justify-between py-2">
+          <textarea
+            #textarea
+            [(ngModel)]="content"
+            [placeholder]="placeholder"
+            class="w-full resize-none border-0 outline-none focus:outline-none focus:ring-0 text-[16px] leading-normal placeholder-gray-500 min-h-[24px] caret-blue-500"
+            (input)="adjustTextareaHeight($event)"
+            (focus)="inputFocused = true"
+            (blur)="inputFocused = false">
+          </textarea>
+        </div>
+  
+        <!-- Selected Image Preview -->
+        <div *ngIf="selectedImage" class="mt-2 relative">
+          <img [src]="selectedImageUrl" alt="Selected image" class="max-h-[300px] rounded-lg object-cover">
+          <button 
+            (click)="removeImage()"
+            class="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full p-1 hover:bg-opacity-70">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+  
+        <!-- Actions Bar -->
+        <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
+          <div class="flex items-center gap-2">
+            <button 
+              (click)="onImageClick()"
+              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-full p-3 transition-colors">
+              <i class="far fa-image text-[15px]"></i>
+            </button>
+            <button 
+              (click)="toggleEmojiPicker($event)"
+              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-full p-3 transition-colors emoji-trigger">
+              <i class="far fa-smile text-[15px]"></i>
+            </button>
+          </div>
+          <button 
+            (click)="onSubmit()"
+            [disabled]="!canSubmit"
+            class="px-4 py-1.5 bg-blue-500 text-white rounded-full text-[14px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors">
+            Post
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Emoji Picker -->
+  <div 
+    class="emoji-picker-wrapper"
+    *ngIf="showEmojiPicker"
+    [style.position]="'fixed'"
+    [style.top.px]="emojiPickerPosition.top"
+    [style.left.px]="emojiPickerPosition.left"
+    [style.zIndex]="99999"
+    [style.display]="'block'"
+    (click)="$event.stopPropagation()">
+    <emoji-mart
+      class="emoji-mart"
+      [style]="{ position: 'static', display: 'block' }"
+      [title]="'Pick your emoji'"
+      [set]="'twitter'"
+      [enableSearch]="true"
+      [showPreview]="false"
+      [emojiSize]="20"
+      [perLine]="8"
+      (emojiSelect)="addEmoji($event)">
+    </emoji-mart>
+  </div> 

@@ -1,0 +1,12 @@
+/* This component uses Tailwind CSS classes for styling */ 
+
+:host {
+  display: block;
+  
+  &.sticky {
+    position: fixed;
+    width: 350px;
+    transform: translateZ(0);
+    will-change: position;
+  }
+} 
