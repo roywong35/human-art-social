@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from .models import Post, Comment, EvidenceFile, User
+from .models import Post, Comment, EvidenceFile, PostImage, User
 from .serializers import PostSerializer, CommentSerializer
 from django.db import models, transaction
 from django.utils import timezone
@@ -23,9 +23,18 @@ class PostViewSet(viewsets.ModelViewSet):
         """
         Get all posts with related data.
         """
-        return Post.objects.all().select_related('author').prefetch_related(
+        queryset = Post.objects.all().select_related('author').prefetch_related(
             'likes', 'bookmarks', 'reposts', 'comments', 'evidence_files'
-        ).order_by('-created_at')
+        )
+
+        # Filter by following if the user has following_only_preference enabled
+        if self.request.user.following_only_preference:
+            following_users = self.request.user.following.all()
+            if not following_users.exists():
+                return Post.objects.none()  # Return empty queryset if not following anyone
+            queryset = queryset.filter(author__in=following_users)
+
+        return queryset.order_by('-created_at')
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -65,6 +74,7 @@ class PostViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """
         Override create method to handle human drawing posts with evidence files
+        and multiple images
         """
         # Convert string 'true'/'false' to boolean
         is_human_drawing_str = str(self.request.data.get('is_human_drawing', '')).lower()
@@ -80,6 +90,15 @@ class PostViewSet(viewsets.ModelViewSet):
             is_verified=False,
             post_type=post_type
         )
+
+        # Handle multiple images
+        images = self.request.FILES.getlist('images[]')
+        for index, image in enumerate(images):
+            PostImage.objects.create(
+                post=post,
+                image=image,
+                order=index
+            )
 
         # Handle evidence files for human drawings
         if is_human_drawing and evidence_count > 0:
@@ -501,13 +520,25 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'])
     def feed(self, request):
         """
-        Get posts from users the current user follows and their own posts
+        Get posts based on user preferences:
+        - If following_only_preference is true: show posts from followed users
+        - If following_only_preference is false: show all posts
         """
         try:
             following = request.user.following.all()
-            posts = Post.objects.filter(
-                Q(author__in=following) | Q(author=request.user)
-            ).select_related(
+            
+            # If following_only_preference is true and not following anyone, return empty list
+            if request.user.following_only_preference and not following.exists():
+                return Response([])
+                
+            # If following_only_preference is false, show all posts
+            if not request.user.following_only_preference:
+                posts = Post.objects.all()
+            else:
+                # Otherwise, only show posts from followed users
+                posts = Post.objects.filter(author__in=following)
+                
+            posts = posts.select_related(
                 'author',
                 'referenced_post',
                 'referenced_comment'

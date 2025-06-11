@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -11,11 +11,51 @@ import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { PostComponent } from '../shared/post/post.component';
 import { take } from 'rxjs/operators';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+
+@Component({
+  selector: 'app-unfollow-dialog',
+  template: `
+    <div class="p-6 max-w-sm">
+      <h2 class="text-xl font-bold mb-4">Unfollow {{'@'}}{{ data.handle }}</h2>
+      <p class="text-gray-600 mb-6">Their posts will no longer show up in your home timeline.</p>
+      <div class="flex justify-end gap-3">
+        <button mat-button 
+                class="px-4 py-2 rounded-full hover:bg-gray-100" 
+                (click)="onCancel()">
+          Cancel
+        </button>
+        <button mat-button 
+                class="px-4 py-2 rounded-full bg-black text-white hover:bg-gray-900" 
+                (click)="onConfirm()">
+          Unfollow
+        </button>
+      </div>
+    </div>
+  `,
+  standalone: true,
+  imports: [CommonModule, MatDialogModule]
+})
+export class UnfollowDialogComponent {
+  constructor(
+    public dialogRef: MatDialogRef<UnfollowDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { handle: string }
+  ) {}
+
+  onCancel(): void {
+    this.dialogRef.close(false);
+  }
+
+  onConfirm(): void {
+    this.dialogRef.close(true);
+  }
+}
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, PostComponent],
+  imports: [CommonModule, FormsModule, RouterModule, PostComponent, MatDialogModule],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
@@ -26,6 +66,8 @@ export class ProfileComponent implements OnInit {
   error: string | null = null;
   isCurrentUser = false;
   showEditModal = false;
+  isFollowLoading = false;
+  isHoveringFollowButton = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   editForm = {
     username: '',
@@ -41,6 +83,7 @@ export class ProfileComponent implements OnInit {
     private postService: PostService,
     private authService: AuthService,
     private notificationService: NotificationService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -131,7 +174,7 @@ export class ProfileComponent implements OnInit {
       formData.append('banner_image', this.editForm.banner_image);
     }
 
-    this.userService.updateProfile(this.user.id, formData).subscribe({
+    this.userService.updateProfile(this.user.handle, formData).subscribe({
       next: (updatedUser) => {
         this.user = updatedUser;
         this.closeEditModal();
@@ -144,21 +187,40 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  followUser(): void {
-    if (!this.user) return;
+  async followUser(): Promise<void> {
+    if (!this.user || this.isFollowLoading) return;
 
-    this.userService.followUser(this.user.id).subscribe({
+    // If already following, show confirmation dialog
+    if (this.user.is_following) {
+      const dialogRef = this.dialog.open(UnfollowDialogComponent, {
+        width: '400px',
+        data: { handle: this.user.handle },
+        panelClass: 'rounded-lg'
+      });
+
+      const result = await dialogRef.afterClosed().pipe(take(1)).toPromise();
+      if (!result) return; // User cancelled
+    }
+
+    this.isFollowLoading = true;
+    this.userService.followUser(this.user.handle).subscribe({
       next: (updatedUser) => {
         this.user = updatedUser;
+        this.isFollowLoading = false;
       },
       error: (error) => {
         console.error('Error following user:', error);
-        this.notificationService.showError('Failed to follow user');
+        this.isFollowLoading = false;
+        this.notificationService.showError('Failed to update follow status');
       }
     });
   }
 
   onPostClick(post: Post): void {
     this.router.navigate([`/${post.author.handle}/post/${post.id}`]);
+  }
+
+  onFollowButtonHover(isHovering: boolean): void {
+    this.isHoveringFollowButton = isHovering;
   }
 } 

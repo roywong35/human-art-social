@@ -14,29 +14,39 @@ export class UserService {
 
   getUserById(id: number): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/${id}/`).pipe(
-      map(user => this.addImageUrls(user))
+      map(user => this.addImageUrls(user)!)
     );
   }
 
   getUserByHandle(handle: string): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/handle/${handle}/`).pipe(
-      map(user => this.addImageUrls(user))
+      map(user => this.addImageUrls(user)!)
     );
   }
 
-  followUser(userId: number): Observable<User> {
-    return this.http.post<User>(`${this.apiUrl}/${userId}/follow/`, {}).pipe(
-      map(user => this.addImageUrls(user))
+  followUser(handle: string): Observable<User> {
+    return this.http.post<User>(`${this.apiUrl}/handle/${handle}/follow/`, {}).pipe(
+      map(user => this.addImageUrls(user)!)
     );
   }
 
-  updateProfile(userId: number, profileData: Partial<User> | FormData): Observable<User> {
-    return this.http.patch<User>(`${this.apiUrl}/${userId}/`, profileData).pipe(
-      map(user => this.addImageUrls(user))
+  updateProfile(handle: string, profileData: Partial<User> | FormData): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/handle/${handle}/`, profileData).pipe(
+      map(user => this.addImageUrls(user)!)
     );
   }
 
-  private addImageUrls(user: User): User {
+  searchUsers(query: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/search/`, {
+      params: { q: query }
+    }).pipe(
+      map(users => users.map(user => this.addImageUrls(user)!))
+    );
+  }
+
+  private addImageUrls(user: User | null): User | null {
+    if (!user) return null;
+    
     if (user.profile_picture && !user.profile_picture.startsWith('http')) {
       user.profile_picture = `${environment.apiUrl}${user.profile_picture}`;
     }

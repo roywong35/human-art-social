@@ -21,16 +21,34 @@
       <!-- Post content -->
       <p class="text-gray-800 mt-1 break-words">{{ post.content }}</p>
 
-      <!-- Single Image -->
-      <div *ngIf="post.image" class="mt-4 rounded-lg overflow-hidden">
+      <!-- Images Grid -->
+      <div *ngIf="post.images && post.images.length > 0" 
+           class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100"
+           [class.h-80]="post.images.length === 1"
+           [class.h-60]="post.images.length > 1">
+        <div class="flex flex-wrap h-full">
+          <div *ngFor="let image of post.images; let i = index" 
+               [class]="getImageLayoutClass(i, post.images.length)"
+               class="relative p-0.5">
+            <img [src]="image.image" 
+                 [alt]="'Post image ' + (i + 1)"
+                 class="w-full h-full object-cover rounded-lg"
+                 [class.rounded-lg]="post.images.length > 1"
+                 (error)="onImageError($event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Legacy Single Image Support -->
+      <div *ngIf="post.image && !post.images?.length" class="mt-4 rounded-lg overflow-hidden">
         <img [src]="post.image" 
              [alt]="'Post by ' + post.author.username" 
              class="max-w-full h-auto object-cover"
              (error)="onImageError($event)">
       </div>
 
-      <!-- Multiple Media -->
-      <div *ngIf="post.media && post.media.length > 0" class="mt-2">
+      <!-- Legacy Media Support -->
+      <div *ngIf="post.media && post.media.length > 0 && !post.images?.length" class="mt-2">
         <div *ngFor="let media of post.media" class="rounded-lg overflow-hidden">
           <img *ngIf="media.type === 'image'" [src]="media.url" alt="Post media" class="max-w-full h-auto">
           <video *ngIf="media.type === 'video'" [src]="media.url" controls class="max-w-full"></video>

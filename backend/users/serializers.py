@@ -38,13 +38,15 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        fields = ('username', 'handle', 'bio', 'profile_picture', 'banner_image', 'website')
+        fields = ('username', 'handle', 'bio', 'profile_picture', 'banner_image', 'website', 'following_only_preference')
         read_only_fields = ('handle',)  # Handle cannot be changed after registration
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for viewing user profiles with all necessary fields.
     """
+    is_following = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -61,9 +63,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'is_following',
             'followers_count',
             'following_count',
-            'handle'
+            'handle',
+            'following_only_preference'
         )
-        read_only_fields = ('id', 'date_joined', 'followers_count', 'following_count')
+        read_only_fields = ('id', 'date_joined', 'followers_count', 'following_count', 'is_following')
+
+    def get_is_following(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return request.user in obj.followers.all()
+        return False
 
 class UserSerializer(serializers.ModelSerializer):
     followers_count = serializers.IntegerField(read_only=True)

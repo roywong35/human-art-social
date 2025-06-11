@@ -18,4 +18,5 @@ export interface User {
   is_verified?: boolean;
   is_private?: boolean;
   is_staff?: boolean;
+  following_only_preference?: boolean;
 } 

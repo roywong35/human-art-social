@@ -283,4 +283,24 @@ export class PostComponent implements OnInit, OnDestroy {
     console.error('Image failed to load:', event.target.src);
     event.target.src = 'assets/placeholder-image.svg';
   }
+
+  protected getImageLayoutClass(index: number, totalImages: number): string {
+    if (totalImages === 1) {
+      return 'w-full h-full';
+    }
+    
+    if (totalImages === 2) {
+      return 'w-1/2 h-full';
+    }
+    
+    if (totalImages === 3) {
+      if (index === 0) {
+        return 'w-full h-1/2';
+      }
+      return 'w-1/2 h-1/2';
+    }
+    
+    // For 4 images
+    return 'w-1/2 h-1/2';
+  }
 } 

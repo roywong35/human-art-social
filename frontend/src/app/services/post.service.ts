@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap, map } from 'rxjs';
-import { Post } from '../models/post.model';
+import { Post, PostImage } from '../models/post.model';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
@@ -21,13 +21,13 @@ export class PostService {
   }
 
   loadPosts(): void {
-    this.http.get<Post[]>(`${this.baseApiUrl}/feed/`).subscribe({
-      next: (posts) => this.posts.next(posts.map(post => this.addImageUrls(post))),
+    this.getFeed().subscribe({
+      next: (posts) => this.posts.next(posts),
       error: (error) => console.error('Error loading posts:', error)
     });
   }
 
-  getPosts(): Observable<Post[]> {
+  get posts$(): Observable<Post[]> {
     return this.posts.asObservable();
   }
 
@@ -43,18 +43,23 @@ export class PostService {
     );
   }
 
-  createPost(content: string, image?: File): Observable<Post> {
-    console.log('Creating post with image:', image);
+  createPost(content: string, images?: File[]): Observable<Post> {
+    console.log('Creating post with images:', images);
     const formData = new FormData();
     formData.append('content', content);
-    if (image) {
-      console.log('Appending image to form data:', {
-        name: image.name,
-        type: image.type,
-        size: image.size
+    
+    if (images && images.length > 0) {
+      images.forEach((image, index) => {
+        console.log('Appending image to form data:', {
+          name: image.name,
+          type: image.type,
+          size: image.size,
+          index: index
+        });
+        formData.append('images[]', image, image.name);
       });
-      formData.append('image', image);
     }
+    
     return this.http.post<Post>(`${this.baseApiUrl}/posts/`, formData).pipe(
       tap(response => console.log('Post creation response:', response)),
       map(post => this.addImageUrls(post))
@@ -89,13 +94,13 @@ export class PostService {
   }
 
   getFeed(): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/feed/`).pipe(
+    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/feed/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
 
   getExplore(): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/explore/`).pipe(
+    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/explore/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
@@ -153,33 +158,25 @@ export class PostService {
   }
 
   private addImageUrls(post: Post): Post {
-    console.log('Processing post:', post);
     if (post.image) {
-      console.log('Original image path:', post.image);
-      // If it's not an absolute URL and not a data URL, make it absolute
       if (!post.image.startsWith('http') && !post.image.startsWith('data:')) {
         const imagePath = post.image.startsWith('/') ? post.image : `/${post.image}`;
         post.image = `${this.apiUrl}${imagePath}`;
-        console.log('Converted to absolute URL:', post.image);
-      } else {
-        // If it's already an absolute URL but points to our API, ensure it's accessible
-        if (post.image.includes('localhost:8000')) {
-          const url = new URL(post.image);
-          post.image = `${this.apiUrl}${url.pathname}`;
-          console.log('Normalized localhost URL:', post.image);
-        }
       }
-      console.log('Final image URL:', post.image);
     }
     
     if (post.author?.profile_picture) {
       if (!post.author.profile_picture.startsWith('http') && !post.author.profile_picture.startsWith('data:')) {
         const profilePath = post.author.profile_picture.startsWith('/') ? post.author.profile_picture : `/${post.author.profile_picture}`;
         post.author.profile_picture = `${this.apiUrl}${profilePath}`;
-      } else if (post.author.profile_picture.includes('localhost:8000')) {
-        const url = new URL(post.author.profile_picture);
-        post.author.profile_picture = `${this.apiUrl}${url.pathname}`;
       }
+    }
+
+    if (post.images) {
+      post.images = post.images.map(image => ({
+        ...image,
+        image: !image.image.startsWith('http') ? `${this.apiUrl}${image.image.startsWith('/') ? image.image : `/${image.image}`}` : image.image
+      }));
     }
     return post;
   }

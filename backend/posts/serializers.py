@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Post, Comment, EvidenceFile
+from .models import Post, Comment, EvidenceFile, PostImage
 
 User = get_user_model()
 
@@ -43,6 +43,12 @@ class CommentSerializer(serializers.ModelSerializer):
             return obj.bookmarks.filter(id=request.user.id).exists()
         return False
 
+class PostImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostImage
+        fields = ['id', 'image', 'order', 'created_at']
+        read_only_fields = ['created_at']
+
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
@@ -56,11 +62,12 @@ class PostSerializer(serializers.ModelSerializer):
     referenced_comment = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
     evidence_files = EvidenceFileSerializer(many=True, read_only=True)
+    images = PostImageSerializer(many=True, read_only=True)
     
     class Meta:
         model = Post
         fields = [
-            'id', 'content', 'image', 'author', 
+            'id', 'content', 'image', 'images', 'author', 
             'created_at', 'updated_at', 'post_type',
             'likes_count', 'reposts_count', 'comments_count',
             'total_comments_count', 'comments',

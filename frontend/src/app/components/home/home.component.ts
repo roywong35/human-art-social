@@ -116,20 +116,20 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
-    this.postService.getPosts().subscribe({
-      next: (posts) => {
+    this.postService.posts$.subscribe({
+      next: (posts: Post[]) => {
         if (this.activeTab === 'for-you') {
           // Show all posts in For You tab
           this.posts = posts;
         } else {
           // Show only verified human art in Human Art tab
-          this.posts = posts.filter(post => 
+          this.posts = posts.filter((post: Post) => 
             post.is_human_drawing && post.is_verified
           );
         }
         this.loading = false;
       },
-      error: (error) => {
+      error: (error: Error) => {
         console.error('Error loading posts:', error);
         this.error = 'Failed to load posts. Please try again.';
         this.loading = false;
@@ -219,7 +219,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   protected onPostSubmit(data: { content: string, image?: File }): void {
     this.isSubmitting = true;
-    this.postService.createPost(data.content, data.image).subscribe({
+    this.postService.createPost(data.content, data.image ? [data.image] : undefined).subscribe({
       next: (post) => {
         this.posts.unshift(post);
       },

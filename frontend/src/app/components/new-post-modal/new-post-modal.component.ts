@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
@@ -6,6 +6,8 @@ import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
+import { ImageUploadService, ImageFile } from '../../services/image-upload.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-new-post-modal',
@@ -14,31 +16,56 @@ import { PickerComponent } from '@ctrl/ngx-emoji-mart';
   templateUrl: './new-post-modal.component.html',
   styleUrls: ['./new-post-modal.component.scss']
 })
-export class NewPostModalComponent {
+export class NewPostModalComponent implements OnDestroy {
   @ViewChild('postTextarea') postTextarea!: ElementRef<HTMLTextAreaElement>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   
   protected content = '';
-  protected selectedImage: File | undefined;
-  protected selectedImagePreview: string | null = null;
   protected isSubmitting = false;
   protected error: string | null = null;
   protected showEmojiPicker = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
+  protected images: ImageFile[] = [];
+  private subscriptions: Subscription = new Subscription();
+
   constructor(
     public dialogRef: MatDialogRef<NewPostModalComponent>,
     private postService: PostService,
-    public authService: AuthService
-  ) {}
+    public authService: AuthService,
+    private imageUploadService: ImageUploadService
+  ) {
+    // Subscribe to image updates
+    this.subscriptions.add(
+      this.imageUploadService.images$.subscribe(images => {
+        this.images = images;
+      })
+    );
+
+    // Subscribe to error updates
+    this.subscriptions.add(
+      this.imageUploadService.errors$.subscribe(errors => {
+        if (errors.length > 0) {
+          this.error = errors[0].message;
+        } else {
+          this.error = null;
+        }
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+    this.imageUploadService.clearImages();
+  }
 
   async createPost(): Promise<void> {
-    if (this.content.trim() || this.selectedImage) {
+    if (this.content.trim() || this.images.length > 0) {
       try {
         this.isSubmitting = true;
         this.error = null;
-        await this.postService.createPost(this.content, this.selectedImage).toPromise();
+        await this.postService.createPost(this.content, this.images.map(img => img.file)).toPromise();
         this.dialogRef.close(true);
       } catch (error) {
         console.error('Error creating post:', error);
@@ -53,25 +80,17 @@ export class NewPostModalComponent {
     this.dialogRef.close();
   }
 
-  onImageSelected(event: Event): void {
+  async onImageSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      this.selectedImage = file;
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.selectedImagePreview = reader.result as string;
-      };
-      reader.readAsDataURL(file);
+    if (input.files?.length) {
+      await this.imageUploadService.addImages(input.files);
+      // Clear the input so the same file can be selected again
+      input.value = '';
     }
   }
 
-  removeImage(): void {
-    this.selectedImage = undefined;
-    this.selectedImagePreview = null;
-    if (this.fileInput) {
-      this.fileInput.nativeElement.value = '';
-    }
+  removeImage(imageId: string): void {
+    this.imageUploadService.removeImage(imageId);
   }
 
   toggleEmojiPicker(event: MouseEvent): void {
@@ -102,5 +121,9 @@ export class NewPostModalComponent {
     const textarea = event.target;
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
+  }
+
+  getImageLayoutClass(index: number): string {
+    return this.imageUploadService.getLayoutClass(index, this.images.length);
   }
 } 

@@ -1,5 +1,12 @@
 import { User } from './user.model';
 
+export interface PostImage {
+  id: number;
+  image: string;
+  order: number;
+  created_at: string;
+}
+
 export interface Post {
   id: number;
   content: string;
@@ -22,4 +29,11 @@ export interface Post {
     type: 'image' | 'video';
     url: string;
   }>;
+  images?: PostImage[];
+  user_id: number;
+  user: {
+    id: number;
+    display_name: string;
+    profile_picture?: string;
+  };
 } 

@@ -45,6 +45,7 @@ class User(AbstractUser):
     date_joined = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     followers = models.ManyToManyField('self', symmetrical=False, related_name='following', blank=True)
+    following_only_preference = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

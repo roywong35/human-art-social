@@ -35,6 +35,21 @@ class EvidenceFile(models.Model):
     def __str__(self):
         return f"Evidence for post {self.post.id}"
 
+class PostImage(models.Model):
+    """
+    Model for storing multiple images per post
+    """
+    post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to=post_image_path)
+    order = models.IntegerField(default=0)  # To maintain image order
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Image {self.order} for post {self.post.id}"
+
 class Post(models.Model):
     """
     Model for user posts in the social platform.
@@ -47,6 +62,7 @@ class Post(models.Model):
     
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(blank=True)
+    # Deprecating single image field in favor of PostImage relation
     image = models.ImageField(upload_to='posts/', blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

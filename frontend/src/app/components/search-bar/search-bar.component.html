@@ -1,0 +1,46 @@
+<div class="relative">
+  <!-- Search Input -->
+  <div class="bg-gray-100 rounded-full flex items-center px-4 py-1.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100">
+    <i class="fas fa-search text-gray-500"></i>
+    <input
+      #searchInput
+      [(ngModel)]="searchQuery"
+      (input)="onSearchInput($event)"
+      type="text"
+      placeholder="Search"
+      class="bg-transparent ml-3 outline-none w-full text-gray-900 placeholder-gray-500"
+      (focus)="onFocus()"
+      (blur)="onBlur()">
+  </div>
+
+  <!-- Search Results Dropdown -->
+  <div *ngIf="showResults && (isLoading || results.length > 0 || noResults)"
+       class="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[400px] overflow-y-auto z-50">
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="p-4 text-center text-gray-500">
+      <i class="fas fa-spinner fa-spin mr-2"></i>
+      Searching...
+    </div>
+
+    <!-- No Results -->
+    <div *ngIf="!isLoading && noResults" class="p-4 text-center text-gray-500">
+      No results found for "{{searchQuery}}"
+    </div>
+
+    <!-- Results List -->
+    <div *ngIf="!isLoading && results.length > 0" class="divide-y divide-gray-100">
+      <div *ngFor="let user of results"
+           (click)="navigateToProfile(user)"
+           class="p-3 flex items-center gap-3 hover:bg-gray-50 cursor-pointer transition-colors">
+        <img [src]="getProfilePicture(user)" 
+             [alt]="user.username"
+             class="w-10 h-10 rounded-full object-cover">
+        <div>
+          <div class="font-semibold text-gray-900">{{user.display_name || user.username}}</div>
+          <div class="text-sm text-gray-500">{{'@' + user.handle}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

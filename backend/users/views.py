@@ -34,12 +34,24 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def follow(self, request, handle=None):
+        """
+        Follow or unfollow a user
+        """
         user = get_object_or_404(User, handle=handle)
-        if request.user in user.followers.all():
+        was_following = request.user in user.followers.all()
+        
+        if was_following:
             user.followers.remove(request.user)
         else:
             user.followers.add(request.user)
-        return Response(status=status.HTTP_200_OK)
+            
+        # Refresh the user instance to get updated counts
+        user.refresh_from_db()
+        serializer = UserProfileSerializer(user, context={'request': request})
+        return Response({
+            **serializer.data,
+            'is_following': not was_following  # Return the new follow state
+        })
 
     @action(detail=True, methods=['get'])
     def followers(self, request, handle=None):
@@ -108,8 +120,8 @@ class UserViewSet(viewsets.ModelViewSet):
             Q(username__icontains=query) |
             Q(handle__icontains=query) |
             Q(display_name__icontains=query)
-        ).order_by('-created_at')
-        serializer = self.get_serializer(users, many=True)
+        ).order_by('-date_joined')
+        serializer = UserProfileSerializer(users, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
@@ -122,7 +134,7 @@ class UserViewSet(viewsets.ModelViewSet):
         following = request.user.following.all()
         users = User.objects.exclude(
             Q(id=request.user.id) | Q(id__in=following)
-        ).order_by('-created_at')[:5]
+        ).order_by('-date_joined')[:5]
         serializer = self.get_serializer(users, many=True)
         return Response(serializer.data)
 
@@ -136,13 +148,12 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserProfileSerializer
         return UserCreateSerializer
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request, handle=None, *args, **kwargs):
         """
         Handle user profile updates and return full profile data.
         """
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        instance = get_object_or_404(User, handle=handle)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
@@ -184,18 +195,3 @@ class UserViewSet(viewsets.ModelViewSet):
             {'message': f'Artist {user.username} has been verified.'},
             status=status.HTTP_200_OK
         )
-
-    @action(detail=False, methods=['GET'], url_path='handle/(?P<handle>[^/.]+)')
-    def get_by_handle(self, request, handle=None):
-        """
-        Get a user by their handle
-        """
-        try:
-            user = User.objects.get(handle=handle)
-            serializer = UserProfileSerializer(user, context={'request': request})
-            return Response(serializer.data)
-        except User.DoesNotExist:
-            return Response(
-                {'error': 'User not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
