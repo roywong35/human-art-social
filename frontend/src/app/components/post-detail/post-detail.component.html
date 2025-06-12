@@ -1,140 +1,122 @@
-<div class="min-h-screen bg-gray-50 py-8">
-  <div class="max-w-[598px] mx-auto">
-    <!-- Loading State -->
-    <div *ngIf="loading" class="flex justify-center items-center py-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+<div class="max-w-2xl mx-auto bg-white" #postContainer>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center items-center p-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="p-4 text-red-500 text-center">
+    {{ error }}
+  </div>
+
+  <!-- Post Content -->
+  <div *ngIf="!loading && !error && post">
+    <!-- Back Button -->
+    <div class="border-b p-4">
+      <button (click)="goBack()" class="text-gray-500 hover:text-gray-700 flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Back
+      </button>
     </div>
 
-    <!-- Error State -->
-    <div *ngIf="error" class="bg-red-50 text-red-500 p-4 rounded-lg text-center my-4">
-      {{ error }}
+    <!-- Parent Chain (shown when viewing a reply) -->
+    <div *ngIf="post.post_type === 'reply'" class="relative">
+      <!-- Parent Posts from Chain -->
+      <ng-container *ngFor="let parentPost of parentChain; let i = index">
+        <div class="relative">
+          <!-- Connecting Line -->
+          <div class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
+               [style]="i === 0 ? 'top: 45px; height: calc(100% - 45px);' : 'top: 0; height: 100%;'">
+          </div>
+          
+          <app-post 
+            [post]="parentPost"
+            [isDetailView]="true"
+            [isConnectedToParent]="true"
+            class="relative">
+          </app-post>
+        </div>
+      </ng-container>
     </div>
 
-    <!-- Post Content -->
-    <div *ngIf="post && !loading" class="bg-white rounded-lg shadow-sm overflow-hidden">
-      <!-- Back Button -->
-      <div class="p-4 border-b border-gray-100">
-        <button (click)="goBack()" class="text-gray-500 hover:text-gray-700 flex items-center">
-          <i class="fas fa-arrow-left mr-2"></i>
-          Back
-        </button>
+    <!-- Main Post -->
+    <div class="relative" #mainPost>
+      <!-- Thread Line for Replies -->
+      <div *ngIf="post.post_type === 'reply'" 
+           class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
+           style="top: 0; height: 45px;">
       </div>
-
-      <!-- Post with Comments -->
-      <app-post
-        [post]="post"
+      
+      <app-post 
+        [post]="post" 
         [isDetailView]="true"
-        [showComments]="true"
-        (postUpdated)="onPostUpdated()">
+        [isConnectedToParent]="post.post_type === 'reply'"
+        (postUpdated)="loadPost()"
+        class="relative">
       </app-post>
+    </div>
 
-      <!-- Comment Input Box -->
-      <div class="p-4 border-t border-gray-100">
-        <div class="flex space-x-3">
-          <img 
-            [src]="currentUser?.profile_picture || defaultAvatar" 
-            [alt]="currentUser?.username" 
-            class="h-10 w-10 rounded-full">
-          <div class="flex-1">
-            <!-- Compact View (Before Focus) -->
-            <div *ngIf="!commentFocused" 
-                 class="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 cursor-text"
-                 (click)="commentFocused = true">
-              <span class="text-gray-500">Post your reply</span>
-              <button class="px-4 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-semibold">
-                Reply
-              </button>
-            </div>
-
-            <!-- Expanded View (After Focus) -->
-            <div *ngIf="commentFocused" class="border border-gray-200 rounded-lg overflow-hidden">
-              <!-- Reply to header - Only shown when focused -->
-              <div *ngIf="post?.author?.handle" class="text-sm text-gray-500 px-3 pt-2">
-                Replying to <span class="text-blue-500">{{'@' + post.author.handle}}</span>
-              </div>
-              
-              <textarea
-                #commentTextarea
-                [(ngModel)]="newComment"
-                (input)="onTextareaInput()"
-                placeholder="Post your reply"
-                class="w-full px-3 py-2 focus:outline-none resize-none min-h-[40px] max-h-[300px] overflow-hidden"
-                [rows]="1"
-              ></textarea>
-              
-              <!-- Media Actions and Submit -->
-              <div class="flex items-center justify-between px-3 py-1">
-                <div class="flex items-center space-x-2 text-blue-500">
-                  <button class="hover:bg-blue-50 p-1 rounded-full transition-colors">
-                    <i class="far fa-image text-base"></i>
-                  </button>
-                  <button 
-                    class="hover:bg-blue-50 p-1 rounded-full transition-colors relative"
-                    (click)="toggleEmojiPicker($event)"
-                  >
-                    <i class="far fa-smile text-base"></i>
-                  </button>
-                  <!-- Emoji Picker -->
-                  <emoji-mart
-                    *ngIf="showEmojiPicker"
-                    [style.position]="'absolute'"
-                    [style.top.px]="emojiPickerPosition.top"
-                    [style.left.px]="emojiPickerPosition.left"
-                    [style.z-index]="1000"
-                    (emojiSelect)="onEmojiSelect($event)"
-                    [enableFrequentEmojiSort]="true"
-                    [showPreview]="false"
-                    [darkMode]="false"
-                    [style]="{ position: 'absolute', bottom: '50px', right: '0' }"
-                  ></emoji-mart>
-                </div>
-                <button
-                  (click)="submitComment()"
-                  [disabled]="!newComment.trim()"
-                  class="px-4 py-1.5 bg-blue-500 text-white rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
-                >
-                  Reply
-                </button>
-              </div>
-            </div>
+    <!-- Reply Input -->
+    <div *ngIf="currentUser" class="border-t border-b bg-white p-4">
+      <div class="flex space-x-4">
+        <img [src]="currentUser.profile_picture || defaultAvatar" 
+             [alt]="currentUser.username" 
+             class="w-10 h-10 rounded-full">
+        <div class="flex-grow">
+          <textarea
+            #replyTextarea
+            [(ngModel)]="newReply"
+            (input)="onTextareaInput()"
+            (focus)="replyFocused = true"
+            placeholder="Post your reply"
+            class="w-full p-2 border rounded-lg focus:outline-none focus:border-blue-500 resize-none"
+            rows="1">
+          </textarea>
+          
+          <!-- Emoji Picker -->
+          <div class="flex justify-between items-center mt-2">
+            <button
+              (click)="toggleEmojiPicker($event)"
+              class="text-gray-500 hover:text-blue-500">
+              <i class="far fa-smile"></i>
+            </button>
+            <button
+              *ngIf="newReply.trim()"
+              (click)="submitReply()"
+              class="px-4 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600">
+              Reply
+            </button>
+          </div>
+          
+          <!-- Emoji Picker Container -->
+          <div *ngIf="showEmojiPicker" 
+               [style.position]="'fixed'"
+               [style.top.px]="emojiPickerPosition.top"
+               [style.left.px]="emojiPickerPosition.left"
+               [style.zIndex]="1000">
+            <emoji-mart (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Comments List -->
-      <div class="border-t border-gray-100">
-        <div *ngFor="let comment of comments" class="p-4 border-b border-gray-100">
-          <div class="flex space-x-3">
-            <img 
-              [src]="comment.author.profile_picture || defaultAvatar" 
-              [alt]="comment.author.username" 
-              class="h-10 w-10 rounded-full">
-            <div class="flex-1">
-              <div class="flex items-center space-x-2">
-                <span class="font-semibold">{{ comment.author.username }}</span>
-                <span class="text-gray-500">{{'@' + comment.author.handle }}</span>
-                <span class="text-gray-500">·</span>
-                <span class="text-gray-500">{{ comment.created_at | date:'short' }}</span>
-              </div>
-              <p class="mt-1">{{ comment.content }}</p>
-              <div class="mt-2 flex items-center space-x-6 text-gray-500">
-                <button class="hover:text-blue-500 flex items-center space-x-1">
-                  <i class="far fa-comment"></i>
-                  <span>{{ comment.replies_count || 0 }}</span>
-                </button>
-                <button 
-                  (click)="likeComment(comment)"
-                  class="hover:text-red-500 flex items-center space-x-1"
-                  [class.text-red-500]="comment.is_liked"
-                >
-                  <i [class]="comment.is_liked ? 'fas fa-heart' : 'far fa-heart'"></i>
-                  <span>{{ comment.likes_count || 0 }}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- Replies -->
+    <div *ngIf="replies.length > 0">
+      <div *ngFor="let reply of replies; let i = index" class="relative">
+        <app-post 
+          [post]="reply" 
+          [showFullHeader]="true"
+          [isReply]="true"
+          [isConnectedToParent]="false"
+          (postUpdated)="loadPost()"
+          class="border-b">
+        </app-post>
       </div>
+    </div>
+
+    <!-- No Replies Message -->
+    <div *ngIf="!loading && replies.length === 0" class="p-4 text-center text-gray-500">
+      No replies yet. Be the first to reply!
     </div>
   </div>
 </div> 

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, CommentViewSet
+from .views import PostViewSet
 
 router = DefaultRouter()
 router.register(r'posts', PostViewSet, basename='post')
@@ -29,6 +29,18 @@ urlpatterns = [
     })),
     path('posts/<str:handle>/<int:pk>/bookmark/', PostViewSet.as_view({
         'post': 'bookmark'
+    })),
+
+    # Reply URLs
+    path('posts/<str:handle>/<int:pk>/replies/', PostViewSet.as_view({
+        'get': 'replies',
+        'post': 'reply'
+    })),
+    path('posts/<str:handle>/<int:post_id>/replies/<int:reply_id>/', PostViewSet.as_view({
+        'get': 'get_reply'
+    })),
+    path('posts/<str:handle>/<int:pk>/parent-chain/', PostViewSet.as_view({
+        'get': 'parent_chain'
     })),
 
     # Feed URLs

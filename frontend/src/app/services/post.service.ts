@@ -21,9 +21,19 @@ export class PostService {
   }
 
   loadPosts(): void {
-    this.getFeed().subscribe({
-      next: (posts) => this.posts.next(posts),
-      error: (error) => console.error('Error loading posts:', error)
+    // Get current user's following_only_preference
+    this.authService.currentUser$.subscribe(user => {
+      if (user?.following_only_preference) {
+        this.getFeed().subscribe({
+          next: (posts) => this.posts.next(posts),
+          error: (error) => console.error('Error loading posts:', error)
+        });
+      } else {
+        this.getExplore().subscribe({
+          next: (posts) => this.posts.next(posts),
+          error: (error) => console.error('Error loading posts:', error)
+        });
+      }
     });
   }
 
@@ -82,6 +92,10 @@ export class PostService {
     );
   }
 
+  repostPost(handle: string, postId: number): Observable<void> {
+    return this.http.post<void>(`${this.baseApiUrl}/posts/${handle}/${postId}/repost/`, {});
+  }
+
   quotePost(handle: string, postId: number, content: string, image?: File): Observable<Post> {
     const formData = new FormData();
     formData.append('content', content);
@@ -94,13 +108,13 @@ export class PostService {
   }
 
   getFeed(): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/feed/`).pipe(
+    return this.http.get<Post[]>(`${this.baseApiUrl}/feed/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
 
   getExplore(): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/explore/`).pipe(
+    return this.http.get<Post[]>(`${this.baseApiUrl}/explore/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }

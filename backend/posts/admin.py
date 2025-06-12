@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.timesince import timesince
 from django.urls import reverse
-from .models import Post, Comment, EvidenceFile
+from .models import Post, EvidenceFile
 
 class EvidenceFileInline(admin.TabularInline):
     model = EvidenceFile
@@ -47,17 +47,21 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ('id', 'author', 'post_type', 'is_verified', 'verification_status', 'time_ago', 'list_image_preview', 'evidence_files_preview')
     list_filter = ('post_type', 'is_verified', 'created_at')
     search_fields = ('author__username', 'content')
-    readonly_fields = ('created_at', 'updated_at', 'likes_count', 'reposts_count', 'comments_count', 'detail_image_preview', 'evidence_count')
+    readonly_fields = ('created_at', 'updated_at', 'likes_count', 'reposts_count', 'replies_count', 'detail_image_preview', 'evidence_count')
     fieldsets = (
         ('Post Information', {
             'fields': ('author', 'content', ('image', 'detail_image_preview'))
         }),
+        ('Post Type & References', {
+            'fields': ('post_type', 'parent_post', 'referenced_post'),
+            'classes': ('wide',)
+        }),
         ('Verification', {
-            'fields': ('post_type', 'is_verified', 'verification_date', 'evidence_count'),
+            'fields': ('is_verified', 'verification_date', 'evidence_count'),
             'classes': ('wide',)
         }),
         ('Statistics', {
-            'fields': ('created_at', 'updated_at', 'likes_count', 'reposts_count', 'comments_count'),
+            'fields': ('created_at', 'updated_at', 'likes_count', 'reposts_count', 'replies_count'),
             'classes': ('collapse',)
         }),
     )
@@ -168,15 +172,3 @@ class PostAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('author').prefetch_related('evidence_files')
-
-    def get_list_filter(self, request):
-        if request.GET.get('post_type__exact') == 'human_drawing':
-            return ('is_verified', 'created_at')
-        return self.list_filter
-
-@admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'author', 'post', 'created_at')
-    list_filter = ('created_at',)
-    search_fields = ('author__username', 'content')
-    readonly_fields = ('created_at', 'updated_at')

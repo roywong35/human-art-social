@@ -77,12 +77,12 @@ class UserViewSet(viewsets.ModelViewSet):
             posts = Post.objects.filter(author=user).select_related(
                 'author',
                 'referenced_post',
-                'referenced_comment'
+                'parent_post'
             ).prefetch_related(
                 'likes',
                 'bookmarks',
                 'reposts',
-                'comments',
+                'replies',
                 'evidence_files'
             ).order_by('-created_at')
             
@@ -124,19 +124,21 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserProfileSerializer(users, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def suggested(self, request):
-        following = request.user.following.all()
-        users = User.objects.exclude(
-            Q(id=request.user.id) | Q(id__in=following)
-        ).order_by('-date_joined')[:5]
-        serializer = self.get_serializer(users, many=True)
-        return Response(serializer.data)
+        """
+        Get or update the current user's profile
+        """
+        if request.method == 'GET':
+            serializer = UserProfileSerializer(request.user, context={'request': request})
+            return Response(serializer.data)
+        
+        # PATCH method
+        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(UserProfileSerializer(request.user, context={'request': request}).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
         """

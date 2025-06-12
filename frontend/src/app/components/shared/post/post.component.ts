@@ -6,8 +6,8 @@ import { Router, RouterModule } from '@angular/router';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { Post } from '../../../models/post.model';
-import { User } from '../../../models/user.model';
 import { Comment } from '../../../models/comment.model';
+import { User } from '../../../models/user.model';
 import { environment } from '../../../../environments/environment';
 import { BookmarkService } from '../../../services/bookmark.service';
 import { PostService } from '../../../services/post.service';
@@ -15,9 +15,8 @@ import { CommentService } from '../../../services/comment.service';
 import { AuthService } from '../../../services/auth.service';
 import { PostUpdateService } from '../../../services/post-update.service';
 import { Subscription } from 'rxjs';
-import { CommentDialogComponent } from '../../../components/comment-dialog/comment-dialog.component';
 import { PostInputBoxComponent } from '../post-input-box/post-input-box.component';
-import { CommentComponent } from '../comment/comment.component';
+import { CommentDialogComponent } from '../../comment-dialog/comment-dialog.component';
 
 @Component({
   selector: 'app-post',
@@ -28,7 +27,7 @@ import { CommentComponent } from '../comment/comment.component';
     MatDialogModule,
     RouterModule,
     TimeAgoPipe,
-    CommentComponent
+    CommentDialogComponent
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss']
@@ -37,30 +36,30 @@ export class PostComponent implements OnInit, OnDestroy {
   @Input() post!: Post;
   @Input() showFullHeader: boolean = true;
   @Input() isDetailView: boolean = false;
-  @Input() showComments: boolean = false;
+  @Input() isReply: boolean = false;
+  @Input() showReplies: boolean = false;
+  @Input() isConnectedToParent: boolean = false;
 
   @Output() postUpdated = new EventEmitter<void>();
+  @Output() postDeleted = new EventEmitter<number>();
   @Output() replyClicked = new EventEmitter<void>();
   @Output() likeClicked = new EventEmitter<void>();
   @Output() repostClicked = new EventEmitter<void>();
   @Output() shareClicked = new EventEmitter<void>();
   @Output() bookmarkClicked = new EventEmitter<void>();
 
-  @ViewChild('commentTextarea') commentTextarea!: ElementRef;
   @ViewChild('replyTextarea') replyTextarea!: ElementRef;
 
   protected environment = environment;
   protected showRepostMenu = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
-  // Comment functionality
+  // Reply functionality
   protected currentUser: User | null = null;
-  protected comments: Comment[] = [];
-  protected newComment: string = '';
+  protected replies: Post[] = [];
   protected newReply: string = '';
-  protected commentFocused: boolean = false;
   protected replyFocused: boolean = false;
-  protected replyingTo: Comment | null = null;
+  protected replyingTo: Post | null = null;
   protected showEmojiPicker: boolean = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
   protected replyContent: string = '';
@@ -76,29 +75,23 @@ export class PostComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private postUpdateService: PostUpdateService
   ) {
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
-
     this.postUpdateSubscription = this.postUpdateService.postUpdate$.subscribe(
-      ({ handle, postId, updatedPost }) => {
+      ({ postId, updatedPost }) => {
         if (this.post.id === postId) {
-          Object.assign(this.post, updatedPost);
-          this.postUpdated.emit();
-        } else if (this.post.post_type === 'repost' && 
-                  this.post.referenced_post && 
-                  this.post.referenced_post.id === postId) {
-          Object.assign(this.post.referenced_post, updatedPost);
-          this.postUpdated.emit();
+          this.post = { ...this.post, ...updatedPost };
         }
       }
     );
   }
 
   ngOnInit(): void {
-    // Load comments if we're showing them
-    if (this.showComments || this.isDetailView) {
-      this.loadComments();
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+
+    // Load replies if we're showing them
+    if (this.showReplies || this.isDetailView) {
+      this.loadReplies();
     }
   }
 
@@ -106,10 +99,6 @@ export class PostComponent implements OnInit, OnDestroy {
     if (this.postUpdateSubscription) {
       this.postUpdateSubscription.unsubscribe();
     }
-  }
-
-  protected get canComment(): boolean {
-    return this.newComment.trim().length > 0;
   }
 
   protected get canReply(): boolean {
@@ -137,51 +126,46 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected addEmoji(event: any): void {
     const emoji = event.emoji.native;
-    if (this.replyingTo) {
-      this.newReply += emoji;
-      this.replyTextarea.nativeElement.focus();
-    } else {
-      this.newComment += emoji;
-      this.commentTextarea.nativeElement.focus();
-    }
+    this.newReply += emoji;
+    this.replyTextarea.nativeElement.focus();
     this.showEmojiPicker = false;
   }
 
-  protected loadComments(): void {
+  protected loadReplies(): void {
     const handle = this.post.author.handle;
     this.commentService.getComments(handle, this.post.id).subscribe({
-      next: (comments) => {
-        this.comments = comments;
+      next: (replies) => {
+        this.replies = replies;
       },
       error: (error) => {
-        console.error('Error loading comments:', error);
+        console.error('Error loading replies:', error);
       }
     });
   }
 
-  protected submitComment(): void {
-    if (!this.canComment) return;
+  protected submitReply(): void {
+    if (!this.canReply) return;
 
     const handle = this.post.author.handle;
-    this.commentService.createComment(handle, this.post.id, this.newComment).subscribe({
-      next: (comment) => {
-        this.comments.unshift(comment);
-        this.newComment = '';
-        this.commentFocused = false;
-        this.post.comments_count = (this.post.comments_count || 0) + 1;
+    this.commentService.createComment(handle, this.post.id, this.newReply).subscribe({
+      next: (reply) => {
+        this.replies.unshift(reply);
+        this.newReply = '';
+        this.replyFocused = false;
+        this.post.replies_count = (this.post.replies_count || 0) + 1;
         this.postUpdated.emit();
       },
       error: (error) => {
-        console.error('Error creating comment:', error);
+        console.error('Error creating reply:', error);
       }
     });
   }
 
-  replyToComment(comment: Comment, event?: MouseEvent): void {
+  replyToPost(post: Post, event?: MouseEvent): void {
     if (event) event.stopPropagation();
-    this.replyingTo = this.replyingTo?.id === comment.id ? null : comment;
+    this.replyingTo = this.replyingTo?.id === post.id ? null : post;
     this.replyContent = '';
-    if (!event) { // Only focus if it's not from a click event
+    if (!event) {
       setTimeout(() => {
         this.replyTextarea?.nativeElement.focus();
       });
@@ -202,105 +186,138 @@ export class PostComponent implements OnInit, OnDestroy {
 
   navigateToProfile(event: MouseEvent): void {
     event.stopPropagation();
-    const handle = this.post.author.handle;
-    this.router.navigate([`/${handle}`]);
-  }
-
-  navigateToComment(comment: Comment, event: MouseEvent): void {
-    event.stopPropagation();
-    const handle = this.post.author.handle;
-    this.router.navigate([`/${handle}/post`, this.post.id, 'comment', comment.id]);
+    this.router.navigate([`/${this.post.author.handle}`]);
   }
 
   onReply(event: MouseEvent): void {
     event.stopPropagation();
-    this.dialog.open(CommentDialogComponent, {
-      data: {
-        post: this.post,
-        currentUser: this.currentUser
-      },
-      width: '600px',
-      panelClass: ['comment-dialog', 'dialog-position-top'],
-      position: { top: '5%' }
-    }).afterClosed().subscribe(result => {
-      if (result) {
-        this.postUpdated.emit();
-      }
-    });
-    this.replyClicked.emit();
+    
+    if (!this.currentUser) {
+      // Handle not logged in case
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    if (this.isDetailView) {
+      this.replyFocused = true;
+      setTimeout(() => {
+        this.replyTextarea?.nativeElement.focus();
+      });
+    } else {
+      // Open comment dialog
+      const dialogRef = this.dialog.open(CommentDialogComponent, {
+        width: '600px',
+        maxWidth: '100vw',
+        panelClass: ['comment-dialog', 'dialog-position-top'],
+        data: {
+          post: this.post,
+          currentUser: this.currentUser
+        }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          // Comment was added, update the post
+          this.post.replies_count = (this.post.replies_count || 0) + 1;
+          this.postUpdated.emit();
+        }
+      });
+    }
   }
 
   onLike(event: MouseEvent): void {
     event.stopPropagation();
-    const handle = this.post.author.handle;
-    this.postService.likePost(handle, this.post.id).subscribe({
+    this.likeClicked.emit();
+    this.postService.likePost(this.post.author.handle, this.post.id).subscribe({
       next: () => {
         this.post.is_liked = !this.post.is_liked;
         this.post.likes_count = (this.post.likes_count || 0) + (this.post.is_liked ? 1 : -1);
-        this.likeClicked.emit();
       },
-      error: (error) => console.error('Error liking post:', error)
+      error: (error) => {
+        console.error('Error toggling like:', error);
+      }
     });
   }
 
   onRepost(event: MouseEvent): void {
     event.stopPropagation();
-    const handle = this.post.author.handle;
-    this.postService.repost(handle, this.post.id).subscribe({
-      next: (response) => {
-        this.post = response;
-        this.postUpdateService.emitPostUpdate(handle, this.post.id, this.post);
-        this.repostClicked.emit();
+    this.repostClicked.emit();
+    this.postService.repostPost(this.post.author.handle, this.post.id).subscribe({
+      next: () => {
+        this.post.is_reposted = !this.post.is_reposted;
+        this.post.reposts_count = (this.post.reposts_count || 0) + (this.post.is_reposted ? 1 : -1);
       },
-      error: (error) => console.error('Error reposting:', error)
+      error: (error: Error) => {
+        console.error('Error toggling repost:', error);
+      }
     });
   }
 
   onShare(event: MouseEvent): void {
     event.stopPropagation();
-    const handle = this.post.author.handle;
-    const url = `${window.location.origin}/${handle}/post/${this.post.id}`;
+    this.shareClicked.emit();
+    const url = `${window.location.origin}/${this.post.author.handle}/post/${this.post.id}`;
     navigator.clipboard.writeText(url).then(() => {
-      // Could show a toast notification here
-      console.log('Link copied to clipboard');
-      this.shareClicked.emit();
+      // Show a toast or notification that the URL was copied
+      console.log('URL copied to clipboard');
     });
   }
 
   onBookmark(event: MouseEvent): void {
     event.stopPropagation();
-    const handle = this.post.author.handle;
-    this.bookmarkService.toggleBookmark(handle, this.post.id).subscribe({
+    this.bookmarkClicked.emit();
+    this.postService.bookmarkPost(this.post.author.handle, this.post.id).subscribe({
       next: () => {
         this.post.is_bookmarked = !this.post.is_bookmarked;
-        this.bookmarkClicked.emit();
       },
-      error: (error) => console.error('Error bookmarking post:', error)
+      error: (error) => {
+        console.error('Error toggling bookmark:', error);
+      }
     });
   }
 
   protected onImageError(event: any): void {
-    console.error('Image failed to load:', event.target.src);
-    event.target.src = 'assets/placeholder-image.svg';
+    event.target.src = this.defaultAvatar;
   }
 
   protected getImageLayoutClass(index: number, totalImages: number): string {
-    if (totalImages === 1) {
-      return 'w-full h-full';
-    }
-    
-    if (totalImages === 2) {
-      return 'w-1/2 h-full';
-    }
-    
+    if (totalImages === 1) return 'w-full h-full';
+    if (totalImages === 2) return 'w-1/2 h-full';
     if (totalImages === 3) {
-      if (index === 0) {
-        return 'w-full h-1/2';
-      }
+      if (index === 0) return 'w-1/2 h-full';
       return 'w-1/2 h-1/2';
     }
-    
-    // For 4 images
-    return 'w-1/2 h-1/2';
+    if (totalImages === 4) return 'w-1/2 h-1/2';
+    return '';
+  }
+
+  protected toggleRepostMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showRepostMenu = !this.showRepostMenu;
+  }
+
+  protected onRepostOption(type: 'repost' | 'quote', event: MouseEvent): void {
+    event.stopPropagation();
+    this.showRepostMenu = false;
+    if (type === 'repost') {
+      this.onRepost(event);
+    } else {
+      // Handle quote repost
+      this.router.navigate(['/compose'], { state: { quotePost: this.post } });
+    }
+  }
+
+  onDelete(event: MouseEvent): void {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this post?')) {
+      this.postService.deletePost(this.post.author.handle, this.post.id).subscribe({
+        next: () => {
+          this.postDeleted.emit(this.post.id);
+        },
+        error: (error) => {
+          console.error('Error deleting post:', error);
+        }
+      });
+    }
   }
 } 

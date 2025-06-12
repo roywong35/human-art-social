@@ -37,8 +37,8 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="loading" class="flex justify-center items-center py-8">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+  <div *ngIf="isLoading" class="flex justify-center items-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
   </div>
 
   <!-- Error State -->
@@ -49,33 +49,16 @@
   </div>
 
   <!-- No Posts State -->
-  <div *ngIf="!loading && !error && posts.length === 0" class="max-w-[598px] mx-auto">
-    <div class="bg-white rounded-lg shadow p-8 text-center my-3">
-      <p class="text-gray-500 text-lg">
-        {{ activeTab === 'human-drawing' 
-          ? 'No verified human art available yet.'
-          : 'No posts yet. Be the first to post something!' }}
-      </p>
-    </div>
+  <div *ngIf="!isLoading && (!posts || posts.length === 0)" class="text-center py-8 text-gray-500">
+    No posts to show
   </div>
 
   <!-- Posts List -->
-  <div class="max-w-[598px] mx-auto">
-    <!-- For You Tab: X-style posts -->
-    <div *ngIf="activeTab === 'for-you'" class="space-y-[0.5px]">
-      <app-post
-        *ngFor="let post of posts"
-        [post]="post"
-        (postUpdated)="onPostUpdated()">
-      </app-post>
-    </div>
-
-    <!-- Human Art Tab: Instagram-style posts -->
-    <div *ngIf="activeTab === 'human-drawing'" class="space-y-3">
-      <app-instagram-post
-        *ngFor="let post of posts"
-        [post]="post">
-      </app-instagram-post>
-    </div>
+  <div *ngIf="!isLoading && posts && posts.length > 0">
+    <app-post *ngFor="let post of posts" 
+      [post]="post"
+      (postDeleted)="onPostDeleted($event)"
+      class="block border-b">
+    </app-post>
   </div>
 </div> 

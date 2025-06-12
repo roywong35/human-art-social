@@ -3,8 +3,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from .models import Post, Comment, EvidenceFile, PostImage, User
-from .serializers import PostSerializer, CommentSerializer
+from .models import Post, EvidenceFile, PostImage, User
+from .serializers import PostSerializer
 from django.db import models, transaction
 from django.utils import timezone
 import mimetypes
@@ -24,7 +24,7 @@ class PostViewSet(viewsets.ModelViewSet):
         Get all posts with related data.
         """
         queryset = Post.objects.all().select_related('author').prefetch_related(
-            'likes', 'bookmarks', 'reposts', 'comments', 'evidence_files'
+            'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
         )
 
         # Filter by following if the user has following_only_preference enabled
@@ -80,7 +80,7 @@ class PostViewSet(viewsets.ModelViewSet):
         is_human_drawing_str = str(self.request.data.get('is_human_drawing', '')).lower()
         is_human_drawing = is_human_drawing_str == 'true'
         
-        post_type = self.request.data.get('post_type', 'original')
+        post_type = self.request.data.get('post_type', 'post')
         evidence_count = int(self.request.data.get('evidence_count', 0))
         
         # Create the post
@@ -112,365 +112,204 @@ class PostViewSet(viewsets.ModelViewSet):
                     )
 
     @action(detail=True, methods=['GET'])
-    def comments(self, request, pk=None):
+    def replies(self, request, handle=None, pk=None):
         """
-        Get comments for a post, with optional parent_id filter for nested comments
+        Get replies for a post
         """
-        handle = request.query_params.get('handle')
-        post = self.get_object()
-        
-        # Verify handle matches post author if provided
-        if handle and post.author.handle != handle:
-            return Response(
-                {'error': 'Post not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        parent_id = request.query_params.get('parent_id')
-        
-        # Filter comments based on parent_id
-        if parent_id == 'null':
-            comments = post.comments.filter(parent_comment__isnull=True)
-        else:
-            comments = post.comments.filter(parent_comment_id=parent_id)
-            
-        serializer = CommentSerializer(comments, many=True, context={'request': request})
+        post = get_object_or_404(Post, author__handle=handle, pk=pk)
+        replies = post.replies.all().order_by('-created_at')
+        serializer = self.get_serializer(replies, many=True)
         return Response(serializer.data)
-
-    @action(detail=True, methods=['GET'], url_path='comments/(?P<comment_id>[^/.]+)')
-    def get_comment(self, request, pk=None, comment_id=None):
-        """
-        Get a specific comment
-        """
-        post = self.get_object()
-        try:
-            comment = post.comments.get(id=comment_id)
-            serializer = CommentSerializer(comment, context={'request': request})
-            return Response(serializer.data)
-        except Comment.DoesNotExist:
-            return Response(
-                {'error': 'Comment not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=True, methods=['GET'], url_path='comments/(?P<comment_id>[^/.]+)/parent-chain')
-    def get_comment_parent_chain(self, request, pk=None, comment_id=None):
-        """
-        Get the parent chain for a comment
-        """
-        post = self.get_object()
-        try:
-            comment = post.comments.get(id=comment_id)
-            parent_chain = []
-            current = comment.parent_comment
-            while current:
-                parent_chain.append(current)
-                current = current.parent_comment
-            
-            serializer = CommentSerializer(parent_chain, many=True, context={'request': request})
-            return Response(serializer.data)
-        except Comment.DoesNotExist:
-            return Response(
-                {'error': 'Comment not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=True, methods=['GET'], url_path='comments/(?P<comment_id>[^/.]+)/replies')
-    def get_comment_replies(self, request, pk=None, comment_id=None):
-        """
-        Get replies for a comment
-        """
-        post = self.get_object()
-        try:
-            comment = post.comments.get(id=comment_id)
-            replies = comment.replies.all()
-            serializer = CommentSerializer(replies, many=True, context={'request': request})
-            return Response(serializer.data)
-        except Comment.DoesNotExist:
-            return Response(
-                {'error': 'Comment not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
 
     @action(detail=True, methods=['POST'])
-    def comment(self, request, pk=None):
+    def reply(self, request, handle=None, pk=None):
         """
-        Add a comment to a post
+        Create a reply to a post
         """
-        post = self.get_object()
-        content = request.data.get('content', '').strip()
-        parent_comment_id = request.data.get('parent_comment_id')
+        parent_post = get_object_or_404(Post, author__handle=handle, pk=pk)
+        serializer = self.get_serializer(data=request.data)
         
-        if not content:
-            return Response(
-                {'error': 'Content is required for comments'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Handle nested comments
-        parent_comment = None
-        if parent_comment_id:
-            try:
-                parent_comment = Comment.objects.get(id=parent_comment_id, post=post)
-            except Comment.DoesNotExist:
-                return Response(
-                    {'error': 'Parent comment not found'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-        comment = Comment.objects.create(
-            post=post,
-            author=request.user,
-            content=content,
-            parent_comment=parent_comment
-        )
-        
-        serializer = CommentSerializer(comment, context={'request': request})
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['POST'], url_path='comments/(?P<comment_id>[^/.]+)/reply')
-    def reply_to_comment(self, request, pk=None, comment_id=None):
-        """
-        Reply to a specific comment
-        """
-        post = self.get_object()
-        content = request.data.get('content', '').strip()
-        
-        if not content:
-            return Response(
-                {'error': 'Content is required for replies'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            parent_comment = post.comments.get(id=comment_id)
-            reply = Comment.objects.create(
-                post=post,
+        if serializer.is_valid():
+            # Build conversation chain
+            conversation_chain = []
+            current = parent_post
+            
+            # Add current post's chain if it exists
+            if current.conversation_chain:
+                conversation_chain.extend(current.conversation_chain)
+            else:
+                conversation_chain.append(current.id)
+                
+            # Create the reply with the conversation chain
+            reply = serializer.save(
                 author=request.user,
-                content=content,
-                parent_comment=parent_comment
+                parent_post=parent_post,
+                post_type='reply',
+                conversation_chain=conversation_chain
             )
             
-            serializer = CommentSerializer(reply, context={'request': request})
-            return Response(serializer.data)
-        except Comment.DoesNotExist:
-            return Response(
-                {'error': 'Parent comment not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            # Add the reply's ID to its own chain
+            reply.conversation_chain.append(reply.id)
+            reply.save()
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['POST'], url_path='comments/(?P<comment_id>[^/.]+)/like')
-    def like_comment(self, request, pk=None, comment_id=None):
+    @action(detail=True, methods=['GET'])
+    def parent_chain(self, request, pk=None):
         """
-        Like or unlike a comment
+        Get the parent chain for a post (for replies)
         """
         post = self.get_object()
-        try:
-            comment = post.comments.get(id=comment_id)
-            if comment.likes.filter(id=request.user.id).exists():
-                comment.likes.remove(request.user)
-                return Response({'status': 'unliked'})
-            else:
-                comment.likes.add(request.user)
-                return Response({'status': 'liked'})
-        except Comment.DoesNotExist:
-            return Response(
-                {'error': 'Comment not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=True, methods=['POST'], url_path='comments/(?P<comment_id>[^/.]+)/repost')
-    def repost_comment(self, request, pk=None, comment_id=None):
-        """
-        Repost or unrepost a comment
-        """
-        post = self.get_object()
-        try:
-            comment = post.comments.get(id=comment_id)
-            if comment.reposts.filter(id=request.user.id).exists():
-                comment.reposts.remove(request.user)
-                return Response({'status': 'unreposted'})
-            else:
-                comment.reposts.add(request.user)
-                return Response({'status': 'reposted'})
-        except Comment.DoesNotExist:
-            return Response(
-                {'error': 'Comment not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=True, methods=['POST'], url_path='comments/(?P<comment_id>[^/.]+)/bookmark')
-    def bookmark_comment(self, request, pk=None, comment_id=None):
-        """
-        Bookmark or unbookmark a comment
-        """
-        post = self.get_object()
-        try:
-            comment = post.comments.get(id=comment_id)
-            if comment.bookmarks.filter(id=request.user.id).exists():
-                comment.bookmarks.remove(request.user)
-                return Response({'status': 'unbookmarked'})
-            else:
-                comment.bookmarks.add(request.user)
-                return Response({'status': 'bookmarked'})
-        except Comment.DoesNotExist:
-            return Response(
-                {'error': 'Comment not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=True, methods=['DELETE'], url_path='comments/(?P<comment_id>[^/.]+)')
-    def delete_comment(self, request, pk=None, comment_id=None):
-        """
-        Delete a comment
-        """
-        post = self.get_object()
-        try:
-            comment = post.comments.get(
-                id=comment_id,
-                author=request.user  # Only allow deletion of own comments
-            )
-            comment.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Comment.DoesNotExist:
-            return Response(
-                {'error': 'Comment not found or you do not have permission to delete it'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+        parent_chain = []
+        current = post.parent_post
+        
+        while current:
+            parent_chain.append(current)
+            current = current.parent_post
+        
+        serializer = self.get_serializer(parent_chain, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['POST'])
     def like(self, request, handle, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=pk, author=user)
-        if request.user in post.likes.all():
-            post.likes.remove(request.user)
+        """
+        Like/unlike a post
+        """
+        post = self.get_object()
+        user = request.user
+        
+        if post.likes.filter(id=user.id).exists():
+            post.likes.remove(user)
+            return Response({'liked': False})
         else:
-            post.likes.add(request.user)
-        return Response(status=status.HTTP_200_OK)
-    
+            post.likes.add(user)
+            return Response({'liked': True})
+
     @action(detail=True, methods=['POST'])
     def repost(self, request, handle, pk=None):
         """
-        X-style repost - creates a repost entry while preserving the original post
+        Repost a post
         """
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=pk, author=user)
+        original_post = self.get_object()
+        
+        # Create a new post as a repost
         repost = Post.objects.create(
             author=request.user,
-            content='',
             post_type='repost',
-            referenced_post=post
+            referenced_post=original_post
         )
+        
         serializer = self.get_serializer(repost)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['POST'])
     def quote(self, request, pk=None):
         """
-        Quote post - creates a new post with reference to original
+        Create a quote post
         """
         original_post = self.get_object()
-        content = request.data.get('content', '').strip()
+        serializer = self.get_serializer(data=request.data)
         
-        if not content:
-            return Response(
-                {'error': 'Content is required for quote posts'}, 
-                status=status.HTTP_400_BAD_REQUEST
+        if serializer.is_valid():
+            quote_post = serializer.save(
+                author=request.user,
+                post_type='quote',
+                referenced_post=original_post
             )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        quote_post = Post.objects.create(
-            author=request.user,
-            content=content,
-            referenced_post=original_post,
-            post_type='quote'
-        )
-        
-        serializer = self.get_serializer(quote_post)
-        return Response({
-            'status': 'quoted',
-            'post': serializer.data
-        })
-    
     @action(detail=True, methods=['POST'])
     def bookmark(self, request, handle, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=pk, author=user)
-        if request.user in post.bookmarks.all():
-            post.bookmarks.remove(request.user)
+        """
+        Bookmark/unbookmark a post
+        """
+        post = self.get_object()
+        user = request.user
+        
+        if post.bookmarks.filter(id=user.id).exists():
+            post.bookmarks.remove(user)
+            return Response({'bookmarked': False})
         else:
-            post.bookmarks.add(request.user)
-        return Response(status=status.HTTP_200_OK)
-    
+            post.bookmarks.add(user)
+            return Response({'bookmarked': True})
+
     @action(detail=False, methods=['GET'])
     def bookmarked(self, request):
         """
-        Get all posts bookmarked by the current user
+        Get all bookmarked posts for the current user
         """
-        try:
-            posts = Post.objects.filter(
-                bookmarks=request.user
-            ).select_related(
-                'author'
-            ).prefetch_related(
-                'likes',
-                'bookmarks',
-                'reposts',
-                'comments',
-                'comments__author',
-                'comments__bookmarks'
-            ).order_by('-created_at')
-            
-            serializer = self.get_serializer(posts, many=True)
-            return Response(serializer.data)
-        except Exception as e:
-            print(f"Error in bookmarked view: {str(e)}")
-            return Response(
-                {'error': 'An error occurred while fetching bookmarks'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
+        bookmarked_posts = Post.objects.filter(bookmarks=request.user).order_by('-created_at')
+        serializer = self.get_serializer(bookmarked_posts, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['POST'], permission_classes=[IsAdminUser])
     def verify_drawing(self, request, pk=None):
         """
-        Verify a human drawing post. Only accessible by admin users.
+        Verify a human drawing post (admin only)
         """
         post = self.get_object()
         
         if not post.is_human_drawing:
             return Response(
-                {'error': 'This post is not marked as a human drawing'}, 
+                {'error': 'This post is not marked as a human drawing.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Check if evidence files exist
-        if not post.evidence_files.exists():
-            return Response(
-                {'error': 'This post has no evidence files'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        post.is_verified = True
-        post.verification_date = timezone.now()
+        
+        # Toggle verification status
+        post.is_verified = not post.is_verified
+        if post.is_verified:
+            post.verification_date = timezone.now()
+        else:
+            post.verification_date = None
         post.save()
         
         serializer = self.get_serializer(post)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         """
-        Override retrieve method to handle both direct ID and handle-based retrieval
+        Get a single post with its replies
         """
-        handle = kwargs.get('handle')
-        if handle:
-            return self.retrieve_by_handle(request, handle, pk)
         try:
-            post = self.get_object()
-            serializer = self.get_serializer(post)
-            return Response(serializer.data)
-        except Post.DoesNotExist:
+            instance = self.get_object()
+            # Get the post data
+            post_data = self.get_serializer(instance).data
+            
+            # Get replies for this post with full data
+            replies = Post.objects.filter(
+                parent_post=instance,
+                post_type='reply'
+            ).select_related(
+                'author',
+                'referenced_post',
+                'parent_post'
+            ).prefetch_related(
+                'likes',
+                'bookmarks',
+                'reposts',
+                'replies',
+                'evidence_files',
+                'images'
+            ).order_by('-created_at')
+            
+            # Set context for serializing replies
+            context = self.get_serializer_context()
+            context['many'] = True  # This ensures we get proper reply data
+            
+            # Serialize replies with full data
+            replies_data = self.get_serializer(replies, many=True, context=context).data
+            
+            # Add replies to the response
+            post_data['replies'] = replies_data
+            
+            return Response(post_data)
+        except Exception as e:
+            print(f"Error in retrieve method: {str(e)}")
             return Response(
-                {'error': 'Post not found'},
-                status=status.HTTP_404_NOT_FOUND
+                {'error': 'An error occurred while fetching the post'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     def retrieve_by_handle(self, request, handle=None, pk=None):
@@ -478,40 +317,28 @@ class PostViewSet(viewsets.ModelViewSet):
         Retrieve a post by handle and post ID
         """
         try:
-            post = Post.objects.get(
-                author__handle=handle,
-                id=pk
-            )
+            post = get_object_or_404(Post, author__handle=handle, pk=pk)
             serializer = self.get_serializer(post)
             return Response(serializer.data)
-        except Post.DoesNotExist:
+        except Exception as e:
+            print(f"Error in retrieve_by_handle method: {str(e)}")
             return Response(
-                {'error': 'Post not found'},
-                status=status.HTTP_404_NOT_FOUND
+                {'error': 'An error occurred while fetching the post'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     @action(detail=False, methods=['GET'])
     def get_user_posts_by_handle(self, request, handle=None):
         """
-        Get all posts by a user's handle
+        Get all posts by a specific user handle
         """
         try:
             user = get_object_or_404(User, handle=handle)
-            posts = Post.objects.filter(author=user).select_related(
-                'author'
-            ).prefetch_related(
-                'likes',
-                'bookmarks',
-                'reposts',
-                'comments',
-                'comments__author',
-                'comments__bookmarks'
-            ).order_by('-created_at')
-            
+            posts = Post.objects.filter(author=user).order_by('-created_at')
             serializer = self.get_serializer(posts, many=True)
             return Response(serializer.data)
         except Exception as e:
-            print(f"Error in get_user_posts_by_handle: {str(e)}")
+            print(f"Error in get_user_posts_by_handle method: {str(e)}")
             return Response(
                 {'error': 'An error occurred while fetching user posts'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -520,214 +347,88 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'])
     def feed(self, request):
         """
-        Get posts based on user preferences:
-        - If following_only_preference is true: show posts from followed users
-        - If following_only_preference is false: show all posts
+        Get the user's feed (posts from followed users and own posts)
         """
-        try:
-            following = request.user.following.all()
-            
-            # If following_only_preference is true and not following anyone, return empty list
-            if request.user.following_only_preference and not following.exists():
-                return Response([])
-                
-            # If following_only_preference is false, show all posts
-            if not request.user.following_only_preference:
-                posts = Post.objects.all()
-            else:
-                # Otherwise, only show posts from followed users
-                posts = Post.objects.filter(author__in=following)
-                
-            posts = posts.select_related(
-                'author',
-                'referenced_post',
-                'referenced_comment'
-            ).prefetch_related(
-                'likes',
-                'bookmarks',
-                'reposts',
-                'comments',
-                'evidence_files'
-            ).order_by('-created_at')
-            
-            serializer = self.get_serializer(posts, many=True)
-            return Response(serializer.data)
-        except Exception as e:
-            print(f"Error in feed view: {str(e)}")
-            return Response(
-                {'error': 'An error occurred while fetching feed'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        following = request.user.following.all()
+        base_query = Post.objects.filter(
+            Q(author__in=following) | Q(author=request.user)
+        ).select_related(
+            'author',
+            'referenced_post',
+            'parent_post'
+        ).prefetch_related(
+            'likes',
+            'bookmarks',
+            'reposts',
+            'replies',
+            'evidence_files'
+        )
+
+        # Filter out replies but include regular posts, reposts, and quotes
+        posts = base_query.exclude(post_type='reply').order_by('-created_at')
+        
+        # Print debug info
+        print(f"User: {request.user.username}")
+        print(f"Following count: {following.count()}")
+        print(f"Total posts found: {posts.count()}")
+        
+        serializer = self.get_serializer(posts, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['GET'])
     def explore(self, request):
-        posts = Post.objects.exclude(author=request.user).order_by('-created_at')
+        """
+        Get posts for the explore page (all posts)
+        """
+        posts = Post.objects.exclude(
+            post_type='reply'
+        ).select_related(
+            'author',
+            'referenced_post',
+            'parent_post'
+        ).prefetch_related(
+            'likes',
+            'bookmarks',
+            'reposts',
+            'replies',
+            'evidence_files'
+        ).order_by('-created_at')
+        
+        # Print debug info
+        print(f"Total explore posts found: {posts.count()}")
+        
         serializer = self.get_serializer(posts, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'])
-    def bookmarked_posts(self, request):
-        posts = Post.objects.filter(bookmarks=request.user).order_by('-created_at')
-        serializer = self.get_serializer(posts, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def user_posts(self, request, handle):
-        user = get_object_or_404(User, handle=handle)
-        posts = Post.objects.filter(author=user).order_by('-created_at')
-        serializer = self.get_serializer(posts, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def user_bookmarked_posts(self, request, handle):
-        user = get_object_or_404(User, handle=handle)
-        posts = Post.objects.filter(bookmarks=user).order_by('-created_at')
-        serializer = self.get_serializer(posts, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['GET'])
     def search(self, request):
+        """
+        Search posts by content
+        """
         query = request.query_params.get('q', '')
         if not query:
             return Response([])
+        
         posts = Post.objects.filter(
             Q(content__icontains=query) |
             Q(author__username__icontains=query) |
             Q(author__handle__icontains=query)
         ).order_by('-created_at')
+        
         serializer = self.get_serializer(posts, many=True)
         return Response(serializer.data)
 
-class CommentViewSet(viewsets.ModelViewSet):
-    serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Comment.objects.all().order_by('-created_at')
-
-    def list(self, request, handle, post_id):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        comments = Comment.objects.filter(post=post, parent_comment=None).order_by('-created_at')
-        serializer = self.get_serializer(comments, many=True)
-        return Response(serializer.data)
-
-    def retrieve(self, request, handle, post_id, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        comment = get_object_or_404(Comment, id=pk, post=post)
-        serializer = self.get_serializer(comment)
-        return Response(serializer.data)
-
-    def create(self, request, handle, post_id):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(author=request.user, post=post)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['get'])
-    def parent_chain(self, request, handle, post_id, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        comment = get_object_or_404(Comment, id=pk, post=post)
+    @action(detail=True, methods=['GET'])
+    def get_reply(self, request, handle=None, post_id=None, reply_id=None):
+        """
+        Get a specific reply with its parent post
+        """
+        # Get the reply
+        reply = get_object_or_404(Post, author__handle=handle, pk=reply_id, post_type='reply')
         
-        parent_chain = []
-        current = comment.parent_comment
-        while current:
-            parent_chain.append(current)
-            current = current.parent_comment
+        # Get the parent post
+        parent_post = get_object_or_404(Post, pk=post_id)
         
-        serializer = self.get_serializer(parent_chain, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def like(self, request, handle, post_id, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        comment = get_object_or_404(Comment, id=pk, post=post)
-        if request.user in comment.likes.all():
-            comment.likes.remove(request.user)
-        else:
-            comment.likes.add(request.user)
-        return Response(status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=['post'])
-    def repost(self, request, handle, post_id, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        comment = get_object_or_404(Comment, id=pk, post=post)
-        repost = Post.objects.create(
-            author=request.user,
-            content='',
-            post_type='repost',
-            referenced_comment=comment
-        )
-        serializer = PostSerializer(repost)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def bookmark(self, request, handle, post_id, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        comment = get_object_or_404(Comment, id=pk, post=post)
-        if request.user in comment.bookmarks.all():
-            comment.bookmarks.remove(request.user)
-        else:
-            comment.bookmarks.add(request.user)
-        return Response(status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=['get'])
-    def list_replies(self, request, handle, post_id, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        comment = get_object_or_404(Comment, id=pk, post=post)
-        replies = Comment.objects.filter(parent_comment=comment).order_by('-created_at')
-        serializer = self.get_serializer(replies, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def create_reply(self, request, handle, post_id, pk=None):
-        user = get_object_or_404(User, handle=handle)
-        post = get_object_or_404(Post, id=post_id, author=user)
-        parent_comment = get_object_or_404(Comment, id=pk, post=post)
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(author=request.user, post=post, parent_comment=parent_comment)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['get'])
-    def bookmarked_comments(self, request):
-        comments = Comment.objects.filter(bookmarks=request.user).order_by('-created_at')
-        serializer = self.get_serializer(comments, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def user_comments(self, request, handle):
-        user = get_object_or_404(User, handle=handle)
-        comments = Comment.objects.filter(author=user).order_by('-created_at')
-        serializer = self.get_serializer(comments, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def user_bookmarked_comments(self, request, handle):
-        user = get_object_or_404(User, handle=handle)
-        comments = Comment.objects.filter(bookmarks=user).order_by('-created_at')
-        serializer = self.get_serializer(comments, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def search(self, request):
-        query = request.query_params.get('q', '')
-        if not query:
-            return Response([])
-        comments = Comment.objects.filter(
-            Q(content__icontains=query) |
-            Q(author__username__icontains=query) |
-            Q(author__handle__icontains=query)
-        ).order_by('-created_at')
-        serializer = self.get_serializer(comments, many=True)
+        # Serialize the reply with its parent post
+        serializer = self.get_serializer(reply)
         return Response(serializer.data)

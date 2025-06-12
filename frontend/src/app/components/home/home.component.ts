@@ -34,7 +34,7 @@ import { CommentDialogComponent } from '../comment-dialog/comment-dialog.compone
 })
 export class HomeComponent implements OnInit, OnDestroy {
   posts: Post[] = [];
-  loading = true;
+  isLoading = true;
   error: string | null = null;
   protected environment = environment;
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
@@ -90,49 +90,28 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Check for tab parameter in URL
+    this.loadPosts();
+    
+    // Subscribe to query params for tab changes
     this.route.queryParams.subscribe(params => {
-      if (params['tab'] === 'human-drawing') {
-        this.activeTab = 'human-drawing';
-      }
+      this.activeTab = params['tab'] === 'human-drawing' ? 'human-drawing' : 'for-you';
       this.loadPosts();
     });
   }
 
-  setActiveTab(tab: 'for-you' | 'human-drawing'): void {
-    if (this.activeTab !== tab) {
-      this.activeTab = tab;
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { tab: tab === 'for-you' ? 'for-you' : 'human-drawing' },
-        queryParamsHandling: 'merge'
-      }).then(() => {
-        this.loadPosts();
-      });
-    }
-  }
-
   loadPosts(): void {
-    this.loading = true;
+    this.isLoading = true;
     this.error = null;
 
     this.postService.posts$.subscribe({
       next: (posts: Post[]) => {
-        if (this.activeTab === 'for-you') {
-          // Show all posts in For You tab
-          this.posts = posts;
-        } else {
-          // Show only verified human art in Human Art tab
-          this.posts = posts.filter((post: Post) => 
-            post.is_human_drawing && post.is_verified
-          );
-        }
-        this.loading = false;
+        this.posts = posts;
+        this.isLoading = false;
       },
       error: (error: Error) => {
         console.error('Error loading posts:', error);
         this.error = 'Failed to load posts. Please try again.';
-        this.loading = false;
+        this.isLoading = false;
       }
     });
   }
@@ -230,6 +209,20 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
       }
     });
+  }
+
+  onPostDeleted(postId: number): void {
+    this.posts = this.posts.filter(post => post.id !== postId);
+  }
+
+  setActiveTab(tab: 'for-you' | 'human-drawing'): void {
+    if (this.activeTab !== tab) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { tab: tab === 'for-you' ? null : tab },
+        queryParamsHandling: 'merge'
+      });
+    }
   }
 
   ngOnDestroy(): void {

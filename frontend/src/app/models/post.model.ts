@@ -15,12 +15,14 @@ export interface Post {
   updated_at: string;
   likes_count: number;
   comments_count: number;
+  replies_count: number;
   reposts_count: number;
   is_liked: boolean;
   is_bookmarked: boolean;
   is_reposted: boolean;
-  post_type: 'normal' | 'repost';
+  post_type: 'post' | 'reply' | 'repost' | 'quote';
   referenced_post?: Post;
+  parent_post?: Post;
   reposted_by?: User;
   image?: string;
   is_human_drawing: boolean;
@@ -31,9 +33,11 @@ export interface Post {
   }>;
   images?: PostImage[];
   user_id: number;
-  user: {
+  user?: {
     id: number;
     display_name: string;
     profile_picture?: string;
   };
+  replies?: Post[];
+  conversation_chain?: number[];
 } 

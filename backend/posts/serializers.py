@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Post, Comment, EvidenceFile, PostImage
+from .models import Post, EvidenceFile, PostImage
 
 User = get_user_model()
 
@@ -15,34 +15,6 @@ class EvidenceFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'file', 'file_type', 'created_at']
         read_only_fields = ['created_at']
 
-class CommentSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    likes_count = serializers.IntegerField(read_only=True)
-    replies_count = serializers.IntegerField(read_only=True)
-    is_liked = serializers.SerializerMethodField()
-    is_bookmarked = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Comment
-        fields = [
-            'id', 'content', 'author', 'created_at', 'updated_at',
-            'likes_count', 'replies_count', 'is_liked', 'is_bookmarked',
-            'parent_comment', 'media'
-        ]
-        read_only_fields = ['author', 'created_at', 'updated_at']
-
-    def get_is_liked(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.likes.filter(id=request.user.id).exists()
-        return False
-
-    def get_is_bookmarked(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.bookmarks.filter(id=request.user.id).exists()
-        return False
-
 class PostImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostImage
@@ -53,14 +25,13 @@ class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
     reposts_count = serializers.IntegerField(read_only=True)
-    comments_count = serializers.IntegerField(read_only=True)
-    total_comments_count = serializers.IntegerField(read_only=True)
+    replies_count = serializers.IntegerField(read_only=True)
     is_liked = serializers.SerializerMethodField()
     is_bookmarked = serializers.SerializerMethodField()
     is_reposted = serializers.SerializerMethodField()
     referenced_post = serializers.SerializerMethodField()
-    referenced_comment = serializers.SerializerMethodField()
-    comments = serializers.SerializerMethodField()
+    parent_post = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
     evidence_files = EvidenceFileSerializer(many=True, read_only=True)
     images = PostImageSerializer(many=True, read_only=True)
     
@@ -69,23 +40,27 @@ class PostSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'content', 'image', 'images', 'author', 
             'created_at', 'updated_at', 'post_type',
-            'likes_count', 'reposts_count', 'comments_count',
-            'total_comments_count', 'comments',
-            'is_liked', 'is_bookmarked', 'is_reposted',
-            'referenced_post', 'referenced_comment',
+            'likes_count', 'reposts_count', 'replies_count',
+            'replies', 'is_liked', 'is_bookmarked', 'is_reposted',
+            'referenced_post', 'parent_post',
             'is_human_drawing', 'is_verified', 'verification_date',
             'evidence_files', 'media'
         ]
         read_only_fields = [
             'author', 'created_at', 'updated_at', 
-            'likes_count', 'reposts_count', 'comments_count',
-            'total_comments_count', 'is_verified', 'verification_date'
+            'likes_count', 'reposts_count', 'replies_count',
+            'is_verified', 'verification_date'
         ]
 
-    def get_comments(self, obj):
-        # For normal views, show all comments
-        comments = obj.comments.filter(parent_comment__isnull=True)
-        return CommentSerializer(comments, many=True, context=self.context).data
+    def get_replies(self, obj):
+        # Check if we're already serializing replies to prevent recursion
+        if self.context.get('is_reply'):
+            return []
+        # For normal views, show all direct replies
+        replies = obj.replies.all().order_by('-created_at')
+        # Set context to indicate we're serializing replies
+        context = {**self.context, 'is_reply': True}
+        return PostSerializer(replies, many=True, context=context).data
 
     def get_is_liked(self, obj):
         request = self.context.get('request')
@@ -110,9 +85,9 @@ class PostSerializer(serializers.ModelSerializer):
             return PostSerializer(obj.referenced_post, context=self.context).data
         return None
 
-    def get_referenced_comment(self, obj):
-        if obj.referenced_comment:
-            return CommentSerializer(obj.referenced_comment, context=self.context).data
+    def get_parent_post(self, obj):
+        if obj.parent_post:
+            return PostSerializer(obj.parent_post, context=self.context).data
         return None
 
     def create(self, validated_data):

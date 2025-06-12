@@ -66,6 +66,7 @@ export class NewPostModalComponent implements OnDestroy {
         this.isSubmitting = true;
         this.error = null;
         await this.postService.createPost(this.content, this.images.map(img => img.file)).toPromise();
+        window.location.reload();
         this.dialogRef.close(true);
       } catch (error) {
         console.error('Error creating post:', error);

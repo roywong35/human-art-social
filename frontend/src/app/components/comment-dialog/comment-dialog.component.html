@@ -1,78 +1,113 @@
 <div class="dialog-content">
-    <!-- Close Button -->
-    <button class="close-btn" (click)="dialogRef.close()">
-      <i class="fas fa-times"></i>
+  <!-- Close Button -->
+  <div class="h-14">
+    <button class="absolute top-2 left-2 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100" (click)="dialogRef.close()">
+      <i class="fas fa-times text-lg"></i>
     </button>
-  
-    <!-- Original Post -->
-    <div class="post-section">
-      <div class="avatar-container">
+  </div>
+
+  <!-- Parent Post -->
+  <div class="px-2">
+    <div class="flex gap-3">
+      <div class="relative flex flex-col items-center">
         <img [src]="data.post.author.profile_picture || defaultAvatar" 
              alt="Author avatar" 
-             class="avatar">
-        <div class="connecting-line"></div>
+             class="w-10 h-10 rounded-full">
+        <div class="w-0.5 bg-gray-300 flex-1 mt-1"></div>
       </div>
       <div class="flex-1">
+        <!-- Author Info -->
         <div class="flex items-center gap-1">
-          <span class="font-bold">{{ data.post.author.username }}</span>
+          <span class="font-bold hover:underline cursor-pointer">{{ data.post.author.username }}</span>
           <span class="text-gray-500">{{'@'}}{{ data.post.author.handle || data.post.author.username }}</span>
           <span class="text-gray-500">·</span>
           <span class="text-gray-500">{{ data.post.created_at | timeAgo }}</span>
         </div>
-        <p class="post-content">{{ data.post.content }}</p>
-      </div>
-    </div>
-  
-    <!-- Reply Section -->
-    <div class="reply-section">
-      <div class="replying-to">
-        Replying to <span class="text-blue-500">{{'@'}}{{ data.post.author.handle || data.post.author.username }}</span>
-      </div>
-    </div>
-    <div class="reply-input-container">
-        <div class="reply-input-wrapper flex items-start">
-          <img [src]="data.currentUser?.profile_picture || defaultAvatar" 
-               alt="Your avatar" 
-               class="avatar replier-avatar">
-          <textarea
-            [(ngModel)]="replyContent"
-            class="reply-input min-h-[5rem]"
-            placeholder="Post your reply"
-            [rows]="3"
-            (input)="adjustTextarea($event)">
-          </textarea>
+        
+        <!-- Post Content -->
+        <p class="text-[16px] whitespace-pre-wrap">{{ data.post.content }}</p>
+        
+        <!-- Post Image -->
+        <div *ngIf="data.post.image" class="mt-2">
+          <img [src]="data.post.image" 
+               [alt]="'Post by ' + data.post.author.username"
+               class="rounded-xl max-h-[300px] w-auto object-cover">
         </div>
-  
-        <div class="reply-actions">
-          <div class="media-actions">
-            <button class="action-btn" (click)="onImageClick()">
-              <i class="far fa-image"></i>
-            </button>
-            <button class="action-btn" (click)="toggleEmojiPicker($event)">
-              <i class="far fa-smile"></i>
-            </button>
-          </div>
-          <button 
-            class="reply-btn" 
-            [disabled]="!replyContent.trim()"
-            (click)="onSubmit()">
-            Reply
-          </button>
+
+        <!-- Replying To -->
+        <div class="text-gray-500 mt-3 text-[15px]">
+          Replying to <span class="text-blue-500 hover:underline cursor-pointer">{{'@'}}{{ data.post.author.handle || data.post.author.username }}</span>
         </div>
       </div>
+    </div>
   </div>
-  
-  <!-- Emoji Picker -->
-  <div class="emoji-picker-overlay" *ngIf="showEmojiPicker">
-    <div class="emoji-picker-backdrop" (click)="showEmojiPicker = false"></div>
-    <div class="emoji-picker-container"
-         [style.top.px]="emojiPickerPosition.top"
-         [style.left.px]="emojiPickerPosition.left">
-      <emoji-mart [darkMode]="false"
-                 [enableSearch]="false"
-                 [showPreview]="false"
-                 [style]="{ border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }"
-                 (emojiSelect)="addEmoji($event)">
-      </emoji-mart>
+
+  <!-- Reply Input -->
+  <div class="px-2 flex gap-3 py-3">
+    <div class="relative flex flex-col items-center">
+      <img [src]="data.currentUser?.profile_picture || defaultAvatar" 
+           alt="Your avatar" 
+           class="w-10 h-10 rounded-full">
     </div>
-  </div> 
+    <div class="flex-1">
+      <textarea
+        [(ngModel)]="replyContent"
+        class="w-full border-none resize-none text-lg focus:outline-none min-h-[150px]"
+        placeholder="Post your reply"
+        (input)="adjustTextarea($event)">
+      </textarea>
+
+      <!-- Image Preview -->
+      <div *ngIf="imagePreview" class="mt-2 relative">
+        <img [src]="imagePreview" 
+             alt="Selected image" 
+             class="rounded-xl max-h-[300px] w-auto object-cover">
+        <button 
+          (click)="removeImage()"
+          class="absolute top-2 right-2 bg-black bg-opacity-75 text-white p-2 rounded-full hover:bg-opacity-100">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="px-1 flex justify-between items-center border-t pt-2">
+    <div class="flex gap-4">
+      <button 
+        (click)="onImageClick()"
+        class="text-blue-500 p-1.5 rounded-full hover:bg-blue-50">
+        <i class="far fa-image text-base"></i>
+      </button>
+      <button 
+        (click)="toggleEmojiPicker($event)"
+        class="text-blue-500 p-1.5 rounded-full hover:bg-blue-50">
+        <i class="far fa-smile text-base"></i>
+      </button>
+    </div>
+    <button 
+      class="px-6 py-2 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      [disabled]="(!replyContent.trim() && !selectedImage) || isSubmitting"
+      (click)="onSubmit()">
+      <span *ngIf="!isSubmitting">Reply</span>
+      <span *ngIf="isSubmitting" class="flex items-center">
+        <i class="fas fa-spinner fa-spin mr-2"></i>
+        Replying...
+      </span>
+    </button>
+  </div>
+</div>
+
+<!-- Emoji Picker -->
+<div *ngIf="showEmojiPicker" 
+     class="absolute z-50"
+     [style.top.px]="emojiPickerPosition.top"
+     [style.left.px]="emojiPickerPosition.left">
+  <emoji-mart
+    [darkMode]="false"
+    [enableSearch]="false"
+    [showPreview]="false"
+    [style]="{ border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }"
+    (emojiSelect)="addEmoji($event)">
+  </emoji-mart>
+</div> 

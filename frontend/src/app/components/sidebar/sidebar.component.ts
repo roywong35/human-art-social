@@ -27,23 +27,18 @@ export class SidebarComponent implements OnInit {
   constructor(
     public authService: AuthService,
     private dialog: MatDialog,
-    private route: ActivatedRoute,
     private router: Router,
-    private postService: PostService,
-    private userService: UserService
+    private route: ActivatedRoute,
+    private postService: PostService
   ) {
-    // Subscribe to route query params to detect active tab
-    this.route.queryParams.subscribe(params => {
-      this.isHumanArtTab = params['tab'] === 'human-drawing';
-    });
-
-    // Subscribe to router events to reload posts when navigating home
+    // Subscribe to route query params to detect tab changes
     this.router.events.pipe(
       filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd)
-    ).subscribe(event => {
-      if (event.url === '/' || event.url === '/home') {
-        this.postService.loadPosts();
-      }
+    ).subscribe(() => {
+      // Get current query params
+      this.route.queryParams.pipe(take(1)).subscribe(params => {
+        this.isHumanArtTab = params['tab'] === 'human-drawing';
+      });
     });
   }
 
@@ -60,62 +55,34 @@ export class SidebarComponent implements OnInit {
     if (this.isTogglingFollowingOnly) return;
 
     this.isTogglingFollowingOnly = true;
-    this.authService.currentUser$.pipe(take(1)).subscribe(user => {
-      if (user && user.handle) {
-        const newPreference = !this.isFollowingOnly;
-        const formData = new FormData();
-        formData.append('following_only_preference', String(newPreference));
-
-        this.userService.updateProfile(user.handle, formData).subscribe({
-          next: (updatedUser) => {
-            this.isFollowingOnly = updatedUser.following_only_preference || false;
-            this.isTogglingFollowingOnly = false;
-            // Reload posts with new preference
-            this.postService.loadPosts();
-          },
-          error: (error) => {
-            console.error('Error updating following only preference:', error);
-            this.isTogglingFollowingOnly = false;
-          }
-        });
+    const newPreference = !this.isFollowingOnly;
+    
+    this.authService.updateFollowingOnlyPreference(newPreference).subscribe({
+      next: (user) => {
+        this.isFollowingOnly = user.following_only_preference || false;
+        this.isTogglingFollowingOnly = false;
+        // Reload posts with new preference
+        this.postService.loadPosts();
+      },
+      error: (error) => {
+        console.error('Error updating following only preference:', error);
+        this.isTogglingFollowingOnly = false;
       }
     });
   }
 
   openContextModal(): void {
-    console.log('Sidebar: openContextModal called');
-    console.log('Sidebar: isHumanArtTab =', this.isHumanArtTab);
-    
     if (this.isHumanArtTab) {
-      console.log('Sidebar: Opening SubmitDrawingModal');
       this.dialog.open(SubmitDrawingModalComponent, {
         width: '600px',
-        maxHeight: '90vh',
-        panelClass: 'submit-drawing-dialog',
-        position: { top: '5%' }
-      }).afterClosed().subscribe(result => {
-        if (result) {
-          this.postService.loadPosts();
-        }
+        panelClass: ['rounded-2xl', 'create-post-dialog']
       });
     } else {
-      console.log('Sidebar: Opening NewPostModal');
-      const dialogRef = this.dialog.open(NewPostModalComponent, {
+      this.dialog.open(NewPostModalComponent, {
         width: '600px',
-        maxHeight: '90vh',
-        position: { top: '5%' },
-        panelClass: 'rounded-dialog',
-        autoFocus: false,
-        hasBackdrop: true,
-        backdropClass: 'dialog-backdrop'
-      });
-      
-      console.log('Sidebar: Dialog reference:', dialogRef);
-      
-      dialogRef.afterClosed().subscribe(result => {
-        console.log('Sidebar: Modal closed with result:', result);
-        if (result) {
-          this.postService.loadPosts();
+        panelClass: ['rounded-2xl', 'create-post-dialog'],
+        position: {
+          top: '5%'
         }
       });
     }
@@ -139,5 +106,23 @@ export class SidebarComponent implements OnInit {
 
   async logout(): Promise<void> {
     await this.authService.logout();
+  }
+
+  isHomeActive(): boolean {
+    // Return true if we're at root path or human art tab
+    return this.router.url === '/' || this.router.url === '/human-art';
+  }
+
+  navigateToHome(): void {
+    // If already on home page, just refresh the posts
+    if (this.router.url === '/') {
+      this.postService.loadPosts();
+    } else {
+      // Navigate to home and then refresh posts
+      this.router.navigate(['/'])
+        .then(() => {
+          this.postService.loadPosts();
+        });
+    }
   }
 } 

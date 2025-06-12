@@ -1,120 +1,104 @@
-<div class="post-container pb-1 pt-3 pl-3 pr-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer" (click)="navigateToPost()">
+<div [class]="'post-container pb-1 pt-3 pl-3 pr-3 hover:bg-gray-50 ' + (!isConnectedToParent ? 'border-b border-gray-200' : '')">
   <!-- User avatar and content -->
   <div class="flex space-x-3">
-    <div class="flex-shrink-0">
+    <!-- Avatar container with fixed width for consistent line positioning -->
+    <div class="w-[40px] flex-shrink-0 relative z-10">
       <img [src]="post.author.profile_picture || defaultAvatar" 
            [alt]="post.author.username" 
            class="h-10 w-10 rounded-full cursor-pointer"
            (click)="navigateToProfile($event)">
     </div>
+    <!-- Content section with click handler -->
     <div class="flex-grow min-w-0">
       <!-- Author info and timestamp -->
-      <div class="flex items-center space-x-1">
-        <p class="text-[16px] font-extrabold text-gray-900 hover:underline cursor-pointer font-['Inter']" (click)="navigateToProfile($event)">
-          {{ post.author.username }}
-        </p>
-        <p class="text-[15px] text-gray-500">{{'@'}}{{ post.author.handle }}</p>
-        <span class="text-[15px] text-gray-500">·</span>
-        <p class="text-[15px] text-gray-500">{{ post.created_at | timeAgo }}</p>
-      </div>
+      <div class="cursor-pointer" (click)="navigateToPost()">
+        <div class="flex items-center space-x-1">
+          <p class="text-[16px] font-extrabold text-gray-900 hover:underline cursor-pointer font-['Inter']" (click)="navigateToProfile($event)">
+            {{ post.author.username }}
+          </p>
+          <p class="text-[15px] text-gray-500">{{'@'}}{{ post.author.handle }}</p>
+          <span class="text-[15px] text-gray-500">·</span>
+          <p class="text-[15px] text-gray-500">{{ post.created_at | timeAgo }}</p>
+        </div>
 
-      <!-- Post content -->
-      <p class="text-gray-800 mt-1 break-words">{{ post.content }}</p>
+        <!-- Post content -->
+        <p class="text-gray-800 mt-1 break-words whitespace-pre-wrap">{{ post.content }}</p>
 
-      <!-- Images Grid -->
-      <div *ngIf="post.images && post.images.length > 0" 
-           class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100"
-           [class.h-80]="post.images.length === 1"
-           [class.h-60]="post.images.length > 1">
-        <div class="flex flex-wrap h-full">
-          <div *ngFor="let image of post.images; let i = index" 
-               [class]="getImageLayoutClass(i, post.images.length)"
-               class="relative p-0.5">
-            <img [src]="image.image" 
-                 [alt]="'Post image ' + (i + 1)"
-                 class="w-full h-full object-cover rounded-lg"
-                 [class.rounded-lg]="post.images.length > 1"
-                 (error)="onImageError($event)">
+        <!-- Images Grid -->
+        <div *ngIf="post.images && post.images.length > 0" 
+             class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100"
+             [class.h-80]="post.images.length === 1"
+             [class.h-60]="post.images.length > 1">
+          <div class="flex flex-wrap h-full">
+            <div *ngFor="let image of post.images; let i = index" 
+                 [class]="getImageLayoutClass(i, post.images.length)"
+                 class="relative p-0.5">
+              <img [src]="image.image" 
+                   [alt]="'Post image ' + (i + 1)"
+                   class="w-full h-full object-cover rounded-lg"
+                   [class.rounded-lg]="post.images.length > 1"
+                   (error)="onImageError($event)">
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Legacy Single Image Support -->
-      <div *ngIf="post.image && !post.images?.length" class="mt-4 rounded-lg overflow-hidden">
-        <img [src]="post.image" 
-             [alt]="'Post by ' + post.author.username" 
-             class="max-w-full h-auto object-cover"
-             (error)="onImageError($event)">
-      </div>
+        <!-- Legacy Single Image Support -->
+        <div *ngIf="post.image && !post.images?.length" class="mt-4 rounded-lg overflow-hidden">
+          <img [src]="post.image" 
+               [alt]="'Post by ' + post.author.username" 
+               class="max-w-full h-auto object-cover"
+               (error)="onImageError($event)">
+        </div>
 
-      <!-- Legacy Media Support -->
-      <div *ngIf="post.media && post.media.length > 0 && !post.images?.length" class="mt-2">
-        <div *ngFor="let media of post.media" class="rounded-lg overflow-hidden">
-          <img *ngIf="media.type === 'image'" [src]="media.url" alt="Post media" class="max-w-full h-auto">
-          <video *ngIf="media.type === 'video'" [src]="media.url" controls class="max-w-full"></video>
+        <!-- Legacy Media Support -->
+        <div *ngIf="post.media && post.media.length > 0 && !post.images?.length" class="mt-2">
+          <div *ngFor="let media of post.media" class="rounded-lg overflow-hidden">
+            <img *ngIf="media.type === 'image'" [src]="media.url" alt="Post media" class="max-w-full h-auto">
+            <video *ngIf="media.type === 'video'" [src]="media.url" controls class="max-w-full"></video>
+          </div>
         </div>
       </div>
 
       <!-- Post actions -->
       <div class="flex items-center justify-between mt-2">
-        <div class="flex items-center flex-1 justify-between max-w-[400px]">
-          <!-- Reply -->
-          <button class="flex items-center group" (click)="onReply($event)">
-            <div class="flex items-center">
-              <div class="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-blue-50">
-                <i class="far fa-comment text-[18px] text-gray-500 group-hover:text-blue-500 leading-none"></i>
-              </div>
-              <span class="text-sm text-gray-500 group-hover:text-blue-500 ml-1 min-w-[8px] text-center">{{ post.comments_count || 0 }}</span>
-            </div>
-          </button>
-
-          <!-- Repost -->
-          <button class="flex items-center group" (click)="onRepost($event)">
-            <div class="flex items-center">
-              <div class="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-green-50">
-                <i class="fas fa-retweet text-[18px] text-gray-500 group-hover:text-green-500 leading-none"></i>
-              </div>
-              <span class="text-sm text-gray-500 group-hover:text-green-500 ml-1 min-w-[8px] text-center">{{ post.reposts_count || 0 }}</span>
-            </div>
-          </button>
-
-          <!-- Like -->
-          <button class="flex items-center group" (click)="onLike($event)">
-            <div class="flex items-center">
-              <div class="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-red-50">
-                <i [class]="post.is_liked ? 'fas fa-heart text-red-500' : 'far fa-heart text-gray-500'" 
-                   class="text-[18px] group-hover:text-red-500 leading-none"></i>
-              </div>
-              <span class="text-sm ml-1 min-w-[8px] text-center" [class.text-red-500]="post.is_liked" [class.text-gray-500]="!post.is_liked">{{ post.likes_count || 0 }}</span>
-            </div>
-          </button>
-
-          <!-- Share -->
-          <button class="flex items-center group" (click)="onShare($event)">
-            <div class="flex items-center">
-              <div class="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-blue-50">
-                <i class="fas fa-share text-[18px] text-gray-500 group-hover:text-blue-500 leading-none"></i>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        <!-- Bookmark (far right) -->
-        <button class="flex items-center group" (click)="onBookmark($event)">
-          <div class="flex items-center">
-            <div class="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-blue-50">
-              <i [class]="post.is_bookmarked ? 'fas fa-bookmark text-blue-500' : 'far fa-bookmark text-gray-500'"
-                 class="text-[18px] group-hover:text-blue-500 leading-none"></i>
-            </div>
-          </div>
+        <!-- Reply button -->
+        <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
+                (click)="onReply($event)">
+          <i class="far fa-comment text-[18px] group-hover:text-blue-500"></i>
+          <span class="text-sm">{{ post.replies_count || 0 }}</span>
         </button>
-      </div>
 
-      <!-- Comments section -->
-      <div *ngIf="showComments && comments.length > 0" class="mt-4 space-y-4">
-        <div *ngFor="let comment of comments" class="border-t border-gray-200 pt-4">
-          <app-comment [comment]="comment" [post]="post" (commentUpdated)="postUpdated.emit()"></app-comment>
-        </div>
+        <!-- Like button -->
+        <button class="flex items-center gap-2 text-gray-500 hover:text-red-500 p-1.5 rounded-full transition-colors group"
+                (click)="onLike($event)">
+          <i [class]="post.is_liked ? 'fas fa-heart text-red-500' : 'far fa-heart'" class="text-[18px] group-hover:text-red-500"></i>
+          <span class="text-sm" [ngClass]="{'text-red-500': post.is_liked}">{{ post.likes_count }}</span>
+        </button>
+
+        <!-- Repost button -->
+        <button class="flex items-center gap-2 text-gray-500 hover:text-green-500 p-1.5 rounded-full transition-colors group"
+                (click)="onRepost($event)">
+          <i [class]="post.is_reposted ? 'fas fa-retweet text-green-500' : 'fas fa-retweet'" class="text-[18px] group-hover:text-green-500"></i>
+          <span class="text-sm" [ngClass]="{'text-green-500': post.is_reposted}">{{ post.reposts_count || 0 }}</span>
+        </button>
+
+        <!-- Share button -->
+        <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
+                (click)="onShare($event)">
+          <i class="far fa-share-square text-[18px] group-hover:text-blue-500"></i>
+        </button>
+
+        <!-- Bookmark button -->
+        <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
+                (click)="onBookmark($event)">
+          <i class="fa-bookmark text-[18px] group-hover:text-blue-500" 
+             [ngClass]="{
+               'fas': post.is_bookmarked,
+               'far': !post.is_bookmarked,
+               'text-blue-500': post.is_bookmarked,
+               'text-gray-500': !post.is_bookmarked
+             }"></i>
+        </button>
       </div>
     </div>
   </div>

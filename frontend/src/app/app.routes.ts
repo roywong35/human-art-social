@@ -5,7 +5,6 @@ import { RegisterComponent } from './components/register/register.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { BookmarksComponent } from './components/bookmarks/bookmarks.component';
 import { PostDetailComponent } from './components/post-detail/post-detail.component';
-import { CommentDetailComponent } from './components/comment-detail/comment-detail.component';
 import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -40,11 +39,6 @@ export const routes: Routes = [
   {
     path: ':handle/post/:id',
     component: PostDetailComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: ':handle/post/:postId/comment/:commentId',
-    component: CommentDetailComponent,
     canActivate: [AuthGuard]
   },
   {

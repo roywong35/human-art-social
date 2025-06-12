@@ -26,33 +26,21 @@ export class AuthService {
     console.log('Auth Service initialized with API URL:', this.baseApiUrl);
   }
 
-  private loadStoredAuth() {
-    try {
-      const storedUser = localStorage.getItem('user');
-      const storedAccessToken = localStorage.getItem('access_token');
-      const storedRefreshToken = localStorage.getItem('refresh_token');
-
-      console.log('Stored auth data:', {
-        user: storedUser ? JSON.parse(storedUser) : null,
-        accessToken: storedAccessToken ? 'exists' : 'null',
-        refreshToken: storedRefreshToken ? 'exists' : 'null'
-      });
-
-      if (storedAccessToken) {
-        this.accessToken = storedAccessToken;
-        this.refreshToken = storedRefreshToken;
-        
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          this.currentUserSubject.next(this.processUserData(parsedUser));
-        } else {
-          // If we have a token but no user, try to fetch the user
-          this.fetchUserProfile().subscribe();
-        }
+  private loadStoredAuth(): void {
+    const token = localStorage.getItem('access_token');
+    const refresh = localStorage.getItem('refresh_token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (token && refresh && storedUser) {
+      this.accessToken = token;
+      this.refreshToken = refresh;
+      const user = JSON.parse(storedUser);
+      // Load following_only_preference from localStorage
+      const followingOnly = localStorage.getItem('following_only_preference');
+      if (followingOnly !== null) {
+        user.following_only_preference = followingOnly === 'true';
       }
-    } catch (error) {
-      console.error('Error loading stored auth data:', error);
-      this.logout();
+      this.currentUserSubject.next(user);
     }
   }
 
@@ -136,7 +124,7 @@ export class AuthService {
     );
   }
 
-  logout() {
+  logout(): void {
     console.log('Logging out, clearing auth data');
     this.currentUserSubject.next(null);
     this.accessToken = null;
@@ -144,6 +132,7 @@ export class AuthService {
     localStorage.removeItem('user');
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('following_only_preference');
     this.router.navigate(['/login']);
   }
 
@@ -179,5 +168,21 @@ export class AuthService {
   isAdmin(): boolean {
     const currentUser = this.currentUserSubject.getValue();
     return currentUser?.is_staff === true;
+  }
+
+  updateFollowingOnlyPreference(value: boolean): Observable<User> {
+    return this.http.patch<User>(`${this.baseApiUrl}/users/me/`, {
+      following_only_preference: value
+    }).pipe(
+      tap(user => {
+        const currentUser = this.currentUserSubject.value;
+        if (currentUser) {
+          const updatedUser = { ...currentUser, following_only_preference: value };
+          this.currentUserSubject.next(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          localStorage.setItem('following_only_preference', value.toString());
+        }
+      })
+    );
   }
 } 

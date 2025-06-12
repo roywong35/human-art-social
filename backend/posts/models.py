@@ -53,9 +53,12 @@ class PostImage(models.Model):
 class Post(models.Model):
     """
     Model for user posts in the social platform.
+    A post can be a regular post, a comment (reply to another post),
+    a repost, or a quote post.
     """
     POST_TYPES = (
         ('post', 'Post'),
+        ('reply', 'Reply'),
         ('repost', 'Repost'),
         ('quote', 'Quote'),
     )
@@ -67,11 +70,12 @@ class Post(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     post_type = models.CharField(max_length=15, choices=POST_TYPES, default='post')
+    parent_post = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
     referenced_post = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reposts')
-    referenced_comment = models.ForeignKey('Comment', on_delete=models.SET_NULL, null=True, blank=True, related_name='reposts')
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
     bookmarks = models.ManyToManyField(User, related_name='bookmarked_posts', blank=True)
     media = models.JSONField(default=list, blank=True)
+    conversation_chain = models.JSONField(default=list, blank=True, help_text='Ordered list of post IDs in the conversation chain')
     
     # Human drawing fields
     is_human_drawing = models.BooleanField(default=False)
@@ -89,16 +93,16 @@ class Post(models.Model):
         return self.likes.count()
     
     @property
-    def comments_count(self):
-        return self.comments.count()
+    def replies_count(self):
+        return self.replies.count()
 
     @property
     def reposts_count(self):
         return self.reposts.count()
 
     @property
-    def total_reposts(self):
-        return self.reposts.count()
+    def is_reply(self):
+        return self.post_type == 'reply'
 
     @property
     def is_repost(self):
@@ -111,61 +115,11 @@ class Post(models.Model):
     def get_absolute_url(self):
         return f'/{self.author.handle}/post/{self.id}/'
 
-    @property
-    def total_comments_count(self):
-        """Count all comments including replies (for reference if needed)"""
-        return self.comments.count()
-    
-    @property
-    def short_content(self):
-        return self.content[:100] + '...' if len(self.content) > 100 else self.content
-
     def is_liked_by(self, user):
         return self.likes.filter(id=user.id).exists()
-
-    def is_reposted_by(self, user):
-        return self.reposts.filter(id=user.id).exists()
-
-class Comment(models.Model):
-    """
-    Model for comments on posts.
-    """
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    content = models.TextField()
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
-    likes = models.ManyToManyField(User, related_name='liked_comments', blank=True)
-    bookmarks = models.ManyToManyField(User, related_name='bookmarked_comments', blank=True)
-    media = models.JSONField(default=list, blank=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f'{self.author.username} - {self.content[:50]}'
-
-    @property
-    def likes_count(self):
-        return self.likes.count()
-
-    @property
-    def replies_count(self):
-        return self.replies.count()
-
-    @property
-    def reposts_count(self):
-        return self.reposts.count()
-
-    def is_liked_by(self, user):
-        return self.likes.filter(id=user.id).exists()
-
-    def is_reposted_by(self, user):
-        return self.reposts.filter(id=user.id).exists()
 
     def is_bookmarked_by(self, user):
         return self.bookmarks.filter(id=user.id).exists()
 
-    def get_absolute_url(self):
-        return f'/{self.post.author.handle}/post/{self.post.id}/comment/{self.id}/'
+    def is_reposted_by(self, user):
+        return self.reposts.filter(id=user.id).exists()

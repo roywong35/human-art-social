@@ -2,12 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Comment } from '../models/comment.model';
-
-interface CommentResponse {
-  comment: Comment;
-  parent_chain: Comment[];
-}
+import { Post } from '../models/post.model';
 
 @Injectable({
   providedIn: 'root'
@@ -18,48 +13,48 @@ export class CommentService {
 
   constructor(private http: HttpClient) {}
 
-  getComments(handle: string, postId: number): Observable<Comment[]> {
-    return this.http.get<Comment[]>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/`);
+  getComments(handle: string, postId: number): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/${postId}/replies/`);
   }
 
-  getComment(handle: string, postId: number, commentId: number): Observable<Comment> {
-    return this.http.get<Comment>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/${commentId}/`);
+  getComment(handle: string, postId: number, commentId: number): Observable<Post> {
+    return this.http.get<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/replies/${commentId}/`);
   }
 
-  getParentChain(handle: string, postId: number, commentId: number): Observable<Comment[]> {
-    return this.http.get<Comment[]>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/${commentId}/parent-chain/`);
+  getParentChain(handle: string, postId: number, commentId: number): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/${commentId}/parent-chain/`);
   }
 
-  createComment(handle: string, postId: number, content: string): Observable<Comment> {
-    return this.http.post<Comment>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/`, { content });
+  createComment(handle: string, postId: number, content: string): Observable<Post> {
+    return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/replies/`, { content });
   }
 
-  createReply(handle: string, postId: number, commentId: number, content: string): Observable<Comment> {
-    return this.http.post<Comment>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/${commentId}/replies/`, { content });
+  createReply(handle: string, postId: number, commentId: number, content: string): Observable<Post> {
+    return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${commentId}/replies/`, { content });
   }
 
   likeComment(handle: string, postId: number, commentId: number): Observable<void> {
-    return this.http.post<void>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/${commentId}/like/`, {});
+    return this.http.post<void>(`${this.baseApiUrl}/posts/${handle}/${commentId}/like/`, {});
   }
 
   repostComment(handle: string, postId: number, commentId: number): Observable<void> {
-    return this.http.post<void>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/${commentId}/repost/`, {});
+    return this.http.post<void>(`${this.baseApiUrl}/posts/${handle}/${commentId}/repost/`, {});
   }
 
   bookmarkComment(handle: string, postId: number, commentId: number): Observable<void> {
-    return this.http.post<void>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/${commentId}/bookmark/`, {});
+    return this.http.post<void>(`${this.baseApiUrl}/posts/${handle}/${commentId}/bookmark/`, {});
   }
 
-  getReplies(handle: string, postId: number, commentId: number): Observable<Comment[]> {
-    return this.http.get<Comment[]>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/comments/${commentId}/replies/`);
+  getReplies(handle: string, postId: number, commentId: number): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/${commentId}/replies/`);
   }
 
-  getUserComments(handle: string): Observable<Comment[]> {
-    return this.http.get<Comment[]>(`${this.baseApiUrl}/users/${handle}/comments/`);
+  getUserComments(handle: string): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/`);
   }
 
-  searchComments(query: string): Observable<Comment[]> {
-    return this.http.get<Comment[]>(`${this.baseApiUrl}/comments/search/`, {
+  searchComments(query: string): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/search/`, {
       params: { q: query }
     });
   }

@@ -31,7 +31,8 @@ urlpatterns = [
         'get': 'search'
     }), name='user-search'),
     path('me/', UserViewSet.as_view({
-        'get': 'me'
+        'get': 'me',
+        'patch': 'me'
     }), name='user-me'),
     path('suggested/', UserViewSet.as_view({
         'get': 'suggested'
