@@ -11,7 +11,7 @@
       <!-- Author info and timestamp -->
       <div class="flex items-center space-x-1">
         <p class="text-sm font-medium text-gray-900 hover:underline cursor-pointer" (click)="navigateToProfile($event)">
-          {{ comment.author.display_name }}
+          {{ comment.author.username }}
         </p>
         <p class="text-sm text-gray-500">{{'@'}}{{ comment.author.handle }}</p>
         <span class="text-sm text-gray-500">·</span>

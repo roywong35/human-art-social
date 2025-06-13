@@ -118,8 +118,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response([])
         users = User.objects.filter(
             Q(username__icontains=query) |
-            Q(handle__icontains=query) |
-            Q(display_name__icontains=query)
+            Q(handle__icontains=query)
         ).order_by('-date_joined')
         serializer = UserProfileSerializer(users, many=True, context={'request': request})
         return Response(serializer.data)

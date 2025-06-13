@@ -1,18 +1,23 @@
-import { Component, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnDestroy, Inject, Optional } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ImageUploadService, ImageFile } from '../../services/image-upload.service';
 import { Subscription } from 'rxjs';
+import { Post } from '../../models/post.model';
+
+interface DialogData {
+  quotePost?: Post;
+}
 
 @Component({
   selector: 'app-new-post-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, TimeAgoPipe, PickerComponent],
+  imports: [CommonModule, FormsModule, TimeAgoPipe, PickerComponent, MatDialogModule],
   templateUrl: './new-post-modal.component.html',
   styleUrls: ['./new-post-modal.component.scss']
 })
@@ -29,13 +34,17 @@ export class NewPostModalComponent implements OnDestroy {
 
   protected images: ImageFile[] = [];
   private subscriptions: Subscription = new Subscription();
+  protected quotePost: Post | undefined;
 
   constructor(
     public dialogRef: MatDialogRef<NewPostModalComponent>,
     private postService: PostService,
     public authService: AuthService,
-    private imageUploadService: ImageUploadService
+    private imageUploadService: ImageUploadService,
+    @Optional() @Inject(MAT_DIALOG_DATA) private data?: DialogData
   ) {
+    this.quotePost = data?.quotePost;
+
     // Subscribe to image updates
     this.subscriptions.add(
       this.imageUploadService.images$.subscribe(images => {
@@ -65,7 +74,23 @@ export class NewPostModalComponent implements OnDestroy {
       try {
         this.isSubmitting = true;
         this.error = null;
-        await this.postService.createPost(this.content, this.images.map(img => img.file)).toPromise();
+
+        if (this.quotePost) {
+          // Create a quote post
+          await this.postService.createQuotePost(
+            this.content,
+            this.quotePost.author.handle,
+            this.quotePost.id,
+            this.images.map(img => img.file)
+          ).toPromise();
+        } else {
+          // Create a regular post
+          await this.postService.createPost(
+            this.content,
+            this.images.map(img => img.file)
+          ).toPromise();
+        }
+
         window.location.reload();
         this.dialogRef.close(true);
       } catch (error) {

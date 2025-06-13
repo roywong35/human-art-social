@@ -17,6 +17,10 @@ import { PostUpdateService } from '../../../services/post-update.service';
 import { Subscription } from 'rxjs';
 import { PostInputBoxComponent } from '../post-input-box/post-input-box.component';
 import { CommentDialogComponent } from '../../comment-dialog/comment-dialog.component';
+import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
+import { NewPostModalComponent } from '../../new-post-modal/new-post-modal.component';
+import { NotificationService } from '../../../services/notification.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-post',
@@ -27,7 +31,8 @@ import { CommentDialogComponent } from '../../comment-dialog/comment-dialog.comp
     MatDialogModule,
     RouterModule,
     TimeAgoPipe,
-    CommentDialogComponent
+    CommentDialogComponent,
+    RepostMenuComponent
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss']
@@ -40,7 +45,7 @@ export class PostComponent implements OnInit, OnDestroy {
   @Input() showReplies: boolean = false;
   @Input() isConnectedToParent: boolean = false;
 
-  @Output() postUpdated = new EventEmitter<void>();
+  @Output() postUpdated = new EventEmitter<Post>();
   @Output() postDeleted = new EventEmitter<number>();
   @Output() replyClicked = new EventEmitter<void>();
   @Output() likeClicked = new EventEmitter<void>();
@@ -64,7 +69,9 @@ export class PostComponent implements OnInit, OnDestroy {
   protected emojiPickerPosition = { top: 0, left: 0 };
   protected replyContent: string = '';
 
-  private postUpdateSubscription: Subscription;
+  protected repostMenuPosition = { top: 0, left: 0 };
+
+  private subscriptions = new Subscription();
 
   constructor(
     private router: Router,
@@ -73,31 +80,41 @@ export class PostComponent implements OnInit, OnDestroy {
     private bookmarkService: BookmarkService,
     private commentService: CommentService,
     private authService: AuthService,
-    private postUpdateService: PostUpdateService
+    private postUpdateService: PostUpdateService,
+    private notificationService: NotificationService
   ) {
-    this.postUpdateSubscription = this.postUpdateService.postUpdate$.subscribe(
-      ({ postId, updatedPost }) => {
-        if (this.post.id === postId) {
-          this.post = { ...this.post, ...updatedPost };
+    this.subscriptions.add(
+      this.postUpdateService.postUpdate$.subscribe(
+        ({ postId, updatedPost }) => {
+          if (this.post.id === postId) {
+            this.post = { ...this.post, ...updatedPost };
+          }
         }
-      }
+      )
     );
   }
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
+    this.subscriptions.add(
+      this.authService.currentUser$.pipe(take(1)).subscribe(user => {
+        this.currentUser = user;
+      })
+    );
 
     // Load replies if we're showing them
     if (this.showReplies || this.isDetailView) {
       this.loadReplies();
     }
+
+    // Only refresh post in detail view
+    if (this.isDetailView && this.post) {
+      this.postService.refreshPost(this.post.author.handle, this.post.id).subscribe();
+    }
   }
 
   ngOnDestroy(): void {
-    if (this.postUpdateSubscription) {
-      this.postUpdateSubscription.unsubscribe();
+    if (this.subscriptions) {
+      this.subscriptions.unsubscribe();
     }
   }
 
@@ -153,7 +170,7 @@ export class PostComponent implements OnInit, OnDestroy {
         this.newReply = '';
         this.replyFocused = false;
         this.post.replies_count = (this.post.replies_count || 0) + 1;
-        this.postUpdated.emit();
+        this.postUpdated.emit(this.post);
       },
       error: (error) => {
         console.error('Error creating reply:', error);
@@ -219,7 +236,7 @@ export class PostComponent implements OnInit, OnDestroy {
         if (result) {
           // Comment was added, update the post
           this.post.replies_count = (this.post.replies_count || 0) + 1;
-          this.postUpdated.emit();
+          this.postUpdated.emit(this.post);
         }
       });
     }
@@ -227,30 +244,23 @@ export class PostComponent implements OnInit, OnDestroy {
 
   onLike(event: MouseEvent): void {
     event.stopPropagation();
-    this.likeClicked.emit();
+    if (!this.currentUser) return;
+    
     this.postService.likePost(this.post.author.handle, this.post.id).subscribe({
-      next: () => {
-        this.post.is_liked = !this.post.is_liked;
-        this.post.likes_count = (this.post.likes_count || 0) + (this.post.is_liked ? 1 : -1);
+      next: (response) => {
+        // UI is already updated by the service
+        this.postUpdated.emit(this.post);
       },
       error: (error) => {
-        console.error('Error toggling like:', error);
+        console.error('Error liking post:', error);
+        // Service will handle reverting the state
       }
     });
   }
 
   onRepost(event: MouseEvent): void {
     event.stopPropagation();
-    this.repostClicked.emit();
-    this.postService.repostPost(this.post.author.handle, this.post.id).subscribe({
-      next: () => {
-        this.post.is_reposted = !this.post.is_reposted;
-        this.post.reposts_count = (this.post.reposts_count || 0) + (this.post.is_reposted ? 1 : -1);
-      },
-      error: (error: Error) => {
-        console.error('Error toggling repost:', error);
-      }
-    });
+    this.toggleRepostMenu(event);
   }
 
   onShare(event: MouseEvent): void {
@@ -258,8 +268,10 @@ export class PostComponent implements OnInit, OnDestroy {
     this.shareClicked.emit();
     const url = `${window.location.origin}/${this.post.author.handle}/post/${this.post.id}`;
     navigator.clipboard.writeText(url).then(() => {
-      // Show a toast or notification that the URL was copied
-      console.log('URL copied to clipboard');
+      this.notificationService.showSuccess('Post link copied to clipboard');
+    }).catch((error: Error) => {
+      this.notificationService.showError('Failed to copy link to clipboard');
+      console.error('Error copying to clipboard:', error);
     });
   }
 
@@ -280,7 +292,8 @@ export class PostComponent implements OnInit, OnDestroy {
     event.target.src = this.defaultAvatar;
   }
 
-  protected getImageLayoutClass(index: number, totalImages: number): string {
+  protected getImageLayoutClass(index: number, totalImages: number | undefined): string {
+    if (!totalImages) return '';
     if (totalImages === 1) return 'w-full h-full';
     if (totalImages === 2) return 'w-1/2 h-full';
     if (totalImages === 3) {
@@ -294,16 +307,57 @@ export class PostComponent implements OnInit, OnDestroy {
   protected toggleRepostMenu(event: MouseEvent): void {
     event.stopPropagation();
     this.showRepostMenu = !this.showRepostMenu;
+    if (this.showRepostMenu) {
+      const button = event.target as HTMLElement;
+      const rect = button.getBoundingClientRect();
+      this.repostMenuPosition = {
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX - 150 // Center the menu
+      };
+    }
   }
 
-  protected onRepostOption(type: 'repost' | 'quote', event: MouseEvent): void {
-    event.stopPropagation();
-    this.showRepostMenu = false;
-    if (type === 'repost') {
-      this.onRepost(event);
-    } else {
-      // Handle quote repost
-      this.router.navigate(['/compose'], { state: { quotePost: this.post } });
+  private openQuoteModal(): void {
+    const dialogRef = this.dialog.open(NewPostModalComponent, {
+      width: '600px',
+      panelClass: ['rounded-2xl', 'create-post-dialog'],
+      data: { quotePost: this.post }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Quote post created successfully
+      }
+    });
+  }
+
+  async onRepostOption(option: 'repost' | 'quote' | 'unrepost') {
+    console.log('Repost option clicked:', option);
+    console.log('Current post state:', this.post);
+    if (option === 'quote') {
+      // Open quote modal (existing logic)
+      return;
+    }
+    try {
+      console.log('Sending repost request...');
+      const response = await this.postService.repostPost(this.post.author.handle, this.post.id.toString()).toPromise();
+      console.log('Repost response:', response);
+      console.log('Is reposted:', response?.reposted);
+      
+      if (option === 'unrepost' || response?.reposted === false) {
+        // Handle unrepost
+        this.post.is_reposted = false;
+        this.post.reposts_count = Math.max(0, this.post.reposts_count - 1);
+        this.postUpdated.emit(this.post);
+      } else if (response?.reposted || option === 'repost') {
+        // Handle repost
+        this.post.is_reposted = true;
+        this.post.reposts_count++;
+        this.postUpdated.emit(this.post);
+      }
+      window.location.reload();
+    } catch (error) {
+      console.error('Error during repost:', error);
     }
   }
 

@@ -108,7 +108,6 @@ export class SearchBarComponent implements OnInit, OnDestroy {
         } else {
           this.results = users.filter(user => 
             user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (user.display_name && user.display_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
             user.handle.toLowerCase().includes(searchQuery.toLowerCase())
           );
         }
@@ -122,5 +121,18 @@ export class SearchBarComponent implements OnInit, OnDestroy {
         this.results = [];
       }
     });
+  }
+
+  filterUsers(searchQuery: string): void {
+    if (!searchQuery.trim()) {
+      this.results = [];
+      return;
+    }
+
+    searchQuery = searchQuery.toLowerCase();
+    this.results = this.results.filter(user =>
+      user.username.toLowerCase().includes(searchQuery) ||
+      user.handle.toLowerCase().includes(searchQuery)
+    );
   }
 } 

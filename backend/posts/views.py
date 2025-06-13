@@ -8,7 +8,7 @@ from .serializers import PostSerializer
 from django.db import models, transaction
 from django.utils import timezone
 import mimetypes
-from django.db.models import Q
+from django.db.models import Q, Case, When, F
 
 # Create your views here.
 
@@ -23,7 +23,7 @@ class PostViewSet(viewsets.ModelViewSet):
         """
         Get all posts with related data.
         """
-        queryset = Post.objects.all().select_related('author').prefetch_related(
+        queryset = Post.objects.all().select_related('author', 'referenced_post').prefetch_related(
             'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
         )
 
@@ -34,7 +34,14 @@ class PostViewSet(viewsets.ModelViewSet):
                 return Post.objects.none()  # Return empty queryset if not following anyone
             queryset = queryset.filter(author__in=following_users)
 
-        return queryset.order_by('-created_at')
+        # Order by reposted_at for reposts, created_at for others
+        return queryset.order_by(
+            Case(
+                When(post_type='repost', then=F('reposted_at')),
+                default=F('created_at')
+            ).desc(),
+            '-created_at'  # Secondary sort by created_at
+        )
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -176,32 +183,66 @@ class PostViewSet(viewsets.ModelViewSet):
         """
         Like/unlike a post
         """
-        post = self.get_object()
-        user = request.user
-        
-        if post.likes.filter(id=user.id).exists():
-            post.likes.remove(user)
-            return Response({'liked': False})
-        else:
-            post.likes.add(user)
-            return Response({'liked': True})
+        print(f"Like request received - Handle: {handle}, PK: {pk}, User: {request.user}")
+        try:
+            post = self.get_object()
+            user = request.user
+            
+            # If this is a repost, like/unlike the original post
+            target_post = post.referenced_post if post.post_type == 'repost' else post
+            
+            if target_post.likes.filter(id=user.id).exists():
+                target_post.likes.remove(user)
+                return Response({'liked': False})
+            else:
+                target_post.likes.add(user)
+                return Response({'liked': True})
+        except Exception as e:
+            print(f"Error in like action: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['POST'])
-    def repost(self, request, handle, pk=None):
+    def repost(self, request, handle=None, pk=None):
         """
-        Repost a post
+        Repost or unrepost a post
         """
-        original_post = self.get_object()
+        original_post = get_object_or_404(Post, author__handle=handle, pk=pk)
         
-        # Create a new post as a repost
-        repost = Post.objects.create(
-            author=request.user,
-            post_type='repost',
-            referenced_post=original_post
-        )
-        
-        serializer = self.get_serializer(repost)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # Check if user has already reposted
+        if original_post.reposters.filter(id=request.user.id).exists():
+            # Remove user from reposters
+            original_post.reposters.remove(request.user)
+            # Delete the repost
+            repost = Post.objects.filter(
+                author=request.user,
+                referenced_post=original_post
+            ).first()
+            if repost:
+                repost.delete()
+            return Response({'status': 'unreposted'})
+        else:
+            # Add user to reposters
+            original_post.reposters.add(request.user)
+            
+            # Create a new repost
+            repost = Post.objects.create(
+                author=request.user,
+                content=original_post.content,
+                post_type='repost',
+                referenced_post=original_post,
+                reposted_at=timezone.now(),  # Set reposted_at to current time
+                created_at=original_post.created_at,  # Keep original timestamp
+                image=original_post.image,
+                media=original_post.media
+            )
+            # Copy images if any
+            for image in original_post.images.all():
+                PostImage.objects.create(
+                    post=repost,
+                    image=image.image,
+                    order=image.order
+                )
+            return Response({'status': 'reposted'})
 
     @action(detail=True, methods=['POST'])
     def quote(self, request, pk=None):
@@ -432,3 +473,15 @@ class PostViewSet(viewsets.ModelViewSet):
         # Serialize the reply with its parent post
         serializer = self.get_serializer(reply)
         return Response(serializer.data)
+
+    def get_object(self):
+        """
+        Override get_object to handle handle-based lookups
+        """
+        print("Getting object with params:", self.kwargs)
+        handle = self.kwargs.get('handle')
+        pk = self.kwargs.get('pk')
+        
+        if handle:
+            return get_object_or_404(Post, author__handle=handle, pk=pk)
+        return super().get_object()

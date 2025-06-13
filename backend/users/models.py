@@ -20,8 +20,6 @@ class User(AbstractUser):
         }
     )
     
-    display_name = models.CharField(max_length=50, blank=True, null=True)
-    
     handle = models.CharField(
         max_length=30,
         unique=True,

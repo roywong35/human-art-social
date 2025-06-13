@@ -7,7 +7,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'handle', 'display_name', 'profile_picture']
+        fields = ['id', 'username', 'handle', 'profile_picture']
 
 class EvidenceFileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,71 +23,74 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
-    likes_count = serializers.IntegerField(read_only=True)
-    reposts_count = serializers.IntegerField(read_only=True)
-    replies_count = serializers.IntegerField(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    reposts_count = serializers.SerializerMethodField()
+    replies_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
-    is_bookmarked = serializers.SerializerMethodField()
     is_reposted = serializers.SerializerMethodField()
+    is_bookmarked = serializers.SerializerMethodField()
     referenced_post = serializers.SerializerMethodField()
-    parent_post = serializers.SerializerMethodField()
-    replies = serializers.SerializerMethodField()
     evidence_files = EvidenceFileSerializer(many=True, read_only=True)
-    images = PostImageSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = Post
-        fields = [
-            'id', 'content', 'image', 'images', 'author', 
-            'created_at', 'updated_at', 'post_type',
-            'likes_count', 'reposts_count', 'replies_count',
-            'replies', 'is_liked', 'is_bookmarked', 'is_reposted',
-            'referenced_post', 'parent_post',
-            'is_human_drawing', 'is_verified', 'verification_date',
-            'evidence_files', 'media'
-        ]
-        read_only_fields = [
-            'author', 'created_at', 'updated_at', 
-            'likes_count', 'reposts_count', 'replies_count',
-            'is_verified', 'verification_date'
-        ]
+        fields = ['id', 'content', 'author', 'created_at', 'updated_at', 
+                 'likes_count', 'reposts_count', 'replies_count',
+                 'is_liked', 'is_reposted', 'is_bookmarked',
+                 'post_type', 'referenced_post', 'evidence_files']
 
-    def get_replies(self, obj):
-        # Check if we're already serializing replies to prevent recursion
-        if self.context.get('is_reply'):
-            return []
-        # For normal views, show all direct replies
-        replies = obj.replies.all().order_by('-created_at')
-        # Set context to indicate we're serializing replies
-        context = {**self.context, 'is_reply': True}
-        return PostSerializer(replies, many=True, context=context).data
+    def get_likes_count(self, obj):
+        # For reposts, use the original post's likes count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.likes.count()
+        return obj.likes.count()
+
+    def get_reposts_count(self, obj):
+        # For reposts, use the original post's reposts count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.reposts.count()
+        return obj.reposts.count()
+
+    def get_replies_count(self, obj):
+        # For reposts, use the original post's replies count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.replies.count()
+        return obj.replies.count()
 
     def get_is_liked(self, obj):
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.likes.filter(id=request.user.id).exists()
-        return False
-
-    def get_is_bookmarked(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.bookmarks.filter(id=request.user.id).exists()
-        return False
+        if not request or not request.user.is_authenticated:
+            return False
+        # For reposts, check if the original post is liked
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.likes.filter(id=request.user.id).exists()
+        return obj.likes.filter(id=request.user.id).exists()
 
     def get_is_reposted(self, obj):
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.reposts.filter(id=request.user.id).exists()
-        return False
+        if not request or not request.user.is_authenticated:
+            return False
+            
+        # For reposts, check if user has reposted the referenced post
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.reposters.filter(id=request.user.id).exists()
+            
+        # For original posts, check if user has reposted this post
+        return obj.reposters.filter(id=request.user.id).exists()
+
+    def get_is_bookmarked(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        # For reposts, check if the original post is bookmarked
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.bookmarks.filter(id=request.user.id).exists()
+        return obj.bookmarks.filter(id=request.user.id).exists()
 
     def get_referenced_post(self, obj):
-        if obj.referenced_post:
+        if obj.post_type == 'repost' and obj.referenced_post:
+            # Return the original post data
             return PostSerializer(obj.referenced_post, context=self.context).data
-        return None
-
-    def get_parent_post(self, obj):
-        if obj.parent_post:
-            return PostSerializer(obj.parent_post, context=self.context).data
         return None
 
     def create(self, validated_data):

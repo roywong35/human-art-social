@@ -73,9 +73,11 @@ class Post(models.Model):
     parent_post = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
     referenced_post = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reposts')
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
+    reposters = models.ManyToManyField(User, related_name='reposted_posts', blank=True)
     bookmarks = models.ManyToManyField(User, related_name='bookmarked_posts', blank=True)
     media = models.JSONField(default=list, blank=True)
     conversation_chain = models.JSONField(default=list, blank=True, help_text='Ordered list of post IDs in the conversation chain')
+    reposted_at = models.DateTimeField(null=True, blank=True, help_text='When this post was reposted by the current user')
     
     # Human drawing fields
     is_human_drawing = models.BooleanField(default=False)
@@ -90,6 +92,8 @@ class Post(models.Model):
     
     @property
     def likes_count(self):
+        if self.post_type == 'repost' and self.referenced_post:
+            return self.referenced_post.likes.count()
         return self.likes.count()
     
     @property
@@ -98,6 +102,8 @@ class Post(models.Model):
 
     @property
     def reposts_count(self):
+        if self.post_type == 'repost' and self.referenced_post:
+            return self.referenced_post.reposts.count()
         return self.reposts.count()
 
     @property

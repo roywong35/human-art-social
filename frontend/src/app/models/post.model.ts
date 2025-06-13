@@ -7,6 +7,13 @@ export interface PostImage {
   created_at: string;
 }
 
+export interface EvidenceFile {
+  id: number;
+  file: string;
+  file_type: string;
+  created_at: string;
+}
+
 export interface Post {
   id: number;
   content: string;
@@ -20,6 +27,9 @@ export interface Post {
   is_liked: boolean;
   is_bookmarked: boolean;
   is_reposted: boolean;
+  is_liked_by_current_user?: boolean;
+  is_bookmarked_by_current_user?: boolean;
+  is_reposted_by_current_user?: boolean;
   post_type: 'post' | 'reply' | 'repost' | 'quote';
   referenced_post?: Post;
   parent_post?: Post;
@@ -40,4 +50,6 @@ export interface Post {
   };
   replies?: Post[];
   conversation_chain?: number[];
+  reposted_by_current_user?: boolean;
+  evidence_files: EvidenceFile[];
 } 
