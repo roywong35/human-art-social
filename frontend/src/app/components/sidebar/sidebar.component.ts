@@ -13,7 +13,7 @@ import { take, filter } from 'rxjs/operators';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, SubmitDrawingModalComponent],
+  imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss']
 })

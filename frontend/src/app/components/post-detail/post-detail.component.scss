@@ -1,0 +1,24 @@
+/* Post detail styles */
+:host {
+  display: block;
+  width: 100%;
+}
+
+.post-detail-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  color: #ef4444;
+} 

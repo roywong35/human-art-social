@@ -154,6 +154,19 @@ export class NewPostModalComponent implements OnDestroy {
   }
 
   getImageLayoutClass(index: number): string {
-    return this.imageUploadService.getLayoutClass(index, this.images.length);
+    if (this.images.length === 1) {
+      return 'w-full h-full';
+    } else if (this.images.length === 2) {
+      return 'w-1/2 h-full';
+    } else if (this.images.length === 3) {
+      if (index === 0) {
+        return 'w-1/2 h-full';
+      } else {
+        return 'w-1/2 h-1/2';
+      }
+    } else if (this.images.length === 4) {
+      return 'w-1/2 h-1/2';
+    }
+    return '';
   }
 } 

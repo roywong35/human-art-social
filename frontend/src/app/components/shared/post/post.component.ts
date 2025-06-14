@@ -21,6 +21,7 @@ import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
 import { NewPostModalComponent } from '../../new-post-modal/new-post-modal.component';
 import { NotificationService } from '../../../services/notification.service';
 import { take } from 'rxjs/operators';
+import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
 
 @Component({
   selector: 'app-post',
@@ -31,9 +32,7 @@ import { take } from 'rxjs/operators';
     MatDialogModule,
     RouterModule,
     TimeAgoPipe,
-    CommentDialogComponent,
-    RepostMenuComponent,
-    NewPostModalComponent
+    RepostMenuComponent
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss']
@@ -392,5 +391,16 @@ export class PostComponent implements OnInit, OnDestroy {
     img.src = imageUrl;
     
     return 1; // Default to 1:1 until loaded
+  }
+
+  onPhotoClick(event: MouseEvent, index: number): void {
+    event.stopPropagation();
+    const dialogRef = this.dialog.open(PhotoViewerComponent, {
+      panelClass: 'photo-viewer-dialog',
+      data: {
+        photos: this.post.images,
+        initialPhotoIndex: index
+      }
+    });
   }
 } 

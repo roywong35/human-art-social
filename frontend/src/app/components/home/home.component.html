@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-gray-50">
   <!-- Tab Navigation -->
-  <div class="bg-white border-b sticky top-0 z-10">
+  <div class="bg-white border-b sticky top-0 z-20">
     <div class="flex">
       <button 
         [class.border-b-2]="activeTab === 'for-you'"
@@ -22,7 +22,8 @@
       </button>
     </div>
   </div>
-
+  
+  
   <!-- Inline Create Post Box (For You tab only) -->
   <div *ngIf="activeTab === 'for-you'" class="bg-white border-b">
     <div class="max-w-[598px] mx-auto">

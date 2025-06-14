@@ -81,7 +81,8 @@
           <div class="flex h-full">
             <!-- Single photo with adaptive layout -->
             <div *ngIf="(post.images?.length ?? 0) === 1" 
-                 class="w-full rounded-2xl">
+                 class="w-full rounded-2xl cursor-pointer"
+                 (click)="onPhotoClick($event, 0)">
               <img [src]="post.images?.[0]?.image" 
                    [alt]="'Post image 1'"
                    class="w-full h-full object-contain rounded-2xl"
@@ -90,7 +91,9 @@
             <!-- Multiple photos layout -->
             <div *ngIf="(post.images?.length ?? 0) !== 1" class="flex h-full">
               <!-- Left side for first photo in 3-photo layout -->
-              <div *ngIf="(post.images?.length ?? 0) === 3" class="w-1/2 h-full p-0.5">
+              <div *ngIf="(post.images?.length ?? 0) === 3" 
+                   class="w-1/2 h-full p-0.5 cursor-pointer"
+                   (click)="onPhotoClick($event, 0)">
                 <img [src]="post.images?.[0]?.image" 
                      [alt]="'Post image 1'"
                      class="w-full h-full object-cover rounded-lg"
@@ -101,7 +104,8 @@
                 <ng-container *ngFor="let image of post.images; let i = index">
                   <div *ngIf="(post.images?.length ?? 0) !== 3 || i > 0"
                        [class]="getImageLayoutClass(i, post.images?.length || 0)"
-                       class="relative p-0.5">
+                       class="relative p-0.5 cursor-pointer"
+                       (click)="onPhotoClick($event, i)">
                     <img [src]="image.image" 
                          [alt]="'Post image ' + (i + 1)"
                          class="w-full h-full object-cover rounded-lg"
@@ -117,8 +121,8 @@
         <div *ngIf="post.referenced_post?.images?.length" class="mt-2">
           <div class="relative rounded-xl overflow-hidden bg-gray-100"
                [ngClass]="{
-                 'h-80': (post.referenced_post?.images?.length ?? 0) === 1 && getImageAspectRatio(post.referenced_post?.images?.[0]?.image) <= 100/9 || (post.referenced_post?.images?.length ?? 0) > 1,
-                 'h-auto': (post.referenced_post?.images?.length ?? 0) === 1 && getImageAspectRatio(post.referenced_post?.images?.[0]?.image) > 100/9
+                 'h-80': (post.referenced_post?.images?.length ?? 0) === 1 && getImageAspectRatio(post.referenced_post?.images?.[0]?.image) <= 4/3 || (post.referenced_post?.images?.length ?? 0) > 1,
+                 'h-auto': (post.referenced_post?.images?.length ?? 0) === 1 && getImageAspectRatio(post.referenced_post?.images?.[0]?.image) > 4/3
                }">
             <div class="flex h-full">
               <!-- Single photo with adaptive layout -->
@@ -127,8 +131,8 @@
                      [alt]="'Post image 1'"
                      class="w-full"
                      [ngClass]="{
-                       'h-full object-contain': getImageAspectRatio(post.referenced_post?.images?.[0]?.image) <= 100/9,
-                       'object-cover': getImageAspectRatio(post.referenced_post?.images?.[0]?.image) > 100/9
+                       'h-full object-contain': getImageAspectRatio(post.referenced_post?.images?.[0]?.image) <= 4/3,
+                       'object-cover': getImageAspectRatio(post.referenced_post?.images?.[0]?.image) > 4/3
                      }"
                      (error)="onImageError($event)">
               </div>

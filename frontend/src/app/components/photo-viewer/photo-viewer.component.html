@@ -1,0 +1,37 @@
+<!-- Photo viewer modal -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/90" (click)="close()">
+  <!-- Close button -->
+  <button class="absolute top-4 left-4 z-10 text-white hover:text-gray-300 transition-colors"
+          (click)="close(); $event.stopPropagation()">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+
+  <!-- Photo container -->
+  <div class="relative w-full h-full flex items-center justify-center">
+    <!-- Main photo -->
+    <div class="relative h-full flex items-center justify-center" (click)="$event.stopPropagation()">
+      <img [src]="currentPhoto?.image" 
+           [alt]="'Photo ' + (currentIndex + 1)"
+           class="max-h-screen max-w-full object-contain"
+           (error)="onImageError($event)">
+    </div>
+
+    <!-- Navigation arrows -->
+    <button *ngIf="currentIndex > 0"
+            class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+            (click)="previousPhoto(); $event.stopPropagation()">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+    <button *ngIf="currentIndex < totalPhotos - 1"
+            class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+            (click)="nextPhoto(); $event.stopPropagation()">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  </div>
+</div> 

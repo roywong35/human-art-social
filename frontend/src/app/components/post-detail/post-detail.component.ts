@@ -14,7 +14,7 @@ import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 @Component({
   selector: 'app-post-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, PostComponent, DatePipe, PickerComponent],
+  imports: [CommonModule, FormsModule, PostComponent, PickerComponent],
   templateUrl: './post-detail.component.html',
   styles: []
 })

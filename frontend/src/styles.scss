@@ -379,3 +379,16 @@ em-emoji-picker {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
+// Photo viewer dialog styles
+.photo-viewer-dialog {
+  .mat-mdc-dialog-container {
+    padding: 0;
+    background: transparent;
+  }
+  
+  .mat-mdc-dialog-surface {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+

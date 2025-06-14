@@ -1,0 +1,16 @@
+.notification-container {
+  animation: slide-in 0.3s ease-out;
+  backdrop-filter: blur(8px);
+  background-opacity: 0.95;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+} 

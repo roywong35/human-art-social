@@ -129,7 +129,7 @@ export class ImageUploadService {
     
     if (totalImages === 3) {
       if (index === 0) {
-        return 'w-full h-1/2';
+        return 'w-1/2 h-full';
       }
       return 'w-1/2 h-1/2';
     }

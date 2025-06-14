@@ -5,7 +5,6 @@ import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { PostComponent } from '../shared/post/post.component';
-import { InstagramStylePostComponent } from '../instagram-style-post/instagram-style-post.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SubmitDrawingModalComponent } from '../submit-drawing-modal/submit-drawing-modal.component';
@@ -23,7 +22,6 @@ import { NotificationService } from '../../services/notification.service';
   imports: [
     CommonModule, 
     PostComponent, 
-    InstagramStylePostComponent,
     MatDialogModule,
     FormsModule,
     PostInputBoxComponent

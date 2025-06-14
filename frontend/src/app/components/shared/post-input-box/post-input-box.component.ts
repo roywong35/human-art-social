@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { MatDialog } from '@angular/material/dialog';
-import { EmojiPickerComponent } from '../emoji-picker/emoji-picker.component';
-import { EmojiPickerService } from '../../../services/emoji-picker.service';
 
 @Component({
   selector: 'app-post-input-box',
