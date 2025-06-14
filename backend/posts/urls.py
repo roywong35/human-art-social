@@ -27,6 +27,9 @@ urlpatterns = [
     path('posts/<str:handle>/<int:pk>/repost/', PostViewSet.as_view({
         'post': 'repost'
     })),
+    path('posts/<str:handle>/<int:pk>/quote/', PostViewSet.as_view({
+        'post': 'quote'
+    })),
     path('posts/<str:handle>/<int:pk>/bookmark/', PostViewSet.as_view({
         'post': 'bookmark'
     })),

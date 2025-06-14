@@ -14,7 +14,6 @@ import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { PostInputBoxComponent } from '../shared/post-input-box/post-input-box.component';
 import { PostUpdateService } from '../../services/post-update.service';
 import { Subscription } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
 import { CommentDialogComponent } from '../comment-dialog/comment-dialog.component';
 import { NotificationService } from '../../services/notification.service';
 
@@ -31,8 +30,7 @@ import { NotificationService } from '../../services/notification.service';
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit, OnDestroy {
   posts: Post[] = [];
@@ -58,9 +56,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ) {
     // Subscribe to route query params to detect tab changes
     this.subscriptions.add(
-      this.route.queryParams.pipe(
-        distinctUntilChanged()
-      ).subscribe(params => {
+      this.route.queryParams.subscribe(params => {
         const newTab = params['tab'] === 'human-drawing' ? 'human-drawing' : 'for-you';
         if (this.activeTab !== newTab) {
           this.activeTab = newTab;
@@ -71,9 +67,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Subscribe to post updates
     this.subscriptions.add(
-      this.postUpdateService.postUpdate$.pipe(
-        distinctUntilChanged((prev, curr) => prev.postId === curr.postId)
-      ).subscribe(({ postId, updatedPost }) => {
+      this.postUpdateService.postUpdate$.subscribe(({ postId, updatedPost }) => {
         this.posts = this.posts.map(post => {
           if (post.id === postId) {
             return { ...post, ...updatedPost };
@@ -86,40 +80,39 @@ export class HomeComponent implements OnInit, OnDestroy {
           }
           return post;
         });
-        this.cd.markForCheck();
+        this.cd.detectChanges();
       })
     );
 
     // Subscribe to posts stream
     this.subscriptions.add(
-      this.postService.posts$.pipe(
-        distinctUntilChanged((prev, curr) => 
-          JSON.stringify(prev) === JSON.stringify(curr)
-        )
-      ).subscribe({
+      this.postService.posts$.subscribe({
         next: (posts: Post[]) => {
-          this.posts = [...posts];
+          console.log('Home component received posts:', posts.length);
+          this.posts = posts;
           this.isLoading = false;
-          this.cd.markForCheck();
+          this.cd.detectChanges();
         },
         error: (error: Error) => {
           console.error('Error loading posts:', error);
           this.error = 'Failed to load posts. Please try again.';
           this.isLoading = false;
-          this.cd.markForCheck();
+          this.cd.detectChanges();
         }
       })
     );
   }
 
   ngOnInit(): void {
+    console.log('Home component initialized');
     this.loadPosts();
   }
 
   loadPosts(): void {
+    console.log('Home component loading posts');
     this.isLoading = true;
     this.error = null;
-    this.cd.markForCheck();
+    this.cd.detectChanges();
     this.postService.loadPosts();
   }
 

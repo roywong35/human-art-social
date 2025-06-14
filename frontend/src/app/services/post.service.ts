@@ -21,17 +21,23 @@ export class PostService {
   }
 
   loadPosts(): void {
+    console.log('Loading posts...');
     // Take the first value from currentUser$ to avoid multiple subscriptions
     this.authService.currentUser$.pipe(take(1)).subscribe(user => {
+      console.log('Current user:', user);
       const request$ = user?.following_only_preference ? this.getFeed() : this.getExplore();
       request$.pipe(
         map(posts => posts.map(post => this.addImageUrls(post)))
       ).subscribe({
         next: (posts) => {
+          console.log('Posts loaded:', posts.length);
           // Ensure we're not mutating the same array reference
           this.posts.next([...posts]);
         },
-        error: (error) => console.error('Error loading posts:', error)
+        error: (error) => {
+          console.error('Error loading posts:', error);
+          this.posts.next([]);
+        }
       });
     });
   }
@@ -67,7 +73,11 @@ export class PostService {
 
   createPostWithFormData(formData: FormData): Observable<Post> {
     return this.http.post<Post>(`${this.baseApiUrl}/posts/`, formData).pipe(
-      map(post => this.addImageUrls(post))
+      map(post => this.addImageUrls(post)),
+      tap(post => {
+        const currentPosts = this.posts.getValue();
+        this.posts.next([post, ...currentPosts]);
+      })
     );
   }
 
@@ -77,7 +87,7 @@ export class PostService {
     formData.append('post_type', 'quote');
     if (images) {
       images.forEach((image, index) => {
-        formData.append(`images[]`, image);
+        formData.append(`image_${index}`, image);
       });
     }
     return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/quote/`, formData).pipe(

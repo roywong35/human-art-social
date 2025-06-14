@@ -99,13 +99,14 @@ class PostViewSet(viewsets.ModelViewSet):
         )
 
         # Handle multiple images
-        images = self.request.FILES.getlist('images[]')
-        for index, image in enumerate(images):
-            PostImage.objects.create(
-                post=post,
-                image=image,
-                order=index
-            )
+        for key in self.request.FILES:
+            if key.startswith('image_'):
+                image = self.request.FILES[key]
+                PostImage.objects.create(
+                    post=post,
+                    image=image,
+                    order=int(key.split('_')[1])
+                )
 
         # Handle evidence files for human drawings
         if is_human_drawing and evidence_count > 0:
@@ -245,11 +246,11 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({'status': 'reposted'})
 
     @action(detail=True, methods=['POST'])
-    def quote(self, request, pk=None):
+    def quote(self, request, handle=None, pk=None):
         """
         Create a quote post
         """
-        original_post = self.get_object()
+        original_post = get_object_or_404(Post, author__handle=handle, pk=pk)
         serializer = self.get_serializer(data=request.data)
         
         if serializer.is_valid():

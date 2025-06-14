@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -32,7 +32,8 @@ import { take } from 'rxjs/operators';
     RouterModule,
     TimeAgoPipe,
     CommentDialogComponent,
-    RepostMenuComponent
+    RepostMenuComponent,
+    NewPostModalComponent
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss']
@@ -72,6 +73,7 @@ export class PostComponent implements OnInit, OnDestroy {
   protected repostMenuPosition = { top: 0, left: 0 };
 
   private subscriptions = new Subscription();
+  private imageAspectRatios: { [key: string]: number } = {};
 
   constructor(
     private router: Router,
@@ -81,7 +83,8 @@ export class PostComponent implements OnInit, OnDestroy {
     private commentService: CommentService,
     private authService: AuthService,
     private postUpdateService: PostUpdateService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {
     this.subscriptions.add(
       this.postUpdateService.postUpdate$.subscribe(
@@ -298,7 +301,7 @@ export class PostComponent implements OnInit, OnDestroy {
     if (totalImages === 2) return 'w-1/2 h-full';
     if (totalImages === 3) {
       if (index === 0) return 'w-1/2 h-full';
-      return 'w-1/2 h-1/2';
+      return 'w-full h-1/2';
     }
     if (totalImages === 4) return 'w-1/2 h-1/2';
     return '';
@@ -335,7 +338,7 @@ export class PostComponent implements OnInit, OnDestroy {
     console.log('Repost option clicked:', option);
     console.log('Current post state:', this.post);
     if (option === 'quote') {
-      // Open quote modal (existing logic)
+      this.openQuoteModal();
       return;
     }
     try {
@@ -373,5 +376,21 @@ export class PostComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  protected getImageAspectRatio(imageUrl: string | undefined): number {
+    if (!imageUrl) return 1;
+    if (this.imageAspectRatios[imageUrl]) return this.imageAspectRatios[imageUrl];
+    
+    const img = new Image();
+    img.onload = () => {
+      const ratio = img.width / img.height;
+      this.imageAspectRatios[imageUrl] = ratio;
+      // Force change detection
+      this.cdr.detectChanges();
+    };
+    img.src = imageUrl;
+    
+    return 1; // Default to 1:1 until loaded
   }
 } 

@@ -69,36 +69,40 @@ export class NewPostModalComponent implements OnDestroy {
     this.imageUploadService.clearImages();
   }
 
-  async createPost(): Promise<void> {
-    if (this.content.trim() || this.images.length > 0) {
-      try {
-        this.isSubmitting = true;
-        this.error = null;
+  protected async createPost() {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+    this.error = null;
 
-        if (this.quotePost) {
-          // Create a quote post
-          await this.postService.createQuotePost(
-            this.content,
-            this.quotePost.author.handle,
-            this.quotePost.id,
-            this.images.map(img => img.file)
-          ).toPromise();
-        } else {
-          // Create a regular post
-          await this.postService.createPost(
-            this.content,
-            this.images.map(img => img.file)
-          ).toPromise();
-        }
-
-        window.location.reload();
-        this.dialogRef.close(true);
-      } catch (error) {
-        console.error('Error creating post:', error);
-        this.error = 'Failed to create post. Please try again.';
-      } finally {
-        this.isSubmitting = false;
+    try {
+      let post: Post;
+      if (this.quotePost) {
+        // Create quote post
+        const response = await this.postService.createQuotePost(
+          this.content,
+          this.quotePost.author.handle,
+          this.quotePost.id,
+          this.images.map(img => img.file)
+        ).toPromise();
+        if (!response) throw new Error('Failed to create quote post');
+        post = response;
+      } else {
+        // Create regular post
+        const response = await this.postService.createPost(
+          this.content,
+          this.images.map(img => img.file)
+        ).toPromise();
+        if (!response) throw new Error('Failed to create post');
+        post = response;
       }
+
+      this.dialogRef.close(post);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating post:', error);
+      this.error = 'Failed to create post. Please try again.';
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
