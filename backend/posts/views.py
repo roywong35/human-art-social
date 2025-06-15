@@ -484,5 +484,20 @@ class PostViewSet(viewsets.ModelViewSet):
         pk = self.kwargs.get('pk')
         
         if handle:
-            return get_object_or_404(Post, author__handle=handle, pk=pk)
+            return get_object_or_404(
+                Post.objects.select_related(
+                    'author',
+                    'referenced_post',
+                    'parent_post'
+                ).prefetch_related(
+                    'likes',
+                    'bookmarks',
+                    'reposts',
+                    'replies',
+                    'evidence_files',
+                    'images'
+                ),
+                author__handle=handle,
+                pk=pk
+            )
         return super().get_object()
