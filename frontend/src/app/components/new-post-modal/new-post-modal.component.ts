@@ -123,17 +123,33 @@ export class NewPostModalComponent implements OnDestroy {
     this.imageUploadService.removeImage(imageId);
   }
 
-  toggleEmojiPicker(event: MouseEvent): void {
+  protected toggleEmojiPicker(event: MouseEvent): void {
+    console.log('Toggle emoji picker called');
     event.stopPropagation();
+    const buttonElement = event.currentTarget as HTMLElement;
+    const rect = buttonElement.getBoundingClientRect();
+    
+    console.log('Button position:', rect);
+    
+    // Calculate position relative to viewport
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const pickerHeight = 435; // Height of the emoji picker
+    
+    // Position above if not enough space below
+    const top = spaceBelow < pickerHeight && rect.top > pickerHeight
+      ? rect.top - pickerHeight - 5
+      : rect.bottom + 5;
+    
+    this.emojiPickerPosition = {
+      top: rect.bottom,
+      left: rect.left - 140
+    };
+    
+    console.log('Emoji picker position:', this.emojiPickerPosition);
+    
     this.showEmojiPicker = !this.showEmojiPicker;
-    if (this.showEmojiPicker) {
-      const button = event.target as HTMLElement;
-      const rect = button.getBoundingClientRect();
-      this.emojiPickerPosition = {
-        top: rect.bottom + window.scrollY + 10,
-        left: rect.left + window.scrollX
-      };
-    }
+    console.log('Show emoji picker:', this.showEmojiPicker);
   }
 
   addEmoji(event: any): void {

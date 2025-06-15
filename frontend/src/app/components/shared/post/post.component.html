@@ -1,10 +1,9 @@
-<div [class]="'post-container pb-1 pt-3 pl-3 pr-3 hover:bg-gray-50 ' + (!isConnectedToParent ? 'border-b border-gray-200' : '')">
+<div [class]="'post-container pb-1 pt-3 pl-3 pr-3 hover:bg-gray-50 cursor-pointer ' + (!isConnectedToParent ? 'border-b border-gray-200' : '')" (click)="navigateToPost()">
   <!-- Repost header -->
   <div *ngIf="post.post_type === 'repost'" class="flex items-center gap-2 mb-2 text-gray-500">
     <i class="fas fa-retweet"></i>
     <span class="text-sm">You reposted</span>
   </div>
-
 
   <!-- User avatar and content -->
   <div class="flex space-x-3">
@@ -20,7 +19,7 @@
     <!-- Content section -->
     <div class="flex-grow min-w-0">
       <!-- Author info and timestamp -->
-      <div class="cursor-pointer" (click)="navigateToPost()">
+      <div>
         <div class="flex items-center space-x-1">
           <p class="text-[16px] font-extrabold text-gray-900 hover:underline cursor-pointer font-['Inter']" (click)="navigateToProfile($event)">
             {{ post.author.username }}
@@ -157,18 +156,18 @@
       <div class="flex items-center justify-between mt-2">
         <!-- Reply button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
-                (click)="onReply($event)">
+                (click)="onReply($event); $event.stopPropagation()">
           <i class="far fa-comment text-[18px] group-hover:text-blue-500"></i>
-          <span class="text-sm">{{ post.replies_count || 0 }}</span>
+          <span class="text-sm min-w-[20px] text-center">{{ post.replies_count || 0 }}</span>
         </button>
 
         <!-- Repost button -->
         <div class="relative">
           <button class="flex items-center gap-2 text-gray-500 hover:text-green-500 p-1.5 rounded-full transition-colors group"
                   [class.text-green-500]="post.is_reposted"
-                  (click)="toggleRepostMenu($event)">
+                  (click)="toggleRepostMenu($event); $event.stopPropagation()">
             <i class="fas fa-retweet text-[18px]" [class.text-green-500]="post.is_reposted"></i>
-            <span class="text-sm" [class.text-green-500]="post.is_reposted">{{ post.reposts_count || 0 }}</span>
+            <span class="text-sm min-w-[20px] text-center" [class.text-green-500]="post.is_reposted">{{ post.reposts_count || 0 }}</span>
           </button>
 
           <!-- Repost Menu -->
@@ -181,20 +180,20 @@
 
         <!-- Like button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-red-500 p-1.5 rounded-full transition-colors group"
-                (click)="onLike($event)">
+                (click)="onLike($event); $event.stopPropagation()">
           <i [class]="post.is_liked ? 'fas fa-heart text-red-500' : 'far fa-heart'" class="text-[18px] group-hover:text-red-500"></i>
-          <span class="text-sm" [class.text-red-500]="post.is_liked">{{ post.likes_count }}</span>
+          <span class="text-sm min-w-[20px] text-center" [class.text-red-500]="post.is_liked">{{ post.likes_count }}</span>
         </button>
 
         <!-- Share button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
-                (click)="onShare($event)">
+                (click)="onShare($event); $event.stopPropagation()">
           <i class="far fa-share-square text-[18px] group-hover:text-blue-500"></i>
         </button>
 
         <!-- Bookmark button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
-                (click)="onBookmark($event)">
+                (click)="onBookmark($event); $event.stopPropagation()">
           <i [class]="post.is_bookmarked ? 'fas fa-bookmark text-blue-500' : 'far fa-bookmark'" class="text-[18px] group-hover:text-blue-500"></i>
         </button>
       </div>

@@ -68,7 +68,13 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
-      const shouldBeSticky = this.initialTop !== null && scrollY > (this.initialTop + this.sidebarHeight - viewportHeight);
+      const documentHeight = document.documentElement.scrollHeight;
+      const maxScroll = documentHeight - viewportHeight;
+      
+      // Only apply sticky behavior if we haven't reached the bottom of the page
+      const shouldBeSticky = this.initialTop !== null && 
+                            scrollY > (this.initialTop + this.sidebarHeight - viewportHeight) &&
+                            scrollY < maxScroll;
 
       if (this.isSticky !== shouldBeSticky) {
         this.isSticky = shouldBeSticky;

@@ -82,7 +82,7 @@ export class PostInputBoxComponent {
     
     this.emojiPickerPosition = {
       top: rect.bottom,
-      left: rect.left - 120
+      left: rect.left - 140
     };
     
     console.log('Emoji picker position:', this.emojiPickerPosition);
