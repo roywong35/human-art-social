@@ -128,25 +128,8 @@ export class NewPostModalComponent implements OnDestroy {
 
   toggleEmojiPicker(event: MouseEvent) {
     event.stopPropagation();
-    this.emojiPickerService.showPicker(event);
-  }
-
-  addEmoji(emoji: any) {
-    this.emojiPickerService.onEmojiSelect(emoji, (selectedEmoji) => {
-      const textarea = this.postTextarea.nativeElement;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      
-      this.content = 
-        this.content.substring(0, start) + 
-        selectedEmoji.emoji.native +
-        this.content.substring(end);
-      
-      // Set cursor position after emoji
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + selectedEmoji.emoji.native.length;
-        textarea.focus();
-      });
+    this.emojiPickerService.showPicker(event, event.target as HTMLElement, (emoji: any) => {
+      this.content += emoji.emoji.native;
     });
   }
 

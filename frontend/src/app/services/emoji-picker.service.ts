@@ -8,6 +8,7 @@ export interface EmojiPickerState {
     left: number;
   };
   targetElement?: HTMLElement;
+  callback?: (emoji: any) => void;
 }
 
 @Injectable({
@@ -21,7 +22,8 @@ export class EmojiPickerService {
 
   pickerState$ = this.pickerSubject.asObservable();
 
-  showPicker(event: MouseEvent, targetElement?: HTMLElement) {
+  showPicker(event: MouseEvent, targetElement?: HTMLElement, callback?: (emoji: any) => void) {
+    console.log('Showing picker with callback:', !!callback);
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
@@ -56,11 +58,13 @@ export class EmojiPickerService {
         top: top,
         left: left
       },
-      targetElement
+      targetElement,
+      callback
     });
   }
 
   hidePicker() {
+    console.log('Hiding picker');
     this.pickerSubject.next({
       show: false,
       position: { top: 0, left: 0 }

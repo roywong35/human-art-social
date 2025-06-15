@@ -170,12 +170,8 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
 
   toggleEmojiPicker(event: MouseEvent) {
     event.stopPropagation();
-    this.emojiPickerService.showPicker(event);
-  }
-
-  onEmojiSelect(emoji: any) {
-    this.emojiPickerService.onEmojiSelect(emoji, (selectedEmoji) => {
-      this.newReply += selectedEmoji.emoji.native;
+    this.emojiPickerService.showPicker(event, event.target as HTMLElement, (emoji: any) => {
+      this.newReply += emoji.emoji.native;
     });
   }
 

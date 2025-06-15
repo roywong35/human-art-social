@@ -60,27 +60,10 @@ export class CommentDialogComponent implements OnInit {
     this.textareaRows = Math.min(Math.max(Math.ceil(textarea.scrollHeight / 24), 1), 10);
   }
 
-  toggleEmojiPicker(event: MouseEvent): void {
+  toggleEmojiPicker(event: MouseEvent) {
     event.stopPropagation();
-    this.emojiPickerService.showPicker(event);
-  }
-
-  addEmoji(emoji: any): void {
-    this.emojiPickerService.onEmojiSelect(emoji, (selectedEmoji) => {
-      const textarea = this.textarea.nativeElement;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      
-      this.replyContent = 
-        this.replyContent.substring(0, start) + 
-        selectedEmoji.emoji.native +
-        this.replyContent.substring(end);
-      
-      // Set cursor position after emoji
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + selectedEmoji.emoji.native.length;
-        textarea.focus();
-      });
+    this.emojiPickerService.showPicker(event, event.target as HTMLElement, (emoji: any) => {
+      this.replyContent += emoji.emoji.native;
     });
   }
 

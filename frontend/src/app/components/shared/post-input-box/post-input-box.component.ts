@@ -65,27 +65,10 @@ export class PostInputBoxComponent {
     textarea.style.height = textarea.scrollHeight + 'px';
   }
 
-  protected toggleEmojiPicker(event: MouseEvent): void {
+  protected toggleEmojiPicker(event: MouseEvent) {
     event.stopPropagation();
-    this.emojiPickerService.showPicker(event);
-  }
-
-  protected addEmoji(emoji: any): void {
-    this.emojiPickerService.onEmojiSelect(emoji, (selectedEmoji) => {
-      const textarea = this.textarea.nativeElement;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      
-      this.content = 
-        this.content.substring(0, start) + 
-        selectedEmoji.emoji.native +
-        this.content.substring(end);
-      
-      // Set cursor position after emoji
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + selectedEmoji.emoji.native.length;
-        textarea.focus();
-      });
+    this.emojiPickerService.showPicker(event, event.target as HTMLElement, (emoji: any) => {
+      this.content += emoji.emoji.native;
     });
   }
 
