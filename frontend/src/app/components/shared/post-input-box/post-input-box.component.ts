@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { MatDialog } from '@angular/material/dialog';
+import { EmojiPickerService } from '../../../services/emoji-picker.service';
+import { EmojiPickerComponent } from '../../shared/emoji-picker/emoji-picker.component';
 
 @Component({
   selector: 'app-post-input-box',
   standalone: true,
-  imports: [CommonModule, FormsModule, PickerComponent],
+  imports: [CommonModule, FormsModule, PickerComponent, EmojiPickerComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './post-input-box.component.html',
   styleUrls: ['./post-input-box.component.scss']
@@ -36,7 +38,8 @@ export class PostInputBoxComponent {
 
   constructor(
     private dialog: MatDialog,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private emojiPickerService: EmojiPickerService
   ) {}
 
   ngOnInit() {
@@ -63,67 +66,26 @@ export class PostInputBoxComponent {
   }
 
   protected toggleEmojiPicker(event: MouseEvent): void {
-    console.log('Toggle emoji picker called');
     event.stopPropagation();
-    const buttonElement = event.currentTarget as HTMLElement;
-    const rect = buttonElement.getBoundingClientRect();
-    
-    console.log('Button position:', rect);
-    
-    // Calculate position relative to viewport
-    const viewportHeight = window.innerHeight;
-    const spaceBelow = viewportHeight - rect.bottom;
-    const pickerHeight = 435; // Height of the emoji picker
-    
-    // Position above if not enough space below
-    const top = spaceBelow < pickerHeight && rect.top > pickerHeight
-      ? rect.top - pickerHeight - 5
-      : rect.bottom + 5;
-    
-    this.emojiPickerPosition = {
-      top: rect.bottom,
-      left: rect.left - 140
-    };
-    
-    console.log('Emoji picker position:', this.emojiPickerPosition);
-    
-    this.showEmojiPicker = !this.showEmojiPicker;
-    console.log('Show emoji picker:', this.showEmojiPicker);
+    this.emojiPickerService.showPicker(event);
   }
 
-  protected addEmoji(event: any): void {
-    console.log('addEmoji called with event:', event);
-    console.log('Current textarea reference:', this.textarea);
-    console.log('Current content:', this.content);
-
-    if (!event.emoji || !event.emoji.native) {
-      console.error('Invalid emoji event:', event);
-      return;
-    }
-    
-    const emoji = event.emoji.native;
-    console.log('Adding emoji:', emoji);
-
-    if (!this.textarea?.nativeElement) {
-      console.error('Textarea element not found');
-      return;
-    }
-
-    const textarea = this.textarea.nativeElement;
-    console.log('Textarea element found:', textarea);
-    console.log('Selection - start:', textarea.selectionStart, 'end:', textarea.selectionEnd);
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    
-    this.content = this.content.substring(0, start) + emoji + this.content.substring(end);
-    console.log('Updated content:', this.content);
-    
-    // Set cursor position after emoji
-    setTimeout(() => {
-      console.log('Setting cursor position after emoji');
-      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
-      textarea.focus();
+  protected addEmoji(emoji: any): void {
+    this.emojiPickerService.onEmojiSelect(emoji, (selectedEmoji) => {
+      const textarea = this.textarea.nativeElement;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      
+      this.content = 
+        this.content.substring(0, start) + 
+        selectedEmoji.emoji.native +
+        this.content.substring(end);
+      
+      // Set cursor position after emoji
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + selectedEmoji.emoji.native.length;
+        textarea.focus();
+      });
     });
   }
 

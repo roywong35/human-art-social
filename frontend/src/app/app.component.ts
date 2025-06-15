@@ -7,6 +7,7 @@ import { NotificationComponent } from './components/shared/notification/notifica
 import { AuthService } from './services/auth.service';
 import { RouterOutlet } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
+import { EmojiPickerComponent } from './components/shared/emoji-picker/emoji-picker.component';
 
 @Component({
   selector: 'app-root',
@@ -18,7 +19,8 @@ import { MatDialogModule } from '@angular/material/dialog';
     RightSidebarComponent, 
     NotificationComponent,
     RouterOutlet,
-    MatDialogModule
+    MatDialogModule,
+    EmojiPickerComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

@@ -1,0 +1,36 @@
+.emoji-picker-container {
+  position: fixed;
+  z-index: 100000 !important;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  ::ng-deep {
+    .emoji-mart {
+      border: none !important;
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 100000 !important;
+    }
+
+    .emoji-mart-category-label {
+      background: transparent !important;
+    }
+
+    .emoji-mart-search {
+      display: none !important;
+    }
+
+    .emoji-mart-preview {
+      display: none !important;
+    }
+
+    .emoji-mart-category-icon {
+      padding: 6px !important;
+    }
+
+    .emoji-mart-scroll {
+      max-height: 300px !important;
+    }
+  }
+} 

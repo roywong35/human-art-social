@@ -158,18 +158,4 @@
   <div *ngIf="error" class="px-4 pb-2 text-red-500 text-sm">
     {{ error }}
   </div>
-
-  <!-- Emoji Picker -->
-  <div *ngIf="showEmojiPicker" 
-       class="absolute z-50"
-       [style.top.px]="emojiPickerPosition.top"
-       [style.left.px]="emojiPickerPosition.left">
-    <emoji-mart
-      [darkMode]="false"
-      [enableSearch]="false"
-      [showPreview]="false"
-      [style]="{ border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }"
-      (emojiSelect)="addEmoji($event)">
-    </emoji-mart>
-  </div>
 </div>

@@ -10,11 +10,13 @@ import { CommentService } from '../../services/comment.service';
 import { PostComponent } from '../shared/post/post.component';
 import { User } from '../../models/user.model';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
+import { EmojiPickerService } from '../../services/emoji-picker.service';
+import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 
 @Component({
   selector: 'app-post-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, PostComponent, PickerComponent],
+  imports: [CommonModule, FormsModule, PostComponent, PickerComponent, EmojiPickerComponent],
   templateUrl: './post-detail.component.html',
   styles: []
 })
@@ -43,7 +45,8 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
     private postService: PostService,
     private commentService: CommentService,
     public authService: AuthService,
-    private location: Location
+    private location: Location,
+    private emojiPickerService: EmojiPickerService
   ) {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -165,34 +168,14 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
     // Post is already updated via PostUpdateService
   }
 
-  toggleEmojiPicker(event: MouseEvent): void {
+  toggleEmojiPicker(event: MouseEvent) {
     event.stopPropagation();
-    this.showEmojiPicker = !this.showEmojiPicker;
-    if (this.showEmojiPicker) {
-      const button = event.currentTarget as HTMLElement;
-      const rect = button.getBoundingClientRect();
-      this.emojiPickerPosition = {
-        top: rect.bottom + window.scrollY + 10,
-        left: rect.left + window.scrollX - 320
-      };
-    }
+    this.emojiPickerService.showPicker(event);
   }
 
-  onEmojiSelect(event: any): void {
-    const emoji = event.emoji.native;
-    const textarea = this.replyTextarea.nativeElement;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    
-    this.newReply = 
-      this.newReply.substring(0, start) + 
-      emoji +
-      this.newReply.substring(end);
-    
-    // Set cursor position after emoji
-    setTimeout(() => {
-      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
-      textarea.focus();
+  onEmojiSelect(emoji: any) {
+    this.emojiPickerService.onEmojiSelect(emoji, (selectedEmoji) => {
+      this.newReply += selectedEmoji.emoji.native;
     });
   }
 

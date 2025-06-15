@@ -97,7 +97,7 @@
           <!-- Bottom actions (only shown when focused) -->
           <div *ngIf="replyFocused" class="flex justify-between items-center mt-2">
             <!-- Left side: Photo and Emoji pickers -->
-            <div class="flex items-center space-x-2 pl-1">
+            <div class="flex items-center space-x-2">
               <!-- Photo picker -->
               <button
                 (click)="onPhotoClick($event)"
@@ -120,15 +120,6 @@
               class="px-4 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
               Reply
             </button>
-          </div>
-          
-          <!-- Emoji Picker Container -->
-          <div *ngIf="showEmojiPicker" 
-               [style.position]="'fixed'"
-               [style.top.px]="emojiPickerPosition.top"
-               [style.left.px]="emojiPickerPosition.left"
-               [style.zIndex]="1000">
-            <emoji-mart (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
           </div>
         </div>
       </div>

@@ -228,6 +228,9 @@ export class PostComponent implements OnInit, OnDestroy {
         width: '600px',
         maxWidth: '100vw',
         panelClass: ['comment-dialog', 'dialog-position-top'],
+        position: {
+          top: '5%'
+        },
         data: {
           post: this.post,
           currentUser: this.currentUser

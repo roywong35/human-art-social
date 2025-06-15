@@ -10,6 +10,7 @@
     <!-- Main Content -->
     <main [class]="authService.isAuthenticated() ? 'w-[600px]' : 'w-full max-w-2xl'">
       <router-outlet></router-outlet>
+      <app-emoji-picker></app-emoji-picker>
     </main>
 
     <!-- Right Sidebar -->

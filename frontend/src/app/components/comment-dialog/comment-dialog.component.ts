@@ -8,15 +8,18 @@ import { CommentService } from '../../services/comment.service';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { Router } from '@angular/router';
+import { EmojiPickerService } from '../../services/emoji-picker.service';
+import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 
 @Component({
   selector: 'app-comment-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatDialogModule, TimeAgoPipe, PickerComponent],
+  imports: [CommonModule, FormsModule, MatDialogModule, TimeAgoPipe, PickerComponent, EmojiPickerComponent],
   templateUrl: './comment-dialog.component.html',
   styleUrls: ['./comment-dialog.component.scss']
 })
 export class CommentDialogComponent implements OnInit {
+  @ViewChild('replyTextarea') textarea!: ElementRef;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   protected replyContent = '';
   protected textareaRows = 1;
@@ -31,7 +34,8 @@ export class CommentDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<CommentDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { post: Post; currentUser: User | null },
     private commentService: CommentService,
-    private router: Router
+    private router: Router,
+    private emojiPickerService: EmojiPickerService
   ) {}
 
   ngOnInit(): void {
@@ -58,20 +62,26 @@ export class CommentDialogComponent implements OnInit {
 
   toggleEmojiPicker(event: MouseEvent): void {
     event.stopPropagation();
-    this.showEmojiPicker = !this.showEmojiPicker;
-    if (this.showEmojiPicker) {
-      const button = event.target as HTMLElement;
-      const rect = button.getBoundingClientRect();
-      this.emojiPickerPosition = {
-        top: rect.bottom + window.scrollY + 10,
-        left: rect.left + window.scrollX - 320 // Emoji picker width is ~320px
-      };
-    }
+    this.emojiPickerService.showPicker(event);
   }
 
-  addEmoji(event: any): void {
-    this.replyContent += event.emoji.native;
-    this.showEmojiPicker = false;
+  addEmoji(emoji: any): void {
+    this.emojiPickerService.onEmojiSelect(emoji, (selectedEmoji) => {
+      const textarea = this.textarea.nativeElement;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      
+      this.replyContent = 
+        this.replyContent.substring(0, start) + 
+        selectedEmoji.emoji.native +
+        this.replyContent.substring(end);
+      
+      // Set cursor position after emoji
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + selectedEmoji.emoji.native.length;
+        textarea.focus();
+      });
+    });
   }
 
   onImageClick(): void {

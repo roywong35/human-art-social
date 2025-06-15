@@ -64,27 +64,4 @@
         </div>
       </div>
     </div>
-  </div>
-  
-  <!-- Emoji Picker -->
-  <div 
-    class="emoji-picker-wrapper"
-    *ngIf="showEmojiPicker"
-    [style.position]="'fixed'"
-    [style.top.px]="emojiPickerPosition.top"
-    [style.left.px]="emojiPickerPosition.left"
-    [style.zIndex]="99999"
-    [style.display]="'block'"
-    (click)="$event.stopPropagation()">
-    <emoji-mart
-      class="emoji-mart"
-      [style]="{ position: 'static', display: 'block' }"
-      [title]="'Pick your emoji'"
-      [set]="'twitter'"
-      [enableSearch]="true"
-      [showPreview]="false"
-      [emojiSize]="20"
-      [perLine]="8"
-      (emojiSelect)="addEmoji($event)">
-    </emoji-mart>
   </div> 
