@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule, DatePipe, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -326,4 +326,23 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
       });
     }
   }
+
+  onPhotoClick(event: MouseEvent): void {
+    event.stopPropagation();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = (e: any) => {
+      const files = e.target.files;
+      if (files) {
+        // Handle the selected photos
+        // You can implement the photo handling logic here
+        console.log('Selected photos:', files);
+      }
+    };
+    input.click();
+  }
+
+
 } 

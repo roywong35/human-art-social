@@ -57,33 +57,67 @@
     </div>
 
     <!-- Reply Input -->
-    <div *ngIf="currentUser" class="border-t border-b bg-white p-4">
-      <div class="flex space-x-4">
-        <img [src]="currentUser.profile_picture || defaultAvatar" 
+    <div *ngIf="currentUser" class="border-t border-b bg-white p-3">
+      <div class="flex">
+        <!-- Profile picture only shown when focused -->
+        <img *ngIf="replyFocused" 
+             [src]="currentUser.profile_picture || defaultAvatar" 
              [alt]="currentUser.username" 
-             class="w-10 h-10 rounded-full">
+             class="w-10 h-10 rounded-full mt-8">
         <div class="flex-grow">
-          <textarea
-            #replyTextarea
-            [(ngModel)]="newReply"
-            (input)="onTextareaInput()"
-            (focus)="replyFocused = true"
-            placeholder="Post your reply"
-            class="w-full p-2 border rounded-lg focus:outline-none focus:border-blue-500 resize-none"
-            rows="1">
-          </textarea>
-          
-          <!-- Emoji Picker -->
-          <div class="flex justify-between items-center mt-2">
+          <!-- Reply to text (only shown when expanded) -->
+          <div *ngIf="replyFocused" class="text-gray-500 text-base mb-2 ml-2">
+            Replying to <span class="text-blue-500">{{'@'}}{{post.author.handle}}</span>
+          </div>
+
+          <!-- Input area -->
+          <div class="relative">
+            <textarea
+              #replyTextarea
+              [(ngModel)]="newReply"
+              (input)="onTextareaInput()"
+              (focus)="replyFocused = true"
+              placeholder="Post your reply"
+              [class.h-10]="!replyFocused"
+              class="w-full p-2 focus:outline-none resize-none text-base placeholder:text-lg"
+              [rows]="replyFocused ? 2 : 1">
+            </textarea>
+            
+            <!-- Reply button (only shown when not focused) -->
             <button
-              (click)="toggleEmojiPicker($event)"
-              class="text-gray-500 hover:text-blue-500">
-              <i class="far fa-smile"></i>
-            </button>
-            <button
-              *ngIf="newReply.trim()"
+              *ngIf="!replyFocused"
+              [class.opacity-50]="!newReply.trim()"
+              [class.cursor-not-allowed]="!newReply.trim()"
               (click)="submitReply()"
-              class="px-4 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600">
+              class="absolute bottom-2 right-2 px-4 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
+              Reply
+            </button>
+          </div>
+          
+          <!-- Bottom actions (only shown when focused) -->
+          <div *ngIf="replyFocused" class="flex justify-between items-center mt-2">
+            <!-- Left side: Photo and Emoji pickers -->
+            <div class="flex items-center space-x-2 pl-1">
+              <!-- Photo picker -->
+              <button
+                (click)="onPhotoClick($event)"
+                class="text-blue-500 hover:text-blue-600 p-1.5 rounded-full transition-colors">
+                <i class="far fa-image text-[15px]"></i>
+              </button>
+              <!-- Emoji picker -->
+              <button
+                (click)="toggleEmojiPicker($event)"
+                class="text-blue-500 hover:text-blue-600 p-1.5 rounded-full transition-colors">
+                <i class="far fa-smile text-[15px]"></i>
+              </button>
+            </div>
+
+            <!-- Right side: Reply button -->
+            <button
+              [class.opacity-50]="!newReply.trim()"
+              [class.cursor-not-allowed]="!newReply.trim()"
+              (click)="submitReply()"
+              class="px-4 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
               Reply
             </button>
           </div>
