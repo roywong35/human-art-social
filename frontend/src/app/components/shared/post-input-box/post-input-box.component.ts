@@ -22,8 +22,8 @@ export class PostInputBoxComponent {
   @Input() defaultAvatar: string = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   @Input() startCompact: boolean = false; // Whether to start in compact mode
 
-  @Output() submit = new EventEmitter<{ content: string, image?: File }>();
-  @Output() imageSelected = new EventEmitter<File>();
+  @Output() submit = new EventEmitter<{ content: string, images?: File[] }>();
+  @Output() imageSelected = new EventEmitter<File[]>();
 
   @ViewChild('textarea') textarea!: ElementRef;
   @ViewChild('postTextarea') postTextarea!: ElementRef<HTMLTextAreaElement>;
@@ -32,8 +32,7 @@ export class PostInputBoxComponent {
   protected inputFocused: boolean = false;
   protected showEmojiPicker: boolean = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
-  protected selectedImage: File | null = null;
-  protected selectedImageUrl: string | null = null;
+  public images: { id: string, file: File, preview: string }[] = [];
   protected isCompact: boolean = false;
 
   constructor(
@@ -47,7 +46,15 @@ export class PostInputBoxComponent {
   }
 
   protected get canSubmit(): boolean {
-    return this.content.trim().length > 0 || !!this.selectedImage;
+    return this.content.trim().length > 0 || this.images.length > 0;
+  }
+
+  protected getImageLayoutClass(index: number): string {
+    if (this.images.length === 1) return 'w-full h-full';
+    if (this.images.length === 2) return 'w-1/2 h-full';
+    if (this.images.length === 3) return 'w-1/2 h-full';
+    if (this.images.length === 4) return 'w-1/2 h-1/2';
+    return '';
   }
 
   protected expandInput(): void {
@@ -98,15 +105,23 @@ export class PostInputBoxComponent {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
+    input.multiple = true;
     
     input.onchange = (e: Event) => {
       const target = e.target as HTMLInputElement;
-      const file = target.files?.[0];
+      const files = target.files;
       
-      if (file) {
-        this.selectedImage = file;
-        this.selectedImageUrl = URL.createObjectURL(file);
-        this.imageSelected.emit(file);
+      if (files) {
+        const newFiles = Array.from(files).slice(0, 4 - this.images.length);
+        newFiles.forEach(file => {
+          const id = Math.random().toString(36).substring(7);
+          this.images.push({
+            id,
+            file,
+            preview: URL.createObjectURL(file)
+          });
+        });
+        this.imageSelected.emit(this.images.map(img => img.file));
       }
     };
     
@@ -118,27 +133,26 @@ export class PostInputBoxComponent {
 
     this.submit.emit({
       content: this.content,
-      image: this.selectedImage || undefined
+      images: this.images.map(img => img.file)
     });
 
     // Reset the input
     this.content = '';
-    if (this.selectedImageUrl) {
-      URL.revokeObjectURL(this.selectedImageUrl);
-    }
-    this.selectedImage = null;
-    this.selectedImageUrl = null;
+    this.images.forEach(img => {
+      URL.revokeObjectURL(img.preview);
+    });
+    this.images = [];
     this.inputFocused = false;
     if (this.textarea) {
       this.textarea.nativeElement.style.height = 'auto';
     }
   }
 
-  protected removeImage(): void {
-    if (this.selectedImageUrl) {
-      URL.revokeObjectURL(this.selectedImageUrl);
+  protected removeImage(id: string): void {
+    const image = this.images.find(img => img.id === id);
+    if (image) {
+      URL.revokeObjectURL(image.preview);
+      this.images = this.images.filter(img => img.id !== id);
     }
-    this.selectedImage = null;
-    this.selectedImageUrl = null;
   }
 } 

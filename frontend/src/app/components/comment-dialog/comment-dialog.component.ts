@@ -26,8 +26,7 @@ export class CommentDialogComponent implements OnInit {
   protected showEmojiPicker = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
   protected comments: Post[] = [];
-  protected selectedImage: File | null = null;
-  protected imagePreview: string | null = null;
+  public images: { id: string, file: File, preview: string }[] = [];
   protected isSubmitting = false;
 
   constructor(
@@ -67,43 +66,59 @@ export class CommentDialogComponent implements OnInit {
     });
   }
 
+  protected getImageLayoutClass(index: number): string {
+    if (this.images.length === 1) return 'w-full h-full';
+    if (this.images.length === 2) return 'w-1/2 h-full';
+    if (this.images.length === 3) return 'w-1/2 h-full';
+    if (this.images.length === 4) return 'w-1/2 h-1/2';
+    return '';
+  }
+
   onImageClick(): void {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
+    input.multiple = true;
     
     input.onchange = (e: Event) => {
       const target = e.target as HTMLInputElement;
-      const file = target.files?.[0];
-      if (file) {
-        this.selectedImage = file;
-        const reader = new FileReader();
-        reader.onload = () => {
-          this.imagePreview = reader.result as string;
-        };
-        reader.readAsDataURL(file);
+      const files = target.files;
+      
+      if (files) {
+        const newFiles = Array.from(files).slice(0, 4 - this.images.length);
+        newFiles.forEach(file => {
+          const id = Math.random().toString(36).substring(7);
+          this.images.push({
+            id,
+            file,
+            preview: URL.createObjectURL(file)
+          });
+        });
       }
     };
     
     input.click();
   }
 
-  removeImage(): void {
-    this.selectedImage = null;
-    this.imagePreview = null;
+  removeImage(id: string): void {
+    const image = this.images.find(img => img.id === id);
+    if (image) {
+      URL.revokeObjectURL(image.preview);
+      this.images = this.images.filter(img => img.id !== id);
+    }
   }
 
   onSubmit(): void {
-    if (!this.replyContent.trim() && !this.selectedImage) {
+    if (!this.replyContent.trim() && this.images.length === 0) {
       return;
     }
 
     this.isSubmitting = true;
     const formData = new FormData();
     formData.append('content', this.replyContent);
-    if (this.selectedImage) {
-      formData.append('image', this.selectedImage);
-    }
+    this.images.forEach((image, index) => {
+      formData.append(`image${index}`, image.file);
+    });
 
     this.commentService.createComment(this.data.post.author.handle, this.data.post.id, this.replyContent).subscribe({
       next: (comment) => {

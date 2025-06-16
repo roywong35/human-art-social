@@ -38,6 +38,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   showEmojiPicker = false;
   emojiPickerPosition = { top: 0, left: 0 };
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
+  public images: { id: string, file: File, preview: string }[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -96,12 +97,22 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   }
 
   submitReply(): void {
-    if (!this.post || !this.newReply.trim()) return;
+    if (!this.post || (!this.newReply.trim() && this.images.length === 0)) return;
+
+    const formData = new FormData();
+    formData.append('content', this.newReply);
+    this.images.forEach((image, index) => {
+      formData.append(`image${index}`, image.file);
+    });
 
     this.commentService.createComment(this.post.author.handle, this.post.id, this.newReply).subscribe({
       next: (reply) => {
         this.replies.unshift(reply);
         this.newReply = '';
+        this.images.forEach(img => {
+          URL.revokeObjectURL(img.preview);
+        });
+        this.images = [];
         this.replyFocused = false;
         this.showEmojiPicker = false;
         if (this.post) {
@@ -307,21 +318,45 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   }
 
   onPhotoClick(event: MouseEvent): void {
-    event.stopPropagation();
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.multiple = true;
-    input.onchange = (e: any) => {
-      const files = e.target.files;
+    
+    input.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const files = target.files;
+      
       if (files) {
-        // Handle the selected photos
-        // You can implement the photo handling logic here
-        console.log('Selected photos:', files);
+        const newFiles = Array.from(files).slice(0, 4 - this.images.length);
+        newFiles.forEach(file => {
+          const id = Math.random().toString(36).substring(7);
+          this.images.push({
+            id,
+            file,
+            preview: URL.createObjectURL(file)
+          });
+        });
       }
     };
+    
     input.click();
   }
 
+  removeImage(id: string): void {
+    const image = this.images.find(img => img.id === id);
+    if (image) {
+      URL.revokeObjectURL(image.preview);
+      this.images = this.images.filter(img => img.id !== id);
+    }
+  }
+
+  protected getImageLayoutClass(index: number): string {
+    if (this.images.length === 1) return 'w-full h-full';
+    if (this.images.length === 2) return 'w-1/2 h-full';
+    if (this.images.length === 3) return 'w-1/2 h-full';
+    if (this.images.length === 4) return 'w-1/2 h-1/2';
+    return '';
+  }
 
 } 

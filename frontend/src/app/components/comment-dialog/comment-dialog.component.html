@@ -44,7 +44,7 @@
 
   <!-- Reply Input -->
   <div class="px-2 flex gap-3 py-3">
-    <div class="relative flex flex-col items-center">
+    <div class="relative flex flex-col items-center mt-1">
       <img [src]="data.currentUser?.profile_picture || defaultAvatar" 
            alt="Your avatar" 
            class="w-10 h-10 rounded-full">
@@ -52,21 +52,74 @@
     <div class="flex-1">
       <textarea
         [(ngModel)]="replyContent"
-        class="w-full border-none resize-none text-lg focus:outline-none min-h-[150px]"
+        class="w-full border-none resize-none text-lg focus:outline-none "
+        [ngClass]="{
+          'min-h-[150px]': images.length === 0,
+          'min-h-[20px]': images.length > 0
+        }"
         placeholder="Post your reply"
         (input)="adjustTextarea($event)">
       </textarea>
 
-      <!-- Image Preview -->
-      <div *ngIf="imagePreview" class="mt-2 relative">
-        <img [src]="imagePreview" 
-             alt="Selected image" 
-             class="rounded-xl max-h-[300px] w-auto object-cover">
-        <button 
-          (click)="removeImage()"
-          class="absolute top-2 right-2 bg-black bg-opacity-75 text-white p-2 rounded-full hover:bg-opacity-100">
-          <i class="fas fa-times"></i>
-        </button>
+      <!-- Image Preview Grid -->
+      <div *ngIf="images.length > 0" 
+           class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 h-80">
+        <!-- Layout for 1, 2, or 4 photos -->
+        <div *ngIf="images.length !== 3" class="flex flex-wrap h-full">
+          <div *ngFor="let image of images; let i = index" 
+               [class]="getImageLayoutClass(i)"
+               class="relative p-0.5">
+            <img [src]="image.preview" 
+                 class="w-full h-full object-cover rounded-lg"
+                 [class.rounded-lg]="images.length > 1">
+            <button 
+              (click)="removeImage(image.id)"
+              class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+              <i class="fas fa-times text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Special layout for 3 photos -->
+        <div *ngIf="images.length === 3" class="flex w-full h-full">
+          <!-- Left side -->
+          <div class="w-1/2 h-full p-0.5 relative">
+            <img [src]="images[0].preview" 
+                 class="w-full h-full object-cover rounded-lg"
+                 [class.rounded-lg]="true">
+            <button 
+              (click)="removeImage(images[0].id)"
+              class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+              <i class="fas fa-times text-sm"></i>
+            </button>
+          </div>
+
+          <!-- Right side (stacked) -->
+          <div class="w-1/2 h-full flex flex-col">
+            <!-- Top right -->
+            <div class="h-1/2 p-0.5 relative">
+              <img [src]="images[1].preview" 
+                   class="w-full h-full object-cover rounded-lg"
+                   [class.rounded-lg]="true">
+              <button 
+                (click)="removeImage(images[1].id)"
+                class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+                <i class="fas fa-times text-sm"></i>
+              </button>
+            </div>
+            <!-- Bottom right -->
+            <div class="h-1/2 p-0.5 relative">
+              <img [src]="images[2].preview" 
+                   class="w-full h-full object-cover rounded-lg"
+                   [class.rounded-lg]="true">
+              <button 
+                (click)="removeImage(images[2].id)"
+                class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+                <i class="fas fa-times text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -87,7 +140,7 @@
     </div>
     <button 
       class="px-6 py-2 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-      [disabled]="(!replyContent.trim() && !selectedImage) || isSubmitting"
+      [disabled]="(!replyContent.trim() && images.length === 0) || isSubmitting"
       (click)="onSubmit()">
       <span *ngIf="!isSubmitting">Reply</span>
       <span *ngIf="isSubmitting" class="flex items-center">
