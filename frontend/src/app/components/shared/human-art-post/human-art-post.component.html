@@ -27,11 +27,15 @@
           <p class="text-[15px] text-gray-500">{{"@"}}{{ post.author.handle }}</p>
           <span class="text-[15px] text-gray-500">·</span>
           <p class="text-[15px] text-gray-500">{{ post.created_at | timeAgo }}</p>
-          <!-- Add verified badge -->
+          <!-- Add verification badge -->
           <div class="ml-2 inline-flex items-center">
-            <span class="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+            <span *ngIf="post.is_verified" class="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full">
               <i class="fas fa-check-circle mr-1"></i>
               Verified Art
+            </span>
+            <span *ngIf="!post.is_verified" class="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+              <i class="fas fa-clock mr-1"></i>
+              Pending
             </span>
           </div>
         </div>

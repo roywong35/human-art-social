@@ -30,25 +30,29 @@ class PostViewSet(viewsets.ModelViewSet):
         """
         Get all posts with related data.
         """
+        print(f"[DEBUG] User {self.request.user.username} following_only_preference: {self.request.user.following_only_preference}")
+        
         queryset = Post.objects.all().select_related('author', 'referenced_post').prefetch_related(
             'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
         )
+        print(f"[DEBUG] Initial queryset count: {queryset.count()}")
 
         # Filter by following if the user has following_only_preference enabled
         if self.request.user.following_only_preference:
             following_users = self.request.user.following.all()
-            if not following_users.exists():
-                return Post.objects.none()  # Return empty queryset if not following anyone
-            queryset = queryset.filter(author__in=following_users)
+            print(f"[DEBUG] User is following {following_users.count()} users: {[user.username for user in following_users]}")
+            print(f"[DEBUG] Current user ID: {self.request.user.id}")
+            
+            # Include both posts from followed users AND the user's own posts
+            queryset = queryset.filter(
+                Q(author__in=following_users) | Q(author=self.request.user)
+            )
+            print(f"[DEBUG] After following filter queryset count: {queryset.count()}")
 
-        # Order by reposted_at for reposts, created_at for others
-        return queryset.order_by(
-            Case(
-                When(post_type='repost', then=F('reposted_at')),
-                default=F('created_at')
-            ).desc(),
-            '-created_at'  # Secondary sort by created_at
-        )
+        # Order by created_at for all posts
+        final_queryset = queryset.order_by('-created_at')
+        print(f"[DEBUG] Final queryset count: {final_queryset.count()}")
+        return final_queryset
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -444,25 +448,50 @@ class PostViewSet(viewsets.ModelViewSet):
         Get posts from users that the current user follows
         """
         try:
-            following_users = request.user.following.all()
-            if not following_users.exists():
-                return Response([])  # Return empty list if not following anyone
+            print(f"\n[DEBUG] Feed endpoint called by user: {request.user.username}")
+            print(f"[DEBUG] Query params: {request.query_params}")
+            print(f"[DEBUG] Following only preference: {request.user.following_only_preference}")
             
-            queryset = Post.objects.filter(
-                author__in=following_users
-            ).select_related('author', 'referenced_post').prefetch_related(
-                'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
-            ).order_by('-created_at')
+            # Use get_queryset which already handles following_only_preference
+            queryset = self.get_queryset()
+            
+            # Filter by post type if specified
+            post_type = request.query_params.get('post_type')
+            print(f"[DEBUG] Post type filter: {post_type}")
+            
+            if post_type == 'human_drawing':
+                print("[DEBUG] Filtering for human art posts...")
+                # Only show verified human drawings in Human Art tab
+                queryset = queryset.filter(
+                    is_human_drawing=True,
+                    is_verified=True
+                )
+            elif post_type == 'all':
+                print("[DEBUG] Filtering for For You tab...")
+                # Show all non-human drawings AND all human drawings (both verified and unverified)
+                queryset = queryset.filter(
+                    Q(is_human_drawing=False) |  # Regular posts
+                    Q(is_human_drawing=True)     # All human drawings (both verified and unverified)
+                )
+            
+            print(f"[DEBUG] Final queryset count: {queryset.count()}")
 
             page = self.paginate_queryset(queryset)
             if page is not None:
+                print(f"[DEBUG] Page size: {len(page)}")
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
 
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
+            print(f"[DEBUG] Total serialized posts: {len(serializer.data)}")
+            return Response({
+                'count': len(serializer.data),
+                'next': None,
+                'previous': None,
+                'results': serializer.data
+            })
         except Exception as e:
-            print(f"Error in feed: {str(e)}")
+            print(f"[DEBUG] Error in feed: {str(e)}")
             return Response(
                 {'error': 'An error occurred while fetching feed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -474,9 +503,18 @@ class PostViewSet(viewsets.ModelViewSet):
         Get all posts for explore feed
         """
         try:
-            queryset = Post.objects.all().select_related('author', 'referenced_post').prefetch_related(
-                'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
-            ).order_by('-created_at')
+            queryset = self.get_queryset()
+
+            # Filter by post type if specified
+            post_type = request.query_params.get('post_type')
+            if post_type == 'human_drawing':
+                queryset = queryset.filter(is_human_drawing=True, is_verified=True)
+            elif post_type == 'all':
+                # For "For You" tab, show all posts including verified human drawings
+                queryset = queryset.filter(
+                    Q(is_human_drawing=False) |  # Non-human drawings
+                    Q(is_human_drawing=True, is_verified=True)  # Verified human drawings
+                )
 
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -484,7 +522,12 @@ class PostViewSet(viewsets.ModelViewSet):
                 return self.get_paginated_response(serializer.data)
 
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
+            return Response({
+                'count': len(serializer.data),
+                'next': None,
+                'previous': None,
+                'results': serializer.data
+            })
         except Exception as e:
             print(f"Error in explore: {str(e)}")
             return Response(

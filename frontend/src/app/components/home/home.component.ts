@@ -90,8 +90,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.postService.posts$.subscribe({
         next: (posts: Post[]) => {
-          console.log('Home component received posts:', posts.length);
-          this.posts = posts;
+          if (!posts) {
+            console.warn('Received null posts');
+            this.posts = [];
+          } else {
+            console.log('Home component received posts:', posts.length);
+            this.posts = posts;
+          }
           this.isInitialLoading = false;
           this.isLoadingMore = false;
           this.cd.markForCheck();
@@ -99,6 +104,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         error: (error: Error) => {
           console.error('Error loading posts:', error);
           this.error = 'Failed to load posts. Please try again.';
+          this.posts = [];
           this.isInitialLoading = false;
           this.isLoadingMore = false;
           this.cd.markForCheck();
@@ -225,10 +231,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const file = event instanceof File ? event : event.target?.files?.[0];
     if (!file) return;
 
-    this.postService.createPost('', file).subscribe({
-      next: (post) => {
-        this.posts.unshift(post);
-      },
+    this.postService.createPost('', [file]).subscribe({
       error: (error) => {
         console.error('Error creating post:', error);
       }
@@ -238,9 +241,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected onPostSubmit(data: { content: string, images?: File[] }): void {
     this.isSubmitting = true;
     this.postService.createPost(data.content, data.images).subscribe({
-      next: (post) => {
-        this.posts.unshift(post);
-      },
       error: (error) => {
         console.error('Error creating post:', error);
       },

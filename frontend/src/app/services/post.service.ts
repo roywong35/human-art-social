@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap, map, catchError, take } from 'rxjs';
 import { Post, PostImage } from '../models/post.model';
 import { environment } from '../../environments/environment';
@@ -16,107 +16,110 @@ interface PaginatedResponse {
   providedIn: 'root'
 })
 export class PostService {
-  private apiUrl = environment.apiUrl;
-  private baseApiUrl = `${environment.apiUrl}/api`;
+  private baseUrl = environment.apiUrl + '/api';
   private posts = new BehaviorSubject<Post[]>([]);
+  public posts$ = this.posts.asObservable();
   private currentPage = 1;
-  private loading = false;
   private hasMore = true;
+  private loading = false;
 
   constructor(
     private http: HttpClient,
     private authService: AuthService
-  ) {
-    this.loadPosts();
+  ) {}
+
+  createPost(contentOrFormData: string | FormData, files?: File[]): Observable<Post> {
+    if (contentOrFormData instanceof FormData) {
+      return this.http.post<Post>(`${this.baseUrl}/posts/`, contentOrFormData).pipe(
+        tap(newPost => {
+          const currentPosts = this.posts.getValue();
+          this.posts.next([newPost, ...currentPosts]);
+        })
+      );
+    }
+
+    const formData = new FormData();
+    formData.append('content', contentOrFormData);
+    if (files) {
+      files.forEach((file, index) => {
+        formData.append(`image_${index}`, file);
+      });
+    }
+    
+    return this.http.post<Post>(`${this.baseUrl}/posts/`, formData).pipe(
+      tap(newPost => {
+        const currentPosts = this.posts.getValue();
+        this.posts.next([newPost, ...currentPosts]);
+      })
+    );
   }
 
   loadPosts(refresh: boolean = false): void {
-    if (refresh) {
-      this.currentPage = 1;
-      this.hasMore = true;
-      this.posts.next([]);
-    }
-
-    if (this.loading || !this.hasMore) {
-      this.loading = false;
-      return;
-    }
+    // Always reset page number when loading posts initially
+    this.currentPage = 1;
+    this.hasMore = true;
     
     this.loading = true;
-    console.log('Loading posts...');
-    
-    this.authService.currentUser$.pipe(take(1)).subscribe({
-      next: user => {
-        console.log('Current user:', user);
-        const request$ = user?.following_only_preference ? this.getFeed() : this.getExplore();
-        
-        request$.pipe(
-          map(response => {
-            if (!response || !response.results) {
-              console.error('Invalid response format:', response);
-              throw new Error('Invalid response format from server');
-            }
-            
-            // Update pagination state
-            this.hasMore = !!response.next;
-            this.currentPage++;
-            
-            const posts = response.results.map(post => this.addImageUrls(post));
-            console.log('Raw posts from API:', posts);
-            
-            // Log all human art posts
-            const humanArtPosts = posts.filter(p => p.is_human_drawing);
-            console.log('Human art posts before processing:', humanArtPosts.map(p => ({
-              id: p.id,
-              is_human_drawing: p.is_human_drawing,
-              is_verified: p.is_verified
-            })));
-            
-            return posts;
-          }),
-          map(posts => {
-            const activeTab = localStorage.getItem('activeTab') || 'for-you';
-            console.log('Active tab:', activeTab);
-            console.log('Posts before filtering:', posts.length);
-            
-            const filteredPosts = this.filterPostsByTab(posts);
-            console.log('Posts after filtering:', filteredPosts.length);
-            
-            return filteredPosts;
-          })
-        ).subscribe({
-          next: (posts) => {
-            console.log('Final posts loaded:', posts.length);
-            // Append new posts to existing ones
-            const currentPosts = refresh ? [] : this.posts.getValue();
-            this.posts.next([...currentPosts, ...posts]);
-            this.loading = false;
-          },
-          error: (error) => {
-            console.error('Error loading posts:', error);
-            if (refresh) {
-              this.posts.next([]);
-            }
-            this.loading = false;
-            this.hasMore = false;
-          }
+    console.log('Loading posts with auth state:', {
+      isAuthenticated: this.authService.isAuthenticated(),
+      currentPage: this.currentPage,
+      activeTab: localStorage.getItem('activeTab')
+    });
+
+    const source = this.authService.isAuthenticated() ? this.getFeed() : this.getExplore();
+    source.pipe(
+      take(1)
+    ).subscribe({
+      next: (response: PaginatedResponse) => {
+        console.log('Received response:', response);
+        if (!response || !response.results) {
+          console.error('Invalid response format:', response);
+          this.posts.next([]);
+          this.loading = false;
+          return;
+        }
+
+        this.hasMore = !!response.next;
+        this.posts.next(response.results || []);
+        this.loading = false;
+        // Only increment page number if there are more posts to load
+        if (this.hasMore) {
+          this.currentPage++;
+        }
+        console.log('Updated posts state:', {
+          postsCount: response.results.length,
+          hasMore: this.hasMore,
+          currentPage: this.currentPage
         });
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error loading posts:', error);
         this.loading = false;
         this.hasMore = false;
+        this.posts.next([]);
       }
     });
   }
 
-  loadMorePosts(): void {
-    if (!this.loading && this.hasMore) {
-      this.loadPosts();
-    }
+  private getFeed(): Observable<PaginatedResponse> {
+    const activeTab = localStorage.getItem('activeTab') || 'for-you';
+    const postType = activeTab === 'human-drawing' ? 'human_drawing' : 'all';
+    return this.http.get<PaginatedResponse>(
+      `${this.baseUrl}/posts/feed/?page=${this.currentPage}&post_type=${postType}`
+    );
   }
 
-  get posts$(): Observable<Post[]> {
-    return this.posts.asObservable();
+  private getExplore(): Observable<PaginatedResponse> {
+    const activeTab = localStorage.getItem('activeTab') || 'for-you';
+    const postType = activeTab === 'human-drawing' ? 'human_drawing' : 'all';
+    return this.http.get<PaginatedResponse>(
+      `${this.baseUrl}/posts/explore/?page=${this.currentPage}&post_type=${postType}`
+    );
+  }
+
+  // Method to refresh posts after verification
+  refreshPosts(): void {
+    this.loadPosts(true);
   }
 
   get isLoading(): boolean {
@@ -127,57 +130,22 @@ export class PostService {
     return this.hasMore;
   }
 
-  private getFeed(): Observable<PaginatedResponse> {
-    return this.http.get<PaginatedResponse>(`${this.baseApiUrl}/posts/feed/?page=${this.currentPage}`);
-  }
-
-  private getExplore(): Observable<PaginatedResponse> {
-    return this.http.get<PaginatedResponse>(`${this.baseApiUrl}/posts/explore/?page=${this.currentPage}`);
-  }
-
   getPost(handle: string, postId: number): Observable<Post> {
-    return this.http.get<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/`).pipe(
+    return this.http.get<Post>(`${this.baseUrl}/posts/${handle}/${postId}/`).pipe(
       map(post => this.addImageUrls(post))
     );
   }
 
   getUserPosts(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/users/handle/${handle}/posts/`).pipe(
+    return this.http.get<Post[]>(`${this.baseUrl}/users/handle/${handle}/posts/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
-    );
-  }
-
-  createPost(content: string, images?: File[]): Observable<Post> {
-    const formData = new FormData();
-    formData.append('content', content);
-    if (images) {
-      images.forEach((image, index) => {
-        formData.append(`image_${index}`, image);
-      });
-    }
-    console.log("formData2222: ", formData);
-    return this.http.post<Post>(`${this.baseApiUrl}/posts/`, formData).pipe(
-      map(post => this.addImageUrls(post)),
-      tap(newPost => {
-        // Get current posts and add the new post only if it should be shown in current tab
-        const currentPosts = this.posts.getValue();
-        const activeTab = localStorage.getItem('activeTab') || 'for-you';
-        
-        if (activeTab === 'human-drawing' && newPost.is_human_drawing) {
-          // Add to Human Art tab if it's a human drawing
-          this.posts.next([newPost, ...currentPosts]);
-        } else if (activeTab === 'for-you' && (!newPost.is_human_drawing || newPost.is_verified)) {
-          // Add to For You tab if it's not a human drawing or is verified
-          this.posts.next([newPost, ...currentPosts]);
-        }
-      })
     );
   }
 
   createPostWithFormData(formData: FormData, isReply: boolean = false, handle?: string, postId?: number): Observable<Post> {
     const url = isReply && handle && postId 
-      ? `${this.baseApiUrl}/posts/${handle}/${postId}/replies/`
-      : `${this.baseApiUrl}/posts/`;
+      ? `${this.baseUrl}/posts/${handle}/${postId}/replies/`
+      : `${this.baseUrl}/posts/`;
     
     // Debug FormData contents
     console.log('FormData contents:');
@@ -204,9 +172,11 @@ export class PostService {
         if (activeTab === 'human-drawing' && newPost.is_human_drawing) {
           // Add to Human Art tab if it's a human drawing
           this.posts.next([newPost, ...currentPosts]);
-        } else if (activeTab === 'for-you' && (!newPost.is_human_drawing || newPost.is_verified)) {
+        } else if (activeTab === 'for-you') {
           // Add to For You tab if it's not a human drawing or is verified
-          this.posts.next([newPost, ...currentPosts]);
+          if (!newPost.is_human_drawing || (newPost.is_human_drawing && newPost.is_verified)) {
+            this.posts.next([newPost, ...currentPosts]);
+          }
         }
       })
     );
@@ -221,7 +191,7 @@ export class PostService {
         formData.append(`image_${index}`, image);
       });
     }
-    return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/quote/`, formData).pipe(
+    return this.http.post<Post>(`${this.baseUrl}/posts/${handle}/${postId}/quote/`, formData).pipe(
       map(post => this.addImageUrls(post))
     );
   }
@@ -256,7 +226,7 @@ export class PostService {
     this.posts.next(updatedPosts);
 
     // Send to backend using the target post's handle and ID
-    return this.http.post<{liked: boolean}>(`${this.baseApiUrl}/posts/${targetPost.author.handle}/${targetPostId}/like/`, {}).pipe(
+    return this.http.post<{liked: boolean}>(`${this.baseUrl}/posts/${targetPost.author.handle}/${targetPostId}/like/`, {}).pipe(
       catchError(error => {
         // Revert on error
         this.posts.next(posts);
@@ -266,7 +236,7 @@ export class PostService {
   }
 
   repost(handle: string, postId: number): Observable<Post> {
-    return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/repost/`, {}).pipe(
+    return this.http.post<Post>(`${this.baseUrl}/posts/${handle}/${postId}/repost/`, {}).pipe(
       map(post => this.addImageUrls(post))
     );
   }
@@ -309,7 +279,7 @@ export class PostService {
 
     // Send to backend using the target post's handle and ID
     console.log('Sending request to backend...');
-    return this.http.post<{reposted: boolean}>(`${this.baseApiUrl}/posts/${targetPost.author.handle}/${targetPostId}/repost/`, {}).pipe(
+    return this.http.post<{reposted: boolean}>(`${this.baseUrl}/posts/${targetPost.author.handle}/${targetPostId}/repost/`, {}).pipe(
       tap(response => {
         console.log('Backend response:', response);
         console.log('Posts after update:', JSON.stringify(this.posts.getValue(), null, 2));
@@ -329,31 +299,31 @@ export class PostService {
     if (image) {
       formData.append('image', image);
     }
-    return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/quote/`, formData).pipe(
+    return this.http.post<Post>(`${this.baseUrl}/posts/${handle}/post/${postId}/quote/`, formData).pipe(
       map(post => this.addImageUrls(post))
     );
   }
 
   getBookmarkedPosts(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/bookmarks/`).pipe(
+    return this.http.get<Post[]>(`${this.baseUrl}/posts/${handle}/bookmarks/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
 
   getLikedPosts(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/liked/`).pipe(
+    return this.http.get<Post[]>(`${this.baseUrl}/posts/${handle}/liked/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
 
   getMediaPosts(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/media/`).pipe(
+    return this.http.get<Post[]>(`${this.baseUrl}/posts/${handle}/media/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
 
   searchPosts(query: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/search/`, {
+    return this.http.get<Post[]>(`${this.baseUrl}/posts/search/`, {
       params: { q: query }
     }).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
@@ -389,7 +359,7 @@ export class PostService {
     this.posts.next(updatedPosts);
 
     // Send to backend using the target post's handle and ID
-    return this.http.post<void>(`${this.baseApiUrl}/posts/${targetPost.author.handle}/${targetPostId}/bookmark/`, {}).pipe(
+    return this.http.post<void>(`${this.baseUrl}/posts/${targetPost.author.handle}/${targetPostId}/bookmark/`, {}).pipe(
       catchError(error => {
         // Revert on error
         this.posts.next(posts);
@@ -399,7 +369,7 @@ export class PostService {
   }
 
   deletePost(handle: string, postId: number): Observable<any> {
-    return this.http.delete(`${this.baseApiUrl}/posts/${handle}/post/${postId}/`).pipe(
+    return this.http.delete(`${this.baseUrl}/posts/${handle}/post/${postId}/`).pipe(
       tap(() => {
         const currentPosts = this.posts.value;
         const updatedPosts = currentPosts.filter(post => post.id !== postId);
@@ -409,20 +379,20 @@ export class PostService {
   }
 
   getUserPostsByHandle(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/`).pipe(
+    return this.http.get<Post[]>(`${this.baseUrl}/posts/${handle}/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
 
   verifyHumanArt(handle: string, postId: number): Observable<Post> {
-    return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/verify_drawing/`, {}).pipe(
+    return this.http.post<Post>(`${this.baseUrl}/posts/${handle}/post/${postId}/verify_drawing/`, {}).pipe(
       map(post => this.addImageUrls(post))
     );
   }
 
   // Add this method to load a single post and update its state
   refreshPost(authorHandle: string, postId: number): Observable<Post> {
-    return this.http.get<Post>(`${this.baseApiUrl}/posts/${authorHandle}/${postId}/`).pipe(
+    return this.http.get<Post>(`${this.baseUrl}/posts/${authorHandle}/${postId}/`).pipe(
       map(post => this.addImageUrls(post)),
       tap(post => {
         const posts = this.posts.getValue();
@@ -442,13 +412,13 @@ export class PostService {
   }
 
   getPosts(): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/posts/`).pipe(
+    return this.http.get<Post[]>(`${this.baseUrl}/posts/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
 
   createReplyWithFormData(handle: string, postId: number, formData: FormData): Observable<Post> {
-    const url = `${this.baseApiUrl}/posts/${handle}/${postId}/replies/`;
+    const url = `${this.baseUrl}/posts/${handle}/${postId}/replies/`;
     
     // Log FormData contents
     console.log('FormData contents:');
@@ -510,7 +480,7 @@ export class PostService {
       }
     });
     console.log("formData1111: ", formData);
-    return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/replies/`, formData).pipe(
+    return this.http.post<Post>(`${this.baseUrl}/posts/${handle}/${postId}/replies/`, formData).pipe(
       map(post => this.addImageUrls(post))
     );
   }
@@ -526,7 +496,7 @@ export class PostService {
       console.log('Single image before processing:', processedPost.image);
       if (!processedPost.image.startsWith('http') && !processedPost.image.startsWith('data:')) {
         const imagePath = processedPost.image.startsWith('/') ? processedPost.image : `/${processedPost.image}`;
-        processedPost.image = `${this.baseApiUrl}${imagePath}`;
+        processedPost.image = `${this.baseUrl}${imagePath}`;
         console.log('Single image after processing:', processedPost.image);
       }
     }
@@ -537,7 +507,7 @@ export class PostService {
         const profilePath = processedPost.author.profile_picture.startsWith('/') ? processedPost.author.profile_picture : `/${processedPost.author.profile_picture}`;
         processedPost.author = {
           ...processedPost.author,
-          profile_picture: `${this.baseApiUrl}${profilePath}`
+          profile_picture: `${this.baseUrl}${profilePath}`
         };
         console.log('Profile picture after processing:', processedPost.author.profile_picture);
       }
@@ -549,7 +519,7 @@ export class PostService {
         console.log('Processing image:', image);
         const processedImage = {
           ...image,
-          image: !image.image.startsWith('http') ? `${this.baseApiUrl}${image.image.startsWith('/') ? image.image : `/${image.image}`}` : image.image
+          image: !image.image.startsWith('http') ? `${this.baseUrl}${image.image.startsWith('/') ? image.image : `/${image.image}`}` : image.image
         };
         console.log('Processed image:', processedImage);
         return processedImage;
@@ -580,6 +550,38 @@ export class PostService {
       const forYouPosts = posts;
       console.log('For You posts found:', forYouPosts.length);
       return forYouPosts;
+    }
+  }
+
+  loadMorePosts(): void {
+    if (!this.loading && this.hasMore) {
+      this.loading = true;
+      const source = this.authService.isAuthenticated() ? this.getFeed() : this.getExplore();
+      source.pipe(
+        take(1)
+      ).subscribe({
+        next: (response: PaginatedResponse) => {
+          if (!response || !response.results) {
+            console.error('Invalid response format:', response);
+            this.loading = false;
+            return;
+          }
+
+          const currentPosts = this.posts.getValue();
+          this.posts.next([...currentPosts, ...(response.results || [])]);
+          this.hasMore = !!response.next;
+          this.loading = false;
+          // Only increment page number if there are more posts to load
+          if (this.hasMore) {
+            this.currentPage++;
+          }
+        },
+        error: (error) => {
+          console.error('Error loading more posts:', error);
+          this.loading = false;
+          this.hasMore = false;
+        }
+      });
     }
   }
 } 

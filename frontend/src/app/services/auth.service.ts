@@ -35,23 +35,23 @@ export class AuthService {
       this.accessToken = token;
       this.refreshToken = refresh;
       const user = JSON.parse(storedUser);
-      // Load following_only_preference from localStorage
-      const followingOnly = localStorage.getItem('following_only_preference');
-      if (followingOnly !== null) {
-        user.following_only_preference = followingOnly === 'true';
-      }
+      // Don't override the following_only_preference from the stored user data
       this.currentUserSubject.next(user);
     }
   }
 
   private processUserData(user: User): User {
+    // Ensure following_only_preference is explicitly set to false if not present
     if (user.profile_picture && !user.profile_picture.startsWith('http')) {
       user.profile_picture = `${this.apiUrl}${user.profile_picture}`;
     }
     if (user.banner_image && !user.banner_image.startsWith('http')) {
       user.banner_image = `${this.apiUrl}${user.banner_image}`;
     }
-    return user;
+    return {
+      ...user,
+      following_only_preference: user.following_only_preference ?? false
+    };
   }
 
   private getAuthHeaders(): HttpHeaders {
@@ -82,7 +82,7 @@ export class AuthService {
     );
   }
 
-  login(credentials: LoginCredentials): Observable<User> {
+  login(credentials: LoginCredentials): Observable<any> {
     return this.http.post<{ access: string, refresh: string }>(`${this.baseApiUrl}/token/`, credentials).pipe(
       tap(response => {
         if (!response.access) {
