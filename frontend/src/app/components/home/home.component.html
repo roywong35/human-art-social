@@ -37,11 +37,6 @@
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="flex justify-center items-center py-8">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-  </div>
-
   <!-- Error State -->
   <div *ngIf="error" class="max-w-[598px] mx-auto">
     <div class="bg-red-50 text-red-500 p-4 rounded-lg text-center my-3">
@@ -50,16 +45,60 @@
   </div>
 
   <!-- No Posts State -->
-  <div *ngIf="!isLoading && (!posts || posts.length === 0)" class="text-center py-8 text-gray-500">
+  <div *ngIf="!isInitialLoading && (!posts || posts.length === 0)" class="text-center py-8 text-gray-500">
     No posts to show
   </div>
 
   <!-- Posts List -->
-  <div *ngIf="!isLoading && posts && posts.length > 0">
-    <app-post *ngFor="let post of posts" 
-      [post]="post"
-      (postDeleted)="onPostDeleted($event)"
-      class="block border-b">
-    </app-post>
+  <div class="posts-container">
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+
+    <div *ngIf="posts.length === 0 && !isInitialLoading" class="no-posts-message">
+      No posts to show.
+    </div>
+
+    <!-- Initial loading state -->
+    <div *ngIf="isInitialLoading" class="loading-indicator">
+      <mat-spinner [diameter]="40" [strokeWidth]="3"></mat-spinner>
+    </div>
+
+    <ng-container *ngFor="let post of posts">
+      <app-human-art-post *ngIf="post.is_human_drawing" [post]="post"></app-human-art-post>
+      <app-post *ngIf="!post.is_human_drawing" [post]="post"></app-post>
+    </ng-container>
+
+    <!-- Loading more posts indicator -->
+    <div *ngIf="isLoadingMore" class="loading-more-indicator">
+      <mat-spinner [diameter]="30" [strokeWidth]="3"></mat-spinner>
+    </div>
   </div>
-</div> 
+</div>
+
+<style>
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.loading-more-indicator {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 10px;
+}
+
+.error-message {
+  color: #dc3545;
+  text-align: center;
+  padding: 20px;
+}
+
+.no-posts-message {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+}
+</style> 

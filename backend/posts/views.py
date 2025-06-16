@@ -3,6 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.pagination import PageNumberPagination
 from .models import Post, EvidenceFile, PostImage, User
 from .serializers import PostSerializer
 from django.db import models, transaction
@@ -12,12 +13,18 @@ from django.db.models import Q, Case, When, F
 
 # Create your views here.
 
+class PostPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class PostViewSet(viewsets.ModelViewSet):
     """
     ViewSet for handling post operations.
     """
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = PostPagination
     
     def get_queryset(self):
         """
@@ -83,12 +90,21 @@ class PostViewSet(viewsets.ModelViewSet):
         Override create method to handle human drawing posts with evidence files
         and multiple images
         """
+        print("Received request data:", self.request.data)
+        print("Received files:", self.request.FILES)
+        
         # Convert string 'true'/'false' to boolean
         is_human_drawing_str = str(self.request.data.get('is_human_drawing', '')).lower()
         is_human_drawing = is_human_drawing_str == 'true'
         
         post_type = self.request.data.get('post_type', 'post')
         evidence_count = int(self.request.data.get('evidence_count', 0))
+        
+        print("Creating post with:", {
+            'is_human_drawing': is_human_drawing,
+            'post_type': post_type,
+            'evidence_count': evidence_count
+        })
         
         # Create the post
         post = serializer.save(
@@ -97,11 +113,19 @@ class PostViewSet(viewsets.ModelViewSet):
             is_verified=False,
             post_type=post_type
         )
+        print("Post created:", post.id)
 
         # Handle multiple images
         for key in self.request.FILES:
+            print("Processing file key:", key)
             if key.startswith('image_'):
                 image = self.request.FILES[key]
+                print("Creating PostImage with:", {
+                    'post_id': post.id,
+                    'image_name': image.name,
+                    'image_size': image.size,
+                    'order': int(key.split('_')[1])
+                })
                 PostImage.objects.create(
                     post=post,
                     image=image,
@@ -110,14 +134,30 @@ class PostViewSet(viewsets.ModelViewSet):
 
         # Handle evidence files for human drawings
         if is_human_drawing and evidence_count > 0:
+            print("Processing evidence files, count:", evidence_count)
             for i in range(evidence_count):
                 evidence_file = self.request.FILES.get(f'evidence_file_{i}')
                 if evidence_file:
+                    print("Creating EvidenceFile with:", {
+                        'post_id': post.id,
+                        'file_name': evidence_file.name,
+                        'file_size': evidence_file.size,
+                        'file_type': self.get_file_type(evidence_file)
+                    })
                     EvidenceFile.objects.create(
                         post=post,
                         file=evidence_file,
                         file_type=self.get_file_type(evidence_file)
                     )
+                else:
+                    print(f"No evidence file found for index {i}")
+
+        # Verify the created objects
+        print("Final post state:", {
+            'id': post.id,
+            'images_count': post.images.count(),
+            'evidence_files_count': post.evidence_files.count()
+        })
 
     @action(detail=True, methods=['GET'])
     def replies(self, request, handle=None, pk=None):
@@ -401,58 +441,56 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'])
     def feed(self, request):
         """
-        Get the user's feed (posts from followed users and own posts)
+        Get posts from users that the current user follows
         """
-        following = request.user.following.all()
-        base_query = Post.objects.filter(
-            Q(author__in=following) | Q(author=request.user)
-        ).select_related(
-            'author',
-            'referenced_post',
-            'parent_post'
-        ).prefetch_related(
-            'likes',
-            'bookmarks',
-            'reposts',
-            'replies',
-            'evidence_files'
-        )
+        try:
+            following_users = request.user.following.all()
+            if not following_users.exists():
+                return Response([])  # Return empty list if not following anyone
+            
+            queryset = Post.objects.filter(
+                author__in=following_users
+            ).select_related('author', 'referenced_post').prefetch_related(
+                'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
+            ).order_by('-created_at')
 
-        # Filter out replies but include regular posts, reposts, and quotes
-        posts = base_query.exclude(post_type='reply').order_by('-created_at')
-        
-        # Print debug info
-        print(f"User: {request.user.username}")
-        print(f"Following count: {following.count()}")
-        print(f"Total posts found: {posts.count()}")
-        
-        serializer = self.get_serializer(posts, many=True)
-        return Response(serializer.data)
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            print(f"Error in feed: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while fetching feed'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['GET'])
     def explore(self, request):
         """
-        Get posts for the explore page (all posts)
+        Get all posts for explore feed
         """
-        posts = Post.objects.exclude(
-            post_type='reply'
-        ).select_related(
-            'author',
-            'referenced_post',
-            'parent_post'
-        ).prefetch_related(
-            'likes',
-            'bookmarks',
-            'reposts',
-            'replies',
-            'evidence_files'
-        ).order_by('-created_at')
-        
-        # Print debug info
-        print(f"Total explore posts found: {posts.count()}")
-        
-        serializer = self.get_serializer(posts, many=True)
-        return Response(serializer.data)
+        try:
+            queryset = Post.objects.all().select_related('author', 'referenced_post').prefetch_related(
+                'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
+            ).order_by('-created_at')
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            print(f"Error in explore: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while fetching explore posts'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['GET'])
     def search(self, request):

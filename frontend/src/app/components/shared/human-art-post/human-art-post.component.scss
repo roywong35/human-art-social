@@ -1,0 +1,68 @@
+// Styles for post component 
+
+.post-container {
+  @apply bg-white;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    @apply bg-gray-50;
+  }
+}
+
+.emoji-picker-container {
+  position: absolute;
+  z-index: 1000;
+}
+
+:host ::ng-deep {
+  .emoji-mart {
+    border: none !important;
+    border-radius: 8px !important;
+  }
+
+  .emoji-mart-bar {
+    border: none !important;
+  }
+
+  .emoji-mart-search {
+    margin: 6px !important;
+
+    input {
+      border-radius: 9999px !important;
+      padding: 6px 25px !important;
+      border-color: #e5e7eb !important;
+
+      &:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: none !important;
+      }
+    }
+  }
+
+  .emoji-mart-category-label {
+    top: 0 !important;
+    padding: 8px !important;
+    background: white !important;
+    font-size: 14px !important;
+
+    span {
+      background: white !important;
+      font-weight: 600 !important;
+      padding: 0 !important;
+      color: #374151 !important;
+    }
+  }
+
+  .emoji-mart-category .emoji-mart-emoji {
+    padding: 6px !important;
+
+    &:hover {
+      background: #f3f4f6 !important;
+      border-radius: 8px !important;
+    }
+
+    span {
+      cursor: pointer !important;
+    }
+  }
+} 

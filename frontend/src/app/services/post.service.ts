@@ -5,6 +5,13 @@ import { Post, PostImage } from '../models/post.model';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
+interface PaginatedResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Post[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -12,6 +19,9 @@ export class PostService {
   private apiUrl = environment.apiUrl;
   private baseApiUrl = `${environment.apiUrl}/api`;
   private posts = new BehaviorSubject<Post[]>([]);
+  private currentPage = 1;
+  private loading = false;
+  private hasMore = true;
 
   constructor(
     private http: HttpClient,
@@ -20,30 +30,109 @@ export class PostService {
     this.loadPosts();
   }
 
-  loadPosts(): void {
+  loadPosts(refresh: boolean = false): void {
+    if (refresh) {
+      this.currentPage = 1;
+      this.hasMore = true;
+      this.posts.next([]);
+    }
+
+    if (this.loading || !this.hasMore) {
+      this.loading = false;
+      return;
+    }
+    
+    this.loading = true;
     console.log('Loading posts...');
-    // Take the first value from currentUser$ to avoid multiple subscriptions
-    this.authService.currentUser$.pipe(take(1)).subscribe(user => {
-      console.log('Current user:', user);
-      const request$ = user?.following_only_preference ? this.getFeed() : this.getExplore();
-      request$.pipe(
-        map(posts => posts.map(post => this.addImageUrls(post)))
-      ).subscribe({
-        next: (posts) => {
-          console.log('Posts loaded:', posts.length);
-          // Ensure we're not mutating the same array reference
-          this.posts.next([...posts]);
-        },
-        error: (error) => {
-          console.error('Error loading posts:', error);
-          this.posts.next([]);
-        }
-      });
+    
+    this.authService.currentUser$.pipe(take(1)).subscribe({
+      next: user => {
+        console.log('Current user:', user);
+        const request$ = user?.following_only_preference ? this.getFeed() : this.getExplore();
+        
+        request$.pipe(
+          map(response => {
+            if (!response || !response.results) {
+              console.error('Invalid response format:', response);
+              throw new Error('Invalid response format from server');
+            }
+            
+            // Update pagination state
+            this.hasMore = !!response.next;
+            this.currentPage++;
+            
+            const posts = response.results.map(post => this.addImageUrls(post));
+            console.log('Raw posts from API:', posts);
+            
+            // Log all human art posts
+            const humanArtPosts = posts.filter(p => p.is_human_drawing);
+            console.log('Human art posts before processing:', humanArtPosts.map(p => ({
+              id: p.id,
+              is_human_drawing: p.is_human_drawing,
+              is_verified: p.is_verified
+            })));
+            
+            return posts;
+          }),
+          map(posts => {
+            const activeTab = localStorage.getItem('activeTab') || 'for-you';
+            console.log('Active tab:', activeTab);
+            console.log('Posts before filtering:', posts.length);
+            
+            const filteredPosts = this.filterPostsByTab(posts);
+            console.log('Posts after filtering:', filteredPosts.length);
+            
+            return filteredPosts;
+          })
+        ).subscribe({
+          next: (posts) => {
+            console.log('Final posts loaded:', posts.length);
+            // Append new posts to existing ones
+            const currentPosts = refresh ? [] : this.posts.getValue();
+            this.posts.next([...currentPosts, ...posts]);
+            this.loading = false;
+          },
+          error: (error) => {
+            console.error('Error loading posts:', error);
+            if (refresh) {
+              this.posts.next([]);
+            }
+            this.loading = false;
+            this.hasMore = false;
+          }
+        });
+      },
+      error: () => {
+        this.loading = false;
+        this.hasMore = false;
+      }
     });
+  }
+
+  loadMorePosts(): void {
+    if (!this.loading && this.hasMore) {
+      this.loadPosts();
+    }
   }
 
   get posts$(): Observable<Post[]> {
     return this.posts.asObservable();
+  }
+
+  get isLoading(): boolean {
+    return this.loading;
+  }
+
+  get hasMorePosts(): boolean {
+    return this.hasMore;
+  }
+
+  private getFeed(): Observable<PaginatedResponse> {
+    return this.http.get<PaginatedResponse>(`${this.baseApiUrl}/posts/feed/?page=${this.currentPage}`);
+  }
+
+  private getExplore(): Observable<PaginatedResponse> {
+    return this.http.get<PaginatedResponse>(`${this.baseApiUrl}/posts/explore/?page=${this.currentPage}`);
   }
 
   getPost(handle: string, postId: number): Observable<Post> {
@@ -68,7 +157,20 @@ export class PostService {
     }
     console.log("formData2222: ", formData);
     return this.http.post<Post>(`${this.baseApiUrl}/posts/`, formData).pipe(
-      map(post => this.addImageUrls(post))
+      map(post => this.addImageUrls(post)),
+      tap(newPost => {
+        // Get current posts and add the new post only if it should be shown in current tab
+        const currentPosts = this.posts.getValue();
+        const activeTab = localStorage.getItem('activeTab') || 'for-you';
+        
+        if (activeTab === 'human-drawing' && newPost.is_human_drawing) {
+          // Add to Human Art tab if it's a human drawing
+          this.posts.next([newPost, ...currentPosts]);
+        } else if (activeTab === 'for-you' && (!newPost.is_human_drawing || newPost.is_verified)) {
+          // Add to For You tab if it's not a human drawing or is verified
+          this.posts.next([newPost, ...currentPosts]);
+        }
+      })
     );
   }
 
@@ -94,11 +196,17 @@ export class PostService {
     
     return this.http.post<Post>(url, formData).pipe(
       map(post => this.addImageUrls(post)),
-      tap(post => {
-        console.log('Response from server:', post);
-        if (!isReply) {
-          const currentPosts = this.posts.getValue();
-          this.posts.next([post, ...currentPosts]);
+      tap(newPost => {
+        // Get current posts and add the new post only if it should be shown in current tab
+        const currentPosts = this.posts.getValue();
+        const activeTab = localStorage.getItem('activeTab') || 'for-you';
+        
+        if (activeTab === 'human-drawing' && newPost.is_human_drawing) {
+          // Add to Human Art tab if it's a human drawing
+          this.posts.next([newPost, ...currentPosts]);
+        } else if (activeTab === 'for-you' && (!newPost.is_human_drawing || newPost.is_verified)) {
+          // Add to For You tab if it's not a human drawing or is verified
+          this.posts.next([newPost, ...currentPosts]);
         }
       })
     );
@@ -223,18 +331,6 @@ export class PostService {
     }
     return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/post/${postId}/quote/`, formData).pipe(
       map(post => this.addImageUrls(post))
-    );
-  }
-
-  getFeed(): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/feed/`).pipe(
-      map(posts => posts.map(post => this.addImageUrls(post)))
-    );
-  }
-
-  getExplore(): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseApiUrl}/explore/`).pipe(
-      map(posts => posts.map(post => this.addImageUrls(post)))
     );
   }
 
@@ -423,30 +519,67 @@ export class PostService {
     // Create a new post object to avoid mutations
     const processedPost = { ...post };
     
+    console.log('Processing post images for post:', post.id);
+    console.log('Raw post images:', post.images);
+    
     if (processedPost.image) {
+      console.log('Single image before processing:', processedPost.image);
       if (!processedPost.image.startsWith('http') && !processedPost.image.startsWith('data:')) {
         const imagePath = processedPost.image.startsWith('/') ? processedPost.image : `/${processedPost.image}`;
         processedPost.image = `${this.baseApiUrl}${imagePath}`;
+        console.log('Single image after processing:', processedPost.image);
       }
     }
     
     if (processedPost.author?.profile_picture) {
+      console.log('Profile picture before processing:', processedPost.author.profile_picture);
       if (!processedPost.author.profile_picture.startsWith('http') && !processedPost.author.profile_picture.startsWith('data:')) {
         const profilePath = processedPost.author.profile_picture.startsWith('/') ? processedPost.author.profile_picture : `/${processedPost.author.profile_picture}`;
         processedPost.author = {
           ...processedPost.author,
           profile_picture: `${this.baseApiUrl}${profilePath}`
         };
+        console.log('Profile picture after processing:', processedPost.author.profile_picture);
       }
     }
 
     if (processedPost.images) {
-      processedPost.images = processedPost.images.map(image => ({
-        ...image,
-        image: !image.image.startsWith('http') ? `${this.baseApiUrl}${image.image.startsWith('/') ? image.image : `/${image.image}`}` : image.image
-      }));
+      console.log('Processing multiple images:', processedPost.images);
+      processedPost.images = processedPost.images.map(image => {
+        console.log('Processing image:', image);
+        const processedImage = {
+          ...image,
+          image: !image.image.startsWith('http') ? `${this.baseApiUrl}${image.image.startsWith('/') ? image.image : `/${image.image}`}` : image.image
+        };
+        console.log('Processed image:', processedImage);
+        return processedImage;
+      });
+      console.log('Final processed images:', processedPost.images);
     }
 
     return processedPost;
+  }
+
+  // Add new method to filter posts based on active tab
+  private filterPostsByTab(posts: Post[]): Post[] {
+    const activeTab = localStorage.getItem('activeTab') || 'for-you';
+    console.log('Filtering posts for tab:', activeTab);
+    
+    if (activeTab === 'human-drawing') {
+      // For Human Art tab, only show verified human drawings
+      console.log('Filtering for human art posts...');
+      const humanArtPosts = posts.filter(post => {
+        console.log('Post:', post.id, 'is_human_drawing:', post.is_human_drawing, 'is_verified:', post.is_verified);
+        return post.is_human_drawing === true && post.is_verified === true;
+      });
+      console.log('Verified human art posts found:', humanArtPosts.length);
+      return humanArtPosts;
+    } else {
+      // For For You tab, show all posts including unverified human art
+      console.log('Filtering for For You tab...');
+      const forYouPosts = posts;
+      console.log('For You posts found:', forYouPosts.length);
+      return forYouPosts;
+    }
   }
 } 

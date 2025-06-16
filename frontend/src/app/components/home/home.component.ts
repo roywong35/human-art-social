@@ -5,6 +5,7 @@ import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { PostComponent } from '../shared/post/post.component';
+import { HumanArtPostComponent } from '../shared/human-art-post/human-art-post.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SubmitDrawingModalComponent } from '../submit-drawing-modal/submit-drawing-modal.component';
@@ -21,18 +22,21 @@ import { NotificationService } from '../../services/notification.service';
   standalone: true,
   imports: [
     CommonModule, 
-    PostComponent, 
+    PostComponent,
+    HumanArtPostComponent,
     MatDialogModule,
     FormsModule,
     PostInputBoxComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrls: ['./home.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeComponent implements OnInit, OnDestroy {
   posts: Post[] = [];
-  isLoading = true;
+  isInitialLoading = true;
+  isLoadingMore = false;
   error: string | null = null;
   protected environment = environment;
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
@@ -58,7 +62,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         const newTab = params['tab'] === 'human-drawing' ? 'human-drawing' : 'for-you';
         if (this.activeTab !== newTab) {
           this.activeTab = newTab;
-          this.loadPosts();
+          this.loadPosts(true);
         }
       })
     );
@@ -78,7 +82,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           }
           return post;
         });
-        this.cd.detectChanges();
+        this.cd.markForCheck();
       })
     );
 
@@ -88,30 +92,62 @@ export class HomeComponent implements OnInit, OnDestroy {
         next: (posts: Post[]) => {
           console.log('Home component received posts:', posts.length);
           this.posts = posts;
-          this.isLoading = false;
-          this.cd.detectChanges();
+          this.isInitialLoading = false;
+          this.isLoadingMore = false;
+          this.cd.markForCheck();
         },
         error: (error: Error) => {
           console.error('Error loading posts:', error);
           this.error = 'Failed to load posts. Please try again.';
-          this.isLoading = false;
-          this.cd.detectChanges();
+          this.isInitialLoading = false;
+          this.isLoadingMore = false;
+          this.cd.markForCheck();
         }
       })
     );
   }
 
-  ngOnInit(): void {
-    console.log('Home component initialized');
-    this.loadPosts();
+  @HostListener('window:scroll', ['$event'])
+  onScroll(): void {
+    // Check if we're near the bottom of the page (80% scrolled)
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const scrollThreshold = document.documentElement.scrollHeight * 0.8;
+
+    if (scrollPosition >= scrollThreshold && !this.isLoadingMore && this.postService.hasMorePosts) {
+      this.loadMorePosts();
+    }
   }
 
-  loadPosts(): void {
-    console.log('Home component loading posts');
-    this.isLoading = true;
+  loadMorePosts(): void {
+    if (!this.isLoadingMore && this.postService.hasMorePosts) {
+      this.isLoadingMore = true;
+      this.cd.markForCheck();
+      this.postService.loadMorePosts();
+    }
+  }
+
+  loadPosts(refresh: boolean = false): void {
+    console.log('Loading posts for tab:', this.activeTab);
     this.error = null;
-    this.cd.detectChanges();
-    this.postService.loadPosts();
+    this.isInitialLoading = refresh;
+    this.cd.markForCheck();
+    this.postService.loadPosts(refresh);
+  }
+
+  ngOnInit(): void {
+    console.log('Home component initialized');
+    // Get active tab from localStorage or route params
+    this.route.queryParams.subscribe(params => {
+      const tabFromParams = params['tab'];
+      const savedTab = localStorage.getItem('activeTab');
+      
+      // Set active tab with priority: URL params > localStorage > default
+      this.activeTab = tabFromParams || savedTab || 'for-you';
+      localStorage.setItem('activeTab', this.activeTab);
+      
+      // Load posts for the active tab
+      this.loadPosts(true);
+    });
   }
 
   onPostUpdated(): void {
@@ -220,11 +256,19 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   setActiveTab(tab: 'for-you' | 'human-drawing'): void {
     if (this.activeTab !== tab) {
+      this.activeTab = tab;
+      localStorage.setItem('activeTab', tab);
+      
+      // Update URL without triggering the router subscription
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { tab: tab === 'for-you' ? null : tab },
-        queryParamsHandling: 'merge'
+        queryParamsHandling: 'merge',
+        replaceUrl: true
       });
+
+      // Reload posts for the new tab
+      this.loadPosts();
     }
   }
 

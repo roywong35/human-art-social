@@ -58,4 +58,9 @@ urlpatterns = [
     path('bookmarks/posts/', PostViewSet.as_view({
         'get': 'bookmarked'
     })),
+
+    # Verification URLs
+    path('posts/<str:handle>/<int:pk>/verify_drawing/', PostViewSet.as_view({
+        'post': 'verify_drawing'
+    })),
 ] 

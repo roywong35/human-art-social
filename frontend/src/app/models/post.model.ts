@@ -31,7 +31,7 @@ export interface Post {
   is_liked_by_current_user?: boolean;
   is_bookmarked_by_current_user?: boolean;
   is_reposted_by_current_user?: boolean;
-  post_type: 'post' | 'reply' | 'repost' | 'quote';
+  post_type: 'post' | 'reply' | 'repost' | 'quote' | 'human_art';
   referenced_post?: Post;
   parent_post?: Post;
   reposted_by?: User;

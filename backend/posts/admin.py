@@ -44,8 +44,8 @@ class EvidenceFileInline(admin.TabularInline):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('id', 'author', 'post_type', 'is_verified', 'verification_status', 'time_ago', 'list_image_preview', 'evidence_files_preview')
-    list_filter = ('post_type', 'is_verified', 'created_at')
+    list_display = ('id', 'author', 'post_type', 'is_human_drawing', 'is_verified', 'verification_status', 'time_ago', 'list_image_preview', 'evidence_files_preview')
+    list_filter = ('is_human_drawing', 'post_type', 'is_verified', 'created_at')
     search_fields = ('author__username', 'content')
     readonly_fields = ('created_at', 'updated_at', 'likes_count', 'reposts_count', 'replies_count', 'detail_image_preview', 'evidence_count')
     fieldsets = (
@@ -74,25 +74,25 @@ class PostAdmin(admin.ModelAdmin):
     linked_id.short_description = 'ID'
 
     def verification_status(self, obj):
-        if obj.post_type != 'human_drawing':
-            return '-'
-        if obj.is_verified:
-            return format_html('<span style="color: green; font-weight: bold;">✓ Verified</span>')
-        return format_html('<span style="color: orange; font-weight: bold;">⏳ Pending</span>')
+        if obj.is_human_drawing:
+            if obj.is_verified:
+                return format_html('<span style="color: green; font-weight: bold;">✓ Verified</span>')
+            return format_html('<span style="color: orange; font-weight: bold;">⏳ Pending</span>')
+        return '-'
     verification_status.short_description = 'Status'
 
     def time_ago(self, obj):
         if not obj.created_at:
             return '-'
         time_diff = timesince(obj.created_at)
-        if not obj.post_type == 'human_drawing' or obj.is_verified:
+        if not obj.is_human_drawing or obj.is_verified:
             return format_html('<span style="color: #666;">{}</span>', time_diff)
         return format_html('<span style="color: #e67e22; font-weight: 500;">{}</span>', time_diff)
     time_ago.short_description = 'Submitted'
     time_ago.admin_order_field = 'created_at'
 
     def evidence_files_preview(self, obj):
-        if obj.post_type != 'human_drawing':
+        if not obj.is_human_drawing:
             return '-'
         evidence_files = obj.evidence_files.all()
         if not evidence_files:
@@ -154,21 +154,25 @@ class PostAdmin(admin.ModelAdmin):
         )
     detail_image_preview.short_description = 'Art Preview'
 
+    @admin.action(description='Verify selected human art posts')
     def verify_human_drawings(self, request, queryset):
-        queryset.filter(post_type='human_drawing').update(
-            is_verified=True,
-            verification_date=timezone.now()
-        )
-        self.message_user(request, f"{queryset.count()} posts have been verified.")
-    verify_human_drawings.short_description = "Verify selected human drawings"
+        updated = 0
+        for post in queryset.filter(is_human_drawing=True):
+            post.is_verified = True
+            post.verification_date = timezone.now()
+            post.save(update_fields=['is_verified', 'verification_date'])
+            updated += 1
+        self.message_user(request, f'{updated} posts were successfully verified.')
 
+    @admin.action(description='Reject selected human art posts')
     def reject_human_drawings(self, request, queryset):
-        queryset.filter(post_type='human_drawing').update(
-            is_verified=False,
-            verification_date=None
-        )
-        self.message_user(request, f"{queryset.count()} posts have been rejected.")
-    reject_human_drawings.short_description = "Reject selected human drawings"
+        updated = 0
+        for post in queryset.filter(is_human_drawing=True):
+            post.is_verified = False
+            post.verification_date = None
+            post.save(update_fields=['is_verified', 'verification_date'])
+            updated += 1
+        self.message_user(request, f'{updated} posts were rejected.')
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('author').prefetch_related('evidence_files')

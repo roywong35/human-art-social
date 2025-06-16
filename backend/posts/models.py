@@ -12,8 +12,8 @@ def post_image_path(instance, filename):
     ext = filename.split('.')[-1]
     # Generate a unique filename using UUID
     filename = f"{uuid.uuid4()}.{ext}"
-    # Return the upload path
-    return os.path.join('post_images', filename)
+    # Return the upload path using the same path as the old image field
+    return os.path.join('posts', filename)
 
 def evidence_file_path(instance, filename):
     # Get the file extension

@@ -136,25 +136,53 @@ export class SubmitDrawingModalComponent {
 
     const formData = new FormData();
     formData.append('content', this.content);
-    formData.append('image', this.artFile);
+    
+    // Use the new image format for the artwork
+    formData.append('image_0', this.artFile);
     
     // Append evidence files with index to maintain order
     this.evidenceFiles.forEach((ef, index) => {
       formData.append(`evidence_file_${index}`, ef.file);
     });
 
-    formData.append('is_human_drawing', true as any);
-    formData.append('post_type', 'human_drawing');
+    formData.append('is_human_drawing', 'true');
+    formData.append('post_type', 'post');
     formData.append('evidence_count', this.evidenceFiles.length.toString());
 
+    console.log('Submitting post with files:', this.evidenceFiles);
+    console.log('Art file details:', {
+      name: this.artFile.name,
+      type: this.artFile.type,
+      size: this.artFile.size
+    });
+    console.log('Evidence files details:', this.evidenceFiles.map(file => ({
+      name: file.name,
+      type: file.file.type,
+      size: file.file.size
+    })));
+
+    // Log FormData contents
+    console.log('FormData contents:');
+    formData.forEach((value, key) => {
+      if (value instanceof File) {
+        console.log(`${key}:`, {
+          name: value.name,
+          type: value.type,
+          size: value.size
+        });
+      } else {
+        console.log(`${key}:`, value);
+      }
+    });
+
     this.postService.createPostWithFormData(formData).subscribe({
-      next: () => {
+      next: (response) => {
+        console.log('Post created successfully:', response);
         this.isSubmitting = false;
-        // Close with success result
         this.closeModal(true);
       },
       error: (error) => {
-        console.error('Error submitting artwork:', error);
+        console.error('Error creating post:', error);
         this.error = 'Failed to submit artwork. Please try again.';
         this.isSubmitting = false;
       }
