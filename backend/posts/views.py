@@ -159,7 +159,19 @@ class PostViewSet(viewsets.ModelViewSet):
             # Add the reply's ID to its own chain
             reply.conversation_chain.append(reply.id)
             reply.save()
+
+            # Handle multiple images
+            for key in request.FILES:
+                if key.startswith('image_'):
+                    image = request.FILES[key]
+                    PostImage.objects.create(
+                        post=reply,
+                        image=image,
+                        order=int(key.split('_')[1])
+                    )
             
+            # Return the updated reply with images
+            serializer = self.get_serializer(reply)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -66,17 +66,40 @@ export class PostService {
         formData.append(`image_${index}`, image);
       });
     }
+    console.log("formData2222: ", formData);
     return this.http.post<Post>(`${this.baseApiUrl}/posts/`, formData).pipe(
       map(post => this.addImageUrls(post))
     );
   }
 
-  createPostWithFormData(formData: FormData): Observable<Post> {
-    return this.http.post<Post>(`${this.baseApiUrl}/posts/`, formData).pipe(
+  createPostWithFormData(formData: FormData, isReply: boolean = false, handle?: string, postId?: number): Observable<Post> {
+    const url = isReply && handle && postId 
+      ? `${this.baseApiUrl}/posts/${handle}/${postId}/replies/`
+      : `${this.baseApiUrl}/posts/`;
+    
+    // Debug FormData contents
+    console.log('FormData contents:');
+    formData.forEach((value, key) => {
+      console.log(`${key}:`, value);
+      if (value instanceof File) {
+        console.log(`${key} is a File:`, {
+          name: value.name,
+          type: value.type,
+          size: value.size
+        });
+      }
+    });
+
+    console.log('Making request to:', url);
+    
+    return this.http.post<Post>(url, formData).pipe(
       map(post => this.addImageUrls(post)),
       tap(post => {
-        const currentPosts = this.posts.getValue();
-        this.posts.next([post, ...currentPosts]);
+        console.log('Response from server:', post);
+        if (!isReply) {
+          const currentPosts = this.posts.getValue();
+          this.posts.next([post, ...currentPosts]);
+        }
       })
     );
   }
@@ -325,6 +348,74 @@ export class PostService {
   getPosts(): Observable<Post[]> {
     return this.http.get<Post[]>(`${this.baseApiUrl}/posts/`).pipe(
       map(posts => posts.map(post => this.addImageUrls(post)))
+    );
+  }
+
+  createReplyWithFormData(handle: string, postId: number, formData: FormData): Observable<Post> {
+    const url = `${this.baseApiUrl}/posts/${handle}/${postId}/replies/`;
+    
+    // Log FormData contents
+    console.log('FormData contents:');
+    formData.forEach((value, key) => {
+      console.log(`${key}:`, value);
+      if (value instanceof File) {
+        console.log(`${key} is a File:`, {
+          name: value.name,
+          type: value.type,
+          size: value.size
+        });
+      }
+    });
+
+    console.log('Making request to:', url);
+    
+    return this.http.post<Post>(url, formData).pipe(
+      map(post => this.addImageUrls(post)),
+      tap(post => {
+        console.log('Response from server:', post);
+      })
+    );
+  }
+
+  createReply(handle: string, postId: number, content: string, images?: File[]): Observable<Post> {
+    const formData = new FormData();
+    formData.append('content', content);
+    
+    if (images && images.length > 0) {
+      images.forEach((file, index) => {
+        // Validate file
+        if (!(file instanceof File)) {
+          console.error(`Invalid file at index ${index}:`, file);
+          return;
+        }
+        
+        // Log file details
+        console.log(`Appending file ${index}:`, {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          isFile: file instanceof File
+        });
+        
+        formData.append(`image_${index}`, file);
+      });
+    }
+
+    // Log FormData contents
+    console.log('FormData contents before sending:');
+    formData.forEach((value, key) => {
+      console.log(`${key}:`, value);
+      if (value instanceof File) {
+        console.log(`${key} is a File:`, {
+          name: value.name,
+          type: value.type,
+          size: value.size
+        });
+      }
+    });
+    console.log("formData1111: ", formData);
+    return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/replies/`, formData).pipe(
+      map(post => this.addImageUrls(post))
     );
   }
 

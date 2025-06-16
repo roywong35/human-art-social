@@ -28,10 +28,14 @@
         <p class="text-[16px] whitespace-pre-wrap">{{ data.post.content }}</p>
         
         <!-- Post Image -->
-        <div *ngIf="data.post.image" class="mt-2">
-          <img [src]="data.post.image" 
-               [alt]="'Post by ' + data.post.author.username"
-               class="rounded-xl max-h-[300px] w-auto object-cover">
+        <div *ngIf="data.post.images && data.post.images.length > 0" class="mt-2">
+          <div class="grid grid-cols-2 gap-1">
+            <div *ngFor="let image of data.post.images" class="relative">
+              <img [src]="image.image_url || image.image" 
+                   [alt]="'Post by ' + data.post.author.username"
+                   class="rounded-xl max-h-[300px] w-auto object-cover">
+            </div>
+          </div>
         </div>
 
         <!-- Replying To -->

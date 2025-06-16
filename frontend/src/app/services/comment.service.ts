@@ -25,7 +25,10 @@ export class CommentService {
     return this.http.get<Post[]>(`${this.baseApiUrl}/posts/${handle}/${commentId}/parent-chain/`);
   }
 
-  createComment(handle: string, postId: number, content: string): Observable<Post> {
+  createComment(handle: string, postId: number, content: string, formData?: FormData): Observable<Post> {
+    if (formData) {
+      return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/replies/`, formData);
+    }
     return this.http.post<Post>(`${this.baseApiUrl}/posts/${handle}/${postId}/replies/`, { content });
   }
 

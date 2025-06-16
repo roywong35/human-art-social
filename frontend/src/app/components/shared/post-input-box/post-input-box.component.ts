@@ -9,7 +9,7 @@ import { EmojiPickerComponent } from '../../shared/emoji-picker/emoji-picker.com
 @Component({
   selector: 'app-post-input-box',
   standalone: true,
-  imports: [CommonModule, FormsModule, PickerComponent, EmojiPickerComponent],
+  imports: [CommonModule, FormsModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './post-input-box.component.html',
   styleUrls: ['./post-input-box.component.scss']

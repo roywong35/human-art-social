@@ -117,10 +117,15 @@ export class CommentDialogComponent implements OnInit {
     const formData = new FormData();
     formData.append('content', this.replyContent);
     this.images.forEach((image, index) => {
-      formData.append(`image${index}`, image.file);
+      formData.append(`image_${index}`, image.file);
     });
 
-    this.commentService.createComment(this.data.post.author.handle, this.data.post.id, this.replyContent).subscribe({
+    this.commentService.createComment(
+      this.data.post.author.handle, 
+      this.data.post.id, 
+      this.replyContent,
+      this.images.length > 0 ? formData : undefined
+    ).subscribe({
       next: (comment) => {
         this.isSubmitting = false;
         this.dialogRef.close(comment);

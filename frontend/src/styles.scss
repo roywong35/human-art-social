@@ -4,6 +4,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent unwanted scrollbars */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Remove resize handle from Material Dialog */
+.mat-mdc-dialog-container {
+  .mdc-dialog__surface {
+    resize: none !important;
+  }
+}
+
 @layer components {
   .form-input {
     @apply mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm;
@@ -64,6 +76,7 @@
   .mat-mdc-dialog-container {
     .mdc-dialog__surface {
       background: transparent;
+      resize: none !important;
     }
   }
 }
@@ -390,5 +403,14 @@ em-emoji-picker {
     background: transparent;
     box-shadow: none;
   }
+}
+
+/* Hide scrollbars globally for all textarea elements */
+textarea::-webkit-scrollbar {
+  display: none;
+}
+textarea {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
 }
 

@@ -2,12 +2,14 @@
 :host {
   display: block;
   width: 100%;
+  overflow-x: hidden;
 }
 
 .post-detail-container {
   max-width: 600px;
   margin: 0 auto;
   padding: 1rem;
+  overflow-x: hidden;
 }
 
 .loading-container {

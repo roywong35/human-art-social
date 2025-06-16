@@ -30,7 +30,7 @@
         </div>
 
         <!-- Post content -->
-        <p class="text-gray-800 mt-1 break-words whitespace-pre-wrap">{{ post.content }}</p>
+        <p class="text-gray-800 mt-1 pl-0.5 break-words whitespace-pre-wrap">{{ post.content }}</p>
 
         <!-- Referenced post for quotes -->
         <div *ngIf="post.post_type === 'quote' && post.referenced_post" class="mt-3 border border-gray-200 rounded-xl p-3">

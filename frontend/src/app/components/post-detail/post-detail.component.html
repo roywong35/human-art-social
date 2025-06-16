@@ -28,7 +28,6 @@
           <div class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
                [style]="i === 0 ? 'top: 45px; height: calc(100% - 45px);' : 'top: 0; height: 100%;'">
           </div>
-          
           <app-post 
             [post]="parentPost"
             [isDetailView]="true"
@@ -46,7 +45,6 @@
            class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
            style="top: 0; height: 45px;">
       </div>
-      
       <app-post 
         [post]="post" 
         [isDetailView]="true"
@@ -59,15 +57,14 @@
     <!-- Reply Input -->
     <div *ngIf="currentUser" class="border-t border-b bg-white p-3">
       <div class="flex">
-        <!-- Profile picture only shown when focused -->
-        <img *ngIf="replyFocused" 
-             [src]="currentUser.profile_picture || defaultAvatar" 
-             [alt]="currentUser.username" 
-             class="w-10 h-10 rounded-full mt-8">
+        <img 
+          [src]="currentUser.profile_picture || defaultAvatar" 
+          [alt]="currentUser.username" 
+          class="w-10 h-10 rounded-full  mr-3">
         <div class="flex-grow">
           <!-- Reply to text (only shown when expanded) -->
           <div *ngIf="replyFocused" class="text-gray-500 text-base mb-2 ml-2">
-            Replying to <span class="text-blue-500">{{'@'}}{{post.author.handle}}</span>
+            Replying to <span class="text-blue-500">{{'@' + post.author.handle}}</span>
           </div>
 
           <!-- Input area -->
@@ -147,16 +144,16 @@
             <!-- Reply button (only shown when not focused) -->
             <button
               *ngIf="!replyFocused"
-              [class.opacity-50]="!newReply.trim()"
-              [class.cursor-not-allowed]="!newReply.trim()"
+              [class.opacity-50]="!newReply.trim() && images.length === 0"
+              [class.cursor-not-allowed]="!newReply.trim() && images.length === 0"
               (click)="submitReply()"
-              class="absolute bottom-2 right-2 px-4 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
+              class="absolute bottom-1 right-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
               Reply
             </button>
           </div>
           
           <!-- Bottom actions (only shown when focused) -->
-          <div *ngIf="replyFocused" class="flex justify-between items-center mt-2">
+          <div *ngIf="replyFocused" class="flex justify-between items-center mt-2 ml-1">
             <!-- Left side: Photo and Emoji pickers -->
             <div class="flex items-center space-x-2">
               <!-- Photo picker -->
@@ -175,10 +172,10 @@
 
             <!-- Right side: Reply button -->
             <button
-              [class.opacity-50]="!newReply.trim()"
-              [class.cursor-not-allowed]="!newReply.trim()"
+              [class.opacity-50]="!newReply.trim() && images.length === 0"
+              [class.cursor-not-allowed]="!newReply.trim() && images.length === 0"
               (click)="submitReply()"
-              class="px-4 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
+              class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
               Reply
             </button>
           </div>

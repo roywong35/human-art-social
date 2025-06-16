@@ -16,10 +16,18 @@ class EvidenceFileSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
 class PostImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = PostImage
-        fields = ['id', 'image', 'order', 'created_at']
+        fields = ['id', 'image', 'image_url', 'order', 'created_at']
         read_only_fields = ['created_at']
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return None
 
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)

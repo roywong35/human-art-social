@@ -3,6 +3,7 @@ import { User } from './user.model';
 export interface PostImage {
   id: number;
   image: string;
+  image_url?: string;
   order: number;
   created_at: string;
 }

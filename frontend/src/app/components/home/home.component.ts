@@ -199,9 +199,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected onPostSubmit(data: { content: string, image?: File }): void {
+  protected onPostSubmit(data: { content: string, images?: File[] }): void {
     this.isSubmitting = true;
-    this.postService.createPost(data.content, data.image ? [data.image] : undefined).subscribe({
+    this.postService.createPost(data.content, data.images).subscribe({
       next: (post) => {
         this.posts.unshift(post);
       },

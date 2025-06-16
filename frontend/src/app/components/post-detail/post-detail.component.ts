@@ -12,11 +12,12 @@ import { User } from '../../models/user.model';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { EmojiPickerService } from '../../services/emoji-picker.service';
 import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
+import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 
 @Component({
   selector: 'app-post-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, PostComponent, PickerComponent, EmojiPickerComponent],
+  imports: [CommonModule, FormsModule, PostComponent, TimeAgoPipe],
   templateUrl: './post-detail.component.html',
   styles: []
 })
@@ -99,13 +100,9 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   submitReply(): void {
     if (!this.post || (!this.newReply.trim() && this.images.length === 0)) return;
 
-    const formData = new FormData();
-    formData.append('content', this.newReply);
-    this.images.forEach((image, index) => {
-      formData.append(`image${index}`, image.file);
-    });
+    const imageFiles = this.images.map(img => img.file);
 
-    this.commentService.createComment(this.post.author.handle, this.post.id, this.newReply).subscribe({
+    this.postService.createReply(this.post.author.handle, this.post.id, this.newReply, imageFiles).subscribe({
       next: (reply) => {
         this.replies.unshift(reply);
         this.newReply = '';
@@ -318,6 +315,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   }
 
   onPhotoClick(event: MouseEvent): void {
+    console.log('Photo click handler called');
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -328,6 +326,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
       const files = target.files;
       
       if (files) {
+        console.log('Files selected:', files);
         const newFiles = Array.from(files).slice(0, 4 - this.images.length);
         newFiles.forEach(file => {
           const id = Math.random().toString(36).substring(7);
@@ -337,6 +336,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
             preview: URL.createObjectURL(file)
           });
         });
+        console.log('Images array after adding:', this.images);
       }
     };
     
