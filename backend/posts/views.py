@@ -288,17 +288,8 @@ class PostViewSet(viewsets.ModelViewSet):
                 post_type='repost',
                 referenced_post=original_post,
                 reposted_at=timezone.now(),  # Set reposted_at to current time
-                created_at=original_post.created_at,  # Keep original timestamp
-                image=original_post.image,
-                media=original_post.media
+                created_at=timezone.now()   # Use current time for created_at
             )
-            # Copy images if any
-            for image in original_post.images.all():
-                PostImage.objects.create(
-                    post=repost,
-                    image=image.image,
-                    order=image.order
-                )
             return Response({'status': 'reposted'})
 
     @action(detail=True, methods=['POST'])
