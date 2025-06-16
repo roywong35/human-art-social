@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, CUSTOM_ELEMENTS_SCHEMA, NgModule, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, CUSTOM_ELEMENTS_SCHEMA, NgModule, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Post } from '../../models/post.model';
 import { PostService } from '../../services/post.service';
@@ -45,6 +45,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   // Properties for post creation
   isSubmitting = false;
   private subscriptions = new Subscription();
+  private scrollThrottleTimeout: any;
 
   constructor(
     private postService: PostService,
@@ -54,7 +55,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private cd: ChangeDetectorRef,
     private postUpdateService: PostUpdateService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private ngZone: NgZone
   ) {
     // Subscribe to route query params to detect tab changes
     this.subscriptions.add(
@@ -67,26 +69,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       })
     );
 
-    // Subscribe to post updates
-    this.subscriptions.add(
-      this.postUpdateService.postUpdate$.subscribe(({ postId, updatedPost }) => {
-        this.posts = this.posts.map(post => {
-          if (post.id === postId) {
-            return { ...post, ...updatedPost };
-          }
-          if (post.post_type === 'repost' && post.referenced_post && post.referenced_post.id === postId) {
-            return {
-              ...post,
-              referenced_post: { ...post.referenced_post, ...updatedPost }
-            };
-          }
-          return post;
-        });
-        this.cd.markForCheck();
-      })
-    );
-
-    // Subscribe to posts stream
+    // Subscribe to posts$ stream for initial load and pagination
     this.subscriptions.add(
       this.postService.posts$.subscribe({
         next: (posts: Post[]) => {
@@ -94,8 +77,16 @@ export class HomeComponent implements OnInit, OnDestroy {
             console.warn('Received null posts');
             this.posts = [];
           } else {
-            console.log('Home component received posts:', posts.length);
-            this.posts = posts;
+            // Only replace posts on initial load or refresh
+            if (this.isInitialLoading || !this.posts.length) {
+              this.posts = posts;
+            } else {
+              // For infinite scroll, append new posts
+              const newPosts = posts.filter(newPost => 
+                !this.posts.some(existingPost => existingPost.id === newPost.id)
+              );
+              this.posts = [...this.posts, ...newPosts];
+            }
           }
           this.isInitialLoading = false;
           this.isLoadingMore = false;
@@ -111,17 +102,51 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       })
     );
+
+    // Subscribe to post updates for real-time interactions
+    this.subscriptions.add(
+      this.postUpdateService.postUpdate$.subscribe(({ postId, updatedPost }) => {
+        // Find all instances of the post (original and reposts)
+        this.posts = this.posts.map(post => {
+          if (post.id === postId) {
+            // Update the post while preserving its position in the array
+            return { ...post, ...updatedPost };
+          }
+          // Also update any referenced posts (for reposts)
+          if (post.post_type === 'repost' && post.referenced_post?.id === postId) {
+            return {
+              ...post,
+              referenced_post: { ...post.referenced_post, ...updatedPost }
+            };
+          }
+          return post;
+        });
+        this.cd.markForCheck();
+      })
+    );
   }
 
   @HostListener('window:scroll', ['$event'])
   onScroll(): void {
-    // Check if we're near the bottom of the page (80% scrolled)
-    const scrollPosition = window.innerHeight + window.scrollY;
-    const scrollThreshold = document.documentElement.scrollHeight * 0.8;
+    // Run scroll handling outside Angular zone for better performance
+    this.ngZone.runOutsideAngular(() => {
+      if (this.scrollThrottleTimeout) {
+        return;
+      }
 
-    if (scrollPosition >= scrollThreshold && !this.isLoadingMore && this.postService.hasMorePosts) {
-      this.loadMorePosts();
-    }
+      this.scrollThrottleTimeout = setTimeout(() => {
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const scrollThreshold = document.documentElement.scrollHeight * 0.8;
+
+        if (scrollPosition >= scrollThreshold && !this.isLoadingMore && this.postService.hasMorePosts) {
+          // Run loadMorePosts inside Angular zone
+          this.ngZone.run(() => {
+            this.loadMorePosts();
+          });
+        }
+        this.scrollThrottleTimeout = null;
+      }, 200); // Increased throttle time to reduce sensitivity
+    });
   }
 
   loadMorePosts(): void {
@@ -161,12 +186,21 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   onLike(post: Post): void {
+    // Optimistic UI update
+    post.is_liked = !post.is_liked;
+    post.likes_count = (post.likes_count || 0) + (post.is_liked ? 1 : -1);
+    this.cd.markForCheck();
+
+    // Backend call
     this.postService.likePost(post.author.handle, post.id).subscribe({
-      next: () => {
+      error: (error) => {
+        // Revert on error
         post.is_liked = !post.is_liked;
         post.likes_count = (post.likes_count || 0) + (post.is_liked ? 1 : -1);
-      },
-      error: (error) => console.error('Error liking post:', error)
+        this.cd.markForCheck();
+        console.error('Error liking post:', error);
+        this.notificationService.showError('Failed to update like');
+      }
     });
   }
 
@@ -194,14 +228,46 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   onRepost(post: Post): void {
+    // Optimistic UI update
+    post.is_reposted = !post.is_reposted;
+    post.reposts_count = (post.reposts_count || 0) + (post.is_reposted ? 1 : -1);
+    this.cd.markForCheck();
+
+    // Backend call
     this.postService.repost(post.author.handle, post.id).subscribe({
       next: (response) => {
+        // Update with full server response to ensure consistency
         const index = this.posts.findIndex(p => p.id === post.id);
         if (index !== -1) {
           this.posts[index] = response;
+          this.cd.markForCheck();
         }
       },
-      error: (error) => console.error('Error reposting:', error)
+      error: (error) => {
+        // Revert on error
+        post.is_reposted = !post.is_reposted;
+        post.reposts_count = (post.reposts_count || 0) + (post.is_reposted ? 1 : -1);
+        this.cd.markForCheck();
+        console.error('Error reposting:', error);
+        this.notificationService.showError('Failed to repost');
+      }
+    });
+  }
+
+  onBookmark(post: Post): void {
+    // Optimistic UI update
+    post.is_bookmarked = !post.is_bookmarked;
+    this.cd.markForCheck();
+
+    // Backend call
+    this.postService.bookmarkPost(post.author.handle, post.id).subscribe({
+      error: (error) => {
+        // Revert on error
+        post.is_bookmarked = !post.is_bookmarked;
+        this.cd.markForCheck();
+        console.error('Error bookmarking post:', error);
+        this.notificationService.showError('Failed to update bookmark');
+      }
     });
   }
 
@@ -274,5 +340,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+    if (this.scrollThrottleTimeout) {
+      clearTimeout(this.scrollThrottleTimeout);
+    }
   }
 } 

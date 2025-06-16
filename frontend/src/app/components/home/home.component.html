@@ -66,7 +66,13 @@
 
     <ng-container *ngFor="let post of posts">
       <app-human-art-post *ngIf="activeTab === 'human-drawing'" [post]="post"></app-human-art-post>
-      <app-post *ngIf="activeTab === 'for-you'" [post]="post"></app-post>
+      <app-post *ngIf="activeTab === 'for-you'" 
+                [post]="post"
+                (likeClicked)="onLike(post)"
+                (repostClicked)="onRepost(post)"
+                (bookmarkClicked)="onBookmark(post)"
+                (shareClicked)="onShare(post)">
+      </app-post>
     </ng-container>
 
     <!-- Loading more posts indicator -->

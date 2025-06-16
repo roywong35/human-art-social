@@ -178,7 +178,7 @@
         </button>
 
         <!-- Repost button -->
-        <div class="relative">
+        <div class="relative" (click)="$event.stopPropagation()">
           <button class="flex items-center gap-2 text-gray-500 hover:text-green-500 p-1.5 rounded-full transition-colors group"
                   [class.text-green-500]="post.is_reposted"
                   (click)="toggleRepostMenu($event); $event.stopPropagation()">
@@ -196,20 +196,20 @@
 
         <!-- Like button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-red-500 p-1.5 rounded-full transition-colors group"
-                (click)="onLike($event); $event.stopPropagation()">
+                (click)="onLike($event)">
           <i [class]="post.is_liked ? 'fas fa-heart text-red-500' : 'far fa-heart'" class="text-[18px] group-hover:text-red-500"></i>
-          <span class="text-sm min-w-[20px] text-center" [class.text-red-500]="post.is_liked">{{ post.likes_count }}</span>
+          <span class="text-sm min-w-[20px] text-center" [class.text-red-500]="post.is_liked">{{ post.likes_count || 0 }}</span>
         </button>
 
         <!-- Share button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
-                (click)="onShare($event); $event.stopPropagation()">
-          <i class="far fa-share-square text-[18px] group-hover:text-blue-500"></i>
+                (click)="onShare($event)">
+          <i class="fas fa-share text-[18px] group-hover:text-blue-500"></i>
         </button>
 
         <!-- Bookmark button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
-                (click)="onBookmark($event); $event.stopPropagation()">
+                (click)="onBookmark($event)">
           <i [class]="post.is_bookmarked ? 'fas fa-bookmark text-blue-500' : 'far fa-bookmark'" class="text-[18px] group-hover:text-blue-500"></i>
         </button>
       </div>

@@ -1,9 +1,9 @@
-<div class="repost-menu">
-  <div class="menu-item" (click)="onRepost()">
+<div class="repost-menu" (click)="$event.stopPropagation()">
+  <div class="menu-item" (click)="onRepost(); $event.stopPropagation()">
     <i class="fas font-extrabold fa-retweet"></i>
     <span>{{ isReposted ? 'Undo Repost' : 'Repost' }}</span>
   </div>
-  <div class="menu-item" (click)="onQuote()">
+  <div class="menu-item" (click)="onQuote(); $event.stopPropagation()">
     <i class="fas font-extrabold fa-quote-right"></i>
     <span>Quote</span>
   </div>

@@ -249,23 +249,12 @@ export class PostComponent implements OnInit, OnDestroy {
 
   onLike(event: MouseEvent): void {
     event.stopPropagation();
-    if (!this.currentUser) return;
-    
-    this.postService.likePost(this.post.author.handle, this.post.id).subscribe({
-      next: (response) => {
-        // UI is already updated by the service
-        this.postUpdated.emit(this.post);
-      },
-      error: (error) => {
-        console.error('Error liking post:', error);
-        // Service will handle reverting the state
-      }
-    });
+    this.likeClicked.emit();
   }
 
   onRepost(event: MouseEvent): void {
     event.stopPropagation();
-    this.toggleRepostMenu(event);
+    this.repostClicked.emit();
   }
 
   onShare(event: MouseEvent): void {
@@ -337,32 +326,15 @@ export class PostComponent implements OnInit, OnDestroy {
   }
 
   async onRepostOption(option: 'repost' | 'quote' | 'unrepost') {
-    console.log('Repost option clicked:', option);
-    console.log('Current post state:', this.post);
     if (option === 'quote') {
       this.openQuoteModal();
       return;
     }
-    try {
-      console.log('Sending repost request...');
-      const response = await this.postService.repostPost(this.post.author.handle, this.post.id.toString()).toPromise();
-      console.log('Repost response:', response);
-      console.log('Is reposted:', response?.reposted);
-      
-      if (option === 'unrepost' || response?.reposted === false) {
-        // Handle unrepost
-        this.post.is_reposted = false;
-        this.post.reposts_count = Math.max(0, this.post.reposts_count - 1);
-        this.postUpdated.emit(this.post);
-      } else if (response?.reposted || option === 'repost') {
-        // Handle repost
-        this.post.is_reposted = true;
-        this.post.reposts_count++;
-        this.postUpdated.emit(this.post);
-      }
-      window.location.reload();
-    } catch (error) {
-      console.error('Error during repost:', error);
+
+    this.showRepostMenu = false; // Close menu immediately
+
+    if (option === 'repost' || option === 'unrepost') {
+      this.repostClicked.emit(); // Emit event to parent
     }
   }
 
