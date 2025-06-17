@@ -63,18 +63,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.postService.posts$.subscribe({
         next: (posts: Post[]) => {
-          console.log('[HomeComponent] Received posts update:', {
-            count: posts?.length,
-            isInitialLoading: this.isInitialLoading,
-            currentCount: this.posts.length
-          });
-          
           if (!posts) {
-            console.warn('[HomeComponent] Received null posts');
             this.posts = [];
           } else {
             // Always replace posts array to ensure change detection
-            console.log('[HomeComponent] Updating posts array');
             this.posts = [...posts];
           }
           
@@ -83,7 +75,6 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.cd.markForCheck();
         },
         error: (error: Error) => {
-          console.error('[HomeComponent] Error in posts$ subscription:', error);
           this.error = 'Failed to load posts. Please try again.';
           this.posts = [];
           this.isInitialLoading = false;
@@ -96,7 +87,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Subscribe to post updates for real-time interactions
     this.subscriptions.add(
       this.postUpdateService.postUpdate$.subscribe(({ postId, updatedPost }) => {
-        console.log('[HomeComponent] Received post update:', { postId });
         // Find all instances of the post (original and reposts)
         this.posts = this.posts.map(post => {
           if (post.id === postId) {
@@ -149,12 +139,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   loadPosts(refresh: boolean = false): void {
-    console.log('[HomeComponent] Loading posts:', {
-      tab: this.activeTab,
-      refresh,
-      isInitialLoading: this.isInitialLoading
-    });
-    
     this.error = null;
     this.isInitialLoading = refresh;
     this.cd.markForCheck();
@@ -164,8 +148,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    console.log('Home component initialized');
-    
     // Get initial tab state from URL params or localStorage
     const tabFromParams = this.route.snapshot.queryParams['tab'];
     const savedTab = localStorage.getItem('activeTab');
@@ -173,16 +155,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     localStorage.setItem('activeTab', this.activeTab);
     
     // Initial load of posts
-    console.log('Initial load for tab:', this.activeTab);
     this.loadPosts(true);
     
     // Subscribe to future tab changes
     this.subscriptions.add(
       this.route.queryParams.subscribe(params => {
-        console.log('Query params changed:', params);
         const newTab = params['tab'] || 'for-you';
         if (this.activeTab !== newTab) {
-          console.log('Tab changed from', this.activeTab, 'to', newTab);
           this.activeTab = newTab as 'for-you' | 'human-drawing';
           localStorage.setItem('activeTab', this.activeTab);
           this.loadPosts(true);
@@ -201,17 +180,14 @@ export class HomeComponent implements OnInit, OnDestroy {
     const newCount = originalPost.likes_count + (newLikeState ? 1 : -1);
 
     this.ngZone.run(() => {
-      let updatedPosts = 0;
       this.posts.forEach(p => {
         if (p.id === originalPost.id) {
           p.is_liked = newLikeState;
           p.likes_count = newCount;
-          updatedPosts++;
         }
         if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
           p.referenced_post.is_liked = newLikeState;
           p.referenced_post.likes_count = newCount;
-          updatedPosts++;
         }
       });
 
@@ -337,15 +313,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     const newBookmarkState = !originalPost.is_bookmarked;
 
     this.ngZone.run(() => {
-      let updatedPosts = 0;
       this.posts.forEach(p => {
         if (p.id === originalPost.id) {
           p.is_bookmarked = newBookmarkState;
-          updatedPosts++;
         }
         if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
           p.referenced_post.is_bookmarked = newBookmarkState;
-          updatedPosts++;
         }
       });
 
@@ -388,14 +361,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     const url = `${window.location.origin}/${post.author.handle}/post/${post.id}`;
     navigator.clipboard.writeText(url).then(() => {
       this.notificationService.showSuccess('Post link copied to clipboard');
-    }).catch((error: Error) => {
+    }).catch(() => {
       this.notificationService.showError('Failed to copy link to clipboard');
-      console.error('Error copying to clipboard:', error);
     });
   }
 
   onImageError(event: any): void {
-    console.error('Image failed to load:', event.target.src);
     // Optionally set a fallback image
     event.target.src = 'assets/image-placeholder.png';
   }
@@ -420,9 +391,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   protected onPostSubmit(data: { content: string, images?: File[] }): void {
     this.isSubmitting = true;
     this.postService.createPost(data.content, data.images).subscribe({
-      error: (error) => {
-        console.error('Error creating post:', error);
-      },
       complete: () => {
         this.isSubmitting = false;
       }

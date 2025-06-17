@@ -92,6 +92,7 @@ export class PostComponent implements OnInit, OnDestroy {
         ({ postId, updatedPost }) => {
           if (this.post.id === postId) {
             this.post = { ...this.post, ...updatedPost };
+            this.cd.markForCheck();
           }
         }
       )
@@ -123,15 +124,6 @@ export class PostComponent implements OnInit, OnDestroy {
   }
 
   ngOnChanges() {
-    console.log('Post component: Input post changed:', { 
-      id: this.post.id, 
-      type: this.post.post_type,
-      isLiked: this.post.is_liked,
-      likesCount: this.post.likes_count,
-      isReposted: this.post.is_reposted,
-      repostsCount: this.post.reposts_count,
-      isBookmarked: this.post.is_bookmarked
-    });
     this.cd.markForCheck();
   }
 
@@ -278,15 +270,7 @@ export class PostComponent implements OnInit, OnDestroy {
 
   onLike(event: Event): void {
     event.stopPropagation();
-    console.log('Post component: Emitting like event for post:', { 
-      id: this.post.id, 
-      type: this.post.post_type,
-      referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
-    });
-    this.ngZone.run(() => {
-      this.likeClicked.emit(this.post);
-      this.cd.detectChanges();
-    });
+    this.likeClicked.emit(this.post);
   }
 
   onRepost(event: Event): void {
@@ -316,15 +300,7 @@ export class PostComponent implements OnInit, OnDestroy {
 
   onBookmark(event: Event): void {
     event.stopPropagation();
-    console.log('Post component: Emitting bookmark event for post:', { 
-      id: this.post.id, 
-      type: this.post.post_type,
-      referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
-    });
-    this.ngZone.run(() => {
-      this.bookmarkClicked.emit(this.post);
-      this.cd.detectChanges();
-    });
+    this.bookmarkClicked.emit(this.post);
   }
 
   protected onImageError(event: any): void {

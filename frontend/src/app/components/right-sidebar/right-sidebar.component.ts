@@ -1,6 +1,9 @@
 import { Component, ElementRef, OnInit, OnDestroy, HostBinding, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
+import { HashtagService, HashtagResult } from '../../services/hashtag.service';
+import { Router } from '@angular/router';
 
 interface TrendingTopic {
   name: string;
@@ -18,7 +21,7 @@ interface RecommendedUser {
 @Component({
   selector: 'app-right-sidebar',
   standalone: true,
-  imports: [CommonModule, SearchBarComponent],
+  imports: [CommonModule, FormsModule, SearchBarComponent],
   templateUrl: './right-sidebar.component.html',
   styleUrls: ['./right-sidebar.component.scss']
 })
@@ -26,8 +29,11 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   @HostBinding('class.sticky') isSticky = false;
   private initialTop: number | null = null;
   private sidebarHeight: number = 0;
+  selectedTimeframe: 'hour' | 'day' = 'hour';
+  isRefreshing = false;
+  trendingTopics: HashtagResult[] = [];
 
-  trendingTopics: TrendingTopic[] = [
+  trendingTopicsOriginal: TrendingTopic[] = [
     { name: 'Angular', postCount: 125000, category: 'Technology' },
     { name: 'TypeScript', postCount: 98000, category: 'Programming' },
     { name: 'WebDev', postCount: 85000, category: 'Technology' },
@@ -58,7 +64,12 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
   private scrollHandler: () => void;
 
-  constructor(private elementRef: ElementRef, private renderer: Renderer2) {
+  constructor(
+    private elementRef: ElementRef,
+    private renderer: Renderer2,
+    private hashtagService: HashtagService,
+    private router: Router
+  ) {
     this.scrollHandler = () => {
       if (this.initialTop === null) {
         const rect = this.elementRef.nativeElement.getBoundingClientRect();
@@ -99,19 +110,53 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     }, 0);
 
     window.addEventListener('scroll', this.scrollHandler, { passive: true });
+    this.loadTrending();
   }
 
   ngOnDestroy() {
     window.removeEventListener('scroll', this.scrollHandler);
   }
 
+  onTimeframeChange() {
+    this.loadTrending();
+  }
+
+  refreshTrending() {
+    this.isRefreshing = true;
+    this.hashtagService.calculateTrending(this.selectedTimeframe).subscribe({
+      next: (response) => {
+        this.trendingTopics = response.results;
+        this.isRefreshing = false;
+      },
+      error: (error) => {
+        console.error('Error refreshing trending:', error);
+        this.isRefreshing = false;
+      }
+    });
+  }
+
+  private loadTrending() {
+    this.hashtagService.getTrendingHashtags(this.selectedTimeframe).subscribe({
+      next: (response) => {
+        this.trendingTopics = response.results;
+      },
+      error: (error) => {
+        console.error('Error loading trending:', error);
+      }
+    });
+  }
+
   formatCount(count: number): string {
     if (count >= 1000000) {
-      return `${(count / 1000000).toFixed(1)}M`;
+      return (count / 1000000).toFixed(1) + 'M';
     }
     if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K`;
+      return (count / 1000).toFixed(1) + 'K';
     }
     return count.toString();
+  }
+
+  navigateToHashtag(hashtag: string) {
+    this.router.navigate(['/search'], { queryParams: { q: `#${hashtag}` } });
   }
 } 

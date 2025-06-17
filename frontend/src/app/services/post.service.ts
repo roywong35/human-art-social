@@ -61,18 +61,9 @@ export class PostService {
     
     this.loading = true;
     const followingOnly = localStorage.getItem('following_only_preference') === 'true';
-    console.log('[PostService] Starting loadPosts with:', {
-      refresh,
-      activeTab,
-      isAuthenticated: this.authService.isAuthenticated(),
-      currentPage: this.currentPage,
-      followingOnly,
-      loading: this.loading
-    });
 
     // Clear current posts if refreshing
     if (refresh) {
-      console.log('[PostService] Clearing current posts for refresh');
       this.posts.next([]);
     }
 
@@ -80,15 +71,7 @@ export class PostService {
     source.pipe(
       take(1),
       map((response: PaginatedResponse) => {
-        console.log('[PostService] Received API response:', {
-          count: response?.count,
-          hasNext: !!response?.next,
-          resultCount: response?.results?.length,
-          followingOnly
-        });
-
         if (!response || !response.results) {
-          console.error('[PostService] Invalid response format:', response);
           this.posts.next([]);
           return;
         }
@@ -97,10 +80,6 @@ export class PostService {
         
         // Always emit new posts array to force change detection
         const newPosts = [...response.results];
-        console.log('[PostService] Emitting new posts:', {
-          count: newPosts.length,
-          refresh
-        });
         this.posts.next(newPosts);
         
         // Only increment page number if there are more posts to load
@@ -109,30 +88,20 @@ export class PostService {
         }
       }),
       catchError((error) => {
-        console.error('[PostService] Error loading posts:', {
-          error,
-          status: error.status,
-          message: error.message,
-          url: error.url,
-          statusText: error.statusText
-        });
         this.loading = false;
         this.hasMore = false;
         this.posts.next([]);
-        // Instead of throwing, return an empty observable
         return of(undefined);
       }),
       tap({
         next: () => {
-          console.log('[PostService] Request completed successfully');
           this.loading = false;
         },
-        error: (error) => {
-          console.error('[PostService] Unexpected error in tap:', error);
+        error: () => {
           this.loading = false;
         }
       })
-    ).subscribe(); // Execute the request immediately
+    ).subscribe();
   }
 
   private getFeed(activeTab?: string): Observable<PaginatedResponse> {
@@ -140,19 +109,7 @@ export class PostService {
     const postType = tab === 'human-drawing' ? 'human_drawing' : 'all';
     const followingOnly = localStorage.getItem('following_only_preference') === 'true';
     const url = `${this.baseUrl}/posts/feed/?page=${this.currentPage}&post_type=${postType}&following_only=${followingOnly}`;
-    console.log('[PostService] Making getFeed request to:', url);
-    return this.http.get<PaginatedResponse>(url).pipe(
-      catchError(error => {
-        console.error('[PostService] Error in getFeed:', {
-          error,
-          status: error.status,
-          message: error.message,
-          url,
-          statusText: error.statusText
-        });
-        throw error;
-      })
-    );
+    return this.http.get<PaginatedResponse>(url);
   }
 
   private getExplore(activeTab?: string): Observable<PaginatedResponse> {
@@ -160,19 +117,7 @@ export class PostService {
     const postType = tab === 'human-drawing' ? 'human_drawing' : 'all';
     const followingOnly = localStorage.getItem('following_only_preference') === 'true';
     const url = `${this.baseUrl}/posts/explore/?page=${this.currentPage}&post_type=${postType}&following_only=${followingOnly}`;
-    console.log('[PostService] Making getExplore request to:', url);
-    return this.http.get<PaginatedResponse>(url).pipe(
-      catchError(error => {
-        console.error('[PostService] Error in getExplore:', {
-          error,
-          status: error.status,
-          message: error.message,
-          url,
-          statusText: error.statusText
-        });
-        throw error;
-      })
-    );
+    return this.http.get<PaginatedResponse>(url);
   }
 
   // Method to refresh posts after verification
@@ -204,21 +149,6 @@ export class PostService {
     const url = isReply && handle && postId 
       ? `${this.baseUrl}/posts/${handle}/${postId}/replies/`
       : `${this.baseUrl}/posts/`;
-    
-    // Debug FormData contents
-    console.log('FormData contents:');
-    formData.forEach((value, key) => {
-      console.log(`${key}:`, value);
-      if (value instanceof File) {
-        console.log(`${key} is a File:`, {
-          name: value.name,
-          type: value.type,
-          size: value.size
-        });
-      }
-    });
-
-    console.log('Making request to:', url);
     
     return this.http.post<Post>(url, formData).pipe(
       map(post => this.addImageUrls(post)),
@@ -255,40 +185,10 @@ export class PostService {
   }
 
   likePost(handle: string, postId: number): Observable<{liked: boolean}> {
-    // Get current posts state
-    const posts = this.posts.getValue();
-    const post = posts.find(p => p.id === postId);
-    if (!post) return new Observable();
-
-    // Get the target post (original post for reposts)
-    const targetPost = post.post_type === 'repost' && post.referenced_post ? post.referenced_post : post;
-    const targetPostId = targetPost.id;
-
-    // Optimistically update UI
-    const newLikedState = !post.is_liked;
-    const updatedPosts = posts.map(p => {
-      // Update both the post and any related posts (original or reposts)
-      const isRelatedPost = p.id === targetPostId || 
-                          (p.post_type === 'repost' && p.referenced_post?.id === targetPostId) ||
-                          (p.id === postId);
-      
-      if (isRelatedPost) {
-        return {
-          ...p,
-          is_liked: newLikedState,
-          likes_count: newLikedState ? p.likes_count + 1 : p.likes_count - 1
-        };
-      }
-      return p;
-    });
-    this.posts.next(updatedPosts);
-
-    // Send to backend using the target post's handle and ID
-    return this.http.post<{liked: boolean}>(`${this.baseUrl}/posts/${targetPost.author.handle}/${targetPostId}/like/`, {}).pipe(
-      catchError(error => {
-        // Revert on error
-        this.posts.next(posts);
-        throw error;
+    console.log('[PostService] Like post called:', { handle, postId });
+    return this.http.post<{liked: boolean}>(`${this.baseUrl}/posts/${handle}/${postId}/like/`, {}).pipe(
+      tap(response => {
+        console.log('[PostService] Like API response:', response);
       })
     );
   }
@@ -342,39 +242,10 @@ export class PostService {
   }
 
   bookmarkPost(handle: string, postId: number): Observable<void> {
-    // Get current posts state
-    const posts = this.posts.getValue();
-    const post = posts.find(p => p.id === postId);
-    if (!post) return new Observable();
-
-    // Get the target post (original post for reposts)
-    const targetPost = post.post_type === 'repost' && post.referenced_post ? post.referenced_post : post;
-    const targetPostId = targetPost.id;
-
-    // Optimistically update UI
-    const newBookmarkedState = !post.is_bookmarked;
-    const updatedPosts = posts.map(p => {
-      // Update both the post and any related posts (original or reposts)
-      const isRelatedPost = p.id === targetPostId || 
-                          (p.post_type === 'repost' && p.referenced_post?.id === targetPostId) ||
-                          (p.id === postId);
-      
-      if (isRelatedPost) {
-        return {
-          ...p,
-          is_bookmarked: newBookmarkedState
-        };
-      }
-      return p;
-    });
-    this.posts.next(updatedPosts);
-
-    // Send to backend using the target post's handle and ID
-    return this.http.post<void>(`${this.baseUrl}/posts/${targetPost.author.handle}/${targetPostId}/bookmark/`, {}).pipe(
-      catchError(error => {
-        // Revert on error
-        this.posts.next(posts);
-        throw error;
+    console.log('[PostService] Bookmark post called:', { handle, postId });
+    return this.http.post<void>(`${this.baseUrl}/posts/${handle}/${postId}/bookmark/`, {}).pipe(
+      tap(() => {
+        console.log('[PostService] Bookmark API call successful');
       })
     );
   }
@@ -594,5 +465,13 @@ export class PostService {
         }
       });
     }
+  }
+
+  toggleLike(postId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/posts/${postId}/like/`, {});
+  }
+
+  toggleBookmark(postId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/posts/${postId}/bookmark/`, {});
   }
 } 

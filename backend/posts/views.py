@@ -11,6 +11,7 @@ from django.utils import timezone
 import mimetypes
 from django.db.models import Q, Case, When, F, Count
 from datetime import timedelta
+from django.core.cache import cache
 
 # Create your views here.
 
@@ -595,19 +596,61 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = HashtagSerializer(hashtags, many=True)
         return Response({'results': serializer.data})
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['GET'])
     def trending_hashtags(self, request):
-        # Get hashtags used in the last 24 hours
-        time_threshold = timezone.now() - timedelta(hours=24)
+        """Get trending hashtags from cache or calculate if needed"""
+        timeframe = request.query_params.get('timeframe', 'hour')
+        cache_key = f'trending_hashtags:{timeframe}'
         
+        # Try to get from cache first
+        results = cache.get(cache_key)
+        if results is not None:
+            return Response({'results': results})
+            
+        # If not in cache, calculate
+        results = self._calculate_trending(timeframe)
+        cache.set(cache_key, results, 300)  # Cache for 5 minutes
+        
+        return Response({'results': results})
+
+    @action(detail=False, methods=['POST'])
+    def calculate_trending(self, request):
+        """Force calculate trending hashtags"""
+        timeframe = request.data.get('timeframe', 'hour')
+        
+        # Calculate fresh results
+        results = self._calculate_trending(timeframe)
+        
+        # Update cache
+        cache_key = f'trending_hashtags:{timeframe}'
+        cache.set(cache_key, results, 300)  # Cache for 5 minutes
+        
+        return Response({'results': results})
+
+    def _calculate_trending(self, timeframe='hour'):
+        """Calculate trending hashtags for the specified timeframe"""
+        now = timezone.now()
+        
+        # Set time threshold based on timeframe
+        if timeframe == 'hour':
+            time_threshold = now - timedelta(hours=1)
+        else:  # day
+            time_threshold = now - timedelta(days=1)
+            
+        # Get trending hashtags
         trending = Hashtag.objects.filter(
             post_hashtags__created_at__gte=time_threshold
         ).annotate(
-            recent_count=Count('post_hashtags')
-        ).order_by('-recent_count')[:5]  # Top 5 trending hashtags
+            post_count=Count('post_hashtags'),
+            recent_count=Count(
+                'post_hashtags',
+                filter=Q(post_hashtags__created_at__gte=now - timedelta(minutes=15))
+            )
+        ).order_by('-post_count', '-recent_count')[:10]
         
+        # Serialize results
         serializer = HashtagSerializer(trending, many=True)
-        return Response({'results': serializer.data})
+        return serializer.data
 
     def get_object(self):
         """

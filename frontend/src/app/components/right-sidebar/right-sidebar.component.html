@@ -5,15 +5,34 @@
 
     <!-- Trending Topics -->
     <div class="bg-white rounded-lg mb-4 shadow-sm">
-      <h2 class="text-xl font-bold px-4 py-3 border-b">Trending</h2>
-      <div class="divide-y divide-gray-100">
-        <div *ngFor="let topic of trendingTopics" class="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
-          <div class="text-sm text-gray-500">{{ topic.category }}</div>
-          <div class="font-bold text-gray-900">#{{ topic.name }}</div>
-          <div class="text-sm text-gray-500">{{ formatCount(topic.postCount) }} posts</div>
+      <div class="flex items-center justify-between px-4 py-3 border-b">
+        <h2 class="text-xl font-bold">Trending</h2>
+        <div class="flex items-center gap-2">
+          <!-- Timeframe Toggle -->
+          <select [(ngModel)]="selectedTimeframe" 
+                  (change)="onTimeframeChange()"
+                  class="text-sm border rounded px-2 py-1">
+            <option value="hour">Past Hour</option>
+            <option value="day">Today</option>
+          </select>
+          <!-- Refresh Button -->
+          <button (click)="refreshTrending()" 
+                  class="text-blue-500 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                  [class.animate-spin]="isRefreshing">
+            <i class="fas fa-sync-alt"></i>
+          </button>
         </div>
       </div>
-      <a href="#" class="block px-4 py-3 text-blue-500 hover:bg-gray-50 transition-colors border-t">Show more</a>
+      <div class="divide-y divide-gray-100">
+        <div *ngFor="let topic of trendingTopics" class="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+          <div class="text-sm text-gray-500">Trending {{ selectedTimeframe === 'hour' ? 'this hour' : 'today' }}</div>
+          <div class="font-bold text-gray-900">#{{ topic.name }}</div>
+          <div class="text-sm text-gray-500">{{ formatCount(topic.post_count) }} posts</div>
+        </div>
+      </div>
+      <div *ngIf="trendingTopics.length === 0" class="px-4 py-3 text-gray-500 text-center">
+        No trending topics yet
+      </div>
     </div>
 
     <!-- Recommended Users -->
