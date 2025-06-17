@@ -242,55 +242,7 @@ export class PostService {
   }
 
   repostPost(authorHandle: string, postId: string): Observable<{reposted: boolean}> {
-    // Get current posts state
-    const posts = this.posts.getValue();
-    const post = posts.find(p => p.id === parseInt(postId));
-    if (!post) return new Observable();
-
-    console.log('Current post in service - is_reposted:', post.is_reposted);
-    console.log('Full current post:', JSON.stringify(post, null, 2));
-
-    // Get the target post (original post for reposts)
-    const targetPost = post.post_type === 'repost' && post.referenced_post ? post.referenced_post : post;
-    const targetPostId = targetPost.id.toString();
-    console.log('Target post - is_reposted:', targetPost.is_reposted);
-
-    // Optimistically update UI
-    console.log('Updating UI optimistically...');
-    const updatedPosts = posts.map(p => {
-      // Update both the post and any related posts (original or reposts)
-      const isRelatedPost = p.id === targetPost.id || 
-                          (p.post_type === 'repost' && p.referenced_post?.id === targetPost.id) ||
-                          (p.id === post.id);
-      
-      if (isRelatedPost) {
-        console.log('Updating related post:', p.id, 'is_reposted:', p.is_reposted);
-        const updatedPost = {
-          ...p,
-          is_reposted: !p.is_reposted,
-          reposts_count: p.is_reposted ? p.reposts_count - 1 : p.reposts_count + 1
-        };
-        console.log('Updated post - is_reposted:', updatedPost.is_reposted);
-        return updatedPost;
-      }
-      return p;
-    });
-    this.posts.next(updatedPosts);
-
-    // Send to backend using the target post's handle and ID
-    console.log('Sending request to backend...');
-    return this.http.post<{reposted: boolean}>(`${this.baseUrl}/posts/${targetPost.author.handle}/${targetPostId}/repost/`, {}).pipe(
-      tap(response => {
-        console.log('Backend response:', response);
-        console.log('Posts after update:', JSON.stringify(this.posts.getValue(), null, 2));
-      }),
-      catchError(error => {
-        console.error('Error from backend:', error);
-        // Revert on error
-        this.posts.next(posts);
-        throw error;
-      })
-    );
+    return this.http.post<{reposted: boolean}>(`${this.baseUrl}/posts/${authorHandle}/${postId}/repost/`, {});
   }
 
   quotePost(handle: string, postId: number, content: string, image?: File): Observable<Post> {

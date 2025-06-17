@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -35,7 +35,8 @@ import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component'
     RepostMenuComponent
   ],
   templateUrl: './post.component.html',
-  styleUrls: ['./post.component.scss']
+  styleUrls: ['./post.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PostComponent implements OnInit, OnDestroy {
   @Input() post!: Post;
@@ -48,10 +49,10 @@ export class PostComponent implements OnInit, OnDestroy {
   @Output() postUpdated = new EventEmitter<Post>();
   @Output() postDeleted = new EventEmitter<number>();
   @Output() replyClicked = new EventEmitter<void>();
-  @Output() likeClicked = new EventEmitter<void>();
-  @Output() repostClicked = new EventEmitter<void>();
+  @Output() likeClicked = new EventEmitter<Post>();
+  @Output() repostClicked = new EventEmitter<Post>();
   @Output() shareClicked = new EventEmitter<void>();
-  @Output() bookmarkClicked = new EventEmitter<void>();
+  @Output() bookmarkClicked = new EventEmitter<Post>();
 
   @ViewChild('replyTextarea') replyTextarea!: ElementRef;
 
@@ -83,7 +84,8 @@ export class PostComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private postUpdateService: PostUpdateService,
     private notificationService: NotificationService,
-    private cdr: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     this.subscriptions.add(
       this.postUpdateService.postUpdate$.subscribe(
@@ -118,6 +120,33 @@ export class PostComponent implements OnInit, OnDestroy {
     if (this.subscriptions) {
       this.subscriptions.unsubscribe();
     }
+  }
+
+  ngOnChanges() {
+    console.log('Post component: Input post changed:', { 
+      id: this.post.id, 
+      type: this.post.post_type,
+      isLiked: this.post.is_liked,
+      likesCount: this.post.likes_count,
+      isReposted: this.post.is_reposted,
+      repostsCount: this.post.reposts_count,
+      isBookmarked: this.post.is_bookmarked
+    });
+    this.cd.markForCheck();
+  }
+
+  ngDoCheck() {
+    // Log any changes to the post
+    console.log('Post component: Checking post state:', { 
+      id: this.post.id, 
+      type: this.post.post_type,
+      isLiked: this.post.is_liked,
+      likesCount: this.post.likes_count,
+      isReposted: this.post.is_reposted,
+      repostsCount: this.post.reposts_count,
+      isBookmarked: this.post.is_bookmarked,
+      referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
+    });
   }
 
   protected get canReply(): boolean {
@@ -247,14 +276,30 @@ export class PostComponent implements OnInit, OnDestroy {
     }
   }
 
-  onLike(event: MouseEvent): void {
+  onLike(event: Event): void {
     event.stopPropagation();
-    this.likeClicked.emit();
+    console.log('Post component: Emitting like event for post:', { 
+      id: this.post.id, 
+      type: this.post.post_type,
+      referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
+    });
+    this.ngZone.run(() => {
+      this.likeClicked.emit(this.post);
+      this.cd.detectChanges();
+    });
   }
 
-  onRepost(event: MouseEvent): void {
+  onRepost(event: Event): void {
     event.stopPropagation();
-    this.repostClicked.emit();
+    console.log('Post component: Emitting repost event for post:', { 
+      id: this.post.id, 
+      type: this.post.post_type,
+      referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
+    });
+    this.ngZone.run(() => {
+      this.repostClicked.emit(this.post);
+      this.cd.detectChanges();
+    });
   }
 
   onShare(event: MouseEvent): void {
@@ -269,16 +314,16 @@ export class PostComponent implements OnInit, OnDestroy {
     });
   }
 
-  onBookmark(event: MouseEvent): void {
+  onBookmark(event: Event): void {
     event.stopPropagation();
-    this.bookmarkClicked.emit();
-    this.postService.bookmarkPost(this.post.author.handle, this.post.id).subscribe({
-      next: () => {
-        this.post.is_bookmarked = !this.post.is_bookmarked;
-      },
-      error: (error) => {
-        console.error('Error toggling bookmark:', error);
-      }
+    console.log('Post component: Emitting bookmark event for post:', { 
+      id: this.post.id, 
+      type: this.post.post_type,
+      referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
+    });
+    this.ngZone.run(() => {
+      this.bookmarkClicked.emit(this.post);
+      this.cd.detectChanges();
     });
   }
 
@@ -301,14 +346,6 @@ export class PostComponent implements OnInit, OnDestroy {
   protected toggleRepostMenu(event: MouseEvent): void {
     event.stopPropagation();
     this.showRepostMenu = !this.showRepostMenu;
-    if (this.showRepostMenu) {
-      const button = event.target as HTMLElement;
-      const rect = button.getBoundingClientRect();
-      this.repostMenuPosition = {
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX - 150 // Center the menu
-      };
-    }
   }
 
   private openQuoteModal(): void {
@@ -334,7 +371,7 @@ export class PostComponent implements OnInit, OnDestroy {
     this.showRepostMenu = false; // Close menu immediately
 
     if (option === 'repost' || option === 'unrepost') {
-      this.repostClicked.emit(); // Emit event to parent
+      this.repostClicked.emit(this.post);
     }
   }
 
@@ -361,7 +398,7 @@ export class PostComponent implements OnInit, OnDestroy {
       const ratio = img.width / img.height;
       this.imageAspectRatios[imageUrl] = ratio;
       // Force change detection
-      this.cdr.detectChanges();
+      this.cd.detectChanges();
     };
     img.src = imageUrl;
     
@@ -377,5 +414,31 @@ export class PostComponent implements OnInit, OnDestroy {
         initialPhotoIndex: index
       }
     });
+  }
+
+  // Getters for safe state access
+  get isLiked(): boolean {
+    return this.post.post_type === 'repost' ? !!this.post.referenced_post?.is_liked : !!this.post.is_liked;
+  }
+
+  get isReposted(): boolean {
+    return this.post.post_type === 'repost' ? !!this.post.referenced_post?.is_reposted : !!this.post.is_reposted;
+  }
+
+  get isBookmarked(): boolean {
+    return this.post.post_type === 'repost' ? !!this.post.referenced_post?.is_bookmarked : !!this.post.is_bookmarked;
+  }
+
+  get likesCount(): number {
+    return this.post.post_type === 'repost' ? this.post.referenced_post?.likes_count || 0 : this.post.likes_count || 0;
+  }
+
+  get repostsCount(): number {
+    return this.post.post_type === 'repost' ? this.post.referenced_post?.reposts_count || 0 : this.post.reposts_count || 0;
+  }
+
+  // Public method to force change detection
+  forceUpdate(): void {
+    this.cd.detectChanges();
   }
 } 

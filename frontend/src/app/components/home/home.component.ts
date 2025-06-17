@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, CUSTOM_ELEMENTS_SCHEMA, NgModule, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, NgZone } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, CUSTOM_ELEMENTS_SCHEMA, NgModule, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, NgZone, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Post } from '../../models/post.model';
 import { PostService } from '../../services/post.service';
@@ -34,6 +34,7 @@ import { NotificationService } from '../../services/notification.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  @ViewChildren(PostComponent) postComponents!: QueryList<PostComponent>;
   posts: Post[] = [];
   isInitialLoading = true;
   isLoadingMore = false;
@@ -186,18 +187,56 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   onLike(post: Post): void {
-    // Optimistic UI update
-    post.is_liked = !post.is_liked;
-    post.likes_count = (post.likes_count || 0) + (post.is_liked ? 1 : -1);
-    this.cd.markForCheck();
+    const originalPost = post.post_type === 'repost' ? post.referenced_post! : post;
+    const newLikeState = !originalPost.is_liked;
+    const newCount = originalPost.likes_count + (newLikeState ? 1 : -1);
+
+    this.ngZone.run(() => {
+      let updatedPosts = 0;
+      this.posts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_liked = newLikeState;
+          p.likes_count = newCount;
+          updatedPosts++;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_liked = newLikeState;
+          p.referenced_post.likes_count = newCount;
+          updatedPosts++;
+        }
+      });
+
+      // Force change detection on all post components
+      this.postComponents.forEach(postComponent => {
+        if (postComponent.post.id === originalPost.id || 
+            (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+          postComponent.forceUpdate();
+        }
+      });
+    });
 
     // Backend call
-    this.postService.likePost(post.author.handle, post.id).subscribe({
+    this.postService.likePost(originalPost.author.handle, originalPost.id).subscribe({
       error: (error) => {
-        // Revert on error
-        post.is_liked = !post.is_liked;
-        post.likes_count = (post.likes_count || 0) + (post.is_liked ? 1 : -1);
-        this.cd.markForCheck();
+        this.ngZone.run(() => {
+          this.posts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_liked = !newLikeState;
+              p.likes_count = originalPost.likes_count;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_liked = !newLikeState;
+              p.referenced_post.likes_count = originalPost.likes_count;
+            }
+          });
+          
+          this.postComponents.forEach(postComponent => {
+            if (postComponent.post.id === originalPost.id || 
+                (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+              postComponent.forceUpdate();
+            }
+          });
+        });
         console.error('Error liking post:', error);
         this.notificationService.showError('Failed to update like');
       }
@@ -228,26 +267,56 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   onRepost(post: Post): void {
-    // Optimistic UI update
-    post.is_reposted = !post.is_reposted;
-    post.reposts_count = (post.reposts_count || 0) + (post.is_reposted ? 1 : -1);
-    this.cd.markForCheck();
+    const originalPost = post.post_type === 'repost' ? post.referenced_post! : post;
+    const newRepostState = !originalPost.is_reposted;
+    const newCount = originalPost.reposts_count + (newRepostState ? 1 : -1);
+
+    this.ngZone.run(() => {
+      let updatedPosts = 0;
+      this.posts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_reposted = newRepostState;
+          p.reposts_count = newCount;
+          updatedPosts++;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_reposted = newRepostState;
+          p.referenced_post.reposts_count = newCount;
+          updatedPosts++;
+        }
+      });
+
+      // Force change detection on all post components
+      this.postComponents.forEach(postComponent => {
+        if (postComponent.post.id === originalPost.id || 
+            (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+          postComponent.forceUpdate();
+        }
+      });
+    });
 
     // Backend call
-    this.postService.repost(post.author.handle, post.id).subscribe({
-      next: (response) => {
-        // Update with full server response to ensure consistency
-        const index = this.posts.findIndex(p => p.id === post.id);
-        if (index !== -1) {
-          this.posts[index] = response;
-          this.cd.markForCheck();
-        }
-      },
+    this.postService.repostPost(originalPost.author.handle, originalPost.id.toString()).subscribe({
       error: (error) => {
-        // Revert on error
-        post.is_reposted = !post.is_reposted;
-        post.reposts_count = (post.reposts_count || 0) + (post.is_reposted ? 1 : -1);
-        this.cd.markForCheck();
+        this.ngZone.run(() => {
+          this.posts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_reposted = !newRepostState;
+              p.reposts_count = originalPost.reposts_count;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_reposted = !newRepostState;
+              p.referenced_post.reposts_count = originalPost.reposts_count;
+            }
+          });
+
+          this.postComponents.forEach(postComponent => {
+            if (postComponent.post.id === originalPost.id || 
+                (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+              postComponent.forceUpdate();
+            }
+          });
+        });
         console.error('Error reposting:', error);
         this.notificationService.showError('Failed to repost');
       }
@@ -255,16 +324,51 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   onBookmark(post: Post): void {
-    // Optimistic UI update
-    post.is_bookmarked = !post.is_bookmarked;
-    this.cd.markForCheck();
+    const originalPost = post.post_type === 'repost' ? post.referenced_post! : post;
+    const newBookmarkState = !originalPost.is_bookmarked;
+
+    this.ngZone.run(() => {
+      let updatedPosts = 0;
+      this.posts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_bookmarked = newBookmarkState;
+          updatedPosts++;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_bookmarked = newBookmarkState;
+          updatedPosts++;
+        }
+      });
+
+      // Force change detection on all post components
+      this.postComponents.forEach(postComponent => {
+        if (postComponent.post.id === originalPost.id || 
+            (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+          postComponent.forceUpdate();
+        }
+      });
+    });
 
     // Backend call
-    this.postService.bookmarkPost(post.author.handle, post.id).subscribe({
+    this.postService.bookmarkPost(originalPost.author.handle, originalPost.id).subscribe({
       error: (error) => {
-        // Revert on error
-        post.is_bookmarked = !post.is_bookmarked;
-        this.cd.markForCheck();
+        this.ngZone.run(() => {
+          this.posts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_bookmarked = !newBookmarkState;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_bookmarked = !newBookmarkState;
+            }
+          });
+
+          this.postComponents.forEach(postComponent => {
+            if (postComponent.post.id === originalPost.id || 
+                (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+              postComponent.forceUpdate();
+            }
+          });
+        });
         console.error('Error bookmarking post:', error);
         this.notificationService.showError('Failed to update bookmark');
       }
@@ -343,5 +447,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.scrollThrottleTimeout) {
       clearTimeout(this.scrollThrottleTimeout);
     }
+  }
+
+  // Add a method to log posts for debugging
+  private logPosts(message: string) {
+    console.log(message, this.posts.map(p => ({
+      id: p.id,
+      type: p.post_type,
+      content: p.content,
+      refId: p.referenced_post?.id
+    })));
   }
 } 

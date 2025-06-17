@@ -180,15 +180,17 @@
         <!-- Repost button -->
         <div class="relative" (click)="$event.stopPropagation()">
           <button class="flex items-center gap-2 text-gray-500 hover:text-green-500 p-1.5 rounded-full transition-colors group"
-                  [class.text-green-500]="post.is_reposted"
+                  [class.text-green-500]="isReposted"
                   (click)="toggleRepostMenu($event); $event.stopPropagation()">
-            <i class="fas fa-retweet text-[18px]" [class.text-green-500]="post.is_reposted"></i>
-            <span class="text-sm min-w-[20px] text-center" [class.text-green-500]="post.is_reposted">{{ post.reposts_count || 0 }}</span>
+            <i class="fas fa-retweet text-[18px]" [class.text-green-500]="isReposted"></i>
+            <span class="text-sm min-w-[20px] text-center" [class.text-green-500]="isReposted">
+              {{ repostsCount }}
+            </span>
           </button>
 
           <!-- Repost Menu -->
           <app-repost-menu *ngIf="showRepostMenu"
-                          [isReposted]="post.is_reposted"
+                          [isReposted]="isReposted"
                           (optionSelected)="onRepostOption($event)"
                           (closeMenu)="showRepostMenu = false">
           </app-repost-menu>
@@ -197,8 +199,10 @@
         <!-- Like button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-red-500 p-1.5 rounded-full transition-colors group"
                 (click)="onLike($event)">
-          <i [class]="post.is_liked ? 'fas fa-heart text-red-500' : 'far fa-heart'" class="text-[18px] group-hover:text-red-500"></i>
-          <span class="text-sm min-w-[20px] text-center" [class.text-red-500]="post.is_liked">{{ post.likes_count || 0 }}</span>
+          <i [class]="isLiked ? 'fas fa-heart text-red-500' : 'far fa-heart'" class="text-[18px] group-hover:text-red-500"></i>
+          <span class="text-sm min-w-[20px] text-center" [class.text-red-500]="isLiked">
+            {{ likesCount }}
+          </span>
         </button>
 
         <!-- Share button -->
@@ -210,7 +214,7 @@
         <!-- Bookmark button -->
         <button class="flex items-center gap-2 text-gray-500 hover:text-blue-500 p-1.5 rounded-full transition-colors group"
                 (click)="onBookmark($event)">
-          <i [class]="post.is_bookmarked ? 'fas fa-bookmark text-blue-500' : 'far fa-bookmark'" class="text-[18px] group-hover:text-blue-500"></i>
+          <i [class]="isBookmarked ? 'fas fa-bookmark text-blue-500' : 'far fa-bookmark'" class="text-[18px] group-hover:text-blue-500"></i>
         </button>
       </div>
     </div>
