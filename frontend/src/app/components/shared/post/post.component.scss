@@ -65,4 +65,70 @@
       cursor: pointer !important;
     }
   }
+}
+
+// Like button animation
+.fa-heart {
+  &.text-red-500 {
+    animation: likeAnimation 0.4s ease-in-out;
+  }
+}
+
+// Repost button animation
+.fa-retweet {
+  &.text-green-500 {
+    animation: retweetAnimation 0.4s ease-in-out;
+  }
+}
+
+// Count number animations
+.text-red-500, .text-green-500 {
+  &.text-sm {
+    animation: popIn 0.4s ease-in-out;
+  }
+}
+
+@keyframes likeAnimation {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2) rotate(-15deg);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes retweetAnimation {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2) rotate(30deg);
+  }
+  50% {
+    transform: scale(0.95) rotate(-15deg);
+  }
+  75% {
+    transform: scale(1.1) rotate(15deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 } 

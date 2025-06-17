@@ -48,6 +48,8 @@ class PostViewSet(viewsets.ModelViewSet):
                 Q(author__in=following_users) | Q(author=self.request.user)
             )
             print(f"[DEBUG] After following filter queryset count: {queryset.count()}")
+        else:
+            print("[DEBUG] Following only preference is off, showing all posts")
 
         # Order by created_at for all posts
         final_queryset = queryset.order_by('-created_at')

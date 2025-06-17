@@ -22,6 +22,7 @@ export class SidebarComponent implements OnInit {
   isHumanArtTab = false;
   isFollowingOnly = false;
   isTogglingFollowingOnly = false;
+  isRefreshing = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   constructor(
@@ -29,7 +30,8 @@ export class SidebarComponent implements OnInit {
     private dialog: MatDialog,
     private router: Router,
     private route: ActivatedRoute,
-    private postService: PostService
+    private postService: PostService,
+    private userService: UserService
   ) {
     // Subscribe to route query params to detect tab changes
     this.router.events.pipe(
@@ -40,35 +42,89 @@ export class SidebarComponent implements OnInit {
         this.isHumanArtTab = params['tab'] === 'human-drawing';
       });
     });
+
+    // Subscribe to route changes to detect Human Art tab
+    this.router.events.pipe(
+      filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      this.isHumanArtTab = event.url.includes('human-art');
+    });
   }
 
   ngOnInit() {
+    console.log('[Sidebar] Initializing component');
+    
     // Load user's following only preference
     this.authService.currentUser$.pipe(take(1)).subscribe(user => {
       if (user) {
+        console.log('[Sidebar] Got user preferences:', {
+          following_only_preference: user.following_only_preference
+        });
         this.isFollowingOnly = user.following_only_preference || false;
+        // Store the initial preference in localStorage
+        localStorage.setItem('following_only_preference', this.isFollowingOnly.toString());
       }
+    });
+
+    // Subscribe to route changes to update isHumanArtTab
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      this.isHumanArtTab = event.url.includes('human-art');
+      console.log('[Sidebar] Route changed:', {
+        url: event.url,
+        isHumanArtTab: this.isHumanArtTab
+      });
     });
   }
 
   toggleFollowingOnly(): void {
-    if (this.isTogglingFollowingOnly) return;
+    if (this.isTogglingFollowingOnly) {
+      console.log('[Sidebar] Toggle already in progress, ignoring click');
+      return;
+    }
 
     this.isTogglingFollowingOnly = true;
     const newPreference = !this.isFollowingOnly;
     
+    console.log('[Sidebar] Starting toggleFollowingOnly:', {
+      currentState: this.isFollowingOnly,
+      newState: newPreference,
+      isTogglingFollowingOnly: this.isTogglingFollowingOnly
+    });
+    
+    // Update local state and localStorage immediately for better UX
+    this.isFollowingOnly = newPreference;
+    localStorage.setItem('following_only_preference', newPreference.toString());
+    
     this.authService.updateFollowingOnlyPreference(newPreference).subscribe({
       next: (user) => {
-        this.isFollowingOnly = user.following_only_preference || false;
+        console.log('[Sidebar] Preference updated on server:', {
+          newPreference,
+          userPreference: user.following_only_preference
+        });
+        
+        // Get the current active tab from localStorage
+        const activeTab = localStorage.getItem('activeTab') || 'for-you';
+        
+        // Always reload posts when toggling in either direction
+        console.log('[Sidebar] Reloading posts with new preference');
+        this.postService.loadPosts(true, activeTab);
         this.isTogglingFollowingOnly = false;
-        // Reload posts with new preference
-        this.postService.loadPosts();
       },
       error: (error) => {
-        console.error('Error updating following only preference:', error);
+        // Revert on error
+        console.error('[Sidebar] Error updating preference:', error);
+        this.isFollowingOnly = !newPreference;
+        localStorage.setItem('following_only_preference', (!newPreference).toString());
         this.isTogglingFollowingOnly = false;
       }
     });
+  }
+
+  toggleUserMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
   }
 
   openContextModal(): void {
@@ -86,22 +142,6 @@ export class SidebarComponent implements OnInit {
         }
       });
     }
-  }
-
-  toggleUserMenu(event: MouseEvent): void {
-    event.stopPropagation();
-    this.showUserMenu = !this.showUserMenu;
-    
-    if (this.showUserMenu) {
-      setTimeout(() => {
-        document.addEventListener('click', this.closeUserMenu);
-      });
-    }
-  }
-
-  private closeUserMenu = () => {
-    this.showUserMenu = false;
-    document.removeEventListener('click', this.closeUserMenu);
   }
 
   async logout(): Promise<void> {

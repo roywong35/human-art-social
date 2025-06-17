@@ -59,42 +59,31 @@ export class HomeComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private ngZone: NgZone
   ) {
-    // Subscribe to route query params to detect tab changes
-    this.subscriptions.add(
-      this.route.queryParams.subscribe(params => {
-        const newTab = params['tab'] === 'human-drawing' ? 'human-drawing' : 'for-you';
-        if (this.activeTab !== newTab) {
-          this.activeTab = newTab;
-          this.loadPosts(true);
-        }
-      })
-    );
-
     // Subscribe to posts$ stream for initial load and pagination
     this.subscriptions.add(
       this.postService.posts$.subscribe({
         next: (posts: Post[]) => {
+          console.log('[HomeComponent] Received posts update:', {
+            count: posts?.length,
+            isInitialLoading: this.isInitialLoading,
+            currentCount: this.posts.length
+          });
+          
           if (!posts) {
-            console.warn('Received null posts');
+            console.warn('[HomeComponent] Received null posts');
             this.posts = [];
           } else {
-            // Only replace posts on initial load or refresh
-            if (this.isInitialLoading || !this.posts.length) {
-              this.posts = posts;
-            } else {
-              // For infinite scroll, append new posts
-              const newPosts = posts.filter(newPost => 
-                !this.posts.some(existingPost => existingPost.id === newPost.id)
-              );
-              this.posts = [...this.posts, ...newPosts];
-            }
+            // Always replace posts array to ensure change detection
+            console.log('[HomeComponent] Updating posts array');
+            this.posts = [...posts];
           }
+          
           this.isInitialLoading = false;
           this.isLoadingMore = false;
           this.cd.markForCheck();
         },
         error: (error: Error) => {
-          console.error('Error loading posts:', error);
+          console.error('[HomeComponent] Error in posts$ subscription:', error);
           this.error = 'Failed to load posts. Please try again.';
           this.posts = [];
           this.isInitialLoading = false;
@@ -107,6 +96,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Subscribe to post updates for real-time interactions
     this.subscriptions.add(
       this.postUpdateService.postUpdate$.subscribe(({ postId, updatedPost }) => {
+        console.log('[HomeComponent] Received post update:', { postId });
         // Find all instances of the post (original and reposts)
         this.posts = this.posts.map(post => {
           if (post.id === postId) {
@@ -159,27 +149,46 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   loadPosts(refresh: boolean = false): void {
-    console.log('Loading posts for tab:', this.activeTab);
+    console.log('[HomeComponent] Loading posts:', {
+      tab: this.activeTab,
+      refresh,
+      isInitialLoading: this.isInitialLoading
+    });
+    
     this.error = null;
     this.isInitialLoading = refresh;
     this.cd.markForCheck();
-    this.postService.loadPosts(refresh);
+    
+    // Just trigger the load - we're already subscribed to posts$ for updates
+    this.postService.loadPosts(true, this.activeTab);
   }
 
   ngOnInit(): void {
     console.log('Home component initialized');
-    // Get active tab from localStorage or route params
-    this.route.queryParams.subscribe(params => {
-      const tabFromParams = params['tab'];
-      const savedTab = localStorage.getItem('activeTab');
-      
-      // Set active tab with priority: URL params > localStorage > default
-      this.activeTab = tabFromParams || savedTab || 'for-you';
-      localStorage.setItem('activeTab', this.activeTab);
-      
-      // Load posts for the active tab
-      this.loadPosts(true);
-    });
+    
+    // Get initial tab state from URL params or localStorage
+    const tabFromParams = this.route.snapshot.queryParams['tab'];
+    const savedTab = localStorage.getItem('activeTab');
+    this.activeTab = (tabFromParams || savedTab || 'for-you') as 'for-you' | 'human-drawing';
+    localStorage.setItem('activeTab', this.activeTab);
+    
+    // Initial load of posts
+    console.log('Initial load for tab:', this.activeTab);
+    this.loadPosts(true);
+    
+    // Subscribe to future tab changes
+    this.subscriptions.add(
+      this.route.queryParams.subscribe(params => {
+        console.log('Query params changed:', params);
+        const newTab = params['tab'] || 'for-you';
+        if (this.activeTab !== newTab) {
+          console.log('Tab changed from', this.activeTab, 'to', newTab);
+          this.activeTab = newTab as 'for-you' | 'human-drawing';
+          localStorage.setItem('activeTab', this.activeTab);
+          this.loadPosts(true);
+        }
+      })
+    );
   }
 
   onPostUpdated(): void {
@@ -438,7 +447,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       });
 
       // Reload posts for the new tab
-      this.loadPosts();
+      this.loadPosts(true);
     }
   }
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, map, catchError, take } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map, catchError, take, of } from 'rxjs';
 import { Post, PostImage } from '../models/post.model';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
@@ -54,66 +54,124 @@ export class PostService {
     );
   }
 
-  loadPosts(refresh: boolean = false): void {
+  loadPosts(refresh: boolean = false, activeTab?: string): void {
     // Always reset page number when loading posts initially
     this.currentPage = 1;
     this.hasMore = true;
     
     this.loading = true;
-    console.log('Loading posts with auth state:', {
+    const followingOnly = localStorage.getItem('following_only_preference') === 'true';
+    console.log('[PostService] Starting loadPosts with:', {
+      refresh,
+      activeTab,
       isAuthenticated: this.authService.isAuthenticated(),
       currentPage: this.currentPage,
-      activeTab: localStorage.getItem('activeTab')
+      followingOnly,
+      loading: this.loading
     });
 
-    const source = this.authService.isAuthenticated() ? this.getFeed() : this.getExplore();
+    // Clear current posts if refreshing
+    if (refresh) {
+      console.log('[PostService] Clearing current posts for refresh');
+      this.posts.next([]);
+    }
+
+    const source = this.authService.isAuthenticated() ? this.getFeed(activeTab) : this.getExplore(activeTab);
     source.pipe(
-      take(1)
-    ).subscribe({
-      next: (response: PaginatedResponse) => {
-        console.log('Received response:', response);
+      take(1),
+      map((response: PaginatedResponse) => {
+        console.log('[PostService] Received API response:', {
+          count: response?.count,
+          hasNext: !!response?.next,
+          resultCount: response?.results?.length,
+          followingOnly
+        });
+
         if (!response || !response.results) {
-          console.error('Invalid response format:', response);
+          console.error('[PostService] Invalid response format:', response);
           this.posts.next([]);
-          this.loading = false;
           return;
         }
 
         this.hasMore = !!response.next;
-        this.posts.next(response.results || []);
-        this.loading = false;
+        
+        // Always emit new posts array to force change detection
+        const newPosts = [...response.results];
+        console.log('[PostService] Emitting new posts:', {
+          count: newPosts.length,
+          refresh
+        });
+        this.posts.next(newPosts);
+        
         // Only increment page number if there are more posts to load
         if (this.hasMore) {
           this.currentPage++;
         }
-        console.log('Updated posts state:', {
-          postsCount: response.results.length,
-          hasMore: this.hasMore,
-          currentPage: this.currentPage
+      }),
+      catchError((error) => {
+        console.error('[PostService] Error loading posts:', {
+          error,
+          status: error.status,
+          message: error.message,
+          url: error.url,
+          statusText: error.statusText
         });
-      },
-      error: (error) => {
-        console.error('Error loading posts:', error);
         this.loading = false;
         this.hasMore = false;
         this.posts.next([]);
-      }
-    });
+        // Instead of throwing, return an empty observable
+        return of(undefined);
+      }),
+      tap({
+        next: () => {
+          console.log('[PostService] Request completed successfully');
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('[PostService] Unexpected error in tap:', error);
+          this.loading = false;
+        }
+      })
+    ).subscribe(); // Execute the request immediately
   }
 
-  private getFeed(): Observable<PaginatedResponse> {
-    const activeTab = localStorage.getItem('activeTab') || 'for-you';
-    const postType = activeTab === 'human-drawing' ? 'human_drawing' : 'all';
-    return this.http.get<PaginatedResponse>(
-      `${this.baseUrl}/posts/feed/?page=${this.currentPage}&post_type=${postType}`
+  private getFeed(activeTab?: string): Observable<PaginatedResponse> {
+    const tab = activeTab || localStorage.getItem('activeTab') || 'for-you';
+    const postType = tab === 'human-drawing' ? 'human_drawing' : 'all';
+    const followingOnly = localStorage.getItem('following_only_preference') === 'true';
+    const url = `${this.baseUrl}/posts/feed/?page=${this.currentPage}&post_type=${postType}&following_only=${followingOnly}`;
+    console.log('[PostService] Making getFeed request to:', url);
+    return this.http.get<PaginatedResponse>(url).pipe(
+      catchError(error => {
+        console.error('[PostService] Error in getFeed:', {
+          error,
+          status: error.status,
+          message: error.message,
+          url,
+          statusText: error.statusText
+        });
+        throw error;
+      })
     );
   }
 
-  private getExplore(): Observable<PaginatedResponse> {
-    const activeTab = localStorage.getItem('activeTab') || 'for-you';
-    const postType = activeTab === 'human-drawing' ? 'human_drawing' : 'all';
-    return this.http.get<PaginatedResponse>(
-      `${this.baseUrl}/posts/explore/?page=${this.currentPage}&post_type=${postType}`
+  private getExplore(activeTab?: string): Observable<PaginatedResponse> {
+    const tab = activeTab || localStorage.getItem('activeTab') || 'for-you';
+    const postType = tab === 'human-drawing' ? 'human_drawing' : 'all';
+    const followingOnly = localStorage.getItem('following_only_preference') === 'true';
+    const url = `${this.baseUrl}/posts/explore/?page=${this.currentPage}&post_type=${postType}&following_only=${followingOnly}`;
+    console.log('[PostService] Making getExplore request to:', url);
+    return this.http.get<PaginatedResponse>(url).pipe(
+      catchError(error => {
+        console.error('[PostService] Error in getExplore:', {
+          error,
+          status: error.status,
+          message: error.message,
+          url,
+          statusText: error.statusText
+        });
+        throw error;
+      })
     );
   }
 
