@@ -637,16 +637,53 @@ class PostViewSet(viewsets.ModelViewSet):
         else:  # day
             time_threshold = now - timedelta(days=1)
             
-        # Get trending hashtags
-        trending = Hashtag.objects.filter(
-            post_hashtags__created_at__gte=time_threshold
-        ).annotate(
-            post_count=Count('post_hashtags'),
-            recent_count=Count(
-                'post_hashtags',
-                filter=Q(post_hashtags__created_at__gte=now - timedelta(minutes=15))
+        print(f"\n=== TRENDING DEBUG START ===")
+        print(f"Timeframe: {timeframe}")
+        print(f"Current time: {now}")
+        print(f"Time threshold: {time_threshold}")
+        
+        # First, let's see what hashtags exist at all
+        all_hashtags = Hashtag.objects.all()
+        print(f"\nAll hashtags in system: {all_hashtags.count()}")
+        for tag in all_hashtags:
+            print(f"\nHashtag: #{tag.name}")
+            # Check posts for this hashtag
+            posts = tag.posts.all()
+            print(f"Total posts: {posts.count()}")
+            for post in posts:
+                print(f"- Post {post.id}:")
+                print(f"  Type: {post.post_type}")
+                print(f"  Created: {post.created_at}")
+                print(f"  Content: {post.content[:50]}")
+                print(f"  After threshold: {post.created_at >= time_threshold}")
+        
+        # Get trending hashtags - simplified query
+        trending = Hashtag.objects.annotate(
+            post_count=Count(
+                'posts',
+                distinct=True,
+                filter=Q(
+                    posts__created_at__gte=time_threshold,
+                    posts__post_type__in=['post', 'quote']
+                )
             )
-        ).order_by('-post_count', '-recent_count')[:10]
+        ).filter(
+            post_count__gt=0
+        ).order_by('-post_count')[:10]
+        
+        print(f"\nFinal trending SQL: {str(trending.query)}")
+        print(f"Final trending hashtags: {trending.count()}")
+        for tag in trending:
+            print(f"#{tag.name}: {tag.post_count} posts")
+            # Show the actual posts for this tag
+            posts = tag.posts.filter(
+                created_at__gte=time_threshold,
+                post_type__in=['post', 'quote']
+            )
+            for post in posts:
+                print(f"- Post {post.id} (type={post.post_type}, created={post.created_at})")
+        
+        print("=== TRENDING DEBUG END ===\n")
         
         # Serialize results
         serializer = HashtagSerializer(trending, many=True)

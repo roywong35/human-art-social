@@ -24,14 +24,27 @@
         </div>
       </div>
       <div class="divide-y divide-gray-100">
-        <div *ngFor="let topic of trendingTopics" class="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+        <!-- Real trending topics -->
+        <div *ngFor="let topic of trendingTopics.slice(0, maxTrendingTopics)" 
+             class="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+             (click)="navigateToHashtag(topic.name)">
           <div class="text-sm text-gray-500">Trending {{ selectedTimeframe === 'hour' ? 'this hour' : 'today' }}</div>
-          <div class="font-bold text-gray-900">#{{ topic.name }}</div>
+          <div class="font-bold text-gray-900 hover:text-blue-500 transition-colors">#{{ topic.name }}</div>
           <div class="text-sm text-gray-500">{{ formatCount(topic.post_count) }} posts</div>
         </div>
-      </div>
-      <div *ngIf="trendingTopics.length === 0" class="px-4 py-3 text-gray-500 text-center">
-        No trending topics yet
+
+        <!-- Placeholder items -->
+        <div *ngFor="let placeholder of placeholderArray" 
+             class="px-4 py-3 animate-pulse">
+          <div class="text-sm text-gray-300">Trending {{ selectedTimeframe === 'hour' ? 'this hour' : 'today' }}</div>
+          <div class="h-6 bg-gray-200 rounded w-32 mt-1"></div>
+          <div class="h-4 bg-gray-200 rounded w-24 mt-2"></div>
+        </div>
+
+        <!-- Show this only when there are no topics and no placeholders -->
+        <div *ngIf="trendingTopics.length === 0" class="px-4 py-3 text-gray-500 text-center">
+          No trending topics yet
+        </div>
       </div>
     </div>
 

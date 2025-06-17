@@ -32,6 +32,15 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   selectedTimeframe: 'hour' | 'day' = 'hour';
   isRefreshing = false;
   trendingTopics: HashtagResult[] = [];
+  readonly maxTrendingTopics = 6;
+
+  get placeholderCount(): number {
+    return Math.max(0, this.maxTrendingTopics - this.trendingTopics.length);
+  }
+
+  get placeholderArray(): number[] {
+    return Array(this.placeholderCount).fill(0);
+  }
 
   trendingTopicsOriginal: TrendingTopic[] = [
     { name: 'Angular', postCount: 125000, category: 'Technology' },

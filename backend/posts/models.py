@@ -163,28 +163,39 @@ class Post(models.Model):
         return self.reposts.filter(id=user.id).exists()
 
     def extract_and_save_hashtags(self):
+        print("\n=== HASHTAG EXTRACTION DEBUG ===")
+        print(f"Post ID: {self.id}")
+        print(f"Content: {self.content}")
+        
         # Extract hashtags using regex
         hashtag_pattern = r'#(\w+)'
         found_tags = set(tag.lower() for tag in re.findall(hashtag_pattern, self.content))
+        print(f"Found hashtags: {found_tags}")
         
         # Get or create hashtags
         current_hashtags = set()
         for tag_name in found_tags:
-            hashtag, _ = Hashtag.objects.get_or_create(name=tag_name)
+            hashtag, created = Hashtag.objects.get_or_create(name=tag_name)
+            print(f"Hashtag '{tag_name}': {'Created' if created else 'Already exists'}")
             current_hashtags.add(hashtag)
         
         # Update post's hashtags
         existing_hashtags = set(self.hashtags.all())
+        print(f"Existing hashtags: {[tag.name for tag in existing_hashtags]}")
         
         # Remove hashtags that are no longer in the content
         to_remove = existing_hashtags - current_hashtags
         if to_remove:
+            print(f"Removing hashtags: {[tag.name for tag in to_remove]}")
             self.hashtags.remove(*to_remove)
         
         # Add new hashtags
         to_add = current_hashtags - existing_hashtags
         if to_add:
+            print(f"Adding hashtags: {[tag.name for tag in to_add]}")
             self.hashtags.add(*to_add)
+        
+        print("=== HASHTAG EXTRACTION END ===\n")
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None

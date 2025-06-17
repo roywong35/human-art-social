@@ -115,4 +115,5 @@ class HashtagSerializer(serializers.ModelSerializer):
         fields = ['name', 'post_count']
     
     def get_post_count(self, obj):
-        return obj.posts.count() 
+        # Only count original posts and quotes, not reposts
+        return obj.posts.exclude(post_type='repost').count() 
