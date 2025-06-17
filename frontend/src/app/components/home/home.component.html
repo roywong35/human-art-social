@@ -44,26 +44,8 @@
     </div>
   </div>
 
-  <!-- No Posts State -->
-  <div *ngIf="!isInitialLoading && (!posts || posts.length === 0)" class="text-center py-8 text-gray-500">
-    No posts to show
-  </div>
-
   <!-- Posts List -->
   <div class="posts-container">
-    <div *ngIf="error" class="error-message">
-      {{ error }}
-    </div>
-
-    <div *ngIf="posts.length === 0 && !isInitialLoading" class="no-posts-message">
-      No posts to show.
-    </div>
-
-    <!-- Initial loading state -->
-    <div *ngIf="isInitialLoading" class="loading-indicator">
-      <mat-spinner [diameter]="40" [strokeWidth]="3"></mat-spinner>
-    </div>
-
     <ng-container *ngFor="let post of posts">
       <app-human-art-post *ngIf="activeTab === 'human-drawing'" [post]="post"></app-human-art-post>
       <app-post *ngIf="activeTab === 'for-you'" 
@@ -74,11 +56,6 @@
                 (shareClicked)="onShare(post)">
       </app-post>
     </ng-container>
-
-    <!-- Loading more posts indicator -->
-    <div *ngIf="isLoadingMore" class="loading-more-indicator">
-      <mat-spinner [diameter]="30" [strokeWidth]="3"></mat-spinner>
-    </div>
   </div>
 </div>
 
@@ -86,25 +63,12 @@
 .loading-indicator {
   display: flex;
   justify-content: center;
-  padding: 40px 0;
-}
-
-.loading-more-indicator {
-  display: flex;
-  justify-content: center;
   padding: 20px 0;
-  margin-top: 10px;
 }
 
 .error-message {
   color: #dc3545;
   text-align: center;
   padding: 20px;
-}
-
-.no-posts-message {
-  text-align: center;
-  padding: 20px;
-  color: #6c757d;
 }
 </style> 

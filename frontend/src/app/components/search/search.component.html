@@ -1,0 +1,29 @@
+<div class="max-w-4xl mx-auto">
+  <!-- Search Header -->
+  <div class="sticky top-0 bg-white z-10">
+    <div class="flex items-center gap-4 px-6 py-3">
+      <button (click)="goBack()" class="text-gray-600 hover:text-gray-900">
+        <i class="fas fa-arrow-left text-xl"></i>
+      </button>
+      <div class="flex-1">
+        <app-search-bar [initialSearchValue]="searchQuery"></app-search-bar>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-8">
+    <i class="fas fa-spinner fa-spin text-2xl text-gray-500"></i>
+  </div>
+
+  <!-- No Results -->
+  <div *ngIf="!isLoading && posts.length === 0 && searchQuery" 
+       class="text-center py-8 text-gray-500">
+    No posts found
+  </div>
+
+  <!-- Posts List -->
+  <div>
+    <app-post *ngFor="let post of posts" [post]="post"></app-post>
+  </div>
+</div> 

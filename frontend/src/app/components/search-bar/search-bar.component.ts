@@ -1,11 +1,17 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil, forkJoin, of } from 'rxjs';
 import { UserService } from '../../services/user.service';
+import { HashtagService, HashtagResult } from '../../services/hashtag.service';
 import { User } from '../../models/user.model';
 import { environment } from '../../../environments/environment';
+
+interface SearchResult {
+  type: 'user' | 'hashtag';
+  data: User | HashtagResult;
+}
 
 @Component({
   selector: 'app-search-bar',
@@ -14,11 +20,12 @@ import { environment } from '../../../environments/environment';
   templateUrl: './search-bar.component.html',
   styleUrls: ['./search-bar.component.scss']
 })
-export class SearchBarComponent implements OnInit, OnDestroy {
+export class SearchBarComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild('searchInput') searchInput!: ElementRef;
+  @Input() initialSearchValue: string = '';
   
   searchQuery = '';
-  results: User[] = [];
+  results: SearchResult[] = [];
   isLoading = false;
   showResults = false;
   noResults = false;
@@ -30,6 +37,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
 
   constructor(
     private userService: UserService,
+    private hashtagService: HashtagService,
     private router: Router
   ) {}
 
@@ -42,6 +50,17 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     ).subscribe(query => {
       this.performSearch(query);
     });
+
+    // Set initial search value if provided
+    if (this.initialSearchValue) {
+      this.searchQuery = this.initialSearchValue;
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['initialSearchValue'] && changes['initialSearchValue'].currentValue) {
+      this.searchQuery = changes['initialSearchValue'].currentValue;
+    }
   }
 
   ngOnDestroy() {
@@ -49,11 +68,12 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  onSearchInput(event: any) {
+    this.searchSubject.next(this.searchQuery);
+  }
+
   onFocus() {
     this.showResults = true;
-    if (this.searchQuery) {
-      this.performSearch(this.searchQuery);
-    }
   }
 
   onBlur() {
@@ -63,14 +83,15 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     }, 200);
   }
 
-  onSearchInput(event: Event) {
-    const query = (event.target as HTMLInputElement).value;
-    this.searchQuery = query;
-    this.searchSubject.next(query);
-  }
-
-  navigateToProfile(user: User) {
-    this.router.navigate(['/', user.handle]);
+  navigateToResult(result: SearchResult) {
+    if (result.type === 'user') {
+      const user = result.data as User;
+      this.router.navigate(['/', user.handle]);
+    } else {
+      const hashtag = result.data as HashtagResult;
+      // Navigate to hashtag search results page (you'll need to implement this)
+      this.router.navigate(['/search'], { queryParams: { q: `#${hashtag.name}` } });
+    }
     this.showResults = false;
     this.searchQuery = '';
     this.results = [];
@@ -95,44 +116,41 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.noResults = false;
 
-    // Remove @ symbol if present for the API call
-    const searchQuery = query.startsWith('@') ? query.substring(1) : query;
-
-    this.userService.searchUsers(searchQuery).subscribe({
-      next: (users: User[]) => {
-        // Filter results based on whether it's a handle search or username search
-        if (query.startsWith('@')) {
-          this.results = users.filter(user => 
-            user.handle.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-        } else {
-          this.results = users.filter(user => 
-            user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.handle.toLowerCase().includes(searchQuery.toLowerCase())
-          );
+    if (query.startsWith('#')) {
+      // Hashtag search
+      this.hashtagService.searchHashtags(query).subscribe({
+        next: (response) => {
+          this.results = response.results.map(hashtag => ({
+            type: 'hashtag',
+            data: hashtag
+          }));
+          this.isLoading = false;
+          this.noResults = this.results.length === 0;
+        },
+        error: () => {
+          this.isLoading = false;
+          this.noResults = true;
+          this.results = [];
         }
-        
-        this.isLoading = false;
-        this.noResults = this.results.length === 0;
-      },
-      error: () => {
-        this.isLoading = false;
-        this.noResults = true;
-        this.results = [];
-      }
-    });
-  }
-
-  filterUsers(searchQuery: string): void {
-    if (!searchQuery.trim()) {
-      this.results = [];
-      return;
+      });
+    } else {
+      // User search
+      const searchQuery = query.startsWith('@') ? query.substring(1) : query;
+      this.userService.searchUsers(searchQuery).subscribe({
+        next: (users: User[]) => {
+          this.results = users.map(user => ({
+            type: 'user',
+            data: user
+          }));
+          this.isLoading = false;
+          this.noResults = this.results.length === 0;
+        },
+        error: () => {
+          this.isLoading = false;
+          this.noResults = true;
+          this.results = [];
+        }
+      });
     }
-
-    searchQuery = searchQuery.toLowerCase();
-    this.results = this.results.filter(user =>
-      user.username.toLowerCase().includes(searchQuery) ||
-      user.handle.toLowerCase().includes(searchQuery)
-    );
   }
 } 

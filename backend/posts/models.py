@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 import os
 import uuid
 from django.utils import timezone
+import re
 
 User = get_user_model()
 
@@ -50,6 +51,35 @@ class PostImage(models.Model):
     def __str__(self):
         return f"Image {self.order} for post {self.post.id}"
 
+class Hashtag(models.Model):
+    name = models.CharField(max_length=100, unique=True)  # Stored in lowercase
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        self.name = self.name.lower()  # Force lowercase
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'#{self.name}'
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['created_at'])
+        ]
+
+class PostHashtag(models.Model):
+    post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='post_hashtags')
+    hashtag = models.ForeignKey(Hashtag, on_delete=models.CASCADE, related_name='post_hashtags')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['post', 'hashtag']  # Prevent duplicates
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['hashtag', 'created_at'])  # For trending queries
+        ]
+
 class Post(models.Model):
     """
     Model for user posts in the social platform.
@@ -83,6 +113,8 @@ class Post(models.Model):
     is_human_drawing = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     verification_date = models.DateTimeField(null=True, blank=True)
+    
+    hashtags = models.ManyToManyField(Hashtag, through=PostHashtag, related_name='posts')
     
     class Meta:
         ordering = ['-created_at']
@@ -129,3 +161,35 @@ class Post(models.Model):
 
     def is_reposted_by(self, user):
         return self.reposts.filter(id=user.id).exists()
+
+    def extract_and_save_hashtags(self):
+        # Extract hashtags using regex
+        hashtag_pattern = r'#(\w+)'
+        found_tags = set(tag.lower() for tag in re.findall(hashtag_pattern, self.content))
+        
+        # Get or create hashtags
+        current_hashtags = set()
+        for tag_name in found_tags:
+            hashtag, _ = Hashtag.objects.get_or_create(name=tag_name)
+            current_hashtags.add(hashtag)
+        
+        # Update post's hashtags
+        existing_hashtags = set(self.hashtags.all())
+        
+        # Remove hashtags that are no longer in the content
+        to_remove = existing_hashtags - current_hashtags
+        if to_remove:
+            self.hashtags.remove(*to_remove)
+        
+        # Add new hashtags
+        to_add = current_hashtags - existing_hashtags
+        if to_add:
+            self.hashtags.add(*to_add)
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # Extract and save hashtags after saving the post
+        if self.content:  # Only process if there's content
+            self.extract_and_save_hashtags()

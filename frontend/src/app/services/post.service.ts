@@ -333,6 +333,7 @@ export class PostService {
   }
 
   searchPosts(query: string): Observable<Post[]> {
+    // For hashtag searches, we'll search in the content field
     return this.http.get<Post[]>(`${this.baseUrl}/posts/search/`, {
       params: { q: query }
     }).pipe(

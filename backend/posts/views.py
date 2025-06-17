@@ -1,15 +1,16 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, EvidenceFile, PostImage, User
-from .serializers import PostSerializer
+from .models import Post, EvidenceFile, PostImage, User, Hashtag
+from .serializers import PostSerializer, HashtagSerializer
 from django.db import models, transaction
 from django.utils import timezone
 import mimetypes
-from django.db.models import Q, Case, When, F
+from django.db.models import Q, Case, When, F, Count
+from datetime import timedelta
 
 # Create your views here.
 
@@ -531,17 +532,30 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'])
     def search(self, request):
         """
-        Search posts by content
+        Search posts by content, hashtags, or user
         """
-        query = request.query_params.get('q', '')
+        query = request.query_params.get('q', '').strip()
         if not query:
             return Response([])
         
+        # If it's a hashtag search (with or without # symbol)
+        if query.startswith('#'):
+            query = query[1:]  # Remove the # symbol
+            
+        # Search for posts with the hashtag
         posts = Post.objects.filter(
-            Q(content__icontains=query) |
-            Q(author__username__icontains=query) |
-            Q(author__handle__icontains=query)
-        ).order_by('-created_at')
+            Q(hashtags__name__iexact=query) |  # Exact hashtag match
+            Q(content__icontains=query) |      # Content contains the term
+            Q(author__username__icontains=query) |  # Username contains the term
+            Q(author__handle__icontains=query)      # Handle contains the term
+        ).select_related(
+            'author'
+        ).prefetch_related(
+            'likes',
+            'bookmarks',
+            'reposts',
+            'hashtags'
+        ).distinct().order_by('-created_at')
         
         serializer = self.get_serializer(posts, many=True)
         return Response(serializer.data)
@@ -560,6 +574,40 @@ class PostViewSet(viewsets.ModelViewSet):
         # Serialize the reply with its parent post
         serializer = self.get_serializer(reply)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def search_hashtags(self, request):
+        query = request.query_params.get('q', '').lower().strip()
+        if not query:
+            return Response({'results': []})
+            
+        # Remove # if present at the start
+        if query.startswith('#'):
+            query = query[1:]
+        
+        # Search for hashtags that start with the query
+        hashtags = Hashtag.objects.filter(
+            name__startswith=query
+        ).annotate(
+            post_count=Count('posts')
+        ).order_by('-post_count')[:10]  # Limit to top 10 results
+        
+        serializer = HashtagSerializer(hashtags, many=True)
+        return Response({'results': serializer.data})
+
+    @action(detail=False, methods=['get'])
+    def trending_hashtags(self, request):
+        # Get hashtags used in the last 24 hours
+        time_threshold = timezone.now() - timedelta(hours=24)
+        
+        trending = Hashtag.objects.filter(
+            post_hashtags__created_at__gte=time_threshold
+        ).annotate(
+            recent_count=Count('post_hashtags')
+        ).order_by('-recent_count')[:5]  # Top 5 trending hashtags
+        
+        serializer = HashtagSerializer(trending, many=True)
+        return Response({'results': serializer.data})
 
     def get_object(self):
         """

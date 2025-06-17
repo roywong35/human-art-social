@@ -5,6 +5,7 @@ import { RegisterComponent } from './components/register/register.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { BookmarksComponent } from './components/bookmarks/bookmarks.component';
 import { PostDetailComponent } from './components/post-detail/post-detail.component';
+import { SearchComponent } from './components/search/search.component';
 import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -29,6 +30,11 @@ export const routes: Routes = [
   {
     path: 'bookmarks',
     component: BookmarksComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'search',
+    component: SearchComponent,
     canActivate: [AuthGuard]
   },
   {

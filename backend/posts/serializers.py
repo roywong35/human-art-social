@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Post, EvidenceFile, PostImage
+from .models import Post, EvidenceFile, PostImage, Hashtag
 
 User = get_user_model()
 
@@ -105,4 +105,14 @@ class PostSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
-        return super().create(validated_data) 
+        return super().create(validated_data)
+
+class HashtagSerializer(serializers.ModelSerializer):
+    post_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Hashtag
+        fields = ['name', 'post_count']
+    
+    def get_post_count(self, obj):
+        return obj.posts.count() 

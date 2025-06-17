@@ -63,4 +63,8 @@ urlpatterns = [
     path('posts/<str:handle>/<int:pk>/verify_drawing/', PostViewSet.as_view({
         'post': 'verify_drawing'
     })),
+
+    # The router will add the following URLs:
+    # - /api/posts/search_hashtags/
+    # - /api/posts/trending_hashtags/
 ] 
