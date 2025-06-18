@@ -414,3 +414,35 @@ textarea {
   scrollbar-width: none;     /* Firefox */
 }
 
+/* Follow Button Styles */
+.follow-button {
+  @apply px-4 py-2 font-bold rounded-full border-2 transition-all duration-200 flex items-center gap-2;
+
+  /* Not Following State */
+  &:not(.following) {
+    @apply border-gray-200 bg-white text-gray-900;
+    &:hover {
+      @apply bg-gray-100;
+    }
+  }
+
+  /* Following State */
+  &.following {
+    @apply border-transparent bg-black text-white;
+    &:hover {
+      @apply bg-red-600;
+      span:last-child::after {
+        content: 'Unfollow';
+      }
+      span:last-child span {
+        display: none;
+      }
+    }
+  }
+
+  /* Loading State */
+  &.loading {
+    @apply opacity-75 cursor-not-allowed;
+  }
+}
+

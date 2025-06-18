@@ -7,11 +7,17 @@ import { HashtagService, HashtagResult } from '../../services/hashtag.service';
 import { UserService } from '../../services/user.service';
 import { Router } from '@angular/router';
 import { User } from '../../models/user.model';
+import { Subject } from 'rxjs';
 
 interface TrendingTopic {
   name: string;
   postCount: number;
   category: string;
+}
+
+interface UserWithState extends User {
+  isFollowLoading?: boolean;
+  isHoveringFollowButton?: boolean;
 }
 
 @Component({
@@ -29,8 +35,21 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   isRefreshing = false;
   trendingTopics: HashtagResult[] = [];
   readonly maxTrendingTopics = 5;
-  recommendedUsers: User[] = [];
+  recommendedUsers: UserWithState[] = [];
   isLoadingUsers = false;
+  readonly maxRecommendedUsers = 3;
+
+  get displayedUsers(): UserWithState[] {
+    return this.recommendedUsers.slice(0, this.maxRecommendedUsers);
+  }
+
+  get userPlaceholderCount(): number {
+    return Math.max(0, this.maxRecommendedUsers - this.displayedUsers.length);
+  }
+
+  get userPlaceholderArray(): number[] {
+    return Array(this.userPlaceholderCount).fill(0);
+  }
 
   get placeholderCount(): number {
     return Math.max(0, this.maxTrendingTopics - this.trendingTopics.length);
@@ -41,6 +60,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   }
 
   private scrollHandler: () => void;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private elementRef: ElementRef,
@@ -144,7 +164,11 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     this.isLoadingUsers = true;
     this.userService.getRecommendedUsers().subscribe({
       next: (users) => {
-        this.recommendedUsers = users;
+        this.recommendedUsers = users.map(user => ({
+          ...user,
+          isFollowLoading: false,
+          isHoveringFollowButton: false
+        }));
         this.isLoadingUsers = false;
       },
       error: (error) => {
@@ -158,19 +182,31 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/', handle]);
   }
 
-  followUser(user: User, event: Event) {
+  followUser(user: UserWithState, event: Event) {
     event.stopPropagation(); // Prevent navigation when clicking follow button
+    if (user.isFollowLoading) return;
+
+    user.isFollowLoading = true;
     this.userService.followUser(user.handle).subscribe({
       next: (updatedUser) => {
         // Update the user in the list
         const index = this.recommendedUsers.findIndex(u => u.handle === user.handle);
         if (index !== -1) {
-          this.recommendedUsers[index] = updatedUser;
+          this.recommendedUsers[index] = {
+            ...updatedUser,
+            isFollowLoading: false,
+            isHoveringFollowButton: false
+          };
         }
       },
       error: (error) => {
         console.error('Error following user:', error);
+        user.isFollowLoading = false;
       }
     });
+  }
+
+  onFollowButtonHover(user: UserWithState, isHovering: boolean) {
+    user.isHoveringFollowButton = isHovering;
   }
 } 

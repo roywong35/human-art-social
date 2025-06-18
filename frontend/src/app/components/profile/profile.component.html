@@ -37,18 +37,12 @@
           (mouseenter)="onFollowButtonHover(true)"
           (mouseleave)="onFollowButtonHover(false)"
           [disabled]="isFollowLoading"
-          class="px-4 py-2 font-bold rounded-full border-2 transition-all duration-200 flex items-center gap-2"
-          [class.border-gray-200]="!user?.is_following"
-          [class.border-transparent]="user?.is_following"
-          [class.bg-black]="user?.is_following && !isHoveringFollowButton"
-          [class.bg-red-600]="user?.is_following && isHoveringFollowButton"
-          [class.bg-white]="!user?.is_following"
-          [class.text-white]="user?.is_following"
-          [class.text-gray-900]="!user?.is_following"
-          [class.hover:bg-red-600]="user?.is_following"
-          [class.hover:bg-gray-100]="!user?.is_following">
-          <i *ngIf="isFollowLoading" class="fas fa-spinner fa-spin"></i>
-          <span>{{ user?.is_following ? (isHoveringFollowButton ? 'Unfollow' : 'Following') : 'Follow' }}</span>
+          class="follow-button"
+          [class.following]="user?.is_following">
+          <span>
+            <span *ngIf="user?.is_following">Following</span>
+            <span *ngIf="!user?.is_following">Follow</span>
+          </span>
         </button>
         <button *ngIf="isCurrentUser" 
           (click)="openEditModal()"

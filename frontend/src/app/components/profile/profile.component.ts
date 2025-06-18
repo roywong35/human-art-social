@@ -100,6 +100,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     // Subscribe to route parameter changes
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const handle = params.get('handle');
+      console.log('ProfileComponent: Route params changed, handle:', handle);
       if (!handle) {
         this.error = 'Invalid profile URL';
         this.isLoading = false;
@@ -123,8 +124,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserProfile(handle: string): void {
+    console.log('ProfileComponent: Loading user profile for handle:', handle);
     this.userService.getUserByHandle(handle).subscribe({
       next: (user) => {
+        console.log('ProfileComponent: User profile loaded:', user);
         this.user = user;
         this.authService.currentUser$.pipe(take(1)).subscribe(currentUser => {
           this.isCurrentUser = currentUser?.id === user.id;
@@ -132,7 +135,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.loadUserPosts(handle);
       },
       error: (error) => {
-        console.error('Error loading profile:', error);
+        console.error('ProfileComponent: Error loading profile:', error);
         this.error = 'Failed to load profile';
         this.isLoading = false;
       }

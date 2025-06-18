@@ -387,15 +387,27 @@ class PostViewSet(viewsets.ModelViewSet):
                 'images'
             ).order_by('-created_at')
             
+            # Paginate the replies
+            paginator = self.pagination_class()
+            paginated_replies = paginator.paginate_queryset(replies, request)
+            
             # Set context for serializing replies
             context = self.get_serializer_context()
             context['many'] = True  # This ensures we get proper reply data
             
-            # Serialize replies with full data
-            replies_data = self.get_serializer(replies, many=True, context=context).data
+            # Serialize paginated replies with full data
+            replies_data = self.get_serializer(paginated_replies, many=True, context=context).data
             
-            # Add replies to the response
-            post_data['replies'] = replies_data
+            # Get pagination response data
+            pagination_data = paginator.get_paginated_response(replies_data).data
+            
+            # Add paginated replies to the response
+            post_data['replies'] = pagination_data['results']
+            post_data['replies_pagination'] = {
+                'count': pagination_data['count'],
+                'next': pagination_data['next'],
+                'previous': pagination_data['previous']
+            }
             
             return Response(post_data)
         except Exception as e:

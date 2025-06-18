@@ -41,16 +41,30 @@ export class AuthService {
   }
 
   private processUserData(user: User): User {
-    // Ensure following_only_preference is explicitly set to false if not present
-    if (user.profile_picture && !user.profile_picture.startsWith('http')) {
-      user.profile_picture = `${this.apiUrl}${user.profile_picture}`;
+    // Create a copy of the user object to avoid modifying the original
+    const processedUser = { ...user };
+
+    // Handle profile picture URL
+    if (processedUser.profile_picture) {
+      if (!processedUser.profile_picture.startsWith('http') && !processedUser.profile_picture.startsWith('data:')) {
+        // Remove any leading slashes to avoid double slashes in the URL
+        const cleanPath = processedUser.profile_picture.replace(/^\/+/, '');
+        processedUser.profile_picture = `${this.apiUrl}/${cleanPath}`;
+      }
     }
-    if (user.banner_image && !user.banner_image.startsWith('http')) {
-      user.banner_image = `${this.apiUrl}${user.banner_image}`;
+
+    // Handle banner image URL similarly
+    if (processedUser.banner_image) {
+      if (!processedUser.banner_image.startsWith('http') && !processedUser.banner_image.startsWith('data:')) {
+        const cleanPath = processedUser.banner_image.replace(/^\/+/, '');
+        processedUser.banner_image = `${this.apiUrl}/${cleanPath}`;
+      }
     }
+
+    // Ensure following_only_preference is explicitly set
     return {
-      ...user,
-      following_only_preference: user.following_only_preference ?? false
+      ...processedUser,
+      following_only_preference: processedUser.following_only_preference ?? false
     };
   }
 

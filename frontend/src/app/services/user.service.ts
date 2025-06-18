@@ -58,6 +58,12 @@ export class UserService {
     return this.http.get<User[]>(`${this.apiUrl}/handle/${handle}/following/`);
   }
 
+  getAllUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/all/`).pipe(
+      map(users => users.map(user => this.addImageUrls(user)!))
+    );
+  }
+
   private addImageUrls(user: User | null): User | null {
     if (!user) return null;
     

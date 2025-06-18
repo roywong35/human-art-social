@@ -8,6 +8,7 @@ import { PostDetailComponent } from './components/post-detail/post-detail.compon
 import { SearchComponent } from './components/search/search.component';
 import { ConnectionsComponent } from './components/connections/connections.component';
 import { AuthGuard } from './guards/auth.guard';
+import { RecommendedUsersComponent } from './components/recommended-users/recommended-users.component';
 
 export const routes: Routes = [
   {
@@ -39,6 +40,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'recommended-users',
+    component: RecommendedUsersComponent,
+    canActivate: [AuthGuard]
+  },
+  {
     path: ':handle/connections',
     component: ConnectionsComponent,
     canActivate: [AuthGuard]
@@ -51,6 +57,16 @@ export const routes: Routes = [
   {
     path: ':handle/post/:id',
     component: PostDetailComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: ':handle/followers',
+    component: ConnectionsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: ':handle/following',
+    component: ConnectionsComponent,
     canActivate: [AuthGuard]
   },
   {

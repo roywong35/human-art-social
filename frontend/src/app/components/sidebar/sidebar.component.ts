@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -31,7 +31,8 @@ export class SidebarComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private postService: PostService,
-    private userService: UserService
+    private userService: UserService,
+    private elementRef: ElementRef
   ) {
     // Subscribe to route query params to detect tab changes
     this.router.events.pipe(
@@ -163,6 +164,15 @@ export class SidebarComponent implements OnInit {
         .then(() => {
           this.postService.loadPosts();
         });
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  handleClick(event: MouseEvent) {
+    // Check if the click was outside the user menu and its toggle button
+    const clickedInside = this.elementRef.nativeElement.contains(event.target);
+    if (!clickedInside && this.showUserMenu) {
+      this.showUserMenu = false;
     }
   }
 } 

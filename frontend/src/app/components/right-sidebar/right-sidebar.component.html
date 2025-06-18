@@ -53,56 +53,69 @@
       <h2 class="text-xl font-bold px-4 py-3 border-b">Who to follow</h2>
       <div class="divide-y divide-gray-100">
         <!-- Loading state -->
-        <div *ngIf="isLoadingUsers" class="px-4 py-3">
-          <div class="animate-pulse flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="w-12 h-12 rounded-full bg-gray-200"></div>
-              <div class="ml-3">
-                <div class="h-4 bg-gray-200 rounded w-24"></div>
-                <div class="h-3 bg-gray-200 rounded w-20 mt-2"></div>
-                <div class="h-3 bg-gray-200 rounded w-32 mt-2"></div>
+        <div *ngIf="isLoadingUsers" class="min-h-[336px]">
+          <div *ngFor="let i of [1,2,3]" class="px-4 py-3">
+            <div class="animate-pulse flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-gray-200"></div>
+                <div class="ml-3">
+                  <div class="h-4 bg-gray-200 rounded w-24"></div>
+                  <div class="h-3 bg-gray-200 rounded w-20 mt-2"></div>
+                  <div class="h-3 bg-gray-200 rounded w-32 mt-2"></div>
+                </div>
               </div>
+              <div class="w-20 h-8 bg-gray-200 rounded-full"></div>
             </div>
-            <div class="w-20 h-8 bg-gray-200 rounded-full"></div>
           </div>
         </div>
 
-        <!-- User list -->
-        <div *ngFor="let user of recommendedUsers" 
-             class="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer group"
-             (click)="navigateToProfile(user.handle)">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
-                   [alt]="user.username + ' avatar'" 
-                   class="w-12 h-12 rounded-full bg-gray-200">
-              <div class="ml-3">
-                <div class="font-bold text-gray-900 group-hover:text-blue-500 transition-colors">{{ user.username }}</div>
-                <div class="text-gray-500">{{'@'}}{{ user.handle }}</div>
-                <div class="text-sm text-gray-600 mt-1">{{ user.bio || 'No bio available' }}</div>
+        <!-- User list with placeholders -->
+        <div *ngIf="!isLoadingUsers" class="min-h-[336px]">
+          <!-- Actual users -->
+          <div *ngFor="let user of displayedUsers" 
+               class="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer group"
+               (click)="navigateToProfile(user.handle)">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
+                     [alt]="user.username + ' avatar'" 
+                     class="w-12 h-12 rounded-full bg-gray-200 object-cover">
+                <div class="ml-3">
+                  <div class="font-bold text-gray-900 transition-colors">{{ user.username }}</div>
+                  <div class="text-gray-500">{{'@'}}{{ user.handle }}</div>
+                  <div class="text-sm text-gray-600 mt-1">{{ user.bio || 'No bio available' }}</div>
+                </div>
               </div>
+              <button (click)="followUser(user, $event)" 
+                      class="follow-button"
+                      [class.following]="user.is_following"
+                      (mouseenter)="onFollowButtonHover(user, true)"
+                      (mouseleave)="onFollowButtonHover(user, false)">
+                <span>
+                  <span *ngIf="user.is_following">Following</span>
+                  <span *ngIf="!user.is_following">Follow</span>
+                </span>
+              </button>
             </div>
-            <button (click)="followUser(user, $event)" 
-                    class="px-4 py-1.5 rounded-full font-bold transition-colors"
-                    [class.bg-indigo-600]="!user.is_following"
-                    [class.hover:bg-indigo-700]="!user.is_following"
-                    [class.text-white]="!user.is_following"
-                    [class.border-2]="user.is_following"
-                    [class.border-gray-200]="user.is_following"
-                    [class.text-gray-900]="user.is_following"
-                    [class.hover:bg-gray-50]="user.is_following">
-              {{ user.is_following ? 'Following' : 'Follow' }}
-            </button>
           </div>
-        </div>
 
-        <!-- Empty state -->
-        <div *ngIf="!isLoadingUsers && recommendedUsers.length === 0" 
-             class="px-4 py-3 text-gray-500 text-center">
-          No recommendations available
+          <!-- Placeholder users -->
+          <div *ngFor="let i of userPlaceholderArray" class="px-4 py-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-gray-100"></div>
+                <div class="ml-3">
+                  <div class="h-4 w-24 bg-gray-100 rounded"></div>
+                  <div class="h-3 w-20 bg-gray-100 rounded mt-2"></div>
+                  <div class="h-3 w-32 bg-gray-100 rounded mt-2"></div>
+                </div>
+              </div>
+              <div class="w-20 h-8 bg-gray-100 rounded-full"></div>
+            </div>
+          </div>
         </div>
       </div>
-      <a routerLink="/search" class="block px-4 py-3 text-blue-500 hover:bg-gray-50 transition-colors border-t">
+      <a routerLink="/recommended-users" class="block px-4 py-3 text-blue-500 hover:bg-gray-50 transition-colors border-t">
         Show more
       </a>
     </div>
