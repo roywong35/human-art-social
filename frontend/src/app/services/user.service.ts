@@ -30,6 +30,12 @@ export class UserService {
     );
   }
 
+  getRecommendedUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/suggested/`).pipe(
+      map(users => users.map(user => this.addImageUrls(user)!))
+    );
+  }
+
   updateProfile(handle: string, profileData: Partial<User> | FormData): Observable<User> {
     return this.http.patch<User>(`${this.apiUrl}/handle/${handle}/`, profileData).pipe(
       map(user => this.addImageUrls(user)!)
@@ -42,6 +48,14 @@ export class UserService {
     }).pipe(
       map(users => users.map(user => this.addImageUrls(user)!))
     );
+  }
+
+  getUserFollowers(handle: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/handle/${handle}/followers/`);
+  }
+
+  getUserFollowing(handle: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/handle/${handle}/following/`);
   }
 
   private addImageUrls(user: User | null): User | null {

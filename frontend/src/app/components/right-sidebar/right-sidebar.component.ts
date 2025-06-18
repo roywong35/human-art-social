@@ -1,9 +1,12 @@
 import { Component, ElementRef, OnInit, OnDestroy, HostBinding, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 import { HashtagService, HashtagResult } from '../../services/hashtag.service';
+import { UserService } from '../../services/user.service';
 import { Router } from '@angular/router';
+import { User } from '../../models/user.model';
 
 interface TrendingTopic {
   name: string;
@@ -11,17 +14,10 @@ interface TrendingTopic {
   category: string;
 }
 
-interface RecommendedUser {
-  name: string;
-  username: string;
-  avatar: string;
-  bio: string;
-}
-
 @Component({
   selector: 'app-right-sidebar',
   standalone: true,
-  imports: [CommonModule, FormsModule, SearchBarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, SearchBarComponent],
   templateUrl: './right-sidebar.component.html',
   styleUrls: ['./right-sidebar.component.scss']
 })
@@ -32,7 +28,9 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   selectedTimeframe: 'hour' | 'day' = 'hour';
   isRefreshing = false;
   trendingTopics: HashtagResult[] = [];
-  readonly maxTrendingTopics = 6;
+  readonly maxTrendingTopics = 5;
+  recommendedUsers: User[] = [];
+  isLoadingUsers = false;
 
   get placeholderCount(): number {
     return Math.max(0, this.maxTrendingTopics - this.trendingTopics.length);
@@ -42,41 +40,13 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     return Array(this.placeholderCount).fill(0);
   }
 
-  trendingTopicsOriginal: TrendingTopic[] = [
-    { name: 'Angular', postCount: 125000, category: 'Technology' },
-    { name: 'TypeScript', postCount: 98000, category: 'Programming' },
-    { name: 'WebDev', postCount: 85000, category: 'Technology' },
-    { name: 'AI', postCount: 250000, category: 'Technology' },
-    { name: 'Python', postCount: 180000, category: 'Programming' }
-  ];
-
-  recommendedUsers: RecommendedUser[] = [
-    {
-      name: 'John Developer',
-      username: '@johndeveloper',
-      avatar: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=',
-      bio: 'Full-stack developer | Angular enthusiast'
-    },
-    {
-      name: 'Sarah Coder',
-      username: '@sarahcodes',
-      avatar: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=',
-      bio: 'Frontend Developer | UI/UX Designer'
-    },
-    {
-      name: 'Tech Ninja',
-      username: '@techninja',
-      avatar: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=',
-      bio: 'Software Engineer | Open Source Contributor'
-    }
-  ];
-
   private scrollHandler: () => void;
 
   constructor(
     private elementRef: ElementRef,
     private renderer: Renderer2,
     private hashtagService: HashtagService,
+    private userService: UserService,
     private router: Router
   ) {
     this.scrollHandler = () => {
@@ -120,6 +90,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
     window.addEventListener('scroll', this.scrollHandler, { passive: true });
     this.loadTrending();
+    this.loadRecommendedUsers();
   }
 
   ngOnDestroy() {
@@ -167,5 +138,39 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
   navigateToHashtag(hashtag: string) {
     this.router.navigate(['/search'], { queryParams: { q: `#${hashtag}` } });
+  }
+
+  private loadRecommendedUsers() {
+    this.isLoadingUsers = true;
+    this.userService.getRecommendedUsers().subscribe({
+      next: (users) => {
+        this.recommendedUsers = users;
+        this.isLoadingUsers = false;
+      },
+      error: (error) => {
+        console.error('Error loading recommended users:', error);
+        this.isLoadingUsers = false;
+      }
+    });
+  }
+
+  navigateToProfile(handle: string) {
+    this.router.navigate(['/', handle]);
+  }
+
+  followUser(user: User, event: Event) {
+    event.stopPropagation(); // Prevent navigation when clicking follow button
+    this.userService.followUser(user.handle).subscribe({
+      next: (updatedUser) => {
+        // Update the user in the list
+        const index = this.recommendedUsers.findIndex(u => u.handle === user.handle);
+        if (index !== -1) {
+          this.recommendedUsers[index] = updatedUser;
+        }
+      },
+      error: (error) => {
+        console.error('Error following user:', error);
+      }
+    });
   }
 } 

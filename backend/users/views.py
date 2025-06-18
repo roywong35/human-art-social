@@ -21,6 +21,16 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
 
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action == 'create':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
     def get_queryset(self):
         """
         Get the base queryset for the viewset.
@@ -138,6 +148,27 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(UserProfileSerializer(request.user, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'])
+    def suggested(self, request):
+        """
+        Get recommended users based on follower count
+        """
+        # Exclude the current user, users they already follow, and staff/admin users
+        current_user = request.user
+        following_users = current_user.following.all()
+        
+        users = User.objects.exclude(
+            Q(id=current_user.id) | 
+            Q(id__in=following_users) |
+            Q(is_staff=True) |
+            Q(is_superuser=True)
+        ).annotate(
+            follower_count=Count('followers')
+        ).order_by('-follower_count')[:5]  # Get top 5 users by follower count
+        
+        serializer = UserProfileSerializer(users, many=True, context={'request': request})
+        return Response(serializer.data)
 
     def get_serializer_class(self):
         """

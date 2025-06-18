@@ -2,6 +2,11 @@ from django.urls import path
 from .views import UserViewSet
 
 urlpatterns = [
+    # Registration endpoint
+    path('', UserViewSet.as_view({
+        'post': 'create'
+    }), name='user-register'),
+
     # User profile endpoints
     path('handle/<str:handle>/', UserViewSet.as_view({
         'get': 'retrieve',

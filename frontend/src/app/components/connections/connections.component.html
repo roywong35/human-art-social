@@ -1,0 +1,96 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="bg-white border-b sticky top-0 z-10">
+    <div class="max-w-[600px] mx-auto">
+      <div class="px-4 py-3">
+        <div class="flex items-center gap-6">
+          <button (click)="router.navigate(['/'])">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-xl font-bold">{{ username }}</h1>
+            <p class="text-gray-500 text-sm">{{'@'}}{{ handle }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex">
+        <button 
+          [class.border-b-2]="activeTab === 'followers'"
+          [class.border-blue-500]="activeTab === 'followers'"
+          [class.text-blue-500]="activeTab === 'followers'"
+          (click)="setTab('followers')"
+          class="flex-1 py-4 text-sm font-medium hover:bg-gray-50">
+          Followers
+        </button>
+        <button 
+          [class.border-b-2]="activeTab === 'following'"
+          [class.border-blue-500]="activeTab === 'following'"
+          [class.text-blue-500]="activeTab === 'following'"
+          (click)="setTab('following')"
+          class="flex-1 py-4 text-sm font-medium hover:bg-gray-50">
+          Following
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="max-w-[600px] mx-auto divide-y divide-gray-200">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="p-4 flex justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="p-4 text-center text-red-500">
+      {{ error }}
+    </div>
+
+    <!-- User List -->
+    <div *ngIf="!isLoading && !error">
+      <div *ngFor="let user of users" class="p-4 hover:bg-gray-50 transition-colors">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center flex-grow cursor-pointer" (click)="navigateToProfile(user.handle)">
+            <img [src]="user.profile_picture || defaultAvatar" 
+                 [alt]="user.username + ' avatar'" 
+                 class="w-12 h-12 rounded-full bg-gray-200">
+            <div class="ml-3 flex-grow">
+              <div class="font-bold text-gray-900">{{ user.username }}</div>
+              <div class="text-gray-500">{{'@'}}{{ user.handle }}</div>
+              <div class="text-gray-600 text-sm mt-1">{{ user.bio || 'No bio available' }}</div>
+            </div>
+          </div>
+          
+          <!-- Follow Button -->
+          <button 
+            (click)="followUser(user, $event)"
+            (mouseenter)="onFollowButtonHover(user, true)"
+            (mouseleave)="onFollowButtonHover(user, false)"
+            [disabled]="user.isFollowLoading"
+            class="px-4 py-2 font-bold rounded-full border-2 transition-all duration-200 flex items-center gap-2"
+            [class.border-gray-200]="!user.is_following"
+            [class.border-transparent]="user.is_following"
+            [class.bg-black]="user.is_following && !user.isHoveringFollowButton"
+            [class.bg-red-600]="user.is_following && user.isHoveringFollowButton"
+            [class.bg-white]="!user.is_following"
+            [class.text-white]="user.is_following"
+            [class.text-gray-900]="!user.is_following"
+            [class.hover:bg-red-600]="user.is_following"
+            [class.hover:bg-gray-100]="!user.is_following">
+            <i *ngIf="user.isFollowLoading" class="fas fa-spinner fa-spin"></i>
+            <span>{{ user.is_following ? (user.isHoveringFollowButton ? 'Unfollow' : 'Following') : 'Follow' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="users.length === 0" class="p-8 text-center text-gray-500">
+        No {{ activeTab }} to display
+      </div>
+    </div>
+  </div>
+</div>

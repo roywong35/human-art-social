@@ -46,7 +46,7 @@
           [class.text-white]="user?.is_following"
           [class.text-gray-900]="!user?.is_following"
           [class.hover:bg-red-600]="user?.is_following"
-          [class.hover:bg-gray-50]="!user?.is_following">
+          [class.hover:bg-gray-100]="!user?.is_following">
           <i *ngIf="isFollowLoading" class="fas fa-spinner fa-spin"></i>
           <span>{{ user?.is_following ? (isHoveringFollowButton ? 'Unfollow' : 'Following') : 'Follow' }}</span>
         </button>
@@ -82,11 +82,11 @@
         </div>
 
         <div class="flex gap-4 mt-3">
-          <a href="#" class="hover:underline">
+          <a [routerLink]="['/', user?.handle, 'connections']" [queryParams]="{tab: 'following'}" class="hover:underline">
             <span class="font-bold">{{ user?.following_count || 0 }}</span>
             <span class="text-gray-500"> Following</span>
           </a>
-          <a href="#" class="hover:underline">
+          <a [routerLink]="['/', user?.handle, 'connections']" [queryParams]="{tab: 'followers'}" class="hover:underline">
             <span class="font-bold">{{ user?.followers_count || 0 }}</span>
             <span class="text-gray-500"> Followers</span>
           </a>

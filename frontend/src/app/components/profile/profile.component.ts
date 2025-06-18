@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -13,6 +13,8 @@ import { PostComponent } from '../shared/post/post.component';
 import { take } from 'rxjs/operators';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { UserListDialogComponent } from '../shared/user-list-dialog/user-list-dialog.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-unfollow-dialog',
@@ -55,11 +57,19 @@ export class UnfollowDialogComponent {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, PostComponent, MatDialogModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    RouterModule, 
+    PostComponent, 
+    MatDialogModule,
+    UserListDialogComponent
+  ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
+  private routeSubscription: Subscription | undefined;
   user: User | null = null;
   posts: Post[] = [];
   isLoading = true;
@@ -87,14 +97,29 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const handle = this.route.snapshot.paramMap.get('handle');
-    if (!handle) {
-      this.error = 'Invalid profile URL';
-      this.isLoading = false;
-      return;
-    }
+    // Subscribe to route parameter changes
+    this.routeSubscription = this.route.paramMap.subscribe(params => {
+      const handle = params.get('handle');
+      if (!handle) {
+        this.error = 'Invalid profile URL';
+        this.isLoading = false;
+        return;
+      }
 
-    this.loadUserProfile(handle);
+      // Reset state
+      this.isLoading = true;
+      this.error = null;
+      this.user = null;
+      this.posts = [];
+
+      this.loadUserProfile(handle);
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
   }
 
   private loadUserProfile(handle: string): void {
@@ -222,5 +247,35 @@ export class ProfileComponent implements OnInit {
 
   onFollowButtonHover(isHovering: boolean): void {
     this.isHoveringFollowButton = isHovering;
+  }
+
+  showFollowers(event: Event): void {
+    event.preventDefault();
+    if (!this.user) return;
+
+    this.userService.getUserFollowers(this.user.handle).subscribe(followers => {
+      this.dialog.open(UserListDialogComponent, {
+        data: {
+          users: followers,
+          title: 'Followers'
+        },
+        panelClass: 'rounded-lg'
+      });
+    });
+  }
+
+  showFollowing(event: Event): void {
+    event.preventDefault();
+    if (!this.user) return;
+
+    this.userService.getUserFollowing(this.user.handle).subscribe(following => {
+      this.dialog.open(UserListDialogComponent, {
+        data: {
+          users: following,
+          title: 'Following'
+        },
+        panelClass: 'rounded-lg'
+      });
+    });
   }
 } 
