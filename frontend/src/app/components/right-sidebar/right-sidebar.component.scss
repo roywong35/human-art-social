@@ -2,11 +2,12 @@
 
 :host {
   display: block;
+  position: relative;
   
   &.sticky {
     position: fixed;
-    width: 350px;
     transform: translateZ(0);
-    will-change: position;
+    will-change: transform;
+    z-index: 10;
   }
 } 
