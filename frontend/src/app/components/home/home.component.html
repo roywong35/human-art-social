@@ -47,9 +47,8 @@
   <!-- Posts List -->
   <div class="posts-container">
     <ng-container *ngFor="let post of posts">
-      <app-human-art-post *ngIf="activeTab === 'human-drawing'" [post]="post"></app-human-art-post>
-      <app-post *ngIf="activeTab === 'for-you'" 
-                [post]="post"
+      <app-post [post]="post"
+                [showFullHeader]="true"
                 (likeClicked)="onLike(post)"
                 (repostClicked)="onRepost(post)"
                 (bookmarkClicked)="onBookmark(post)"
