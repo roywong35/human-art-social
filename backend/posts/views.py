@@ -776,7 +776,24 @@ class PostViewSet(viewsets.ModelViewSet):
         replies = Post.objects.filter(
             author=user,
             post_type='reply'
-        ).select_related('author', 'referenced_post', 'parent_post').order_by('-created_at')
+        ).select_related(
+            'author',
+            'referenced_post',
+            'referenced_post__author',
+            'parent_post',
+            'parent_post__author'
+        ).prefetch_related(
+            'images',
+            'evidence_files',
+            'likes',
+            'bookmarks',
+            'reposts',
+            'parent_post__images',
+            'parent_post__evidence_files',
+            'parent_post__likes',
+            'parent_post__bookmarks',
+            'parent_post__reposts'
+        ).order_by('-created_at')
         
         serializer = PostSerializer(replies, many=True, context={'request': request})
         return Response(serializer.data)

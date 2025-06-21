@@ -156,11 +156,45 @@
 
       <!-- Replies Tab -->
       <div *ngSwitchCase="'replies'" class="divide-y divide-gray-200">
-        <app-post *ngFor="let reply of replies"
-          [post]="reply"
-          [showFullHeader]="true"
-          (click)="onPostClick(reply)">
-        </app-post>
+        <div *ngFor="let reply of replies" class="relative">
+          <!-- Parent Chain -->
+          <ng-container *ngIf="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0">
+            <div *ngFor="let parentPost of replyParentChains[reply.id]; let i = index" class="relative">
+              <!-- Connecting Line -->
+              <div class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
+                   [style]="i === 0 ? 'top: 45px; height: calc(100% - 45px);' : 'top: 0; height: 100%;'">
+              </div>
+              <app-post 
+                [post]="parentPost"
+                [isDetailView]="true"
+                [isConnectedToParent]="true"
+                class="relative">
+              </app-post>
+            </div>
+          </ng-container>
+
+          <!-- Reply Post -->
+          <div class="relative">
+            <!-- Thread Line -->
+            <div *ngIf="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0" 
+                 class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
+                 style="top: 0; height: 45px;">
+            </div>
+            <app-post 
+              [post]="reply"
+              [isDetailView]="true"
+              [isConnectedToParent]="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0"
+              [showFullHeader]="true"
+              (click)="onPostClick(reply)"
+              class="relative">
+            </app-post>
+          </div>
+        </div>
+
+        <!-- No Replies Message -->
+        <div *ngIf="!isLoading && replies.length === 0" class="p-4 text-center text-gray-500">
+          No replies yet.
+        </div>
       </div>
 
       <!-- Media Tab -->

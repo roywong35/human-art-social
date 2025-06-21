@@ -73,6 +73,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   user: User | null = null;
   posts: Post[] = [];
   replies: Post[] = [];
+  replyParentChains: { [replyId: number]: Post[] } = {};
   mediaItems: { image: string; postId: number }[] = [];
   humanArtPosts: Post[] = [];
   likedPosts: Post[] = [];
@@ -118,6 +119,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.user = null;
       this.posts = [];
       this.replies = [];
+      this.replyParentChains = {};
       this.mediaItems = [];
       this.humanArtPosts = [];
       this.likedPosts = [];
@@ -208,16 +210,52 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   private loadUserReplies(handle: string): void {
     this.postService.getUserReplies(handle).subscribe({
-      next: (replies: Post[]) => {
-        this.replies = replies;
+      next: async (replies) => {
+        // Filter to ensure we only have replies
+        this.replies = replies.filter(post => post.post_type === 'reply');
+        
+        // Build parent chains for each reply
+        for (const reply of this.replies) {
+          await this.buildParentChain(reply);
+        }
+        
         this.isLoading = false;
       },
-      error: (error: Error) => {
-        console.error('Error loading replies:', error);
+      error: (error) => {
+        console.error('Error loading user replies:', error);
         this.error = 'Failed to load replies';
         this.isLoading = false;
       }
     });
+  }
+
+  private async buildParentChain(reply: Post) {
+    console.log('Building parent chain for reply:', reply.id);
+    
+    // Initialize empty chain for this reply
+    this.replyParentChains[reply.id] = [];
+
+    // Use conversation_chain to build the parent chain
+    if (reply.conversation_chain && reply.conversation_chain.length > 0) {
+      // Get all posts except the last one (which is the current reply)
+      const chainIds = reply.conversation_chain.slice(0, -1);
+      console.log('Using conversation chain:', chainIds);
+      
+      for (const postId of chainIds) {
+        try {
+          // Use getPostById since parent posts can be from different users
+          const chainPost = await this.postService.getPostById(postId).toPromise();
+          if (chainPost) {
+            console.log('Added parent to chain:', chainPost.id);
+            this.replyParentChains[reply.id].push(chainPost);
+          }
+        } catch (error) {
+          console.error(`Error loading parent post ${postId}:`, error);
+        }
+      }
+    }
+
+    console.log('Final parent chain for reply', reply.id, ':', this.replyParentChains[reply.id].map(p => p.id));
   }
 
   private loadUserMedia(handle: string): void {
