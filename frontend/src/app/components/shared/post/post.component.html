@@ -141,7 +141,9 @@
                }">
             <div class="flex h-full">
               <!-- Single photo with adaptive layout -->
-              <div *ngIf="(post.referenced_post?.images?.length ?? 0) === 1" class="w-full">
+              <div *ngIf="(post.referenced_post?.images?.length ?? 0) === 1" 
+                   class="w-full cursor-pointer"
+                   (click)="onPhotoClick($event, 0, true)">
                 <img [src]="post.referenced_post?.images?.[0]?.image" 
                      [alt]="'Post image 1'"
                      class="w-full"
@@ -155,7 +157,8 @@
               <div *ngIf="(post.referenced_post?.images?.length ?? 0) !== 1" class="flex flex-wrap h-full">
                 <div *ngFor="let image of post.referenced_post?.images; let i = index" 
                      [class]="(post.referenced_post?.images?.length ?? 0) === 1 ? 'w-full h-full' : getImageLayoutClass(i, post.referenced_post?.images?.length || 0)"
-                     class="relative p-0.5">
+                     class="relative p-0.5 cursor-pointer"
+                     (click)="onPhotoClick($event, i, true)">
                   <img [src]="image?.image" 
                        [alt]="'Post image ' + (i + 1)"
                        class="w-full h-full object-cover"

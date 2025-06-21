@@ -381,12 +381,12 @@ export class PostComponent implements OnInit, OnDestroy {
     return 1; // Default to 1:1 until loaded
   }
 
-  onPhotoClick(event: MouseEvent, index: number): void {
+  onPhotoClick(event: MouseEvent, index: number, isReferencedPost: boolean = false): void {
     event.stopPropagation();
     const dialogRef = this.dialog.open(PhotoViewerComponent, {
       panelClass: 'photo-viewer-dialog',
       data: {
-        photos: this.post.images,
+        photos: isReferencedPost ? this.post.referenced_post?.images : this.post.images,
         initialPhotoIndex: index
       }
     });
