@@ -88,12 +88,115 @@
       </div>
     </div>
 
-    <!-- Posts -->
-    <div class="divide-y divide-gray-200">
-      <app-post *ngFor="let post of posts"
-        [post]="post"
-        (click)="onPostClick(post)">
-      </app-post>
+    <!-- Tabs Navigation -->
+    <div class="border-b border-gray-200">
+      <div class="flex max-w-[600px] mx-auto">
+        <button 
+          [class.border-b-2]="activeTab === 'posts'"
+          [class.border-blue-500]="activeTab === 'posts'"
+          [class.text-blue-500]="activeTab === 'posts'"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          (click)="setActiveTab('posts')"
+        >
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          Posts
+        </button>
+        <button 
+          [class.border-b-2]="activeTab === 'replies'"
+          [class.border-blue-500]="activeTab === 'replies'"
+          [class.text-blue-500]="activeTab === 'replies'"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          (click)="setActiveTab('replies')"
+        >
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          Replies
+        </button>
+        <button 
+          [class.border-b-2]="activeTab === 'media'"
+          [class.border-blue-500]="activeTab === 'media'"
+          [class.text-blue-500]="activeTab === 'media'"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          (click)="setActiveTab('media')"
+        >
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          Media
+        </button>
+        <button 
+          [class.border-b-2]="activeTab === 'human-art'"
+          [class.border-blue-500]="activeTab === 'human-art'"
+          [class.text-blue-500]="activeTab === 'human-art'"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          (click)="setActiveTab('human-art')"
+        >
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          Human Art
+        </button>
+        <button 
+          [class.border-b-2]="activeTab === 'likes'"
+          [class.border-blue-500]="activeTab === 'likes'"
+          [class.text-blue-500]="activeTab === 'likes'"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          (click)="setActiveTab('likes')"
+        >
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          Likes
+        </button>
+      </div>
+    </div>
+
+    <!-- Content based on active tab -->
+    <div [ngSwitch]="activeTab">
+      <!-- Posts Tab -->
+      <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200">
+        <app-post *ngFor="let post of posts"
+          [post]="post"
+          (click)="onPostClick(post)">
+        </app-post>
+      </div>
+
+      <!-- Replies Tab -->
+      <div *ngSwitchCase="'replies'" class="divide-y divide-gray-200">
+        <app-post *ngFor="let reply of replies"
+          [post]="reply"
+          [showFullHeader]="true"
+          (click)="onPostClick(reply)">
+        </app-post>
+      </div>
+
+      <!-- Media Tab -->
+      <div *ngSwitchCase="'media'" class="p-4">
+        <div class="grid grid-cols-3 gap-1">
+          <div *ngFor="let media of mediaItems" 
+               class="aspect-square cursor-pointer overflow-hidden"
+               (click)="onMediaClick(media)">
+            <img [src]="media.image" 
+                 alt="Media content" 
+                 class="w-full h-full object-cover">
+          </div>
+        </div>
+      </div>
+
+      <!-- Human Art Tab -->
+      <div *ngSwitchCase="'human-art'" class="p-4">
+        <div class="grid grid-cols-3 gap-1">
+          <div *ngFor="let art of humanArtPosts" 
+               class="aspect-square cursor-pointer overflow-hidden"
+               (click)="onPostClick(art)">
+            <img [src]="art.images?.[0]?.image || art.image" 
+                 alt="Human art" 
+                 class="w-full h-full object-cover">
+          </div>
+        </div>
+      </div>
+
+      <!-- Likes Tab -->
+      <div *ngSwitchCase="'likes'" class="divide-y divide-gray-200">
+        <app-post *ngFor="let post of likedPosts"
+          [post]="post"
+          [showFullHeader]="true"
+          (click)="onPostClick(post)">
+        </app-post>
+      </div>
     </div>
   </div>
 </div>

@@ -22,6 +22,7 @@ export class PostService {
   private currentPage = 1;
   private hasMore = true;
   private loading = false;
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
@@ -134,15 +135,15 @@ export class PostService {
   }
 
   getPost(handle: string, postId: number): Observable<Post> {
-    return this.http.get<Post>(`${this.baseUrl}/posts/${handle}/${postId}/`).pipe(
-      map(post => this.addImageUrls(post))
-    );
+    return this.http.get<Post>(`${this.baseUrl}/posts/${handle}/${postId}/`);
+  }
+
+  getPostById(postId: number): Observable<Post> {
+    return this.http.get<Post>(`${this.baseUrl}/posts/by-id/${postId}/`);
   }
 
   getUserPosts(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.baseUrl}/users/handle/${handle}/posts/`).pipe(
-      map(posts => posts.map(post => this.addImageUrls(post)))
-    );
+    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/posts/`);
   }
 
   createPostWithFormData(formData: FormData, isReply: boolean = false, handle?: string, postId?: number): Observable<Post> {
@@ -473,5 +474,21 @@ export class PostService {
 
   toggleBookmark(postId: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/posts/${postId}/bookmark/`, {});
+  }
+
+  getUserReplies(handle: string): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/replies/`);
+  }
+
+  getUserMedia(handle: string): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/media/`);
+  }
+
+  getUserHumanArt(handle: string): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/human-art/`);
+  }
+
+  getUserLikes(handle: string): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/likes/`);
   }
 } 

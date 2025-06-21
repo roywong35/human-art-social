@@ -9,9 +9,10 @@ from .serializers import PostSerializer, HashtagSerializer
 from django.db import models, transaction
 from django.utils import timezone
 import mimetypes
-from django.db.models import Q, Case, When, F, Count
+from django.db.models import Q, Case, When, F, Count, Prefetch
 from datetime import timedelta
 from django.core.cache import cache
+from django.http import Http404
 
 # Create your views here.
 
@@ -432,22 +433,52 @@ class PostViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    @action(detail=False, methods=['GET'])
-    def get_user_posts_by_handle(self, request, handle=None):
+    def retrieve_by_id(self, request, pk=None):
         """
-        Get all posts by a specific user handle
+        Retrieve a post by ID only (for conversation chains)
         """
         try:
-            user = get_object_or_404(User, handle=handle)
-            posts = Post.objects.filter(author=user).order_by('-created_at')
-            serializer = self.get_serializer(posts, many=True)
+            post = Post.objects.select_related(
+                'author',
+                'referenced_post',
+                'referenced_post__author',
+                'parent_post'
+            ).prefetch_related(
+                'images',
+                'evidence_files',
+                'likes',
+                'bookmarks',
+                'reposts'
+            ).get(id=pk)
+            serializer = self.get_serializer(post)
             return Response(serializer.data)
+        except Post.DoesNotExist:
+            raise Http404("Post not found")
         except Exception as e:
-            print(f"Error in get_user_posts_by_handle method: {str(e)}")
+            print(f"Error in retrieve_by_id method: {str(e)}")
             return Response(
-                {'error': 'An error occurred while fetching user posts'},
+                {'error': 'An error occurred while fetching the post'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    def get_user_posts(self, handle):
+        user = get_object_or_404(User, handle=handle)
+        posts = Post.objects.filter(
+            author=user,
+        ).exclude(
+            post_type='reply'  # Exclude replies from the main posts tab
+        ).select_related(
+            'author',
+            'referenced_post',
+            'parent_post'
+        ).order_by('-created_at')
+        return posts
+
+    @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/posts')
+    def user_posts(self, request, handle=None):
+        posts = self.get_user_posts(handle)
+        serializer = PostSerializer(posts, many=True, context={'request': request})
+        return Response(serializer.data)
 
     @action(detail=False, methods=['GET'])
     def feed(self, request):
@@ -703,27 +734,82 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         """
-        Override get_object to handle handle-based lookups
+        Get post by handle and id
         """
-        print("Getting object with params:", self.kwargs)
-        handle = self.kwargs.get('handle')
-        pk = self.kwargs.get('pk')
-        
-        if handle:
-            return get_object_or_404(
-                Post.objects.select_related(
+        try:
+            handle = self.kwargs.get('handle')
+            post_id = self.kwargs.get('pk')
+            action = self.action
+            
+            if handle and post_id:
+                # Base query with all necessary related fields
+                base_query = Post.objects.select_related(
                     'author',
                     'referenced_post',
+                    'referenced_post__author',
                     'parent_post'
                 ).prefetch_related(
+                    'images',
+                    'evidence_files',
                     'likes',
                     'bookmarks',
-                    'reposts',
-                    'replies',
-                    'evidence_files',
-                    'images'
-                ),
-                author__handle=handle,
-                pk=pk
-            )
-        return super().get_object()
+                    'reposts'
+                )
+                
+                # For conversation chain posts, we don't need to check the handle
+                if action == 'retrieve_by_handle':
+                    return base_query.get(id=post_id)
+                else:
+                    # For other actions, verify the handle matches
+                    return base_query.get(
+                        Q(author__handle=handle) | Q(author__username=handle),
+                        id=post_id
+                    )
+                    
+            return super().get_object()
+        except Post.DoesNotExist:
+            raise Http404("Post not found")
+
+    @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/replies')
+    def user_replies(self, request, handle=None):
+        user = get_object_or_404(User, handle=handle)
+        replies = Post.objects.filter(
+            author=user,
+            post_type='reply'
+        ).select_related('author', 'referenced_post', 'parent_post').order_by('-created_at')
+        
+        serializer = PostSerializer(replies, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/media')
+    def user_media(self, request, handle=None):
+        user = get_object_or_404(User, handle=handle)
+        media_posts = Post.objects.filter(
+            author=user,
+            images__isnull=False
+        ).distinct().select_related('author').order_by('-created_at')
+        
+        serializer = PostSerializer(media_posts, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/human-art')
+    def user_human_art(self, request, handle=None):
+        user = get_object_or_404(User, handle=handle)
+        human_art_posts = Post.objects.filter(
+            author=user,
+            is_human_drawing=True,
+            is_verified=True
+        ).select_related('author').order_by('-created_at')
+        
+        serializer = PostSerializer(human_art_posts, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/likes')
+    def user_likes(self, request, handle=None):
+        user = get_object_or_404(User, handle=handle)
+        liked_posts = Post.objects.filter(
+            likes=user
+        ).select_related('author').order_by('-created_at')
+        
+        serializer = PostSerializer(liked_posts, many=True, context={'request': request})
+        return Response(serializer.data)

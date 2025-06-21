@@ -13,6 +13,11 @@ urlpatterns = [
         'get': 'get_user_posts_by_handle'
     }), name='user-posts'),
     
+    # Get post by ID only (for conversation chains)
+    path('posts/by-id/<int:pk>/', PostViewSet.as_view({
+        'get': 'retrieve_by_id'
+    }), name='post-by-id'),
+    
     path('posts/<str:handle>/<int:pk>/', PostViewSet.as_view({
         'get': 'retrieve_by_handle',
         'put': 'update',

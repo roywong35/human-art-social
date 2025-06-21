@@ -72,6 +72,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | undefined;
   user: User | null = null;
   posts: Post[] = [];
+  replies: Post[] = [];
+  mediaItems: { image: string; postId: number }[] = [];
+  humanArtPosts: Post[] = [];
+  likedPosts: Post[] = [];
+  activeTab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes' = 'posts';
   isLoading = true;
   error: string | null = null;
   isCurrentUser = false;
@@ -112,8 +117,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.error = null;
       this.user = null;
       this.posts = [];
+      this.replies = [];
+      this.mediaItems = [];
+      this.humanArtPosts = [];
+      this.likedPosts = [];
 
       this.loadUserProfile(handle);
+    });
+
+    // Subscribe to query params for tab
+    this.route.queryParams.subscribe(params => {
+      const tab = params['tab'];
+      if (tab && ['posts', 'replies', 'media', 'human-art', 'likes'].includes(tab)) {
+        this.activeTab = tab as 'posts' | 'replies' | 'media' | 'human-art' | 'likes';
+        this.loadTabContent(this.user?.handle || '');
+      }
     });
   }
 
@@ -132,7 +150,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.authService.currentUser$.pipe(take(1)).subscribe(currentUser => {
           this.isCurrentUser = currentUser?.id === user.id;
         });
-        this.loadUserPosts(handle);
+        this.loadTabContent(handle);
       },
       error: (error) => {
         console.error('ProfileComponent: Error loading profile:', error);
@@ -140,6 +158,38 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  setActiveTab(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): void {
+    this.activeTab = tab;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge'
+    });
+    this.loadTabContent(this.user?.handle || '');
+  }
+
+  private loadTabContent(handle: string): void {
+    if (!handle) return;
+
+    switch (this.activeTab) {
+      case 'posts':
+        this.loadUserPosts(handle);
+        break;
+      case 'replies':
+        this.loadUserReplies(handle);
+        break;
+      case 'media':
+        this.loadUserMedia(handle);
+        break;
+      case 'human-art':
+        this.loadUserHumanArt(handle);
+        break;
+      case 'likes':
+        this.loadUserLikes(handle);
+        break;
+    }
   }
 
   private loadUserPosts(handle: string): void {
@@ -151,6 +201,68 @@ export class ProfileComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading posts:', error);
         this.error = 'Failed to load posts';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadUserReplies(handle: string): void {
+    this.postService.getUserReplies(handle).subscribe({
+      next: (replies: Post[]) => {
+        this.replies = replies;
+        this.isLoading = false;
+      },
+      error: (error: Error) => {
+        console.error('Error loading replies:', error);
+        this.error = 'Failed to load replies';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadUserMedia(handle: string): void {
+    this.postService.getUserMedia(handle).subscribe({
+      next: (posts: Post[]) => {
+        this.mediaItems = posts.reduce((acc: { image: string; postId: number }[], post: Post) => {
+          const images = post.images?.map(img => ({
+            image: img.image,
+            postId: post.id
+          })) || [];
+          return [...acc, ...images];
+        }, []);
+        this.isLoading = false;
+      },
+      error: (error: Error) => {
+        console.error('Error loading media:', error);
+        this.error = 'Failed to load media';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadUserHumanArt(handle: string): void {
+    this.postService.getUserHumanArt(handle).subscribe({
+      next: (posts: Post[]) => {
+        this.humanArtPosts = posts.filter(post => post.is_verified);
+        this.isLoading = false;
+      },
+      error: (error: Error) => {
+        console.error('Error loading human art:', error);
+        this.error = 'Failed to load human art';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadUserLikes(handle: string): void {
+    this.postService.getUserLikes(handle).subscribe({
+      next: (posts: Post[]) => {
+        this.likedPosts = posts;
+        this.isLoading = false;
+      },
+      error: (error: Error) => {
+        console.error('Error loading likes:', error);
+        this.error = 'Failed to load likes';
         this.isLoading = false;
       }
     });
@@ -280,5 +392,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
         panelClass: 'rounded-lg'
       });
     });
+  }
+
+  onMediaClick(media: { image: string; postId: number }): void {
+    this.router.navigate(['/', this.user?.handle, 'post', media.postId]);
   }
 } 

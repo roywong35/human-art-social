@@ -228,14 +228,16 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
     // Clear existing chain
     this.parentChain = [];
 
-    // If we have conversation_chain, use it
-    if (post.conversation_chain && post.conversation_chain.length > 1) {
+    // Use conversation_chain to build the parent chain
+    if (post.conversation_chain && post.conversation_chain.length > 0) {
+      // Get all posts except the last one (which is the current post)
       const chainIds = post.conversation_chain.slice(0, -1);
       console.log('Using conversation chain:', chainIds);
       
       for (const postId of chainIds) {
         try {
-          const chainPost = await this.postService.getPost(this.handle, postId).toPromise();
+          // Use getPostById instead of getPost since parent posts can be from different users
+          const chainPost = await this.postService.getPostById(postId).toPromise();
           if (chainPost) {
             console.log('Added parent to chain:', chainPost.id);
             this.parentChain.push(chainPost);
@@ -243,18 +245,6 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
         } catch (error) {
           console.error(`Error loading parent post ${postId}:`, error);
         }
-      }
-    }
-    // Otherwise, build chain using parent_post relationships
-    else if (post.parent_post) {
-      console.log('Building chain from parent relationships');
-      let currentPost: Post | null = post.parent_post;
-      
-      // Keep adding parents until we reach the top
-      while (currentPost) {
-        console.log('Added parent to chain:', currentPost.id);
-        this.parentChain.unshift(currentPost);
-        currentPost = currentPost.parent_post || null;
       }
     }
 
