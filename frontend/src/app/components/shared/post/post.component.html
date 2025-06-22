@@ -2,7 +2,10 @@
   <!-- Repost header -->
   <div *ngIf="post.post_type === 'repost'" class="flex items-center gap-2 mb-2 text-gray-500">
     <i class="fas fa-retweet"></i>
-    <span class="text-sm">You reposted</span>
+    <span class="text-sm" *ngIf="post.author.id === currentUser?.id">You reposted</span>
+    <span class="text-sm" *ngIf="post.author.id !== currentUser?.id">
+      <span class="hover:underline cursor-pointer" (click)="navigateToProfile($event)">{{ post.author.username }}</span> reposted
+    </span>
   </div>
 
   <!-- User avatar and content -->

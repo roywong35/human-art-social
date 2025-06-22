@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, Event, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { RightSidebarComponent } from './components/right-sidebar/right-sidebar.component';
@@ -27,8 +27,28 @@ import { EmojiPickerComponent } from './components/shared/emoji-picker/emoji-pic
 })
 export class AppComponent {
   title = 'frontend';
+  isLoading = false;
 
   constructor(
     public authService: AuthService,
-  ) {}
+    private router: Router
+  ) {
+    this.router.events.subscribe((event: Event) => {
+      switch (true) {
+        case event instanceof NavigationStart: {
+          this.isLoading = true;
+          break;
+        }
+        case event instanceof NavigationEnd:
+        case event instanceof NavigationCancel:
+        case event instanceof NavigationError: {
+          this.isLoading = false;
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    });
+  }
 }
