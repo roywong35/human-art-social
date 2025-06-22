@@ -1,20 +1,21 @@
 <div class="relative">
   <!-- Search Input -->
-  <div class="bg-gray-100 rounded-full flex items-center px-4 py-1.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100">
+  <div class="bg-gray-100 rounded-full flex items-center px-4 py-1.5" [class.focus-within:bg-white]="!isPreview" [class.focus-within:ring-2]="!isPreview" [class.focus-within:ring-blue-100]="!isPreview">
     <i class="fas fa-search text-gray-500"></i>
     <input
       #searchInput
       [(ngModel)]="searchQuery"
       (input)="onSearchInput($event)"
       type="text"
-      placeholder="Search"
+      [placeholder]="isPreview ? 'Sign in to search' : 'Search'"
       class="bg-transparent ml-3 outline-none w-full text-gray-900 placeholder-gray-500"
       (focus)="onFocus()"
-      (blur)="onBlur()">
+      (blur)="onBlur()"
+      [disabled]="isPreview">
   </div>
 
   <!-- Search Results Dropdown -->
-  <div *ngIf="showResults && (isLoading || results.length > 0 || noResults)"
+  <div *ngIf="!isPreview && showResults && (isLoading || results.length > 0 || noResults)"
        class="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[400px] overflow-y-auto z-50">
     
     <!-- Loading State -->

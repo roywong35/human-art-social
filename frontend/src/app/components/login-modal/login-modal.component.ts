@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-login-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatDialogModule],
   template: `
     <div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -21,7 +23,7 @@ import { NotificationService } from '../../services/notification.service';
           <div class="absolute top-0 right-0 pt-4 pr-4">
             <button
               type="button"
-              (click)="close.emit()"
+              (click)="dialogRef.close()"
               class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               <span class="sr-only">Close</span>
@@ -122,7 +124,8 @@ export class LoginModalComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    public dialogRef: MatDialogRef<LoginModalComponent>
   ) {}
 
   onSubmit() {
@@ -137,7 +140,7 @@ export class LoginModalComponent {
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
         this.notificationService.showSuccess('Successfully signed in!');
-        this.router.navigate(['/home']);
+        this.dialogRef.close(true); // Close with success result
       },
       error: (error) => {
         this.isLoading = false;
@@ -145,4 +148,4 @@ export class LoginModalComponent {
       }
     });
   }
-} 
+}

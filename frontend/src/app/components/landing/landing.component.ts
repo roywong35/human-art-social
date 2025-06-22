@@ -9,6 +9,8 @@ import { Post } from '../../models/post.model';
 import { LoginModalComponent } from '../login-modal/login-modal.component';
 import { RegisterModalComponent } from '../register-modal/register-modal.component';
 import { AuthService } from '../../services/auth.service';
+import { MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-landing',
@@ -19,7 +21,8 @@ import { AuthService } from '../../services/auth.service';
     PostComponent,
     SearchBarComponent,
     LoginModalComponent,
-    RegisterModalComponent
+    RegisterModalComponent,
+    MatDialogModule
   ],
   template: `
     <div class="min-h-screen bg-gray-50">
@@ -43,12 +46,12 @@ import { AuthService } from '../../services/auth.service';
             <div class="mt-8 px-4">
               <div class="flex gap-3">
                 <button 
-                  (click)="showRegisterModal = true"
+                  (click)="openRegisterModal()"
                   class="flex-1 py-2.5 px-4 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 transition-colors text-sm">
                   Join us
                 </button>
                 <button 
-                  (click)="showLoginModal = true"
+                  (click)="openLoginModal()"
                   class="flex-1 py-2.5 px-4 border border-blue-500 text-blue-500 rounded-full font-semibold hover:bg-blue-50 transition-colors text-sm">
                   Sign in
                 </button>
@@ -96,20 +99,6 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </div>
     </div>
-
-    <!-- Login Modal -->
-    <app-login-modal
-      *ngIf="showLoginModal"
-      (close)="showLoginModal = false"
-      (openRegister)="switchToRegister()"
-    ></app-login-modal>
-
-    <!-- Register Modal -->
-    <app-register-modal
-      *ngIf="showRegisterModal"
-      (close)="showRegisterModal = false"
-      (openLogin)="switchToLogin()"
-    ></app-register-modal>
   `,
   styles: [`
     :host {
@@ -120,14 +109,13 @@ import { AuthService } from '../../services/auth.service';
 export class LandingComponent implements OnInit {
   posts: Post[] = [];
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
-  showLoginModal = false;
-  showRegisterModal = false;
 
   constructor(
     private postService: PostService,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService
+    private authService: AuthService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -187,13 +175,31 @@ export class LandingComponent implements OnInit {
     );
   }
 
-  switchToLogin() {
-    this.showRegisterModal = false;
-    this.showLoginModal = true;
+  openLoginModal() {
+    const dialogRef = this.dialog.open(LoginModalComponent, {
+      width: '400px',
+      panelClass: 'custom-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // If login was successful, navigate to home
+        this.router.navigate(['/home']);
+      }
+    });
   }
 
-  switchToRegister() {
-    this.showLoginModal = false;
-    this.showRegisterModal = true;
+  openRegisterModal() {
+    const dialogRef = this.dialog.open(RegisterModalComponent, {
+      width: '400px',
+      panelClass: 'custom-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // If registration was successful, navigate to home
+        this.router.navigate(['/home']);
+      }
+    });
   }
 } 

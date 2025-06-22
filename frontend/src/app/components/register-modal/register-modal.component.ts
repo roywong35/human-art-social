@@ -1,20 +1,23 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { RegisterData } from '../../models';
+import { MatDialogRef, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
+import { LoginModalComponent } from '../login-modal/login-modal.component';
 
 @Component({
   selector: 'app-register-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatDialogModule],
   template: `
     <div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <!-- Background overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="close.emit()"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="onClose()"></div>
 
         <!-- Modal panel -->
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
@@ -22,7 +25,7 @@ import { RegisterData } from '../../models';
           <div class="absolute top-0 right-0 pt-4 pr-4">
             <button
               type="button"
-              (click)="close.emit()"
+              (click)="onClose()"
               class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               <span class="sr-only">Close</span>
@@ -142,7 +145,7 @@ import { RegisterData } from '../../models';
                 <div class="text-center mt-4">
                   <button
                     type="button"
-                    (click)="openLogin.emit()"
+                    (click)="switchToLogin()"
                     class="text-sm text-indigo-600 hover:text-indigo-500"
                   >
                     Already have an account? Sign in
@@ -157,9 +160,6 @@ import { RegisterData } from '../../models';
   `
 })
 export class RegisterModalComponent {
-  @Output() close = new EventEmitter<void>();
-  @Output() openLogin = new EventEmitter<void>();
-
   registerData: RegisterData = {
     username: '',
     email: '',
@@ -174,8 +174,14 @@ export class RegisterModalComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private dialogRef: MatDialogRef<RegisterModalComponent>,
+    private dialog: MatDialog
   ) {}
+
+  onClose() {
+    this.dialogRef.close();
+  }
 
   onSubmit() {
     // Validate all required fields
@@ -198,24 +204,42 @@ export class RegisterModalComponent {
       return;
     }
 
-    // Validate password strength
-    if (this.registerData.password.length < 6) {
-      this.registerError = 'Password must be at least 6 characters long';
+    // Validate handle format (only letters, numbers, and underscores)
+    const handleRegex = /^[a-zA-Z0-9_]+$/;
+    if (!handleRegex.test(this.registerData.handle)) {
+      this.registerError = 'Handle can only contain letters, numbers, and underscores';
       return;
     }
 
-    this.registerError = '';
     this.isLoading = true;
+    this.registerError = '';
 
     this.authService.register(this.registerData).subscribe({
       next: () => {
-        this.notificationService.showSuccess('Account created successfully! Please sign in.');
-        this.openLogin.emit();
+        this.notificationService.showSuccess('Account created successfully!');
+        this.dialogRef.close(true); // Close with success result
       },
       error: (error) => {
         this.isLoading = false;
-        this.registerError = error.error?.detail || 'An error occurred during registration';
+        if (error.error?.handle) {
+          this.registerError = 'This handle is already taken';
+        } else if (error.error?.email) {
+          this.registerError = 'This email is already registered';
+        } else {
+          this.registerError = error.error?.detail || 'An error occurred during registration';
+        }
       }
+    });
+  }
+
+  switchToLogin() {
+    // Close the register modal
+    this.dialogRef.close();
+
+    // Open the login modal
+    this.dialog.open(LoginModalComponent, {
+      width: '400px',
+      panelClass: 'custom-dialog-container'
     });
   }
 } 

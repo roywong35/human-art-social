@@ -22,6 +22,7 @@ import { NewPostModalComponent } from '../../new-post-modal/new-post-modal.compo
 import { NotificationService } from '../../../services/notification.service';
 import { take } from 'rxjs/operators';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
+import { LoginModalComponent } from '../../login-modal/login-modal.component';
 
 @Component({
   selector: 'app-post',
@@ -32,7 +33,8 @@ import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component'
     MatDialogModule,
     RouterModule,
     TimeAgoPipe,
-    RepostMenuComponent
+    RepostMenuComponent,
+    LoginModalComponent
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss'],
@@ -77,16 +79,16 @@ export class PostComponent implements OnInit, OnDestroy {
   private imageAspectRatios: { [key: string]: number } = {};
 
   constructor(
-    private router: Router,
     private dialog: MatDialog,
     private postService: PostService,
     private bookmarkService: BookmarkService,
     private commentService: CommentService,
-    private authService: AuthService,
-    private postUpdateService: PostUpdateService,
     private notificationService: NotificationService,
     private cd: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private authService: AuthService,
+    private router: Router,
+    private postUpdateService: PostUpdateService
   ) {
     this.subscriptions.add(
       this.postUpdateService.postUpdate$.subscribe(
@@ -101,11 +103,9 @@ export class PostComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.subscriptions.add(
-      this.authService.currentUser$.pipe(take(1)).subscribe(user => {
-        this.currentUser = user;
-      })
-    );
+    this.authService.currentUser$.pipe(take(1)).subscribe(user => {
+      this.currentUser = user;
+    });
 
     // Load replies if we're showing them
     if (this.showReplies || this.isDetailView) {
@@ -221,87 +221,93 @@ export class PostComponent implements OnInit, OnDestroy {
   }
 
   navigateToPost(): void {
-    const handle = this.post.author.handle;
-    this.router.navigate([`/${handle}/post`, this.post.id]);
-  }
-
-  navigateToProfile(event: MouseEvent): void {
-    event.stopPropagation();
-    this.router.navigate([`/${this.post.author.handle}`]);
-  }
-
-  onReply(event: MouseEvent): void {
-    event.stopPropagation();
-    
-    if (!this.currentUser) {
-      // Handle not logged in case
-      this.router.navigate(['/login']);
-      return;
+    if (this.checkAuth('post')) {
+      this.router.navigate([`/${this.post.author.handle}/post/${this.post.id}`]);
     }
+  }
 
-    if (this.isDetailView) {
-      this.replyFocused = true;
-      setTimeout(() => {
-        this.replyTextarea?.nativeElement.focus();
-      });
-    } else {
-      // Open comment dialog
-      const dialogRef = this.dialog.open(CommentDialogComponent, {
-        width: '600px',
-        maxWidth: '100vw',
-        panelClass: ['comment-dialog', 'dialog-position-top'],
-        position: {
-          top: '5%'
-        },
-        data: {
-          post: this.post,
-          currentUser: this.currentUser
-        }
-      });
+  navigateToProfile(event: Event): void {
+    event.stopPropagation();
+    if (this.checkAuth('profile')) {
+      this.router.navigate([`/${this.post.author.handle}`]);
+    }
+  }
 
-      dialogRef.afterClosed().subscribe(result => {
-        if (result) {
-          // Comment was added, update the post
-          this.post.replies_count = (this.post.replies_count || 0) + 1;
-          this.postUpdated.emit(this.post);
-        }
-      });
+  onReply(event: Event): void {
+    event.stopPropagation();
+    if (this.checkAuth('reply')) {
+      if (this.isDetailView) {
+        this.replyFocused = true;
+        setTimeout(() => {
+          this.replyTextarea?.nativeElement.focus();
+        });
+      } else {
+        // Open comment dialog
+        const dialogRef = this.dialog.open(CommentDialogComponent, {
+          width: '600px',
+          maxWidth: '100vw',
+          panelClass: ['comment-dialog', 'dialog-position-top'],
+          position: {
+            top: '5%'
+          },
+          data: {
+            post: this.post,
+            currentUser: this.currentUser
+          }
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+          if (result) {
+            // Comment was added, update the post
+            this.post.replies_count = (this.post.replies_count || 0) + 1;
+            this.postUpdated.emit(this.post);
+          }
+        });
+      }
     }
   }
 
   onLike(event: Event): void {
     event.stopPropagation();
-    this.likeClicked.emit(this.post);
+    if (this.checkAuth('like')) {
+      this.likeClicked.emit(this.post);
+    }
   }
 
   onRepost(event: Event): void {
     event.stopPropagation();
-    console.log('Post component: Emitting repost event for post:', { 
-      id: this.post.id, 
-      type: this.post.post_type,
-      referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
-    });
-    this.ngZone.run(() => {
-      this.repostClicked.emit(this.post);
-      this.cd.detectChanges();
-    });
+    if (this.checkAuth('repost')) {
+      console.log('Post component: Emitting repost event for post:', { 
+        id: this.post.id, 
+        type: this.post.post_type,
+        referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
+      });
+      this.ngZone.run(() => {
+        this.repostClicked.emit(this.post);
+        this.cd.detectChanges();
+      });
+    }
   }
 
   onShare(event: MouseEvent): void {
     event.stopPropagation();
-    this.shareClicked.emit();
-    const url = `${window.location.origin}/${this.post.author.handle}/post/${this.post.id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      this.notificationService.showSuccess('Post link copied to clipboard');
-    }).catch((error: Error) => {
-      this.notificationService.showError('Failed to copy link to clipboard');
-      console.error('Error copying to clipboard:', error);
-    });
+    if (this.checkAuth('share')) {
+      this.shareClicked.emit();
+      const url = `${window.location.origin}/${this.post.author.handle}/post/${this.post.id}`;
+      navigator.clipboard.writeText(url).then(() => {
+        this.notificationService.showSuccess('Post link copied to clipboard');
+      }).catch((error: Error) => {
+        this.notificationService.showError('Failed to copy link to clipboard');
+        console.error('Error copying to clipboard:', error);
+      });
+    }
   }
 
   onBookmark(event: Event): void {
     event.stopPropagation();
-    this.bookmarkClicked.emit(this.post);
+    if (this.checkAuth('bookmark')) {
+      this.bookmarkClicked.emit(this.post);
+    }
   }
 
   protected onImageError(event: any): void {
@@ -322,7 +328,9 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected toggleRepostMenu(event: MouseEvent): void {
     event.stopPropagation();
-    this.showRepostMenu = !this.showRepostMenu;
+    if (this.checkAuth('repost')) {
+      this.showRepostMenu = !this.showRepostMenu;
+    }
   }
 
   private openQuoteModal(): void {
@@ -348,7 +356,7 @@ export class PostComponent implements OnInit, OnDestroy {
     this.showRepostMenu = false; // Close menu immediately
 
     if (option === 'repost' || option === 'unrepost') {
-      this.repostClicked.emit(this.post);
+      this.onRepost(new Event('click'));
     }
   }
 
@@ -384,13 +392,15 @@ export class PostComponent implements OnInit, OnDestroy {
 
   onPhotoClick(event: MouseEvent, index: number, isReferencedPost: boolean = false): void {
     event.stopPropagation();
-    const dialogRef = this.dialog.open(PhotoViewerComponent, {
-      panelClass: 'photo-viewer-dialog',
-      data: {
-        photos: isReferencedPost ? this.post.referenced_post?.images : this.post.images,
-        initialPhotoIndex: index
-      }
-    });
+    if (this.checkAuth('photo')) {
+      const dialogRef = this.dialog.open(PhotoViewerComponent, {
+        panelClass: 'photo-viewer-dialog',
+        data: {
+          photos: isReferencedPost ? this.post.referenced_post?.images : this.post.images,
+          initialPhotoIndex: index
+        }
+      });
+    }
   }
 
   // Getters for safe state access
@@ -417,5 +427,46 @@ export class PostComponent implements OnInit, OnDestroy {
   // Public method to force change detection
   forceUpdate(): void {
     this.cd.detectChanges();
+  }
+
+  protected checkAuth(action: string): boolean {
+    if (!this.authService.isAuthenticated()) {
+      const dialogRef = this.dialog.open(LoginModalComponent, {
+        width: '400px',
+        panelClass: 'custom-dialog-container',
+        disableClose: false // Allow clicking outside to close
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          // User has logged in, retry the action
+          switch (action) {
+            case 'like':
+              this.likeClicked.emit(this.post);
+              break;
+            case 'repost':
+              this.repostClicked.emit(this.post);
+              break;
+            case 'bookmark':
+              this.bookmarkClicked.emit(this.post);
+              break;
+            case 'reply':
+              this.onReply(new Event('click'));
+              break;
+            case 'share':
+              this.shareClicked.emit();
+              break;
+            case 'post':
+              this.router.navigate([`/${this.post.author.handle}/post/${this.post.id}`]);
+              break;
+            case 'profile':
+              this.router.navigate([`/${this.post.author.handle}`]);
+              break;
+          }
+        }
+      });
+      return false;
+    }
+    return true;
   }
 } 
