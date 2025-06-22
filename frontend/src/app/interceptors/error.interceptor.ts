@@ -22,8 +22,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       } else if (error.status === 401) {
         if (!isAuthEndpoint) {
           authService.logout();
-          router.navigate(['/login']);
-          errorMessage = 'Your session has expired. Please log in again.';
+          router.navigate(['/']);
+          errorMessage = 'Your session has expired. Please sign in again.';
         }
       } else if (error.status === 403) {
         errorMessage = 'You do not have permission to perform this action.';

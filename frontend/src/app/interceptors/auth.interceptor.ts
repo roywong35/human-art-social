@@ -13,8 +13,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const token = localStorage.getItem('access_token');
   
-  // Skip token for refresh token requests
-  if (req.url.includes('token/refresh/')) {
+  // Skip token for public endpoints
+  if (req.url.includes('token/refresh/') || 
+      req.url.includes('/posts/public/') ||
+      req.url.includes('/login') ||
+      req.url.includes('/register')) {
     return next(req);
   }
 

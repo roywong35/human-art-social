@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from .models import Post, EvidenceFile, PostImage, User, Hashtag
 from .serializers import PostSerializer, HashtagSerializer
@@ -831,3 +831,52 @@ class PostViewSet(viewsets.ModelViewSet):
         
         serializer = PostSerializer(liked_posts, many=True, context={'request': request})
         return Response(serializer.data)
+
+    @action(detail=False, methods=['GET'], permission_classes=[AllowAny])
+    def public(self, request):
+        """
+        Get public posts for non-authenticated users
+        """
+        try:
+            # Get tab from query params
+            tab = request.query_params.get('tab', 'for-you')
+            
+            # Get all posts, ordered by creation date
+            queryset = Post.objects.all().select_related(
+                'author',
+                'referenced_post',
+                'parent_post'
+            ).prefetch_related(
+                'likes',
+                'bookmarks',
+                'reposts',
+                'replies',
+                'evidence_files',
+                'images'
+            ).exclude(
+                post_type='reply'  # Exclude replies from public view
+            )
+
+            # Filter based on tab
+            if tab == 'human-drawing':
+                queryset = queryset.filter(
+                    is_human_drawing=True,
+                    is_verified=True
+                )
+            
+            queryset = queryset.order_by('-created_at')
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response({
+                'results': serializer.data
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

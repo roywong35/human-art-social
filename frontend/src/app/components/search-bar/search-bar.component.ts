@@ -23,6 +23,7 @@ interface SearchResult {
 export class SearchBarComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild('searchInput') searchInput!: ElementRef;
   @Input() initialSearchValue: string = '';
+  @Input() isPreview = false;
   
   searchQuery = '';
   results: SearchResult[] = [];

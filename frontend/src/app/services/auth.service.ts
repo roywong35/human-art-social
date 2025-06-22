@@ -147,7 +147,7 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('following_only_preference');
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 
   refreshAccessToken(): Observable<{ access: string }> {

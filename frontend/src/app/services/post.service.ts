@@ -491,4 +491,10 @@ export class PostService {
   getUserLikes(handle: string): Observable<Post[]> {
     return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/likes/`);
   }
+
+  getPublicPosts(tab: string = 'for-you'): Observable<{ results: Post[] }> {
+    return this.http.get<{ results: Post[] }>(`${this.baseUrl}/posts/public/`, {
+      params: { tab }
+    });
+  }
 } 

@@ -8,7 +8,7 @@
     </div>
 
     <!-- Main Content -->
-    <main [class]="authService.isAuthenticated() ? 'w-[600px]' : 'w-full max-w-2xl'">
+    <main [class]="authService.isAuthenticated() ? 'w-[600px]' : 'w-full'">
       <router-outlet></router-outlet>
       <app-emoji-picker></app-emoji-picker>
     </main>

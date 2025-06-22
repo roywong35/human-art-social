@@ -1,33 +1,25 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './components/home/home.component';
-import { LoginComponent } from './components/login/login.component';
-import { RegisterComponent } from './components/register/register.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { BookmarksComponent } from './components/bookmarks/bookmarks.component';
 import { PostDetailComponent } from './components/post-detail/post-detail.component';
 import { SearchComponent } from './components/search/search.component';
 import { ConnectionsComponent } from './components/connections/connections.component';
 import { AuthGuard } from './guards/auth.guard';
+import { publicGuard } from './guards/public.guard';
 import { RecommendedUsersComponent } from './components/recommended-users/recommended-users.component';
+import { LandingComponent } from './components/landing/landing.component';
 
 export const routes: Routes = [
   {
     path: '',
-    component: HomeComponent,
-    canActivate: [AuthGuard]
+    component: LandingComponent,
+    canActivate: [publicGuard]
   },
   {
     path: 'home',
-    redirectTo: '/',
-    pathMatch: 'full'
-  },
-  {
-    path: 'login',
-    component: LoginComponent
-  },
-  {
-    path: 'register',
-    component: RegisterComponent
+    component: HomeComponent,
+    canActivate: [AuthGuard]
   },
   {
     path: 'bookmarks',
