@@ -507,10 +507,11 @@ class PostViewSet(viewsets.ModelViewSet):
             elif post_type == 'all':
                 print("[DEBUG] Filtering for For You tab...")
                 # Show all non-human drawings AND all human drawings (both verified and unverified)
+                # Exclude replies from the For You tab
                 queryset = queryset.filter(
                     Q(is_human_drawing=False) |  # Regular posts
                     Q(is_human_drawing=True)     # All human drawings (both verified and unverified)
-                )
+                ).exclude(post_type='reply')  # Exclude replies
             
             print(f"[DEBUG] Final queryset count: {queryset.count()}")
 
