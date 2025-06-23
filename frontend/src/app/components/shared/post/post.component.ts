@@ -390,17 +390,21 @@ export class PostComponent implements OnInit, OnDestroy {
     return 1; // Default to 1:1 until loaded
   }
 
-  onPhotoClick(event: MouseEvent, index: number, isReferencedPost: boolean = false): void {
+  protected onPhotoClick(event: Event, index: number, sourcePost?: Post): void {
     event.stopPropagation();
-    if (this.checkAuth('photo')) {
-      const dialogRef = this.dialog.open(PhotoViewerComponent, {
-        panelClass: 'photo-viewer-dialog',
-        data: {
-          photos: isReferencedPost ? this.post.referenced_post?.images : this.post.images,
-          initialPhotoIndex: index
-        }
-      });
-    }
+    const post = sourcePost || this.post;
+    const images = post.images?.map(img => img.image) || [];
+    this.dialog.open(PhotoViewerComponent, {
+      width: '100vw',
+      height: '100vh',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'photo-viewer-dialog',
+      data: {
+        images: images,
+        currentIndex: index
+      }
+    });
   }
 
   // Getters for safe state access

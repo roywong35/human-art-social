@@ -67,17 +67,50 @@
           <!-- Referenced Post Images -->
           <div *ngIf="post.referenced_post.images?.length" class="mt-2">
             <div class="relative rounded-xl overflow-hidden bg-gray-100"
-                 [class.h-80]="(post.referenced_post.images?.length ?? 0) === 1"
-                 [class.h-60]="(post.referenced_post.images?.length ?? 0) > 1">
-              <div class="flex flex-wrap h-full">
-                <div *ngFor="let image of post.referenced_post.images; let i = index" 
-                     [class]="(post.referenced_post.images?.length ?? 0) === 1 ? 'w-full h-full' : getImageLayoutClass(i, post.referenced_post.images?.length || 0)"
-                     class="relative p-0.5">
-                  <img [src]="image.image" 
-                       [alt]="'Post image ' + (i + 1)"
-                       class="w-full h-full object-cover"
-                       [class.rounded-lg]="(post.referenced_post.images?.length ?? 0) > 1"
+                 [ngClass]="{
+                   'h-80': (post.referenced_post.images?.length ?? 0) > 1,
+                   'h-auto': (post.referenced_post.images?.length ?? 0) === 1
+                 }"
+                 [ngStyle]="(post.referenced_post.images?.length ?? 0) === 1 ? {
+                   'max-height': getImageAspectRatio(post.referenced_post.images?.[0]?.image) < 1 ? '500px' : '320px',
+                   'max-width': getImageAspectRatio(post.referenced_post.images?.[0]?.image) < 1 ? '400px' : '100%',
+                   'display': 'inline-block'
+                 } : {}">
+              <div class="flex h-full">
+                <!-- Single photo with adaptive layout -->
+                <div *ngIf="(post.referenced_post.images?.length ?? 0) === 1" 
+                     class="w-full rounded-xl cursor-pointer"
+                     (click)="onPhotoClick($event, 0, post.referenced_post)">
+                  <img [src]="post.referenced_post.images?.[0]?.image" 
+                       [alt]="'Post image 1'"
+                       class="w-full h-full object-contain rounded-xl"
                        (error)="onImageError($event)">
+                </div>
+                <!-- Multiple photos layout -->
+                <div *ngIf="(post.referenced_post.images?.length ?? 0) !== 1" class="flex h-full">
+                  <!-- Left side for first photo in 3-photo layout -->
+                  <div *ngIf="(post.referenced_post.images?.length ?? 0) === 3" 
+                       class="w-1/2 h-full p-0.5 cursor-pointer"
+                       (click)="onPhotoClick($event, 0, post.referenced_post)">
+                    <img [src]="post.referenced_post.images?.[0]?.image" 
+                         [alt]="'Post image 1'"
+                         class="w-full h-full object-cover rounded-lg"
+                         (error)="onImageError($event)">
+                  </div>
+                  <!-- Right side for remaining photos -->
+                  <div [class]="(post.referenced_post.images?.length ?? 0) === 3 ? 'w-1/2 h-full flex flex-col' : 'flex flex-wrap h-full'">
+                    <ng-container *ngFor="let image of post.referenced_post.images; let i = index">
+                      <div *ngIf="(post.referenced_post.images?.length ?? 0) !== 3 || i > 0"
+                           [class]="getImageLayoutClass(i, post.referenced_post.images?.length || 0)"
+                           class="relative p-0.5 cursor-pointer"
+                           (click)="onPhotoClick($event, i, post.referenced_post)">
+                        <img [src]="image.image" 
+                             [alt]="'Post image ' + (i + 1)"
+                             class="w-full h-full object-cover rounded-lg"
+                             (error)="onImageError($event)">
+                      </div>
+                    </ng-container>
+                  </div>
                 </div>
               </div>
             </div>
@@ -135,43 +168,6 @@
           </div>
         </div>
 
-        <!-- Referenced Post Images -->
-        <div *ngIf="post.referenced_post?.images?.length" class="mt-2">
-          <div class="relative rounded-xl overflow-hidden bg-gray-100"
-               [ngClass]="{
-                 'h-80': (post.referenced_post?.images?.length ?? 0) === 1 && getImageAspectRatio(post.referenced_post?.images?.[0]?.image) <= 4/3 || (post.referenced_post?.images?.length ?? 0) > 1,
-                 'h-auto': (post.referenced_post?.images?.length ?? 0) === 1 && getImageAspectRatio(post.referenced_post?.images?.[0]?.image) > 4/3
-               }">
-            <div class="flex h-full">
-              <!-- Single photo with adaptive layout -->
-              <div *ngIf="(post.referenced_post?.images?.length ?? 0) === 1" 
-                   class="w-full cursor-pointer"
-                   (click)="onPhotoClick($event, 0, true)">
-                <img [src]="post.referenced_post?.images?.[0]?.image" 
-                     [alt]="'Post image 1'"
-                     class="w-full"
-                     [ngClass]="{
-                       'h-full object-contain': getImageAspectRatio(post.referenced_post?.images?.[0]?.image) <= 4/3,
-                       'object-cover': getImageAspectRatio(post.referenced_post?.images?.[0]?.image) > 4/3
-                     }"
-                     (error)="onImageError($event)">
-              </div>
-              <!-- Multiple photos layout (unchanged) -->
-              <div *ngIf="(post.referenced_post?.images?.length ?? 0) !== 1" class="flex flex-wrap h-full">
-                <div *ngFor="let image of post.referenced_post?.images; let i = index" 
-                     [class]="(post.referenced_post?.images?.length ?? 0) === 1 ? 'w-full h-full' : getImageLayoutClass(i, post.referenced_post?.images?.length || 0)"
-                     class="relative p-0.5 cursor-pointer"
-                     (click)="onPhotoClick($event, i, true)">
-                  <img [src]="image?.image" 
-                       [alt]="'Post image ' + (i + 1)"
-                       class="w-full h-full object-cover"
-                       [class.rounded-lg]="(post.referenced_post?.images?.length ?? 0) > 1"
-                       (error)="onImageError($event)">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Post actions -->

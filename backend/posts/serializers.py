@@ -98,7 +98,7 @@ class PostSerializer(serializers.ModelSerializer):
         return obj.bookmarks.filter(id=request.user.id).exists()
 
     def get_referenced_post(self, obj):
-        if obj.post_type == 'repost' and obj.referenced_post:
+        if (obj.post_type == 'repost' or obj.post_type == 'quote') and obj.referenced_post:
             # Return the original post data
             return PostSerializer(obj.referenced_post, context=self.context).data
         return None

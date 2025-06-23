@@ -1,7 +1,7 @@
 import { Component, ViewChild, ElementRef, OnDestroy, Inject, Optional } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 import { Post } from '../../models/post.model';
 import { EmojiPickerService } from '../../services/emoji-picker.service';
 import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
+import { PhotoViewerComponent } from '../photo-viewer/photo-viewer.component';
 
 interface DialogData {
   quotePost?: Post;
@@ -44,6 +45,7 @@ export class NewPostModalComponent implements OnDestroy {
     private emojiPickerService: EmojiPickerService,
     public authService: AuthService,
     private imageUploadService: ImageUploadService,
+    private dialog: MatDialog,
     @Optional() @Inject(MAT_DIALOG_DATA) private data?: DialogData
   ) {
     this.quotePost = data?.quotePost;
@@ -154,5 +156,27 @@ export class NewPostModalComponent implements OnDestroy {
       return 'w-1/2 h-1/2';
     }
     return '';
+  }
+
+  protected onPhotoClick(event: Event, index: number, sourcePost?: Post): void {
+    event.stopPropagation();
+    const post = sourcePost || { images: this.images.map(img => ({ image: img.preview })) };
+    const images = post.images?.map(img => img.image) || [];
+    this.dialog.open(PhotoViewerComponent, {
+      width: '100vw',
+      height: '100vh',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'photo-viewer-dialog',
+      data: {
+        images: images,
+        currentIndex: index
+      }
+    });
+  }
+
+  protected onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = this.defaultAvatar;
   }
 } 
