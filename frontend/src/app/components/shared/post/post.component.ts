@@ -72,6 +72,7 @@ export class PostComponent implements OnInit, OnDestroy {
   protected showEmojiPicker: boolean = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
   protected replyContent: string = '';
+  protected showReplyOptions = false;
 
   protected repostMenuPosition = { top: 0, left: 0 };
 
@@ -472,5 +473,13 @@ export class PostComponent implements OnInit, OnDestroy {
       return false;
     }
     return true;
+  }
+
+  protected getBaseUrl(): string {
+    return window.location.origin;
+  }
+
+  protected getDisplayUrl(): string {
+    return window.location.origin.replace('https://', '').replace('http://', '');
   }
 } 

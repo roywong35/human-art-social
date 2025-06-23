@@ -12,6 +12,7 @@ import { Post } from '../../models/post.model';
 import { EmojiPickerService } from '../../services/emoji-picker.service';
 import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 import { PhotoViewerComponent } from '../photo-viewer/photo-viewer.component';
+import { environment } from '../../../environments/environment';
 
 interface DialogData {
   quotePost?: Post;
@@ -34,6 +35,7 @@ export class NewPostModalComponent implements OnDestroy {
   protected showEmojiPicker = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
+  protected environment = environment;
 
   protected images: ImageFile[] = [];
   private subscriptions: Subscription = new Subscription();
@@ -67,6 +69,14 @@ export class NewPostModalComponent implements OnDestroy {
         }
       })
     );
+  }
+
+  protected getBaseUrl(): string {
+    return window.location.origin;
+  }
+
+  protected getDisplayUrl(): string {
+    return window.location.origin.replace('https://', '').replace('http://', '');
   }
 
   ngOnDestroy() {
