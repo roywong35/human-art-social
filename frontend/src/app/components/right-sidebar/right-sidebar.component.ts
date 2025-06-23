@@ -71,11 +71,12 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     private router: Router
   ) {
     this.scrollHandler = () => {
+      const rect = this.elementRef.nativeElement.getBoundingClientRect();
       if (this.initialTop === null) {
-        const rect = this.elementRef.nativeElement.getBoundingClientRect();
         this.initialTop = rect.top + window.scrollY;
-        this.sidebarHeight = rect.height;
       }
+      // Update height on every scroll
+      this.sidebarHeight = rect.height;
 
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
