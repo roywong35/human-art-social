@@ -1,10 +1,10 @@
-<div class="bg-white shadow-lg h-full">
+<div class="bg-white h-full">
   <div class="px-4 pb-3 h-full flex flex-col">
     <!-- Search Bar -->
     <app-search-bar></app-search-bar>
 
     <!-- Trending Topics -->
-    <div class="bg-white rounded-lg mb-4 shadow-sm">
+    <div class="bg-white rounded-lg mb-4 shadow-sm border border-gray-200">
       <div class="flex items-center justify-between px-4 py-3 border-b">
         <h2 class="text-xl font-bold">Trending</h2>
         <div class="flex items-center gap-2">
@@ -23,7 +23,7 @@
           </button>
         </div>
       </div>
-      <div class="divide-y divide-gray-100">
+      <div class="divide-y divide-gray-100 ">
         <!-- Real trending topics -->
         <div *ngFor="let topic of trendingTopics.slice(0, maxTrendingTopics)" 
              class="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -41,15 +41,11 @@
           <div class="h-4 bg-gray-200 rounded w-24 mt-2"></div>
         </div>
 
-        <!-- Show this only when there are no topics and no placeholders -->
-        <div *ngIf="trendingTopics.length === 0" class="px-4 py-3 text-gray-500 text-center">
-          No trending topics yet
-        </div>
       </div>
     </div>
 
     <!-- Recommended Users -->
-    <div class="bg-white rounded-lg shadow-sm flex-grow">
+    <div class="bg-white rounded-lg shadow-sm flex-grow border border-gray-200">
       <h2 class="text-xl font-bold px-4 py-3 border-b">Who to follow</h2>
       <div class="divide-y divide-gray-100">
         <!-- Loading state -->
@@ -80,14 +76,14 @@
                 <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
                      [alt]="user.username + ' avatar'" 
                      class="w-12 h-12 rounded-full bg-gray-200 object-cover">
-                <div class="ml-3">
-                  <div class="font-bold text-gray-900 transition-colors">{{ user.username }}</div>
-                  <div class="text-gray-500">{{'@'}}{{ user.handle }}</div>
-                  <div class="text-sm text-gray-600 mt-1">{{ user.bio || 'No bio available' }}</div>
+                <div class="ml-3 min-w-0 flex-1">
+                  <div class="font-bold text-gray-900 transition-colors truncate">{{ user.username }}</div>
+                  <div class="text-gray-500 truncate">{{'@'}}{{ user.handle }}</div>
+                  <div class="text-sm text-gray-600 mt-1 truncate">{{ user.bio || 'No bio available' }}</div>
                 </div>
               </div>
               <button (click)="followUser(user, $event)" 
-                      class="follow-button"
+                      class="follow-button flex-shrink-0 ml-3"
                       [class.following]="user.is_following"
                       (mouseenter)="onFollowButtonHover(user, true)"
                       (mouseleave)="onFollowButtonHover(user, false)">

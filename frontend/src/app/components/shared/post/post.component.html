@@ -1,4 +1,4 @@
-<div [class]="'post-container pb-1 pt-3 pl-3 pr-3 hover:bg-gray-50 cursor-pointer ' + (!isConnectedToParent ? 'border-b border-gray-200' : '')" (click)="navigateToPost($event)">
+<div [class]="'post-container pb-1 pt-3 px-4 hover:bg-gray-50 cursor-pointer ' + (!isConnectedToParent ? 'border-b border-gray-200' : '')" (click)="navigateToPost($event)">
   <!-- Repost header -->
   <div *ngIf="post.post_type === 'repost'" class="flex items-center gap-2 mb-2 text-gray-500">
     <i class="fas fa-retweet"></i>

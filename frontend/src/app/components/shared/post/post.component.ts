@@ -300,13 +300,11 @@ export class PostComponent implements OnInit, OnDestroy {
   onShare(event: MouseEvent): void {
     event.stopPropagation();
     if (this.checkAuth('share')) {
-      this.shareClicked.emit();
-      const url = `${window.location.origin}/${this.post.author.handle}/post/${this.post.id}`;
-      navigator.clipboard.writeText(url).then(() => {
-        this.notificationService.showSuccess('Post link copied to clipboard');
-      }).catch((error: Error) => {
-        this.notificationService.showError('Failed to copy link to clipboard');
-        console.error('Error copying to clipboard:', error);
+      const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+      navigator.clipboard.writeText(postUrl).then(() => {
+        this.notificationService.showSuccess('Link copied to clipboard');
+      }).catch(() => {
+        this.notificationService.showError('Failed to copy link');
       });
     }
   }
