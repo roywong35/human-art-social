@@ -34,21 +34,19 @@ export class SidebarComponent implements OnInit {
     private userService: UserService,
     private elementRef: ElementRef
   ) {
-    // Subscribe to route query params to detect tab changes
-    this.router.events.pipe(
-      filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      // Get current query params
-      this.route.queryParams.pipe(take(1)).subscribe(params => {
-        this.isHumanArtTab = params['tab'] === 'human-drawing';
-      });
-    });
-
     // Subscribe to route changes to detect Human Art tab
     this.router.events.pipe(
       filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      this.isHumanArtTab = event.url.includes('human-art');
+      // Check both URL and query params for human art tab
+      this.route.queryParams.pipe(take(1)).subscribe(params => {
+        this.isHumanArtTab = event.url.includes('human-art') || params['tab'] === 'human-drawing';
+        console.log('[Sidebar] Route/Tab changed:', {
+          url: event.url,
+          params: params,
+          isHumanArtTab: this.isHumanArtTab
+        });
+      });
     });
   }
 
@@ -65,17 +63,6 @@ export class SidebarComponent implements OnInit {
         // Store the initial preference in localStorage
         localStorage.setItem('following_only_preference', this.isFollowingOnly.toString());
       }
-    });
-
-    // Subscribe to route changes to update isHumanArtTab
-    this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
-    ).subscribe((event: NavigationEnd) => {
-      this.isHumanArtTab = event.url.includes('human-art');
-      console.log('[Sidebar] Route changed:', {
-        url: event.url,
-        isHumanArtTab: this.isHumanArtTab
-      });
     });
   }
 

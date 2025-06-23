@@ -22,10 +22,6 @@ export const routes: Routes = [
     path: 'bookmarks',
     loadComponent: () => import('./components/bookmarks/bookmarks.component').then(m => m.BookmarksComponent),
     canActivate: [AuthGuard]
-  },
-  {
-    path: 'login',
-    loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent)
   }
 ];
 
