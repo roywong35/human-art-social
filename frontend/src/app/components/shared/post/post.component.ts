@@ -221,9 +221,16 @@ export class PostComponent implements OnInit, OnDestroy {
     this.replyFocused = false;
   }
 
-  navigateToPost(): void {
+  navigateToPost(event: Event, quotedPost?: Post): void {
+    event.stopPropagation();
     if (this.checkAuth('post')) {
-      this.router.navigate([`/${this.post.author.handle}/post/${this.post.id}`]);
+      if (quotedPost) {
+        // Navigate to quoted post
+        this.router.navigate(['/', quotedPost.author.handle, 'post', quotedPost.id]);
+      } else {
+        // Navigate to current post
+        this.router.navigate([`/${this.post.author.handle}/post/${this.post.id}`]);
+      }
     }
   }
 
