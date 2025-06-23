@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
+import { RegisterModalComponent } from '../register-modal/register-modal.component';
 
 @Component({
   selector: 'app-login-modal',
@@ -28,7 +29,8 @@ export class LoginModalComponent {
     private router: Router,
     private notificationService: NotificationService,
     private renderer: Renderer2,
-    public dialogRef: MatDialogRef<LoginModalComponent>
+    public dialogRef: MatDialogRef<LoginModalComponent>,
+    private dialog: MatDialog
   ) {}
 
   onSubmit() {
@@ -60,6 +62,17 @@ export class LoginModalComponent {
         this.isLoading = false;
         this.loginError = error.error?.detail || 'An error occurred during sign in';
       }
+    });
+  }
+
+  openRegisterModal() {
+    // Close the login modal
+    this.dialogRef.close();
+    
+    // Open the register modal
+    this.dialog.open(RegisterModalComponent, {
+      width: '400px',
+      panelClass: 'custom-dialog-container'
     });
   }
 }
