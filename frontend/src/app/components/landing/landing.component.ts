@@ -99,7 +99,9 @@ export class LandingComponent implements OnInit {
   openLoginModal() {
     const dialogRef = this.dialog.open(LoginModalComponent, {
       width: '400px',
-      panelClass: 'custom-dialog-container'
+      panelClass: ['custom-dialog-container', 'centered-dialog'],
+      disableClose: false,
+      autoFocus: true
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -113,7 +115,9 @@ export class LandingComponent implements OnInit {
   openRegisterModal() {
     const dialogRef = this.dialog.open(RegisterModalComponent, {
       width: '400px',
-      panelClass: 'custom-dialog-container'
+      panelClass: ['custom-dialog-container', 'centered-dialog'],
+      disableClose: false,
+      autoFocus: true
     });
 
     dialogRef.afterClosed().subscribe(result => {

@@ -25,6 +25,18 @@ html, body {
       border-radius: 0;
     }
   }
+
+  .cdk-overlay-pane {
+    transform: translateY(-50%) !important;
+  }
+}
+
+.centered-dialog {
+  .cdk-global-overlay-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 @layer components {
