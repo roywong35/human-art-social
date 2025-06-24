@@ -147,6 +147,11 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('following_only_preference');
+    
+    // Clear dark mode preference and update UI
+    localStorage.removeItem('darkMode');
+    document.documentElement.classList.remove('dark');
+    
     this.router.navigate(['/']);
   }
 

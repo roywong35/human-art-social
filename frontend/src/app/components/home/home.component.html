@@ -1,12 +1,12 @@
-<div class="min-h-screen bg-gray-50 border-l border-r border-gray-200">
+<div class="min-h-screen bg-gray-50 dark:bg-black border-l border-r border-gray-200 dark:[border-color:var(--color-border)]">
   <!-- Tab Navigation -->
-  <div class="bg-white border-b sticky top-0 z-20">
+  <div class="bg-white dark:bg-black border-b dark:[border-color:var(--color-border)] sticky top-0 z-20">
     <div class="flex">
       <button 
         [class.border-b-2]="activeTab === 'for-you'"
         [class.border-blue-500]="activeTab === 'for-you'"
         [class.text-blue-500]="activeTab === 'for-you'"
-        class="flex-1 py-4 text-center font-bold hover:bg-gray-50 transition-colors"
+        class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:[color:var(--color-text)]"
         (click)="setActiveTab('for-you')"
       >
         For You
@@ -15,7 +15,7 @@
         [class.border-b-2]="activeTab === 'human-drawing'"
         [class.border-blue-500]="activeTab === 'human-drawing'"
         [class.text-blue-500]="activeTab === 'human-drawing'"
-        class="flex-1 py-4 text-center font-bold hover:bg-gray-50 transition-colors"
+        class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:[color:var(--color-text)]"
         (click)="setActiveTab('human-drawing')"
       >
         Human Art
@@ -27,14 +27,14 @@
   <div *ngIf="isInitialLoading" class="flex items-center justify-center min-h-[400px]">
     <div class="flex flex-col items-center gap-4">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      <p class="text-gray-500">Loading posts...</p>
+      <p class="text-gray-500 dark:[color:var(--color-text-secondary)]">Loading posts...</p>
     </div>
   </div>
   
   <!-- Content (only show when not loading) -->
   <ng-container *ngIf="!isInitialLoading">
     <!-- Inline Create Post Box (For You tab only) -->
-    <div *ngIf="activeTab === 'for-you'" class="bg-white border-b">
+    <div *ngIf="activeTab === 'for-you'" class="bg-white dark:bg-black border-b dark:[border-color:var(--color-border)]">
       <div class="max-w-[598px] mx-auto">
         <app-post-input-box
           [userAvatar]="(authService.currentUser$ | async)?.profile_picture || ''"
@@ -48,7 +48,7 @@
 
     <!-- Error State -->
     <div *ngIf="error" class="max-w-[598px] mx-auto">
-      <div class="bg-red-50 text-red-500 p-4 rounded-lg text-center my-3">
+      <div class="bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 p-4 rounded-lg text-center my-3">
         {{ error }}
       </div>
     </div>

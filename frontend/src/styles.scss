@@ -4,9 +4,39 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent unwanted scrollbars */
+/* Color System */
+:root {
+  /* Light mode (default) */
+  --color-primary: #3B82F6;      /* blue-500 */
+  --color-primary-hover: #2563EB; /* blue-600 */
+  --color-background: #ffffff;    /* white */
+  --color-surface: #ffffff;       /* white - for cards, modals */
+  --color-surface-hover: #F3F4F6; /* gray-100 - for hover states */
+  --color-text: #111827;         /* gray-900 */
+  --color-text-secondary: #4B5563; /* gray-600 */
+  --color-border: #E5E7EB;       /* gray-200 */
+}
+
+/* Dark mode */
+:root.dark {
+  --color-primary: #3B82F6;      /* blue-500 - keeping strong blue */
+  --color-primary-hover: #2563EB; /* blue-600 - slightly darker for hover */
+  --color-background: #000000;    /* pure black for maximum contrast */
+  --color-surface: #111111;       /* slightly lighter black for cards/modals */
+  --color-surface-hover: #222222; /* slightly lighter black for hover states */
+  --color-text: #FFFFFF;          /* pure white for maximum contrast */
+  --color-text-secondary: #E5E5E5;/* slightly dimmed white for secondary text */
+  --color-border: #333333;        /* dark gray for borders */
+}
+
+/* Prevent unwanted scrollbars and set background color */
 html, body {
   overflow-x: hidden;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
 
 /* Remove resize handle from Material Dialog */
@@ -117,7 +147,6 @@ html, body {
       padding: 0;
     }
   }
-
 }
 
 /* Dialog Position Styles */
@@ -125,6 +154,15 @@ html, body {
   .cdk-overlay-pane {
     margin-top: 0 !important;
   }
+}
+
+/* Dialog backdrop color */
+.cdk-overlay-dark-backdrop {
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+:root.dark .cdk-overlay-dark-backdrop {
+  background: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Mobile Responsive Styles */
@@ -315,24 +353,16 @@ em-emoji-picker {
 /* Submit Drawing Dialog Styles */
 .submit-drawing-dialog {
   .mat-mdc-dialog-container {
+    opacity: 0;
+    animation: containerFadeIn 100ms ease-out forwards;
+
     .mdc-dialog__surface {
-      background: white;
+      background: var(--color-surface) !important;
       border-radius: 16px !important;
       overflow: hidden;
       padding: 0;
     }
   }
-}
-
-.submit-drawing-dialog .mdc-dialog__surface {
-  border-radius: 16px !important;
-}
-
-/* Make sure no other styles override our border radius */
-.submit-drawing-dialog .mat-mdc-dialog-container, 
-.submit-drawing-dialog .mat-mdc-dialog-container .mdc-dialog__container,
-.submit-drawing-dialog .mat-mdc-dialog-container .mdc-dialog__surface {
-  border-radius: 16px !important;
 }
 
 .fade-in-dialog {

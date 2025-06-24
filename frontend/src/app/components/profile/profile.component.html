@@ -1,22 +1,22 @@
-<div *ngIf="isLoading" class="min-h-screen bg-gray-50 flex justify-center items-center">
-  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+<div *ngIf="isLoading" class="min-h-screen bg-gray-50 dark:bg-black flex justify-center items-center">
+  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
 </div>
 
-<div *ngIf="error" class="min-h-screen bg-gray-50 flex justify-center items-center">
+<div *ngIf="error" class="min-h-screen bg-gray-50 dark:bg-black flex justify-center items-center">
   <div class="text-center">
-    <p class="text-red-500 mb-4">{{ error }}</p>
+    <p class="text-red-500 dark:text-red-400 mb-4">{{ error }}</p>
     <button (click)="router.navigate(['/'])" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
       Return Home
     </button>
   </div>
 </div>
 
-<div *ngIf="!isLoading && !error" class="min-h-screen bg-white">
+<div *ngIf="!isLoading && !error" class="min-h-screen bg-white dark:bg-black">
   <div class="flex-1">
     <!-- Banner and Profile Info -->
     <div class="relative">
       <!-- Banner -->
-      <div class="h-48 bg-gray-300 flex justify-center">
+      <div class="h-48 bg-gray-300 dark:bg-gray-800 flex justify-center">
         <div class="w-full max-w-[600px]">
           <img *ngIf="user?.banner_image" [src]="user?.banner_image" alt="Profile banner" class="w-full h-48 object-cover">
         </div>
@@ -24,7 +24,7 @@
 
       <!-- Profile Picture -->
       <div class="absolute left-4 -bottom-16">
-        <div class="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden">
+        <div class="w-32 h-32 rounded-full border-4 border-white dark:border-black bg-gray-200 dark:bg-gray-800 overflow-hidden">
           <img *ngIf="user?.profile_picture" [src]="user?.profile_picture" alt="Profile picture" class="w-full h-full object-cover">
           <img *ngIf="!user?.profile_picture" [src]="defaultAvatar" alt="Default avatar" class="w-full h-full">
         </div>
@@ -46,7 +46,7 @@
         </button>
         <button *ngIf="isCurrentUser" 
           (click)="openEditModal()"
-          class="px-4 py-2 font-bold rounded-full border-2 border-gray-200 hover:bg-gray-50">
+          class="px-4 py-2 font-bold rounded-full border-2 border-gray-200 dark:[border-color:var(--color-border)] hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
           Edit profile
         </button>
       </div>
@@ -54,13 +54,13 @@
 
     <!-- Profile Info -->
     <div class="px-4 pt-20 pb-4">
-      <h1 class="text-xl font-bold">{{ user?.username }}</h1>
-      <p class="text-gray-500">{{'@'}}{{ user?.handle || user?.username }}</p>
+      <h1 class="text-xl font-bold dark:[color:var(--color-text)]">{{ user?.username }}</h1>
+      <p class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ user?.handle || user?.username }}</p>
       
-      <div class="mt-3 text-gray-800">
+      <div class="mt-3 text-gray-800 dark:[color:var(--color-text)]">
         <p class="whitespace-pre-wrap">{{ user?.bio }}</p>
         
-        <div class="flex gap-4 mt-3 text-gray-500">
+        <div class="flex gap-4 mt-3 text-gray-500 dark:[color:var(--color-text-secondary)]">
           <span *ngIf="user?.location" class="flex items-center gap-1">
             <i class="fas fa-map-marker-alt"></i>
             {{ user?.location }}
@@ -77,68 +77,68 @@
 
         <div class="flex gap-4 mt-3">
           <a [routerLink]="['/', user?.handle, 'connections']" [queryParams]="{tab: 'following'}" class="hover:underline">
-            <span class="font-bold">{{ user?.following_count || 0 }}</span>
-            <span class="text-gray-500"> Following</span>
+            <span class="font-bold dark:[color:var(--color-text)]">{{ user?.following_count || 0 }}</span>
+            <span class="text-gray-500 dark:[color:var(--color-text-secondary)]"> Following</span>
           </a>
           <a [routerLink]="['/', user?.handle, 'connections']" [queryParams]="{tab: 'followers'}" class="hover:underline">
-            <span class="font-bold">{{ user?.followers_count || 0 }}</span>
-            <span class="text-gray-500"> Followers</span>
+            <span class="font-bold dark:[color:var(--color-text)]">{{ user?.followers_count || 0 }}</span>
+            <span class="text-gray-500 dark:[color:var(--color-text-secondary)]"> Followers</span>
           </a>
         </div>
       </div>
     </div>
 
     <!-- Tabs Navigation -->
-    <div class="border-b border-gray-200">
+    <div class="border-b border-gray-200 dark:[border-color:var(--color-border)]">
       <div class="flex max-w-[600px] mx-auto">
         <button 
           [class.border-b-2]="activeTab === 'posts'"
           [class.border-blue-500]="activeTab === 'posts'"
           [class.text-blue-500]="activeTab === 'posts'"
-          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative group dark:[color:var(--color-text)]"
           (click)="setActiveTab('posts')"
         >
-          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           Posts
         </button>
         <button 
           [class.border-b-2]="activeTab === 'replies'"
           [class.border-blue-500]="activeTab === 'replies'"
           [class.text-blue-500]="activeTab === 'replies'"
-          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative group dark:[color:var(--color-text)]"
           (click)="setActiveTab('replies')"
         >
-          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           Replies
         </button>
         <button 
           [class.border-b-2]="activeTab === 'media'"
           [class.border-blue-500]="activeTab === 'media'"
           [class.text-blue-500]="activeTab === 'media'"
-          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative group dark:[color:var(--color-text)]"
           (click)="setActiveTab('media')"
         >
-          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           Media
         </button>
         <button 
           [class.border-b-2]="activeTab === 'human-art'"
           [class.border-blue-500]="activeTab === 'human-art'"
           [class.text-blue-500]="activeTab === 'human-art'"
-          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative group dark:[color:var(--color-text)]"
           (click)="setActiveTab('human-art')"
         >
-          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           Human Art
         </button>
         <button 
           [class.border-b-2]="activeTab === 'likes'"
           [class.border-blue-500]="activeTab === 'likes'"
           [class.text-blue-500]="activeTab === 'likes'"
-          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 transition-colors relative group"
+          class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative group dark:[color:var(--color-text)]"
           (click)="setActiveTab('likes')"
         >
-          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           Likes
         </button>
       </div>
@@ -147,7 +147,7 @@
     <!-- Content based on active tab -->
     <div [ngSwitch]="activeTab">
       <!-- Posts Tab -->
-      <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200">
+      <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200 dark:divide-gray-800">
         <app-post *ngFor="let post of posts"
           [post]="post"
           (click)="onPostClick(post)">
@@ -155,13 +155,13 @@
       </div>
 
       <!-- Replies Tab -->
-      <div *ngSwitchCase="'replies'" class="divide-y divide-gray-200">
+      <div *ngSwitchCase="'replies'" class="divide-y divide-gray-200 dark:divide-gray-800">
         <div *ngFor="let reply of replies" class="relative">
           <!-- Parent Chain -->
           <ng-container *ngIf="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0">
             <div *ngFor="let parentPost of replyParentChains[reply.id]; let i = index" class="relative">
               <!-- Connecting Line -->
-              <div class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
+              <div class="absolute left-[31px] w-0.5 bg-gray-200 dark:bg-gray-800 z-[5]"
                    [style]="i === 0 ? 'top: 45px; height: calc(100% - 45px);' : 'top: 0; height: 100%;'">
               </div>
               <app-post 
@@ -177,7 +177,7 @@
           <div class="relative">
             <!-- Thread Line -->
             <div *ngIf="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0" 
-                 class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
+                 class="absolute left-[31px] w-0.5 bg-gray-200 dark:bg-gray-800 z-[5]"
                  style="top: 0; height: 45px;">
             </div>
             <app-post 
@@ -192,7 +192,7 @@
         </div>
 
         <!-- No Replies Message -->
-        <div *ngIf="!isLoading && replies.length === 0" class="p-4 text-center text-gray-500">
+        <div *ngIf="!isLoading && replies.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
           No replies yet.
         </div>
       </div>
@@ -201,7 +201,7 @@
       <div *ngSwitchCase="'media'" class="p-4">
         <div class="grid grid-cols-3 gap-1">
           <div *ngFor="let media of mediaItems" 
-               class="aspect-square cursor-pointer overflow-hidden"
+               class="aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
                (click)="onMediaClick(media)">
             <img [src]="media.image" 
                  alt="Media content" 
@@ -214,7 +214,7 @@
       <div *ngSwitchCase="'human-art'" class="p-4">
         <div class="grid grid-cols-3 gap-1">
           <div *ngFor="let art of humanArtPosts" 
-               class="aspect-square cursor-pointer overflow-hidden"
+               class="aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
                (click)="onPostClick(art)">
             <img [src]="art.images?.[0]?.image || art.image" 
                  alt="Human art" 
@@ -224,7 +224,7 @@
       </div>
 
       <!-- Likes Tab -->
-      <div *ngSwitchCase="'likes'" class="divide-y divide-gray-200">
+      <div *ngSwitchCase="'likes'" class="divide-y divide-gray-200 dark:divide-gray-800">
         <app-post *ngFor="let post of likedPosts"
           [post]="post"
           [showFullHeader]="true"
@@ -237,11 +237,11 @@
 
 <!-- Edit Profile Modal -->
 <div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl w-full max-w-lg mx-4">
-    <div class="p-4 border-b border-gray-200">
+  <div class="bg-white dark:bg-black rounded-xl w-full max-w-lg mx-4">
+    <div class="p-4 border-b border-gray-200 dark:[border-color:var(--color-border)]">
       <div class="flex justify-between items-center">
-        <h2 class="text-xl font-bold">Edit profile</h2>
-        <button (click)="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+        <h2 class="text-xl font-bold dark:[color:var(--color-text)]">Edit profile</h2>
+        <button (click)="closeEditModal()" class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-gray-700 dark:hover:text-gray-300">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -251,77 +251,79 @@
       <div class="space-y-4">
         <!-- Banner Image Upload -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Banner Image</label>
+          <label class="block text-sm font-medium text-gray-700 dark:[color:var(--color-text)]">Banner Image</label>
           <div class="mt-1 flex items-center gap-3">
             <img *ngIf="user?.banner_image" [src]="user?.banner_image" alt="Current banner" class="h-20 w-40 object-cover rounded">
             <input
               type="file"
               accept="image/*"
               (change)="onBannerImageSelected($event)"
-              class="block w-full text-sm text-gray-500
+              class="block w-full text-sm text-gray-500 dark:[color:var(--color-text-secondary)]
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border-0
                     file:text-sm file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100"
+                    file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300
+                    hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
             >
           </div>
         </div>
 
         <!-- Profile Picture Upload -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Profile Picture</label>
+          <label class="block text-sm font-medium text-gray-700 dark:[color:var(--color-text)]">Profile Picture</label>
           <div class="mt-1 flex items-center gap-3">
             <img [src]="user?.profile_picture || defaultAvatar" alt="Current profile picture" class="h-12 w-12 rounded-full">
             <input
               type="file"
               accept="image/*"
               (change)="onProfilePictureSelected($event)"
-              class="block w-full text-sm text-gray-500
+              class="block w-full text-sm text-gray-500 dark:[color:var(--color-text-secondary)]
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border-0
                     file:text-sm file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100"
+                    file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300
+                    hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
             >
           </div>
         </div>
 
         <div>
-          <label for="username" class="block text-sm font-medium text-gray-700">Name</label>
+          <label for="username" class="block text-sm font-medium text-gray-700 dark:[color:var(--color-text)]">Name</label>
           <input
             [(ngModel)]="editForm.username"
             type="text"
             id="username"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 
+                   dark:bg-gray-800 dark:[color:var(--color-text)] dark:placeholder-gray-400"
             placeholder="Enter your name"
           >
         </div>
         
         <div>
-          <label for="bio" class="block text-sm font-medium text-gray-700">Bio</label>
+          <label for="bio" class="block text-sm font-medium text-gray-700 dark:[color:var(--color-text)]">Bio</label>
           <textarea
             [(ngModel)]="editForm.bio"
             id="bio"
             rows="4"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 
+                   dark:bg-gray-800 dark:[color:var(--color-text)] dark:placeholder-gray-400"
             placeholder="Write a brief bio about yourself"
           ></textarea>
         </div>
       </div>
     </div>
     
-    <div class="p-4 border-t border-gray-200">
+    <div class="p-4 border-t border-gray-200 dark:[border-color:var(--color-border)]">
       <div class="flex justify-end">
         <button
           (click)="closeEditModal()"
-          class="mr-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full border border-gray-300"
+          class="mr-3 px-4 py-2 text-sm font-medium text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-50 dark:hover:bg-gray-900 rounded-full border border-gray-300 dark:[border-color:var(--color-border)]"
         >
           Cancel
         </button>
         <button
           (click)="saveProfile()"
-          class="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-900 rounded-full"
+          class="px-4 py-2 text-sm font-medium text-white bg-black dark:bg-white dark:text-black hover:bg-gray-900 dark:hover:bg-gray-100 rounded-full"
         >
           Save
         </button>

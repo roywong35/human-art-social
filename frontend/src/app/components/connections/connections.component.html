@@ -1,17 +1,17 @@
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gray-50 dark:bg-black">
   <!-- Header -->
-  <div class="bg-white border-b sticky top-0 z-10">
+  <div class="bg-white dark:bg-black border-b dark:[border-color:var(--color-border)] sticky top-0 z-10">
     <div class="max-w-[600px] mx-auto">
       <div class="px-4 py-3">
         <div class="flex items-center gap-6">
-          <button (click)="router.navigate(['/'])">
+          <button (click)="router.navigate(['/'])" class="dark:[color:var(--color-text)]">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
           <div>
-            <h1 class="text-xl font-bold">{{ username }}</h1>
-            <p class="text-gray-500 text-sm">{{'@'}}{{ handle }}</p>
+            <h1 class="text-xl font-bold dark:[color:var(--color-text)]">{{ username }}</h1>
+            <p class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ handle }}</p>
           </div>
         </div>
       </div>
@@ -23,7 +23,7 @@
           [class.border-blue-500]="activeTab === 'followers'"
           [class.text-blue-500]="activeTab === 'followers'"
           (click)="setTab('followers')"
-          class="flex-1 py-4 text-sm font-medium hover:bg-gray-50">
+          class="flex-1 py-4 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
           Followers
         </button>
         <button 
@@ -31,7 +31,7 @@
           [class.border-blue-500]="activeTab === 'following'"
           [class.text-blue-500]="activeTab === 'following'"
           (click)="setTab('following')"
-          class="flex-1 py-4 text-sm font-medium hover:bg-gray-50">
+          class="flex-1 py-4 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
           Following
         </button>
       </div>
@@ -39,10 +39,10 @@
   </div>
 
   <!-- Content -->
-  <div class="max-w-[600px] mx-auto divide-y divide-gray-200">
+  <div class="max-w-[600px] mx-auto divide-y divide-gray-200 dark:divide-gray-800">
     <!-- Loading State -->
     <div *ngIf="isLoading" class="p-4 flex justify-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
     </div>
 
     <!-- Error State -->
@@ -52,16 +52,16 @@
 
     <!-- User List -->
     <div *ngIf="!isLoading && !error">
-      <div *ngFor="let user of users" class="p-4 hover:bg-gray-50 transition-colors">
+      <div *ngFor="let user of users" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
         <div class="flex items-center justify-between">
           <div class="flex items-center flex-grow cursor-pointer" (click)="navigateToProfile(user.handle)">
             <img [src]="user.profile_picture || defaultAvatar" 
                  [alt]="user.username + ' avatar'" 
-                 class="w-12 h-12 rounded-full bg-gray-200">
+                 class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800">
             <div class="ml-3 flex-grow">
-              <div class="font-bold text-gray-900">{{ user.username }}</div>
-              <div class="text-gray-500">{{'@'}}{{ user.handle }}</div>
-              <div class="text-gray-600 text-sm mt-1">{{ user.bio || 'No bio available' }}</div>
+              <div class="font-bold text-gray-900 dark:[color:var(--color-text)]">{{ user.username }}</div>
+              <div class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ user.handle }}</div>
+              <div class="text-gray-600 dark:[color:var(--color-text-secondary)] text-sm mt-1">{{ user.bio || 'No bio available' }}</div>
             </div>
           </div>
           
@@ -82,7 +82,7 @@
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="users.length === 0" class="p-8 text-center text-gray-500">
+      <div *ngIf="users.length === 0" class="p-8 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
         No {{ activeTab }} to display
       </div>
     </div>

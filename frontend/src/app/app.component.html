@@ -1,9 +1,9 @@
 <!-- Loading Overlay -->
-<div *ngIf="isLoading" class="fixed inset-0 bg-white bg-opacity-75 z-50 flex items-center justify-center">
+<div *ngIf="isLoading" class="fixed inset-0 bg-white dark:bg-black bg-opacity-75 dark:bg-opacity-75 z-50 flex items-center justify-center">
   <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
 </div>
 
-<div class="min-h-screen bg-white">
+<div class="min-h-screen bg-white dark:[background-color:var(--color-background)]">
   <div class="w-[1275px] mx-auto flex gap-2 min-h-screen">
     <!-- Left Sidebar -->
     <div *ngIf="authService.isAuthenticated()" class="w-[275px]">

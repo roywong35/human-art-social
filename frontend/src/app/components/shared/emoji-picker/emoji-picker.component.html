@@ -4,10 +4,10 @@
      [style.left.px]="position.left"
      (click)="$event.stopPropagation()">
   <emoji-mart
-    [darkMode]="false"
+    [darkMode]="true"
     [enableSearch]="false"
     [showPreview]="false"
-    [style]="{ border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }"
+    [style]="{ border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }"
     (emojiSelect)="onEmojiSelect($event)">
   </emoji-mart>
 </div> 

@@ -1,5 +1,5 @@
 import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { SubmitDrawingModalComponent } from '../submit-drawing-modal/submit-drawing-modal.component';
@@ -13,7 +13,7 @@ import { take, filter } from 'rxjs/operators';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RouterLinkActive],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss']
 })
@@ -23,6 +23,7 @@ export class SidebarComponent implements OnInit {
   isFollowingOnly = false;
   isTogglingFollowingOnly = false;
   isRefreshing = false;
+  isDarkMode = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   constructor(
@@ -52,6 +53,11 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit() {
     console.log('[Sidebar] Initializing component');
+    
+    // Load dark mode preference
+    const darkMode = localStorage.getItem('darkMode');
+    this.isDarkMode = darkMode === 'true';
+    this.updateDarkMode(this.isDarkMode);
     
     // Load user's following only preference
     this.authService.currentUser$.pipe(take(1)).subscribe(user => {
@@ -119,7 +125,8 @@ export class SidebarComponent implements OnInit {
     if (this.isHumanArtTab) {
       this.dialog.open(SubmitDrawingModalComponent, {
         width: '600px',
-        panelClass: ['rounded-2xl', 'create-post-dialog']
+        maxWidth: '100vw',
+        panelClass: ['rounded-2xl', 'submit-drawing-dialog']
       });
     } else {
       this.dialog.open(NewPostModalComponent, {
@@ -151,6 +158,20 @@ export class SidebarComponent implements OnInit {
         .then(() => {
           this.postService.loadPosts();
         });
+    }
+  }
+
+  toggleDarkMode(): void {
+    this.isDarkMode = !this.isDarkMode;
+    localStorage.setItem('darkMode', this.isDarkMode.toString());
+    this.updateDarkMode(this.isDarkMode);
+  }
+
+  private updateDarkMode(isDark: boolean): void {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   }
 

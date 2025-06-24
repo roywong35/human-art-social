@@ -1,40 +1,40 @@
 <div class="max-w-2xl mx-auto pt-4">
-  <div class="bg-white shadow rounded-lg">
-    <div class="px-4 py-3 border-b">
-      <h1 class="text-xl font-bold">Recommended Users</h1>
+  <div class="bg-white dark:bg-black shadow rounded-lg border border-gray-200 dark:[border-color:var(--color-border)]">
+    <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
+      <h1 class="text-xl font-bold dark:[color:var(--color-text)]">Recommended Users</h1>
     </div>
 
     <!-- Loading State -->
-    <div *ngIf="isLoading" class="divide-y divide-gray-100">
+    <div *ngIf="isLoading" class="divide-y divide-gray-100 dark:divide-gray-800">
       <div *ngFor="let i of [1,2,3,4,5]" class="px-4 py-4">
         <div class="animate-pulse flex items-center justify-between">
           <div class="flex items-center">
-            <div class="w-12 h-12 rounded-full bg-gray-200"></div>
+            <div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800"></div>
             <div class="ml-3">
-              <div class="h-4 bg-gray-200 rounded w-24"></div>
-              <div class="h-3 bg-gray-200 rounded w-20 mt-2"></div>
-              <div class="h-3 bg-gray-200 rounded w-32 mt-2"></div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-800 rounded w-24"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-20 mt-2"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-32 mt-2"></div>
             </div>
           </div>
-          <div class="w-24 h-8 bg-gray-200 rounded-full"></div>
+          <div class="w-24 h-8 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
         </div>
       </div>
     </div>
 
     <!-- User List -->
-    <div *ngIf="!isLoading" class="divide-y divide-gray-100">
+    <div *ngIf="!isLoading" class="divide-y divide-gray-100 dark:divide-gray-800">
       <div *ngFor="let user of users" 
-           class="user-item px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer group"
+           class="user-item px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer group"
            (click)="navigateToProfile(user.handle)">
         <div class="flex items-center justify-between">
           <div class="flex items-center">
             <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
                  [alt]="user.username + ' avatar'" 
-                 class="w-12 h-12 rounded-full bg-gray-200 object-cover">
+                 class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 object-cover">
             <div class="ml-3">
-              <div class="font-bold text-gray-900 group-hover:text-blue-500 transition-colors">{{ user.username }}</div>
-              <div class="text-gray-500">{{'@'}}{{ user.handle }}</div>
-              <div class="text-sm text-gray-600 mt-1">{{ user.bio || 'No bio available' }}</div>
+              <div class="font-bold text-gray-900 dark:[color:var(--color-text)] group-hover:text-blue-500 transition-colors">{{ user.username }}</div>
+              <div class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ user.handle }}</div>
+              <div class="text-sm text-gray-600 dark:[color:var(--color-text-secondary)] mt-1">{{ user.bio || 'No bio available' }}</div>
             </div>
           </div>
           <button 
@@ -54,7 +54,7 @@
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="users.length === 0" class="empty-state px-4 py-8 text-center text-gray-500">
+      <div *ngIf="users.length === 0" class="empty-state px-4 py-8 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
         <p>No users found</p>
       </div>
     </div>

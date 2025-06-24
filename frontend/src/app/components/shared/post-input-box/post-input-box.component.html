@@ -1,16 +1,16 @@
-<div [class.bg-white]="showCard" [class.p-4]="showCard" [class.border-b]="showCard">
+<div [class.bg-white]="showCard" [class.dark:bg-black]="showCard" [class.p-4]="showCard" [class.border-b]="showCard" [class.dark:[border-color:var(--color-border)]]="showCard">
 
     <div *ngIf="!isCompact" class="flex gap-3 pt-4 pb-1 px-4">
       <img [src]="userAvatar || defaultAvatar" 
            alt="User avatar" 
-           class="w-10 h-10 rounded-full bg-gray-100">
+           class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800">
       <div class="flex-1">
         <div class="flex items-center justify-between py-2">
           <textarea
             #textarea
             [(ngModel)]="content"
             [placeholder]="placeholder"
-            class="w-full resize-none border-0 outline-none focus:outline-none focus:ring-0 text-[18px] leading-normal placeholder-gray-500 min-h-[18px] caret-blue-500"
+            class="w-full resize-none border-0 outline-none focus:outline-none focus:ring-0 text-[18px] leading-normal placeholder-gray-500 dark:placeholder-gray-400 min-h-[18px] caret-blue-500 bg-transparent dark:[color:var(--color-text)]"
             (input)="adjustTextareaHeight($event)"
             (focus)="inputFocused = true"
             (blur)="inputFocused = false">
@@ -19,7 +19,7 @@
   
         <!-- Image Preview Grid -->
         <div *ngIf="images.length > 0" 
-             class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 h-80">
+             class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 h-80">
           <!-- Layout for 1, 2, or 4 photos -->
           <div *ngIf="images.length !== 3" class="flex flex-wrap h-full">
             <div *ngFor="let image of images; let i = index" 
@@ -83,12 +83,12 @@
           <div class="flex items-center gap-2">
             <button 
               (click)="onImageClick()"
-              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-full p-3 transition-colors">
+              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] rounded-full p-3 transition-colors">
               <i class="far fa-image text-[15px]"></i>
             </button>
             <button 
               (click)="toggleEmojiPicker($event)"
-              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-full p-3 transition-colors emoji-trigger">
+              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] rounded-full p-3 transition-colors emoji-trigger">
               <i class="far fa-smile text-[15px]"></i>
             </button>
           </div>

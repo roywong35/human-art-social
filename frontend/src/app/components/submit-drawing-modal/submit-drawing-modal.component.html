@@ -1,9 +1,9 @@
-<div class="bg-white rounded-xl w-full max-w-xl mx-4 max-h-[80vh] flex flex-col">
-  <div class="flex items-center justify-between p-4 border-b border-gray-200">
-    <button (click)="closeModal()" class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors">
+<div class="bg-white dark:bg-black rounded-xl w-full max-h-[80vh] flex flex-col">
+  <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:[border-color:var(--color-border)]">
+    <button (click)="closeModal()" class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-gray-700 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
       <i class="fas fa-times"></i>
     </button>
-    <h2 class="text-xl font-bold">Share Your Human Art</h2>
+    <h2 class="text-xl font-bold dark:[color:var(--color-text)]">Share Your Human Art</h2>
     <button 
       (click)="submitArt()" 
       [disabled]="!artFile || !evidenceFiles.length || isSubmitting"
@@ -20,16 +20,16 @@
   <div class="overflow-y-auto flex-1 p-4">
     <div class="space-y-6">
       <!-- Art Upload Section -->
-      <div class="border rounded-lg p-4">
-        <h3 class="font-semibold text-lg mb-3">Your Artwork</h3>
+      <div class="border dark:[border-color:var(--color-border)] rounded-lg p-4">
+        <h3 class="font-semibold text-lg mb-3 dark:[color:var(--color-text)]">Your Artwork</h3>
         
         <!-- Art Upload Area -->
         <div *ngIf="!artFile" 
-             class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
+             class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
              (click)="artInput.click()">
-          <i class="fas fa-image text-3xl text-gray-400 mb-2"></i>
-          <p class="text-gray-500">Click to upload your artwork</p>
-          <p class="text-sm text-gray-400 mt-1">PNG, JPG, PSD, GIF up to 50MB</p>
+          <i class="fas fa-image text-3xl text-gray-400 dark:text-gray-600 mb-2"></i>
+          <p class="text-gray-500 dark:[color:var(--color-text-secondary)]">Click to upload your artwork</p>
+          <p class="text-sm text-gray-400 dark:text-gray-600 mt-1">PNG, JPG, PSD, GIF up to 50MB</p>
         </div>
 
         <!-- Art Preview -->
@@ -55,29 +55,29 @@
       </div>
 
       <!-- Evidence Upload Section -->
-      <div class="border rounded-lg p-4">
-        <h3 class="font-semibold text-lg mb-2">Verification Evidence</h3>
-        <p class="text-sm text-gray-500 mb-3">
+      <div class="border dark:[border-color:var(--color-border)] rounded-lg p-4">
+        <h3 class="font-semibold text-lg mb-2 dark:[color:var(--color-text)]">Verification Evidence</h3>
+        <p class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] mb-3">
           Please provide evidence that this is your human-created art (work-in-progress shots, source files, etc.)
         </p>
         
         <!-- Evidence Upload Area -->
         <div *ngIf="evidenceFiles.length === 0" 
-             class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
+             class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
              (click)="evidenceInput.click()">
-          <i class="fas fa-file-upload text-3xl text-gray-400 mb-2"></i>
-          <p class="text-gray-500">Upload evidence files</p>
-          <p class="text-sm text-gray-400 mt-1">Images, PSD, or video files up to 100MB total</p>
+          <i class="fas fa-file-upload text-3xl text-gray-400 dark:text-gray-600 mb-2"></i>
+          <p class="text-gray-500 dark:[color:var(--color-text-secondary)]">Upload evidence files</p>
+          <p class="text-sm text-gray-400 dark:text-gray-600 mt-1">Images, PSD, or video files up to 100MB total</p>
         </div>
 
         <!-- Evidence Files List -->
         <div *ngIf="evidenceFiles.length > 0" class="space-y-2">
           <div *ngFor="let file of evidenceFiles; let i = index" 
-               class="flex items-center justify-between p-2 bg-gray-50 rounded">
-            <span class="text-sm truncate">{{ file.name }}</span>
+               class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded">
+            <span class="text-sm truncate dark:[color:var(--color-text)]">{{ file.name }}</span>
             <button 
               (click)="removeEvidence(i)"
-              class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+              class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900 transition-colors"
             >
               <i class="fas fa-times"></i>
             </button>
@@ -102,24 +102,24 @@
       </div>
 
       <!-- Description -->
-      <div class="border rounded-lg p-4">
-        <h3 class="font-semibold text-lg mb-3">Description</h3>
+      <div class="border dark:[border-color:var(--color-border)] rounded-lg p-4">
+        <h3 class="font-semibold text-lg mb-3 dark:[color:var(--color-text)]">Description</h3>
         <textarea
           [(ngModel)]="content"
           placeholder="Tell us about your artwork..."
-          class="w-full resize-none border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          class="w-full resize-none border dark:[border-color:var(--color-border)] rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-900 dark:[color:var(--color-text)] dark:placeholder-gray-500"
           rows="3"
         ></textarea>
       </div>
 
       <!-- Error Message -->
-      <div *ngIf="error" class="text-red-500 text-sm bg-red-50 p-3 rounded-lg flex items-center">
+      <div *ngIf="error" class="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i>
         {{ error }}
       </div>
 
       <!-- Submission Note -->
-      <div class="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg flex items-center">
+      <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] bg-gray-50 dark:bg-gray-900 p-3 rounded-lg flex items-center">
         <i class="fas fa-info-circle mr-2"></i>
         Your artwork will be reviewed before appearing in the Human Art section.
       </div>

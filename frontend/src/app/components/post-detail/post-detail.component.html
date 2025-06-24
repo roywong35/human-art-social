@@ -1,19 +1,19 @@
-<div class="max-w-2xl mx-auto bg-white" #postContainer>
+<div class="max-w-2xl mx-auto bg-white dark:bg-black" #postContainer>
   <!-- Loading State -->
   <div *ngIf="loading" class="flex justify-center items-center p-8">
     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
   </div>
 
   <!-- Error State -->
-  <div *ngIf="error" class="p-4 text-red-500 text-center">
+  <div *ngIf="error" class="p-4 text-red-500 dark:text-red-400 text-center">
     {{ error }}
   </div>
 
   <!-- Post Content -->
   <div *ngIf="!loading && !error && post">
     <!-- Back Button -->
-    <div class="border-b p-4">
-      <button (click)="goBack()" class="text-gray-500 hover:text-gray-700 flex items-center">
+    <div class="border-b border-gray-200 dark:[border-color:var(--color-border)] p-4">
+      <button (click)="goBack()" class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-gray-700 dark:hover:text-gray-300 flex items-center">
         <i class="fas fa-arrow-left mr-2"></i>
         Back
       </button>
@@ -25,7 +25,7 @@
       <ng-container *ngFor="let parentPost of parentChain; let i = index">
         <div class="relative">
           <!-- Connecting Line -->
-          <div class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
+          <div class="absolute left-[31px] w-0.5 bg-gray-200 dark:bg-gray-800 z-[5]"
                [style]="i === 0 ? 'top: 45px; height: calc(100% - 45px);' : 'top: 0; height: 100%;'">
           </div>
           <app-post 
@@ -42,7 +42,7 @@
     <div class="relative" #mainPost>
       <!-- Thread Line for Replies -->
       <div *ngIf="post.post_type === 'reply'" 
-           class="absolute left-[31px] w-0.5 bg-gray-200 z-[5]"
+           class="absolute left-[31px] w-0.5 bg-gray-200 dark:bg-gray-800 z-[5]"
            style="top: 0; height: 45px;">
       </div>
       <app-post 
@@ -55,15 +55,15 @@
     </div>
 
     <!-- Reply Input -->
-    <div *ngIf="currentUser" class="border-t border-b bg-white p-3">
+    <div *ngIf="currentUser" class="border-t border-b border-gray-200 dark:[border-color:var(--color-border)] bg-white dark:bg-black p-3">
       <div class="flex">
         <img 
           [src]="currentUser.profile_picture || defaultAvatar" 
           [alt]="currentUser.username" 
-          class="w-10 h-10 rounded-full  mr-3">
+          class="w-10 h-10 rounded-full mr-3">
         <div class="flex-grow">
           <!-- Reply to text (only shown when expanded) -->
-          <div *ngIf="replyFocused" class="text-gray-500 text-base mb-2 ml-2">
+          <div *ngIf="replyFocused" class="text-gray-500 dark:[color:var(--color-text-secondary)] text-base mb-2 ml-2">
             Replying to <span class="text-blue-500">{{'@' + post.author.handle}}</span>
           </div>
 
@@ -76,13 +76,13 @@
               (focus)="replyFocused = true"
               placeholder="Post your reply"
               [class.h-10]="!replyFocused"
-              class="w-full p-2 focus:outline-none resize-none text-base placeholder:text-lg"
+              class="w-full p-2 focus:outline-none resize-none text-base placeholder:text-lg dark:bg-transparent dark:[color:var(--color-text)] dark:placeholder:text-gray-500"
               [rows]="replyFocused ? 2 : 1">
             </textarea>
 
             <!-- Image Preview Grid -->
             <div *ngIf="images.length > 0" 
-                 class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 h-80">
+                 class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 h-80">
               <!-- Layout for 1, 2, or 4 photos -->
               <div *ngIf="images.length !== 3" class="flex flex-wrap h-full">
                 <div *ngFor="let image of images; let i = index" 
@@ -192,14 +192,14 @@
           [isReply]="true"
           [isConnectedToParent]="false"
           (postUpdated)="loadPost()"
-          class="border-b">
+          class="border-b border-gray-200 dark:[border-color:var(--color-border)]">
         </app-post>
       </div>
     </div>
 
     <!-- No Replies Message -->
-    <div *ngIf="!loading && replies.length === 0" class="p-4 text-center text-gray-500">
-      No replies yet. Be the first to reply!
+    <div *ngIf="!loading && !error && replies.length === 0" class="p-8 text-center">
+      <p class="text-gray-500 dark:[color:var(--color-text-secondary)]">No replies yet</p>
     </div>
   </div>
 </div> 

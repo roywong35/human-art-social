@@ -1,8 +1,8 @@
 <div class="max-w-4xl mx-auto">
   <!-- Search Header -->
-  <div class="sticky top-0 bg-white z-10">
+  <div class="sticky top-0 bg-white dark:[background-color:var(--color-background)] z-10">
     <div class="flex items-center gap-4 px-6 py-3">
-      <button (click)="goBack()" class="text-gray-600 hover:text-gray-900">
+      <button (click)="goBack()" class="text-gray-600 dark:[color:var(--color-text-secondary)] hover:text-gray-900 dark:hover:[color:var(--color-text)]">
         <i class="fas fa-arrow-left text-xl"></i>
       </button>
       <div class="flex-1">
@@ -13,12 +13,12 @@
 
   <!-- Loading State -->
   <div *ngIf="isLoading" class="text-center py-8">
-    <i class="fas fa-spinner fa-spin text-2xl text-gray-500"></i>
+    <i class="fas fa-spinner fa-spin text-2xl text-gray-500 dark:[color:var(--color-text-secondary)]"></i>
   </div>
 
   <!-- No Results -->
   <div *ngIf="!isLoading && posts.length === 0 && searchQuery" 
-       class="text-center py-8 text-gray-500">
+       class="text-center py-8 text-gray-500 dark:[color:var(--color-text-secondary)]">
     No posts found
   </div>
 

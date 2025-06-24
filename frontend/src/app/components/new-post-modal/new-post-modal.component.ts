@@ -21,7 +21,15 @@ interface DialogData {
 @Component({
   selector: 'app-new-post-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule,MatDialogModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatDialogModule,
+    TimeAgoPipe,
+    PickerComponent,
+    EmojiPickerComponent,
+    PhotoViewerComponent
+  ],
   templateUrl: './new-post-modal.component.html',
   styleUrls: ['./new-post-modal.component.scss']
 })

@@ -1,12 +1,7 @@
 // Styles for post component 
 
 .post-container {
-  @apply bg-white;
   transition: background-color 0.2s ease;
-
-  &:hover {
-    @apply bg-gray-50;
-  }
 }
 
 .emoji-picker-container {
