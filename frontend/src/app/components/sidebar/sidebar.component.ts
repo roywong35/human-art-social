@@ -9,6 +9,7 @@ import { PostService } from '../../services/post.service';
 import { NewPostModalComponent } from '../new-post-modal/new-post-modal.component';
 import { UserService } from '../../services/user.service';
 import { take, filter } from 'rxjs/operators';
+import { OverlayService } from '../../services/overlay.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -24,7 +25,7 @@ export class SidebarComponent implements OnInit {
   isTogglingFollowingOnly = false;
   isRefreshing = false;
   isDarkMode = false;
-  protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
+  defaultAvatar = 'assets/placeholder-image.svg';
 
   constructor(
     public authService: AuthService,
@@ -33,7 +34,8 @@ export class SidebarComponent implements OnInit {
     private route: ActivatedRoute,
     private postService: PostService,
     private userService: UserService,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private overlayService: OverlayService
   ) {
     // Subscribe to route changes to detect Human Art tab
     this.router.events.pipe(
@@ -116,9 +118,19 @@ export class SidebarComponent implements OnInit {
     });
   }
 
-  toggleUserMenu(event: MouseEvent): void {
+  toggleUserMenu(event: MouseEvent) {
     event.stopPropagation();
     this.showUserMenu = !this.showUserMenu;
+    if (this.showUserMenu) {
+      this.overlayService.show();
+    } else {
+      this.overlayService.hide();
+    }
+  }
+
+  closeUserMenu() {
+    this.showUserMenu = false;
+    this.overlayService.hide();
   }
 
   openContextModal(): void {

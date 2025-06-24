@@ -11,6 +11,7 @@ import { EmojiPickerComponent } from './components/shared/emoji-picker/emoji-pic
 import { Title } from '@angular/platform-browser';
 import { UserService } from './services/user.service';
 import { User } from './models/user.model';
+import { OverlayService } from './services/overlay.service';
 
 @Component({
   selector: 'app-root',
@@ -36,7 +37,8 @@ export class AppComponent {
     public authService: AuthService,
     private router: Router,
     private titleService: Title,
-    private userService: UserService
+    private userService: UserService,
+    public overlayService: OverlayService
   ) {
     this.router.events.subscribe((event: Event) => {
       if (event instanceof NavigationEnd) {
