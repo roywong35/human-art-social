@@ -399,7 +399,7 @@ export class PostComponent implements OnInit, OnDestroy {
   protected onPhotoClick(event: Event, index: number, sourcePost?: Post): void {
     event.stopPropagation();
     const post = sourcePost || this.post;
-    const images = post.images?.map(img => img.image) || [];
+    const photos = post.images || [];
     this.dialog.open(PhotoViewerComponent, {
       width: '100vw',
       height: '100vh',
@@ -407,8 +407,8 @@ export class PostComponent implements OnInit, OnDestroy {
       maxHeight: '100vh',
       panelClass: 'photo-viewer-dialog',
       data: {
-        images: images,
-        currentIndex: index
+        photos: photos,
+        initialPhotoIndex: index
       }
     });
   }

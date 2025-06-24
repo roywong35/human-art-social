@@ -23,6 +23,7 @@ export class PhotoViewerComponent implements OnInit, OnDestroy {
   currentIndex: number;
   currentPhoto: PostImage | null = null;
   totalPhotos: number;
+  defaultPlaceholder = 'assets/placeholder-image.svg';
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: PhotoViewerData,
@@ -61,6 +62,6 @@ export class PhotoViewerComponent implements OnInit, OnDestroy {
 
   onImageError(event: Event) {
     const img = event.target as HTMLImageElement;
-    img.src = 'assets/images/placeholder.png';
+    img.src = this.defaultPlaceholder;
   }
 } 
