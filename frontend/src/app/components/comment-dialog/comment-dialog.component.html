@@ -1,6 +1,6 @@
-<div class="dialog-content bg-white dark:bg-black">
+<div class="dialog-content bg-white dark:bg-black w-screen min-h-screen min-[688px]:w-[600px] min-[688px]:min-h-0 min-[688px]:max-h-[90vh] min-[688px]:rounded-2xl">
   <!-- Close Button -->
-  <div class="h-14">
+  <div class="h-14 sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 border-b border-gray-200 dark:[border-color:var(--color-border)] min-[688px]:relative">
     <button class="absolute top-2 left-2 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 dark:[color:var(--color-text)]" (click)="dialogRef.close()">
       <i class="fas fa-times text-lg"></i>
     </button>

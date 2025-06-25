@@ -1,4 +1,4 @@
-import { Component, Inject, ViewChild, ElementRef, OnInit } from '@angular/core';
+import { Component, Inject, ViewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -18,7 +18,7 @@ import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.compon
   templateUrl: './comment-dialog.component.html',
   styleUrls: ['./comment-dialog.component.scss']
 })
-export class CommentDialogComponent implements OnInit {
+export class CommentDialogComponent implements OnInit, OnDestroy {
   @ViewChild('replyTextarea') textarea!: ElementRef;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   protected replyContent = '';
@@ -28,6 +28,7 @@ export class CommentDialogComponent implements OnInit {
   protected comments: Post[] = [];
   public images: { id: string, file: File, preview: string }[] = [];
   protected isSubmitting = false;
+  private resizeObserver: ResizeObserver;
 
   constructor(
     public dialogRef: MatDialogRef<CommentDialogComponent>,
@@ -35,10 +36,28 @@ export class CommentDialogComponent implements OnInit {
     private commentService: CommentService,
     private router: Router,
     private emojiPickerService: EmojiPickerService
-  ) {}
+  ) {
+    // Configure dialog based on screen size
+    this.resizeObserver = new ResizeObserver(entries => {
+      const width = entries[0].contentRect.width;
+      if (width < 688) {
+        dialogRef.updatePosition({ left: '0', top: '0' });
+        dialogRef.updateSize('100vw', '100vh');
+      } else {
+        dialogRef.updatePosition();
+        dialogRef.updateSize('600px', 'auto');
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadComments();
+    // Start observing window size
+    this.resizeObserver.observe(document.body);
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver.disconnect();
   }
 
   loadComments(): void {
