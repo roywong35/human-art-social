@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, OnDestroy, Inject, Optional } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnDestroy, Inject, Optional, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -33,7 +33,7 @@ interface DialogData {
   templateUrl: './new-post-modal.component.html',
   styleUrls: ['./new-post-modal.component.scss']
 })
-export class NewPostModalComponent implements OnDestroy {
+export class NewPostModalComponent implements OnInit, OnDestroy {
   @ViewChild('postTextarea') postTextarea!: ElementRef<HTMLTextAreaElement>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   
@@ -48,6 +48,7 @@ export class NewPostModalComponent implements OnDestroy {
   protected images: ImageFile[] = [];
   private subscriptions: Subscription = new Subscription();
   protected quotePost: Post | undefined;
+  private resizeObserver: ResizeObserver;
 
   constructor(
     public dialogRef: MatDialogRef<NewPostModalComponent>,
@@ -59,6 +60,20 @@ export class NewPostModalComponent implements OnDestroy {
     @Optional() @Inject(MAT_DIALOG_DATA) private data?: DialogData
   ) {
     this.quotePost = data?.quotePost;
+
+    // Configure dialog based on screen size
+    this.resizeObserver = new ResizeObserver(entries => {
+      const width = entries[0].contentRect.width;
+      if (width < 688) {
+        dialogRef.updatePosition({ left: '0', top: '0' });
+        dialogRef.updateSize('100vw', '100vh');
+        dialogRef.removePanelClass('rounded-2xl');
+      } else {
+        dialogRef.updatePosition();
+        dialogRef.updateSize('600px', 'auto');
+        dialogRef.addPanelClass('rounded-2xl');
+      }
+    });
 
     // Subscribe to image updates
     this.subscriptions.add(
@@ -79,17 +94,23 @@ export class NewPostModalComponent implements OnDestroy {
     );
   }
 
+  ngOnInit(): void {
+    // Start observing window size
+    this.resizeObserver.observe(document.body);
+  }
+
+  ngOnDestroy() {
+    this.resizeObserver.disconnect();
+    this.subscriptions.unsubscribe();
+    this.imageUploadService.clearImages();
+  }
+
   protected getBaseUrl(): string {
     return window.location.origin;
   }
 
   protected getDisplayUrl(): string {
     return window.location.origin.replace('https://', '').replace('http://', '');
-  }
-
-  ngOnDestroy() {
-    this.subscriptions.unsubscribe();
-    this.imageUploadService.clearImages();
   }
 
   protected async createPost() {

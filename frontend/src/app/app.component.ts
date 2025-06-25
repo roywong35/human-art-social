@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule, Router, Event, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
@@ -12,6 +12,7 @@ import { Title } from '@angular/platform-browser';
 import { UserService } from './services/user.service';
 import { User } from './models/user.model';
 import { OverlayService } from './services/overlay.service';
+import { MobileHeaderComponent } from './components/mobile-header/mobile-header.component';
 
 @Component({
   selector: 'app-root',
@@ -24,12 +25,13 @@ import { OverlayService } from './services/overlay.service';
     NotificationComponent,
     RouterOutlet,
     MatDialogModule,
-    EmojiPickerComponent
+    EmojiPickerComponent,
+    MobileHeaderComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'Human Art Social';
   isLoading = false;
 
@@ -93,5 +95,9 @@ export class AppComponent {
         }
       }
     });
+  }
+
+  ngOnInit() {
+    // Add any initialization logic here
   }
 }

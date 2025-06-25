@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Inject, Optional } from '@angular/core';
+import { Component, EventEmitter, Output, Inject, Optional, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -20,7 +20,7 @@ interface EvidenceFile {
   templateUrl: './submit-drawing-modal.component.html',
   styleUrls: ['./submit-drawing-modal.component.scss']
 })
-export class SubmitDrawingModalComponent {
+export class SubmitDrawingModalComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
   
   content = '';
@@ -35,12 +35,44 @@ export class SubmitDrawingModalComponent {
   private readonly MAX_TOTAL_EVIDENCE_SIZE = 100 * 1024 * 1024; // 100MB
   private readonly MAX_EVIDENCE_FILES = 5;
 
+  private resizeObserver?: ResizeObserver;
+
   constructor(
     private postService: PostService,
     public authService: AuthService,
     private router: Router,
     @Optional() private dialogRef: MatDialogRef<SubmitDrawingModalComponent>
-  ) {}
+  ) {
+    if (this.dialogRef) {
+      // Configure dialog based on screen size
+      this.resizeObserver = new ResizeObserver(entries => {
+        const width = entries[0].contentRect.width;
+        if (width < 688) {
+          dialogRef.updatePosition({ left: '0', top: '0' });
+          dialogRef.updateSize('100vw', '100vh');
+          dialogRef.removePanelClass('rounded-2xl');
+        } else {
+          dialogRef.updatePosition();
+          dialogRef.updateSize('600px', 'auto');
+          dialogRef.addPanelClass('rounded-2xl');
+        }
+      });
+    }
+  }
+
+  ngOnInit(): void {
+    // Start observing window size if dialog exists
+    if (this.dialogRef && this.resizeObserver) {
+      this.resizeObserver.observe(document.body);
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Clean up resize observer if it exists
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+  }
 
   closeModal(result?: boolean): void {
     if (this.dialogRef) {

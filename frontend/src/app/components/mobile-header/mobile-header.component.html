@@ -1,0 +1,70 @@
+<!-- Backdrop when menu is open -->
+<div *ngIf="showUserMenu" 
+     class="fixed inset-0 bg-black bg-opacity-50 z-[1001]"
+     (click)="closeUserMenu()"></div>
+
+<div class="h-14 bg-white dark:bg-black flex items-center px-4">
+  <!-- Left Section -->
+  <div class="flex-1 flex items-center">
+    <button (click)="toggleUserMenu($event)" 
+            class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity">
+      <img *ngIf="(authService.currentUser$ | async)?.profile_picture" 
+           [src]="(authService.currentUser$ | async)?.profile_picture" 
+           alt="Profile picture" 
+           class="w-full h-full object-cover">
+      <img *ngIf="!(authService.currentUser$ | async)?.profile_picture" 
+           [src]="defaultAvatar" 
+           alt="Default avatar" 
+           class="w-full h-full object-cover">
+    </button>
+  </div>
+
+  <!-- Center Section -->
+  <div class="flex-1 flex justify-center">
+    <a routerLink="/home" class="flex items-center justify-center">
+      <div class="text-xl font-bold text-blue-500 hover:text-blue-600 transition-colors">
+        H
+      </div>
+    </a>
+  </div>
+
+  <!-- Right Section -->
+  <div class="flex-1 flex justify-end">
+    <button (click)="openContextModal()" 
+            class="w-10 h-10 flex items-center justify-center rounded-full transition-colors text-white"
+            [ngStyle]="{
+              'background': isHumanArtTab ? 'linear-gradient(45deg, #0d9488, #0f766e)' : 'linear-gradient(45deg, var(--color-primary), var(--color-primary-hover))'
+            }">
+      <i class="fas h-5 w-5 text-base flex items-center justify-center" [class.fa-plus]="!isHumanArtTab" [class.fa-paint-brush]="isHumanArtTab"></i>
+    </button>
+  </div>
+
+  <!-- User Menu Dropdown -->
+  <div *ngIf="showUserMenu" 
+       class="absolute top-full left-0 right-0 mt-2 mx-4 bg-white dark:bg-black rounded-xl shadow-lg z-[1002]">
+    <!-- User Info -->
+    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+      <div class="font-bold text-black dark:text-white">{{ (authService.currentUser$ | async)?.username }}</div>
+      <div class="text-sm text-gray-500 dark:text-gray-400">{{'@'}}{{ (authService.currentUser$ | async)?.handle }}</div>
+    </div>
+    
+    <!-- Menu Items -->
+    <div class="py-1">
+      <a [routerLink]="['/', (authService.currentUser$ | async)?.handle]"
+         (click)="closeUserMenu()"
+         class="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-black dark:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span>Profile</span>
+      </a>
+      <button (click)="logout()" 
+              class="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span>Log out</span>
+      </button>
+    </div>
+  </div>
+</div> 

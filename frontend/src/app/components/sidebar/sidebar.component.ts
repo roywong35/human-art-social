@@ -138,17 +138,11 @@ export class SidebarComponent implements OnInit {
   openContextModal(): void {
     if (this.isHumanArtTab) {
       this.dialog.open(SubmitDrawingModalComponent, {
-        width: '600px',
-        maxWidth: '100vw',
-        panelClass: ['rounded-2xl', 'submit-drawing-dialog']
+        panelClass: ['submit-drawing-dialog']
       });
     } else {
       this.dialog.open(NewPostModalComponent, {
-        width: '600px',
-        panelClass: ['rounded-2xl', 'create-post-dialog'],
-        position: {
-          top: '5%'
-        }
+        panelClass: ['create-post-dialog']
       });
     }
   }
