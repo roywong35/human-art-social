@@ -1,34 +1,54 @@
 <div class="relative">
-<!-- Global Overlay -->
-<div *ngIf="overlayService.showOverlay$ | async" 
-     class="fixed inset-0 z-[99999]"
-     (click)="overlayService.hide()">
-</div>
-
-<!-- Loading Overlay -->
-<div *ngIf="isLoading" class="fixed inset-0 bg-white dark:bg-black bg-opacity-75 dark:bg-opacity-75 z-50 flex items-center justify-center">
-  <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-</div>
-
-<div class="min-h-screen bg-white dark:[background-color:var(--color-background)]">
-  <div class="w-[1275px] mx-auto flex gap-2 min-h-screen">
-    <!-- Left Sidebar -->
-    <div *ngIf="authService.isAuthenticated()" class="w-[275px]">
-      <div class="fixed w-[275px] h-screen">
-        <app-sidebar></app-sidebar>
+  <!-- Global Overlay -->
+  <div *ngIf="overlayService.showOverlay$ | async" 
+       class="fixed inset-0 z-[99999]"
+       (click)="overlayService.hide()">
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="fixed inset-0 bg-white dark:bg-black bg-opacity-75 dark:bg-opacity-75 z-50 flex items-center justify-center">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+  
+  <div class="min-h-screen bg-white dark:[background-color:var(--color-background)]">
+    <div class="max-w-[1265px] mx-auto min-h-screen">
+      <!-- Container that centers content when enough space -->
+      <div class="flex min-[681px]:justify-center lg:justify-end">
+        <!-- Fixed-width container that includes sidebar + content -->
+        <div class="relative flex min-[681px]:w-[680px] lg:w-[950px] xl:w-[1145px]"> <!-- 275px + 600px + 350px = 1145px at xl -->
+          <!-- Left Sidebar -->
+          <div *ngIf="authService.isAuthenticated()" 
+               class="hidden min-[500px]:block">
+            <div class="fixed h-screen w-[80px] xl:w-[275px]">
+              <app-sidebar></app-sidebar>
+            </div>
+          </div>
+  
+          <!-- Main Content Container -->
+          <div class="flex-1 min-[500px]:ml-[80px] xl:ml-[275px]">
+            <div class="flex">
+              <!-- Main Content -->
+              <main [class]="authService.isAuthenticated() ? 'w-full max-w-[600px] border-x border-gray-100 dark:border-gray-800' : 'w-full'">
+                <router-outlet></router-outlet>
+                <app-emoji-picker></app-emoji-picker>
+              </main>
+  
+              <!-- Right Sidebar -->
+              <div *ngIf="authService.isAuthenticated()" 
+                   class="hidden lg:block w-[350px]">
+                <app-right-sidebar></app-right-sidebar>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Mobile Bottom Navigation -->
+      <div *ngIf="authService.isAuthenticated()" 
+           class="min-[500px]:hidden fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:[background-color:var(--color-background)] z-50">
+        <app-sidebar [isMobile]="true"></app-sidebar>
       </div>
     </div>
-
-    <!-- Main Content -->
-    <main [class]="authService.isAuthenticated() ? 'w-[600px]' : 'w-full'">
-      <router-outlet></router-outlet>
-      <app-emoji-picker></app-emoji-picker>
-    </main>
-
-    <!-- Right Sidebar -->
-    <div *ngIf="authService.isAuthenticated()" class="w-[350px] h-screen">
-      <app-right-sidebar></app-right-sidebar>
-    </div>
   </div>
-</div>
-<app-notification></app-notification>
+  <app-notification></app-notification>
+  

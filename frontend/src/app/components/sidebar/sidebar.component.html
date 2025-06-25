@@ -1,149 +1,125 @@
-<nav class="bg-white dark:[background-color:var(--color-background)] h-screen w-68 flex flex-col">
+<nav [class]="isMobile ? 'bg-white dark:[background-color:var(--color-background)] w-full' : 'bg-white dark:[background-color:var(--color-background)] h-screen flex flex-col'">
   <!-- Logo and Brand -->
-  <div class="pt-4 pl-4">
-    <h1 class="text-2xl font-bold text-blue-500 cursor-pointer hover:text-blue-400 transition-colors" routerLink="/home">
-      Human Art Social
-    </h1>
+  <div class="pt-4 px-3" *ngIf="!isMobile">
+    <a routerLink="/home" class="inline-flex items-center justify-center">
+      <div class="text-2xl font-bold text-blue-500 cursor-pointer hover:text-blue-400 transition-colors xl:block hidden">
+        Human Art Social
+      </div>
+      <div class="flex xl:hidden w-14 h-14 rounded-full items-center justify-center hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors">
+        <span class="text-2xl font-bold text-blue-500">H</span>
+      </div>
+    </a>
   </div>
 
   <!-- Navigation Links -->
-  <div class="flex-1 overflow-y-auto">
-    <ul class="p-4 space-y-2">
+  <div [class]="isMobile ? 'flex justify-around py-2' : 'flex-1 overflow-y-auto'">
+    <ul [class]="isMobile ? 'flex justify-around w-full items-center' : 'px-3 py-4 space-y-3'">
       <!-- Home -->
       <li>
         <a routerLink="/home" 
-           routerLinkActive="bg-blue-50 dark:[background-color:var(--color-surface)] text-blue-500"
+           routerLinkActive="text-blue-500"
            [routerLinkActiveOptions]="{exact: true}"
-           class="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
+           [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
-          <span>Home</span>
+          <span [class]="isMobile ? 'hidden' : 'ml-4 xl:block hidden'">Home</span>
         </a>
       </li>
 
       <!-- Search -->
       <li>
         <a routerLink="/search" 
-           routerLinkActive="bg-blue-50 dark:[background-color:var(--color-surface)] text-blue-500"
+           routerLinkActive="text-blue-500"
            [routerLinkActiveOptions]="{exact: true}"
-           class="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
+           [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <span>Search</span>
+          <span [class]="isMobile ? 'hidden' : 'ml-4 xl:block hidden'">Search</span>
         </a>
       </li>
 
       <!-- Profile -->
       <li>
         <a [routerLink]="['/', (authService.currentUser$ | async)?.handle]"
-           routerLinkActive="bg-blue-50 dark:[background-color:var(--color-surface)] text-blue-500"
+           routerLinkActive="text-blue-500"
            [routerLinkActiveOptions]="{exact: true}"
-           class="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
+           [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          <span>Profile</span>
+          <span [class]="isMobile ? 'hidden' : 'ml-4 xl:block hidden'">Profile</span>
         </a>
       </li>
 
       <!-- Bookmarks -->
       <li>
         <a routerLink="/bookmarks" 
-           routerLinkActive="bg-blue-50 dark:[background-color:var(--color-surface)] text-blue-500"
+           routerLinkActive="text-blue-500"
            [routerLinkActiveOptions]="{exact: true}"
-           class="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors text-lg dark:[color:var(--color-text)]">
+           [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
           </svg>
-          <span>Bookmarks</span>
+          <span [class]="isMobile ? 'hidden' : 'ml-4 xl:block hidden'">Bookmarks</span>
         </a>
       </li>
 
-      <!-- Dynamic Action Button -->
-      <li class="mt-2">
-        <button 
-          (click)="openContextModal()"
-          class="group relative w-full flex items-center space-x-3 p-4 rounded-lg text-white transition-all duration-500 hover:opacity-90 text-lg"
-          [ngStyle]="{
-            'background': isHumanArtTab ? 'linear-gradient(45deg, #0d9488, #0f766e)' : 'linear-gradient(45deg, var(--color-primary), var(--color-primary-hover))'
-          }"
-        >
-          <i class="fas h-7 w-7 text-lg" [class.fa-plus]="!isHumanArtTab" [class.fa-paint-brush]="isHumanArtTab"></i>
-          <span class="font-bold">{{ isHumanArtTab ? 'Add Human Art' : 'Create Post' }}</span>
-        </button>
-      </li>
-
-      <!-- Following Only Toggle -->
-      <li class="mt-4">
-        <button (click)="toggleFollowingOnly()" [disabled]="isTogglingFollowingOnly" class="w-full p-4 rounded-lg transition-all duration-300 flex items-center space-x-3 text-lg group border" [ngClass]="{
-          'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800': isFollowingOnly,
-          'hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700': !isFollowingOnly
-        }">
-          <i class="fas fa-user-friends h-7 w-7 flex items-center justify-center" [ngClass]="{
-            'text-blue-500 dark:text-blue-400': isFollowingOnly,
-            'text-gray-500 dark:text-gray-400': !isFollowingOnly
-          }"></i>
-          <span class="font-medium" [ngClass]="{
-            'text-blue-600 dark:text-blue-400': isFollowingOnly,
-            'text-gray-900 dark:[color:var(--color-text)]': !isFollowingOnly
-          }">{{ isFollowingOnly ? 'Following' : 'All Posts' }}</span>
-          <div *ngIf="isTogglingFollowingOnly" class="ml-auto">
-            <i class="fas fa-spinner fa-spin text-blue-500 dark:text-blue-400"></i>
-          </div>
+      <!-- All Posts Toggle -->
+      <li>
+        <button (click)="toggleFollowingOnly()" 
+                [disabled]="isTogglingFollowingOnly"
+                [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg'"
+                [ngClass]="{'text-blue-500': isFollowingOnly}">
+          <i class="fas fa-user-friends h-7 w-7 flex items-center justify-center"></i>
+          <span [class]="isMobile ? 'hidden' : 'ml-4 xl:block hidden'">{{ isFollowingOnly ? 'Following' : 'All Posts' }}</span>
         </button>
       </li>
 
       <!-- Dark Mode Toggle -->
-      <li class="mt-4">
-        <button (click)="toggleDarkMode()" class="w-full p-4 rounded-lg transition-all duration-300 flex items-center space-x-3 text-lg group border" [ngClass]="{
-          'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800': isDarkMode,
-          'hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700': !isDarkMode
-        }">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" [ngClass]="{
-            'text-blue-500 dark:text-blue-400': isDarkMode,
-            'text-gray-500 dark:text-gray-400': !isDarkMode
-          }">
+      <li>
+        <button (click)="toggleDarkMode()"
+                [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg'"
+                [ngClass]="{'text-blue-500': isDarkMode}">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path *ngIf="isDarkMode" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             <path *ngIf="!isDarkMode" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2M5.636 5.636l1.414 1.414m10.607 10.607l1.414 1.414M3 12h2m14 0h2M7.05 7.05L5.636 5.636m12.728 0l-1.414 1.414M5.636 18.364L7.05 16.95m10.607-10.607l1.414-1.414M17 12a5 5 0 11-10 0 5 5 0 0110 0z" />
           </svg>
-          <span class="font-medium" [ngClass]="{
-            'text-blue-600 dark:text-blue-400': isDarkMode,
-            'text-gray-900 dark:[color:var(--color-text)]': !isDarkMode
-          }">{{ isDarkMode ? 'Dark Mode' : 'Light Mode' }}</span>
+          <span [class]="isMobile ? 'hidden' : 'ml-4 xl:block hidden'">{{ isDarkMode ? 'Dark Mode' : 'Light Mode' }}</span>
         </button>
       </li>
-
     </ul>
   </div>
 
-  <!-- User Menu -->
-  <div class="p-2 relative">
+  <!-- User Menu - Hide on mobile -->
+  <div class="px-3 py-2 relative" *ngIf="!isMobile">
     <button (click)="toggleUserMenu($event)" 
-            class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors">
-      <div class="flex items-center gap-3">
-        <img *ngIf="(authService.currentUser$ | async)?.profile_picture" 
-             [src]="(authService.currentUser$ | async)?.profile_picture" 
-             alt="Profile picture" 
-             class="w-10 h-10 rounded-full">
-        <img *ngIf="!(authService.currentUser$ | async)?.profile_picture" 
-             [src]="defaultAvatar" 
-             alt="Default avatar" 
-             class="w-10 h-10 rounded-full">
-        <div class="text-left">
+            class="w-14 h-14 xl:w-full xl:h-auto xl:p-3 flex items-center justify-center xl:justify-start rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors">
+      <div class="flex items-center justify-center xl:justify-start w-full">
+        <div class="w-11 h-11 rounded-full overflow-hidden flex-shrink-0">
+          <img *ngIf="(authService.currentUser$ | async)?.profile_picture" 
+               [src]="(authService.currentUser$ | async)?.profile_picture" 
+               alt="Profile picture" 
+               class="w-full h-full object-cover">
+          <img *ngIf="!(authService.currentUser$ | async)?.profile_picture" 
+               [src]="defaultAvatar" 
+               alt="Default avatar" 
+               class="w-full h-full object-cover">
+        </div>
+        <div class="ml-4 text-left xl:block hidden">
           <div class="font-bold dark:[color:var(--color-text)]">{{ (authService.currentUser$ | async)?.username }}</div>
           <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">{{"@"}}{{ (authService.currentUser$ | async)?.handle || (authService.currentUser$ | async)?.username }}</div>
         </div>
       </div>
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 dark:[color:var(--color-text-secondary)]" viewBox="0 0 20 20" fill="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 dark:[color:var(--color-text-secondary)] xl:block hidden ml-2" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
       </svg>
     </button>
 
     <!-- Dropdown Menu -->
     <div *ngIf="showUserMenu" 
-         class="absolute bottom-full left-0 mb-2 w-full px-4 z-[100000]">
+         class="absolute bottom-full left-0 mb-2 w-full px-2 z-[100000]">
       <div class="bg-white dark:[background-color:var(--color-background)] rounded-xl shadow-[rgba(217,_217,_217,_0.2)_0px_0px_5px,_rgba(217,_217,_217,_0.25)_0px_1px_4px_1px] dark:shadow-[rgba(255,_255,_255,_0.2)_0px_0px_15px,_rgba(255,_255,_255,_0.15)_0px_0px_3px_1px] py-1">
         <a [routerLink]="['/', (authService.currentUser$ | async)?.handle]"
            (click)="closeUserMenu()"
