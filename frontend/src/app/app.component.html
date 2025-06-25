@@ -28,7 +28,7 @@
           <div class="flex-1 min-[500px]:ml-[80px] xl:ml-[275px]">
             <div class="flex">
               <!-- Main Content -->
-              <main [class]="authService.isAuthenticated() ? 'w-full max-w-[600px] border-x border-gray-100 dark:border-gray-800' : 'w-full'">
+              <main [class]="authService.isAuthenticated() ? 'w-screen min-[500px]:w-full max-w-[600px] border-x border-gray-100 dark:border-gray-800' : 'w-screen min-[500px]:w-full'">
                 <router-outlet></router-outlet>
                 <app-emoji-picker></app-emoji-picker>
               </main>
