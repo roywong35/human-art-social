@@ -31,6 +31,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   @HostBinding('class.sticky') isSticky = false;
   private initialTop: number | null = null;
   private sidebarHeight: number = 0;
+  private sidebarWidth: number = 0;
   private lastScrollY: number = 0;
   selectedTimeframe: 'hour' | 'day' = 'hour';
   isRefreshing = false;
@@ -74,13 +75,17 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
       const rect = this.elementRef.nativeElement.getBoundingClientRect();
       if (this.initialTop === null) {
         this.initialTop = rect.top + window.scrollY;
+        // Store the initial width if not already set
+        if (!this.sidebarWidth) {
+          this.sidebarWidth = rect.width;
+        }
       }
+      
       // Update height on every scroll
       this.sidebarHeight = rect.height;
 
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
-      const sidebarRect = this.elementRef.nativeElement.getBoundingClientRect();
 
       // Calculate when to make the sidebar sticky
       const shouldBeSticky = this.initialTop !== null && 
@@ -91,7 +96,8 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
         const topPosition = viewportHeight - this.sidebarHeight;
         this.renderer.setStyle(this.elementRef.nativeElement, 'position', 'fixed');
         this.renderer.setStyle(this.elementRef.nativeElement, 'top', `${topPosition}px`);
-        this.renderer.setStyle(this.elementRef.nativeElement, 'width', `${sidebarRect.width}px`);
+        // Use the stored width instead of recalculating
+        this.renderer.setStyle(this.elementRef.nativeElement, 'width', `${this.sidebarWidth}px`);
       } else {
         this.isSticky = false;
         this.renderer.removeStyle(this.elementRef.nativeElement, 'position');
@@ -107,6 +113,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
       const rect = this.elementRef.nativeElement.getBoundingClientRect();
       this.initialTop = rect.top + window.scrollY;
       this.sidebarHeight = rect.height;
+      this.sidebarWidth = rect.width; // Store the initial width
     }, 0);
 
     window.addEventListener('scroll', this.scrollHandler, { passive: true });
