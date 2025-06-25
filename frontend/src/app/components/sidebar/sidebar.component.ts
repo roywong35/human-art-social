@@ -9,7 +9,6 @@ import { PostService } from '../../services/post.service';
 import { NewPostModalComponent } from '../new-post-modal/new-post-modal.component';
 import { UserService } from '../../services/user.service';
 import { take, filter } from 'rxjs/operators';
-import { OverlayService } from '../../services/overlay.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -36,8 +35,7 @@ export class SidebarComponent implements OnInit {
     private route: ActivatedRoute,
     private postService: PostService,
     private userService: UserService,
-    private elementRef: ElementRef,
-    private overlayService: OverlayService
+    private elementRef: ElementRef
   ) {
     // Subscribe to route changes to detect Human Art tab
     this.router.events.pipe(
@@ -123,16 +121,10 @@ export class SidebarComponent implements OnInit {
   toggleUserMenu(event: MouseEvent) {
     event.stopPropagation();
     this.showUserMenu = !this.showUserMenu;
-    if (this.showUserMenu) {
-      this.overlayService.show();
-    } else {
-      this.overlayService.hide();
-    }
   }
 
   closeUserMenu() {
     this.showUserMenu = false;
-    this.overlayService.hide();
   }
 
   openContextModal(): void {
@@ -147,8 +139,10 @@ export class SidebarComponent implements OnInit {
     }
   }
 
-  async logout(): Promise<void> {
+  async logout() {
     await this.authService.logout();
+    this.closeUserMenu();
+    this.router.navigate(['/']);
   }
 
   isHomeActive(): boolean {
@@ -188,7 +182,7 @@ export class SidebarComponent implements OnInit {
     // Check if the click was outside the user menu and its toggle button
     const clickedInside = this.elementRef.nativeElement.contains(event.target);
     if (!clickedInside && this.showUserMenu) {
-      this.showUserMenu = false;
+      this.closeUserMenu();
     }
   }
 } 

@@ -30,6 +30,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 export class LandingComponent implements OnInit {
   posts: Post[] = [];
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
+  isDarkMode = false;
 
   constructor(
     private postService: PostService,
@@ -61,6 +62,20 @@ export class LandingComponent implements OnInit {
         this.loadPosts();
       }
     });
+
+    // Check dark mode
+    this.checkDarkMode();
+    const observer = new MutationObserver(() => {
+      this.checkDarkMode();
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+
+  private checkDarkMode() {
+    this.isDarkMode = document.documentElement.classList.contains('dark');
   }
 
   onTitleClick() {

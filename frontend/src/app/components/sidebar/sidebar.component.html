@@ -111,6 +111,11 @@
 
   <!-- User Menu - Hide on mobile -->
   <div class="px-3 py-2 relative" *ngIf="!isMobile">
+    <!-- Backdrop when menu is open -->
+    <div *ngIf="showUserMenu" 
+         class="fixed inset-0 z-[9999]"
+         (click)="closeUserMenu()"></div>
+
     <button (click)="toggleUserMenu($event)" 
             class="w-14 h-14 xl:w-full xl:h-auto xl:p-3 flex items-center justify-center xl:justify-start rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors">
       <div class="flex items-center justify-center xl:justify-start w-full">
@@ -136,7 +141,7 @@
 
     <!-- Dropdown Menu -->
     <div *ngIf="showUserMenu" 
-         class="absolute bottom-full left-0 mb-2 w-[240px] bg-white dark:[background-color:var(--color-background)] rounded-xl shadow-lg z-[100000]">
+         class="absolute bottom-full left-3 mb-2 w-[240px] bg-white dark:[background-color:var(--color-background)] rounded-xl shadow-lg z-[10000] cursor-pointer">
       <div class="py-1">
         <a [routerLink]="['/', (authService.currentUser$ | async)?.handle]"
            (click)="closeUserMenu()"

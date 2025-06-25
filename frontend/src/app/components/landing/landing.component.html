@@ -1,76 +1,116 @@
-<div class="min-h-screen bg-gray-50">
-  <div class="w-[1275px] mx-auto flex gap-8 min-h-screen">
-    <!-- Left Sidebar -->
-    <div class="w-[275px]">
-      <div class="fixed w-[275px] h-screen bg-white">
-        <!-- Title -->
-        <div class="pt-4 pl-4">
-          <h1 class="text-2xl font-bold text-blue-500 cursor-pointer hover:text-blue-400 transition-colors" (click)="onTitleClick()">
-            Human Art Social
-          </h1>
-        </div>
+<div class="min-h-screen bg-white dark:bg-black">
+  <!-- Mobile Header (shows below 500px) -->
+  <div class="block min-[500px]:hidden fixed top-0 left-0 right-0 h-14 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black z-50">
+    <div class="flex items-center justify-center h-full">
+      <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">
+    </div>
+  </div>
 
-        <!-- Promotional Text -->
-        <div class="mt-6 px-4">
-          <p class="text-xl font-extrabold text-gray-900 tracking-tight">Where human creativity comes to life.</p>
-        </div>
+  <!-- Mobile Navigation Bar (shows when left sidebar is hidden) -->
+  <div class="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black z-50 block min-[1265px]:hidden">
+    <div class="flex items-center justify-between px-4 h-14">
+      <div class="flex items-center gap-3">
+        <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">
+        <span class="font-bold text-gray-900 dark:text-white hidden min-[380px]:block">Human Art Social</span>
+      </div>
+      <div class="flex gap-3">
+        <button 
+          (click)="openRegisterModal()"
+          class="py-2 px-3 min-[380px]:px-4 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 transition-colors text-sm whitespace-nowrap">
+          Join us
+        </button>
+        <button 
+          (click)="openLoginModal()"
+          class="py-2 px-3 min-[380px]:px-4 border border-blue-500 text-blue-500 rounded-full font-semibold hover:bg-blue-50 dark:hover:bg-gray-900 transition-colors text-sm whitespace-nowrap">
+          Sign in
+        </button>
+      </div>
+    </div>
+  </div>
 
-        <!-- Auth Buttons -->
-        <div class="mt-8 px-4">
-          <div class="flex gap-3">
-            <button 
-              (click)="openRegisterModal()"
-              class="flex-1 py-2.5 px-4 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 transition-colors text-sm">
-              Join us
-            </button>
-            <button 
-              (click)="openLoginModal()"
-              class="flex-1 py-2.5 px-4 border border-blue-500 text-blue-500 rounded-full font-semibold hover:bg-blue-50 transition-colors text-sm">
-              Sign in
-            </button>
+  <!-- Main Container -->
+  <div class="max-w-[1275px] mx-auto min-h-screen pb-14 min-[1265px]:pb-0 pt-14 min-[500px]:pt-0">
+    <!-- Flex Container for Content -->
+    <div class="flex min-h-screen">
+      <!-- Left Sidebar - Hidden below 1265px -->
+      <div class="hidden min-[1265px]:block w-[275px] shrink-0">
+        <div class="fixed w-[275px] h-screen bg-white dark:bg-black">
+          <!-- Title -->
+          <div class="pt-4 pl-4">
+            <a routerLink="/home" class="flex items-center">
+              <div class="flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer">
+                <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">
+              </div>
+            </a>
+          </div>
+
+          <!-- Promotional Text -->
+          <div class="mt-6 px-4">
+            <p class="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">Where human creativity comes to life.</p>
+          </div>
+
+          <!-- Auth Buttons -->
+          <div class="mt-8 px-4">
+            <div class="flex gap-3">
+              <button 
+                (click)="openRegisterModal()"
+                class="flex-1 py-2.5 px-4 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 transition-colors text-sm">
+                Join us
+              </button>
+              <button 
+                (click)="openLoginModal()"
+                class="flex-1 py-2.5 px-4 border border-blue-500 text-blue-500 rounded-full font-semibold hover:bg-blue-50 dark:hover:bg-gray-900 transition-colors text-sm">
+                Sign in
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Main Content -->
-    <main class="w-[600px] border-x border-gray-200">
-      <!-- Tab Navigation -->
-      <div class="bg-white border-b sticky top-0 z-10">
-        <div class="flex">
-          <button 
-            [class.border-b-2]="activeTab === 'for-you'"
-            [class.border-blue-500]="activeTab === 'for-you'"
-            [class.text-blue-500]="activeTab === 'for-you'"
-            class="flex-1 py-4 text-center font-bold hover:bg-gray-50 transition-colors"
-            (click)="setActiveTab('for-you')"
-          >
-            For You
-          </button>
-          <button 
-            [class.border-b-2]="activeTab === 'human-drawing'"
-            [class.border-blue-500]="activeTab === 'human-drawing'"
-            [class.text-blue-500]="activeTab === 'human-drawing'"
-            class="flex-1 py-4 text-center font-bold hover:bg-gray-50 transition-colors"
-            (click)="setActiveTab('human-drawing')"
-          >
-            Human Art
-          </button>
-        </div>
-      </div>
+      <!-- Centered Content Container (when left sidebar is hidden) -->
+      <div class="flex-1 min-[1265px]:flex-none flex justify-center">
+        <div class="flex gap-0 min-[1050px]:gap-8 w-full min-[600px]:w-auto">
+          <!-- Main Content -->
+          <main class="w-full min-[600px]:w-[600px] border-x border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+            <!-- Tab Navigation -->
+            <div class="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
+              <div class="flex">
+                <button 
+                  [class.border-b-2]="activeTab === 'for-you'"
+                  [class.border-blue-500]="activeTab === 'for-you'"
+                  [class.text-blue-500]="activeTab === 'for-you'"
+                  class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:text-white"
+                  (click)="setActiveTab('for-you')"
+                >
+                  For You
+                </button>
+                <button 
+                  [class.border-b-2]="activeTab === 'human-drawing'"
+                  [class.border-blue-500]="activeTab === 'human-drawing'"
+                  [class.text-blue-500]="activeTab === 'human-drawing'"
+                  class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:text-white"
+                  (click)="setActiveTab('human-drawing')"
+                >
+                  Human Art
+                </button>
+              </div>
+            </div>
 
-      <div class="divide-y">
-        <app-post *ngFor="let post of posts" [post]="post" [isPreview]="true"></app-post>
-      </div>
-    </main>
+            <div class="divide-y divide-gray-200 dark:divide-gray-800">
+              <app-post *ngFor="let post of posts" [post]="post" [isPreview]="true"></app-post>
+            </div>
+          </main>
 
-    <!-- Right Sidebar -->
-    <div class="w-[350px]">
-      <div class="fixed w-[350px] h-screen bg-white p-4">
-        <app-search-bar [isPreview]="true"></app-search-bar>
-        <div class="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg">
-          <p class="text-gray-800 font-medium">Unlock the full experience</p>
-          <p class="text-sm text-gray-600 mt-1">Join our community to discover amazing artworks and connect with fellow artists.</p>
+          <!-- Right Sidebar - Hidden below 1050px -->
+          <div class="hidden min-[1050px]:block w-[350px] shrink-0">
+            <div class="fixed w-[350px] h-screen bg-white dark:bg-black p-4">
+              <app-search-bar [isPreview]="true"></app-search-bar>
+              <div class="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg">
+                <p class="text-gray-800 dark:text-white font-medium">Unlock the full experience</p>
+                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Join our community to discover amazing artworks and connect with fellow artists.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
