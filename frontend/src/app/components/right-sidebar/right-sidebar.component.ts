@@ -86,23 +86,34 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
 
-      // Calculate when to make the sidebar sticky
-      const shouldBeSticky = this.initialTop !== null && 
-                           scrollY > (this.initialTop + this.sidebarHeight - viewportHeight);
+      // Check if viewport has enough height for the sidebar
+      const hasEnoughHeight = viewportHeight >= this.sidebarHeight;
 
-      if (shouldBeSticky) {
+      if (hasEnoughHeight) {
+        // If viewport is tall enough, keep sidebar fixed at the top
         this.isSticky = true;
-        const topPosition = viewportHeight - this.sidebarHeight;
         this.renderer.setStyle(this.elementRef.nativeElement, 'position', 'fixed');
-        this.renderer.setStyle(this.elementRef.nativeElement, 'top', `${topPosition}px`);
-        // Use the stored width instead of recalculating
+        this.renderer.setStyle(this.elementRef.nativeElement, 'top', '0');
         this.renderer.setStyle(this.elementRef.nativeElement, 'width', `${this.sidebarWidth}px`);
       } else {
-        this.isSticky = false;
-        this.renderer.removeStyle(this.elementRef.nativeElement, 'position');
-        this.renderer.removeStyle(this.elementRef.nativeElement, 'top');
-        this.renderer.removeStyle(this.elementRef.nativeElement, 'width');
+        // If viewport is not tall enough, use the original scroll-based logic
+        const shouldBeSticky = this.initialTop !== null && 
+                             scrollY > (this.initialTop + this.sidebarHeight - viewportHeight);
+
+        if (shouldBeSticky) {
+          this.isSticky = true;
+          const topPosition = viewportHeight - this.sidebarHeight;
+          this.renderer.setStyle(this.elementRef.nativeElement, 'position', 'fixed');
+          this.renderer.setStyle(this.elementRef.nativeElement, 'top', `${topPosition}px`);
+          this.renderer.setStyle(this.elementRef.nativeElement, 'width', `${this.sidebarWidth}px`);
+        } else {
+          this.isSticky = false;
+          this.renderer.removeStyle(this.elementRef.nativeElement, 'position');
+          this.renderer.removeStyle(this.elementRef.nativeElement, 'top');
+          this.renderer.removeStyle(this.elementRef.nativeElement, 'width');
+        }
       }
     };
   }
