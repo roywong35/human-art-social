@@ -1,7 +1,7 @@
-<div class="min-h-screen bg-gray-50 dark:bg-black">
+<div class="min-h-screen bg-white dark:bg-black w-screen min-[500px]:w-full">
   <!-- Header -->
-  <div class="bg-white dark:bg-black border-b dark:[border-color:var(--color-border)] sticky top-0 z-10">
-    <div class="max-w-[600px] mx-auto">
+  <div class="bg-white dark:bg-black border-b dark:[border-color:var(--color-border)] sticky top-0 z-10 w-full">
+    <div class="w-screen min-[500px]:w-full min-[500px]:min-w-[calc(100vw-80px)] min-[681px]:min-w-[600px] mx-auto">
       <div class="px-4 py-3">
         <div class="flex items-center gap-6">
           <button (click)="router.navigate(['/'])" class="dark:[color:var(--color-text)]">
@@ -17,7 +17,7 @@
       </div>
 
       <!-- Tabs -->
-      <div class="flex">
+      <div class="flex w-full">
         <button 
           [class.border-b-2]="activeTab === 'followers'"
           [class.border-blue-500]="activeTab === 'followers'"
@@ -39,19 +39,19 @@
   </div>
 
   <!-- Content -->
-  <div class="max-w-[600px] mx-auto divide-y divide-gray-200 dark:divide-gray-800">
+  <div class="w-screen min-[500px]:w-full min-[500px]:min-w-[calc(100vw-80px)] min-[681px]:min-w-[600px] mx-auto divide-y divide-gray-200 dark:divide-gray-800">
     <!-- Loading State -->
-    <div *ngIf="isLoading" class="p-4 flex justify-center">
+    <div *ngIf="isLoading" class="p-4 flex justify-center w-full">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
     </div>
 
     <!-- Error State -->
-    <div *ngIf="error" class="p-4 text-center text-red-500">
+    <div *ngIf="error" class="p-4 text-center text-red-500 w-full">
       {{ error }}
     </div>
 
     <!-- User List -->
-    <div *ngIf="!isLoading && !error">
+    <div *ngIf="!isLoading && !error" class="w-full">
       <div *ngFor="let user of users" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
         <div class="flex items-center justify-between">
           <div class="flex items-center flex-grow cursor-pointer" (click)="navigateToProfile(user.handle)">
@@ -82,7 +82,7 @@
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="users.length === 0" class="p-8 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
+      <div *ngIf="users.length === 0" class="p-8 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
         No {{ activeTab }} to display
       </div>
     </div>
