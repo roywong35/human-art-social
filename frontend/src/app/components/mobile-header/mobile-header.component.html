@@ -22,9 +22,7 @@
   <!-- Center Section -->
   <div class="flex-1 flex justify-center">
     <a routerLink="/home" class="flex items-center justify-center">
-      <div class="text-xl font-bold text-blue-500 hover:text-blue-600 transition-colors">
-        H
-      </div>
+      <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-8 w-8 object-contain">
     </a>
   </div>
 

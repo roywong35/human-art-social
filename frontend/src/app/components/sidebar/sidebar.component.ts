@@ -1,10 +1,10 @@
 import { Component, OnInit, HostListener, ElementRef, Input } from '@angular/core';
-import { RouterModule, RouterLinkActive } from '@angular/router';
+import { RouterModule, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { SubmitDrawingModalComponent } from '../submit-drawing-modal/submit-drawing-modal.component';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute, Router, NavigationEnd, Event } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Event } from '@angular/router';
 import { PostService } from '../../services/post.service';
 import { NewPostModalComponent } from '../new-post-modal/new-post-modal.component';
 import { UserService } from '../../services/user.service';
@@ -31,8 +31,8 @@ export class SidebarComponent implements OnInit {
 
   constructor(
     public authService: AuthService,
+    public router: Router,
     private dialog: MatDialog,
-    private router: Router,
     private route: ActivatedRoute,
     private postService: PostService,
     private userService: UserService,
