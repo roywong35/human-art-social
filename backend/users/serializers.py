@@ -102,4 +102,12 @@ class UserSerializer(serializers.ModelSerializer):
         return False
 
     def get_url(self, obj):
-        return obj.get_absolute_url() 
+        return obj.get_absolute_url()
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value 

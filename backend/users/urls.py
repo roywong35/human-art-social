@@ -42,4 +42,9 @@ urlpatterns = [
     path('suggested/', UserViewSet.as_view({
         'get': 'suggested'
     }), name='user-suggested'),
+
+    # Password change endpoint
+    path('change-password/', UserViewSet.as_view({
+        'post': 'change_password'
+    }), name='user-change-password'),
 ] 

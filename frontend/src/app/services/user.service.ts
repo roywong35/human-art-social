@@ -64,6 +64,13 @@ export class UserService {
     );
   }
 
+  changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/change-password/`, {
+      current_password: currentPassword,
+      new_password: newPassword
+    });
+  }
+
   private addImageUrls(user: User | null): User | null {
     if (!user) return null;
     

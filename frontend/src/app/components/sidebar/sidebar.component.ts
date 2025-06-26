@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef, Input } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, Input, ViewChild, ViewContainerRef, TemplateRef } from '@angular/core';
 import { RouterModule, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -9,13 +9,17 @@ import { PostService } from '../../services/post.service';
 import { NewPostModalComponent } from '../new-post-modal/new-post-modal.component';
 import { UserService } from '../../services/user.service';
 import { take, filter } from 'rxjs/operators';
+import { ChangePasswordDialogComponent } from '../change-password-dialog/change-password-dialog.component';
+import { NotificationService } from '../../services/notification.service';
+import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
+import { ComponentPortal, PortalModule, TemplatePortal } from '@angular/cdk/portal';
 
 @Component({
   selector: 'app-sidebar',
-  standalone: true,
-  imports: [CommonModule, RouterModule, RouterLinkActive],
   templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss']
+  styleUrls: ['./sidebar.component.scss'],
+  standalone: true,
+  imports: [CommonModule, RouterModule, OverlayModule, PortalModule]
 })
 export class SidebarComponent implements OnInit {
   @Input() isMobile = false;
@@ -27,6 +31,10 @@ export class SidebarComponent implements OnInit {
   isRefreshing = false;
   isDarkMode = false;
   defaultAvatar = 'assets/placeholder-image.svg';
+  private overlayRef: OverlayRef | null = null;
+
+  @ViewChild('userMenuTpl') userMenuTpl!: TemplateRef<any>;
+  @ViewChild('userMenuButton', { read: ElementRef }) userMenuButton!: ElementRef;
 
   constructor(
     public authService: AuthService,
@@ -35,7 +43,10 @@ export class SidebarComponent implements OnInit {
     private route: ActivatedRoute,
     private postService: PostService,
     private userService: UserService,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private notificationService: NotificationService,
+    private overlay: Overlay,
+    private viewContainerRef: ViewContainerRef
   ) {
     // Subscribe to route changes to detect Human Art tab
     this.router.events.pipe(
@@ -120,10 +131,47 @@ export class SidebarComponent implements OnInit {
 
   toggleUserMenu(event: MouseEvent) {
     event.stopPropagation();
-    this.showUserMenu = !this.showUserMenu;
+    if (this.showUserMenu) {
+      this.closeUserMenu();
+    } else {
+      this.openUserMenu();
+    }
+  }
+
+  openUserMenu() {
+    // Create the overlay
+    const positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(this.userMenuButton)
+      .withPositions([{
+        originX: 'start',
+        originY: 'top',
+        overlayX: 'start',
+        overlayY: 'bottom',
+        offsetY: -8
+      }]);
+
+    this.overlayRef = this.overlay.create({
+      positionStrategy,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      panelClass: 'user-menu-overlay'
+    });
+
+    // Create and attach the portal
+    const portal = new TemplatePortal(this.userMenuTpl, this.viewContainerRef);
+    this.overlayRef.attach(portal);
+
+    // Handle backdrop clicks
+    this.overlayRef.backdropClick().subscribe(() => this.closeUserMenu());
+
+    this.showUserMenu = true;
   }
 
   closeUserMenu() {
+    if (this.overlayRef) {
+      this.overlayRef.dispose();
+      this.overlayRef = null;
+    }
     this.showUserMenu = false;
   }
 
@@ -184,5 +232,30 @@ export class SidebarComponent implements OnInit {
     if (!clickedInside && this.showUserMenu) {
       this.closeUserMenu();
     }
+  }
+
+  openChangePasswordDialog(): void {
+    const dialogRef = this.dialog.open(ChangePasswordDialogComponent, {
+      width: '100%',
+      maxWidth: '100%',
+      height: 'auto',
+      panelClass: ['change-password-dialog'],
+      backdropClass: 'change-password-backdrop'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.userService.changePassword(result.currentPassword, result.newPassword).subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Password changed successfully');
+            this.closeUserMenu();
+          },
+          error: (error) => {
+            console.error('Error changing password:', error);
+            this.notificationService.showError('Failed to change password. Please check your current password and try again.');
+          }
+        });
+      }
+    });
   }
 } 

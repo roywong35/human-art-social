@@ -504,3 +504,69 @@ textarea {
   }
 }
 
+// Change password dialog styles
+.change-password-dialog {
+  // Remove default Material padding
+  .mat-mdc-dialog-surface {
+    padding: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  // Match container size with modal content
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+  }
+
+  // Desktop styles
+  @media (min-width: 688px) {
+    .mat-mdc-dialog-surface {
+      border-radius: 0.5rem !important;
+    }
+
+    // Center the dialog and set max-width
+    margin: 1.5rem auto !important;
+    max-width: 28rem !important; // md size (448px)
+  }
+}
+
+// Backdrop styles
+.change-password-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+// User menu overlay styles
+.user-menu-overlay {
+  z-index: 1000000 !important;
+}
+
+.cdk-overlay-container {
+  z-index: 1000000 !important;
+}
+
+// Fix for the overlay pane to show full shadow and rounded corners
+.cdk-overlay-pane {
+  // Remove any default constraints
+  min-width: unset !important;
+  min-height: unset !important;
+  
+  // Make the pane itself transparent
+  background: transparent !important;
+  
+  // Remove any overflow constraints
+  overflow: visible !important;
+
+  // Add padding for shadow
+  padding: 12px !important;
+}
+
+.cdk-overlay-backdrop {
+  background-color: transparent;
+}
+
+.cdk-overlay-transparent-backdrop {
+  &.cdk-overlay-backdrop-showing {
+    opacity: 0;
+  }
+}
+

@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Count
-from .serializers import UserCreateSerializer, UserProfileSerializer, UserUpdateSerializer, UserSerializer
+from .serializers import UserCreateSerializer, UserProfileSerializer, UserUpdateSerializer, UserSerializer, ChangePasswordSerializer
 from posts.serializers import PostSerializer
 from posts.models import Post
 
@@ -227,3 +227,29 @@ class UserViewSet(viewsets.ModelViewSet):
             {'message': f'Artist {user.username} has been verified.'},
             status=status.HTTP_200_OK
         )
+
+    @action(detail=False, methods=['post'])
+    def change_password(self, request):
+        """
+        Change the password for the current user.
+        Requires the current password and new password.
+        """
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            current_password = serializer.validated_data['current_password']
+            new_password = serializer.validated_data['new_password']
+
+            # Check if current password is correct
+            if not user.check_password(current_password):
+                return Response(
+                    {'current_password': ['Wrong password.']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Set new password
+            user.set_password(new_password)
+            user.save()
+
+            return Response({'message': 'Password changed successfully.'})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
