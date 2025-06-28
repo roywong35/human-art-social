@@ -131,26 +131,28 @@ class PostAdmin(admin.ModelAdmin):
     evidence_count.short_description = 'Evidence Files'
 
     def list_image_preview(self, obj):
-        if not obj.image:
+        first_image = obj.images.first()
+        if not first_image:
             return '-'
         return format_html(
             '<div style="text-align: center;">'
             '<img src="{}" style="max-height: 100px;" /><br/>'
             '<a href="{}" target="_blank" style="font-size: 12px;">View Full</a>'
             '</div>',
-            obj.image.url, obj.image.url
+            first_image.image.url, first_image.image.url
         )
     list_image_preview.short_description = 'Art Preview'
 
     def detail_image_preview(self, obj):
-        if not obj.image:
+        first_image = obj.images.first()
+        if not first_image:
             return '-'
         return format_html(
             '<div style="margin: 10px 0;">'
             '<img src="{}" style="max-height: 300px; border: 1px solid #ddd; border-radius: 4px; padding: 5px;" /><br/>'
             '<a href="{}" target="_blank" class="button">View Full Size</a>'
             '</div>',
-            obj.image.url, obj.image.url
+            first_image.image.url, first_image.image.url
         )
     detail_image_preview.short_description = 'Art Preview'
 
@@ -175,4 +177,4 @@ class PostAdmin(admin.ModelAdmin):
         self.message_user(request, f'{updated} posts were rejected.')
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('author').prefetch_related('evidence_files')
+        return super().get_queryset(request).select_related('author').prefetch_related('evidence_files', 'images')

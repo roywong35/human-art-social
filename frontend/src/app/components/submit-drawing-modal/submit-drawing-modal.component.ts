@@ -169,7 +169,7 @@ export class SubmitDrawingModalComponent implements OnInit, OnDestroy {
     const formData = new FormData();
     formData.append('content', this.content);
     
-    // Use the new image format for the artwork
+    // Use image_0 for the artwork
     formData.append('image_0', this.artFile);
     
     // Append evidence files with index to maintain order
@@ -207,17 +207,16 @@ export class SubmitDrawingModalComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.postService.createPostWithFormData(formData).subscribe({
-      next: (response) => {
-        console.log('Post created successfully:', response);
-        this.isSubmitting = false;
-        this.closeModal(true);
-      },
-      error: (error) => {
-        console.error('Error creating post:', error);
-        this.error = 'Failed to submit artwork. Please try again.';
-        this.isSubmitting = false;
-      }
-    });
+    try {
+      await this.postService.createPostWithFormData(formData).toPromise();
+      // Refresh posts after successful submission
+      this.postService.loadPosts(true);
+      this.closeModal(true);
+    } catch (error) {
+      console.error('Error submitting art:', error);
+      this.error = 'Failed to submit art. Please try again.';
+    } finally {
+      this.isSubmitting = false;
+    }
   }
 } 

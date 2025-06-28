@@ -158,14 +158,12 @@ export class PostService {
         const currentPosts = this.posts.getValue();
         const activeTab = localStorage.getItem('activeTab') || 'for-you';
         
-        if (activeTab === 'human-drawing' && newPost.is_human_drawing) {
-          // Add to Human Art tab if it's a human drawing
+        if (activeTab === 'human-drawing' && newPost.is_human_drawing && newPost.is_verified) {
+          // Only add to Human Art tab if it's a verified human drawing
           this.posts.next([newPost, ...currentPosts]);
         } else if (activeTab === 'for-you') {
-          // Add to For You tab if it's not a human drawing or is verified
-          if (!newPost.is_human_drawing || (newPost.is_human_drawing && newPost.is_verified)) {
-            this.posts.next([newPost, ...currentPosts]);
-          }
+          // Add to For You tab
+          this.posts.next([newPost, ...currentPosts]);
         }
       })
     );
