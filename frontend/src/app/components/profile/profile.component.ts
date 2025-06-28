@@ -8,7 +8,7 @@ import { Post } from '../../models/post.model';
 import { UserService } from '../../services/user.service';
 import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
-import { NotificationService } from '../../services/notification.service';
+import { ToastService } from '../../services/toast.service';
 import { PostComponent } from '../shared/post/post.component';
 import { take } from 'rxjs/operators';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -98,7 +98,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private postService: PostService,
     private authService: AuthService,
-    private notificationService: NotificationService,
+    private toastService: ToastService,
     private dialog: MatDialog
   ) {}
 
@@ -356,11 +356,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
       next: (updatedUser) => {
         this.user = updatedUser;
         this.closeEditModal();
-        this.notificationService.showSuccess('Profile updated successfully');
+        this.toastService.showSuccess('Profile updated successfully');
       },
       error: (error) => {
         console.error('Error updating profile:', error);
-        this.notificationService.showError('Failed to update profile');
+        this.toastService.showError('Failed to update profile');
       }
     });
   }
@@ -389,7 +389,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error following user:', error);
         this.isFollowLoading = false;
-        this.notificationService.showError('Failed to update follow status');
+        this.toastService.showError('Failed to update follow status');
       }
     });
   }

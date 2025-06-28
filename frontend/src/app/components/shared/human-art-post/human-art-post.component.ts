@@ -19,7 +19,7 @@ import { PostInputBoxComponent } from '../post-input-box/post-input-box.componen
 import { CommentDialogComponent } from '../../comment-dialog/comment-dialog.component';
 import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
 import { NewPostModalComponent } from '../../new-post-modal/new-post-modal.component';
-import { NotificationService } from '../../../services/notification.service';
+import { ToastService } from '../../../services/toast.service';
 import { take } from 'rxjs/operators';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
 
@@ -82,7 +82,7 @@ export class HumanArtPostComponent implements OnInit, OnDestroy {
     private commentService: CommentService,
     private authService: AuthService,
     private postUpdateService: PostUpdateService,
-    private notificationService: NotificationService,
+    private toastService: ToastService,
     private cdr: ChangeDetectorRef
   ) {
     this.subscriptions.add(

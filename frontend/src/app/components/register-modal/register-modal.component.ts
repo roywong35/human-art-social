@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { NotificationService } from '../../services/notification.service';
+import { ToastService } from '../../services/toast.service';
 import { RegisterData } from '../../models';
 import { MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -31,7 +31,7 @@ export class RegisterModalComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private notificationService: NotificationService,
+    private toastService: ToastService,
     private dialogRef: MatDialogRef<RegisterModalComponent>,
     private dialog: MatDialog
   ) {}
@@ -73,7 +73,7 @@ export class RegisterModalComponent {
 
     this.authService.register(this.registerData).subscribe({
       next: () => {
-        this.notificationService.showSuccess('Account created successfully!');
+        this.toastService.showSuccess('Account created successfully!');
         this.dialogRef.close(true); // Close with success result
       },
       error: (error) => {

@@ -3,7 +3,7 @@ import { RouterModule, Router, Event, NavigationStart, NavigationEnd, Navigation
 import { CommonModule } from '@angular/common';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { RightSidebarComponent } from './components/right-sidebar/right-sidebar.component';
-import { NotificationComponent } from './components/shared/notification/notification.component';
+import { ToastComponent } from './components/shared/toast/toast.component';
 import { AuthService } from './services/auth.service';
 import { RouterOutlet } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -22,7 +22,7 @@ import { MobileHeaderComponent } from './components/mobile-header/mobile-header.
     RouterModule, 
     SidebarComponent, 
     RightSidebarComponent, 
-    NotificationComponent,
+    ToastComponent,
     RouterOutlet,
     MatDialogModule,
     EmojiPickerComponent,

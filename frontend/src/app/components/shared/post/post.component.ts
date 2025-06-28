@@ -19,7 +19,7 @@ import { PostInputBoxComponent } from '../post-input-box/post-input-box.componen
 import { CommentDialogComponent } from '../../comment-dialog/comment-dialog.component';
 import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
 import { NewPostModalComponent } from '../../new-post-modal/new-post-modal.component';
-import { NotificationService } from '../../../services/notification.service';
+import { ToastService } from '../../../services/toast.service';
 import { take } from 'rxjs/operators';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
 import { LoginModalComponent } from '../../login-modal/login-modal.component';
@@ -84,7 +84,7 @@ export class PostComponent implements OnInit, OnDestroy {
     private postService: PostService,
     private bookmarkService: BookmarkService,
     private commentService: CommentService,
-    private notificationService: NotificationService,
+    private toastService: ToastService,
     private cd: ChangeDetectorRef,
     private ngZone: NgZone,
     private authService: AuthService,
@@ -302,9 +302,9 @@ export class PostComponent implements OnInit, OnDestroy {
     if (this.checkAuth('share')) {
       const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
       navigator.clipboard.writeText(postUrl).then(() => {
-        this.notificationService.showSuccess('Link copied to clipboard');
+        this.toastService.showSuccess('Link copied to clipboard');
       }).catch(() => {
-        this.notificationService.showError('Failed to copy link');
+        this.toastService.showError('Failed to copy link');
       });
     }
   }

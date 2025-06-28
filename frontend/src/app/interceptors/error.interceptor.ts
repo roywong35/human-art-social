@@ -2,12 +2,12 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { Router } from '@angular/router';
-import { NotificationService } from '../services/notification.service';
+import { ToastService } from '../services/toast.service';
 import { AuthService } from '../services/auth.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const notificationService = inject(NotificationService);
+  const toastService = inject(ToastService);
   const authService = inject(AuthService);
 
   return next(req).pipe(
@@ -42,7 +42,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       // Only show notification for non-auth endpoints
       if (!isAuthEndpoint) {
-        notificationService.showError(errorMessage);
+        toastService.showError(errorMessage);
       }
 
       return throwError(() => error);

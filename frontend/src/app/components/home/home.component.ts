@@ -15,7 +15,7 @@ import { PostInputBoxComponent } from '../shared/post-input-box/post-input-box.c
 import { PostUpdateService } from '../../services/post-update.service';
 import { Subscription } from 'rxjs';
 import { CommentDialogComponent } from '../comment-dialog/comment-dialog.component';
-import { NotificationService } from '../../services/notification.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-home',
@@ -56,7 +56,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private cd: ChangeDetectorRef,
     private postUpdateService: PostUpdateService,
-    private notificationService: NotificationService,
+    private toastService: ToastService,
     private ngZone: NgZone
   ) {
     // Subscribe to posts$ stream for initial load and pagination
@@ -223,7 +223,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           });
         });
         console.error('Error liking post:', error);
-        this.notificationService.showError('Failed to update like');
+        this.toastService.showError('Failed to update like');
       }
     });
   }
@@ -303,7 +303,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           });
         });
         console.error('Error reposting:', error);
-        this.notificationService.showError('Failed to repost');
+        this.toastService.showError('Failed to repost');
       }
     });
   }
@@ -352,7 +352,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           });
         });
         console.error('Error bookmarking post:', error);
-        this.notificationService.showError('Failed to update bookmark');
+        this.toastService.showError('Failed to update bookmark');
       }
     });
   }
@@ -360,9 +360,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   onShare(post: Post): void {
     const url = `${window.location.origin}/${post.author.handle}/post/${post.id}`;
     navigator.clipboard.writeText(url).then(() => {
-      this.notificationService.showSuccess('Post link copied to clipboard');
+      this.toastService.showSuccess('Post link copied to clipboard');
     }).catch(() => {
-      this.notificationService.showError('Failed to copy link to clipboard');
+      this.toastService.showError('Failed to copy link to clipboard');
     });
   }
 

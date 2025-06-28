@@ -1,15 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NotificationService, Notification } from '../../../services/notification.service';
+import { ToastService, Toast } from '../../../services/toast.service';
 import { Subscription } from 'rxjs';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
-  selector: 'app-notification',
+  selector: 'app-toast',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './notification.component.html',
-  styleUrls: ['./notification.component.scss'],
+  templateUrl: './toast.component.html',
+  styleUrls: ['./toast.component.scss'],
   animations: [
     trigger('slideIn', [
       transition(':enter', [
@@ -22,16 +22,16 @@ import { trigger, transition, style, animate } from '@angular/animations';
     ])
   ]
 })
-export class NotificationComponent implements OnInit, OnDestroy {
-  notifications: Notification[] = [];
+export class ToastComponent implements OnInit, OnDestroy {
+  toasts: Toast[] = [];
   private subscription: Subscription | null = null;
 
-  constructor(private notificationService: NotificationService) {}
+  constructor(private toastService: ToastService) {}
 
   ngOnInit() {
-    this.subscription = this.notificationService.notifications$.subscribe(notification => {
-      this.notifications.push(notification);
-      setTimeout(() => this.removeNotification(notification.id), 5000); // Remove after 5 seconds
+    this.subscription = this.toastService.toasts$.subscribe(toast => {
+      this.toasts.push(toast);
+      setTimeout(() => this.removeToast(toast.id), 5000); // Remove after 5 seconds
     });
   }
 
@@ -41,8 +41,8 @@ export class NotificationComponent implements OnInit, OnDestroy {
     }
   }
 
-  removeNotification(id: number) {
-    this.notifications = this.notifications.filter(n => n.id !== id);
+  removeToast(id: number) {
+    this.toasts = this.toasts.filter(n => n.id !== id);
   }
 
   getIcon(type: 'success' | 'error' | 'info'): string {

@@ -10,7 +10,7 @@ import { NewPostModalComponent } from '../new-post-modal/new-post-modal.componen
 import { UserService } from '../../services/user.service';
 import { take, filter } from 'rxjs/operators';
 import { ChangePasswordDialogComponent } from '../change-password-dialog/change-password-dialog.component';
-import { NotificationService } from '../../services/notification.service';
+import { ToastService } from '../../services/toast.service';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalModule, TemplatePortal } from '@angular/cdk/portal';
 
@@ -44,7 +44,7 @@ export class SidebarComponent implements OnInit {
     private postService: PostService,
     private userService: UserService,
     private elementRef: ElementRef,
-    private notificationService: NotificationService,
+    private toastService: ToastService,
     private overlay: Overlay,
     private viewContainerRef: ViewContainerRef
   ) {
@@ -247,12 +247,12 @@ export class SidebarComponent implements OnInit {
       if (result) {
         this.userService.changePassword(result.currentPassword, result.newPassword).subscribe({
           next: () => {
-            this.notificationService.showSuccess('Password changed successfully');
+            this.toastService.showSuccess('Password changed successfully');
             this.closeUserMenu();
           },
           error: (error) => {
             console.error('Error changing password:', error);
-            this.notificationService.showError('Failed to change password. Please check your current password and try again.');
+            this.toastService.showError('Failed to change password. Please check your current password and try again.');
           }
         });
       }

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { NotificationService } from '../../services/notification.service';
+import { ToastService } from '../../services/toast.service';
 import { MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
 import { RegisterModalComponent } from '../register-modal/register-modal.component';
@@ -27,7 +27,7 @@ export class LoginModalComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private notificationService: NotificationService,
+    private toastService: ToastService,
     private renderer: Renderer2,
     public dialogRef: MatDialogRef<LoginModalComponent>,
     private dialog: MatDialog
@@ -50,7 +50,7 @@ export class LoginModalComponent {
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
-        this.notificationService.showSuccess('Successfully signed in!');
+        this.toastService.showSuccess('Successfully signed in!');
         this.dialogRef.close(true); // Close with success result
         this.router.navigate(['/home']);
       },
