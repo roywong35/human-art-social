@@ -48,13 +48,17 @@ def create_notification(sender, recipient, notification_type, post=None, comment
     return notification
 
 def create_like_notification(sender, post):
-    create_notification(sender, post.author, 'like', post=post)
+    if sender != post.author:
+        create_notification(sender, post.author, 'like', post=post)
 
 def create_comment_notification(sender, post, comment):
-    create_notification(sender, post.author, 'comment', post=post, comment=comment)
+    if sender != post.author:
+        create_notification(sender, post.author, 'comment', post=post, comment=comment)
 
 def create_follow_notification(sender, recipient):
-    create_notification(sender, recipient, 'follow')
+    if sender != recipient:
+        create_notification(sender, recipient, 'follow')
 
 def create_repost_notification(sender, post):
-    create_notification(sender, post.author, 'repost', post=post) 
+    if sender != post.author:
+        create_notification(sender, post.author, 'repost', post=post) 
