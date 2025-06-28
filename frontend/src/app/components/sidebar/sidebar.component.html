@@ -27,13 +27,29 @@
       <!-- Search -->
       <li>
         <a routerLink="/search" 
-           routerLinkActive="text-blue-500"
-           [routerLinkActiveOptions]="{exact: true}"
-           [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]'">
+          routerLinkActive="text-blue-500"
+          [routerLinkActiveOptions]="{exact: true}"
+          [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <span [class]="isMobile ? 'hidden' : 'ml-4 xl:block hidden'" [ngClass]="{'font-bold': router.url === '/search'}">Search</span>
+        </a>
+      </li>
+
+      <!-- Notifications -->
+      <li>
+        <a routerLink="/notifications" 
+           routerLinkActive="text-blue-500"
+           [routerLinkActiveOptions]="{exact: true}"
+           [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : 'flex items-center justify-center xl:justify-start w-14 h-14 xl:w-full xl:h-auto xl:p-3 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]'">
+          <div class="relative">
+            <i class="far fa-bell h-7 w-7 flex items-center justify-center"></i>
+            <span *ngIf="unreadNotifications > 0" class="absolute -top-2 -right-2 bg-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+              {{ unreadNotifications > 9 ? '9+' : unreadNotifications }}
+            </span>
+          </div>
+          <span [class]="isMobile ? 'hidden' : 'ml-4 xl:block hidden'" [ngClass]="{'font-bold': router.url === '/notifications'}">Notifications</span>
         </a>
       </li>
 

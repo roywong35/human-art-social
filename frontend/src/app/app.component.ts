@@ -35,6 +35,9 @@ export class AppComponent implements OnInit {
   title = 'Human Art Social';
   isLoading = false;
 
+  // Static routes that should not be treated as user handles
+  private staticRoutes = ['home', 'notifications', 'bookmarks', 'search', 'recommended-users'];
+
   constructor(
     public authService: AuthService,
     private router: Router,
@@ -54,9 +57,11 @@ export class AppComponent implements OnInit {
           title = 'Search / ' + this.title;
         } else if (currentRoute === '/bookmarks') {
           title = 'Bookmarks / ' + this.title;
+        } else if (currentRoute === '/notifications') {
+          title = 'Notifications / ' + this.title;
         } else if (currentRoute.includes('/status/')) {
           title = 'Post / ' + this.title;
-        } else if (currentRoute.startsWith('/@') || /^\/[^/]+$/.test(currentRoute)) {
+        } else if (currentRoute.startsWith('/@') || (this.isUserHandleRoute(currentRoute))) {
           // Handle profile pages
           const handle = currentRoute.startsWith('/@') 
             ? currentRoute.split('/')[1].substring(1) // Remove @ symbol
@@ -95,6 +100,13 @@ export class AppComponent implements OnInit {
         }
       }
     });
+  }
+
+  private isUserHandleRoute(route: string): boolean {
+    // Remove leading slash and get the first segment
+    const segment = route.substring(1).split('/')[0];
+    // Return true only if it's a single segment and not a static route
+    return /^[^/]+$/.test(route) && !this.staticRoutes.includes(segment);
   }
 
   ngOnInit() {

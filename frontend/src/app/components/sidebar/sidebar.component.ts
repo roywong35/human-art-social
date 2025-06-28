@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef, Input, ViewChild, ViewContainerRef, TemplateRef } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, Input, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
 import { RouterModule, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -13,6 +13,9 @@ import { ChangePasswordDialogComponent } from '../change-password-dialog/change-
 import { ToastService } from '../../services/toast.service';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalModule, TemplatePortal } from '@angular/cdk/portal';
+import { NotificationService } from '../../services/notification.service';
+import { Subscription, interval } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-sidebar',
@@ -21,7 +24,7 @@ import { ComponentPortal, PortalModule, TemplatePortal } from '@angular/cdk/port
   standalone: true,
   imports: [CommonModule, RouterModule, OverlayModule, PortalModule]
 })
-export class SidebarComponent implements OnInit {
+export class SidebarComponent implements OnInit, OnDestroy {
   @Input() isMobile = false;
   
   showUserMenu = false;
@@ -32,6 +35,8 @@ export class SidebarComponent implements OnInit {
   isDarkMode = false;
   defaultAvatar = 'assets/placeholder-image.svg';
   private overlayRef: OverlayRef | null = null;
+  unreadNotifications = 0;
+  private notificationSubscription?: Subscription;
 
   @ViewChild('userMenuTpl') userMenuTpl!: TemplateRef<any>;
   @ViewChild('userMenuButton', { read: ElementRef }) userMenuButton!: ElementRef;
@@ -46,7 +51,8 @@ export class SidebarComponent implements OnInit {
     private elementRef: ElementRef,
     private toastService: ToastService,
     private overlay: Overlay,
-    private viewContainerRef: ViewContainerRef
+    private viewContainerRef: ViewContainerRef,
+    private notificationService: NotificationService
   ) {
     // Subscribe to route changes to detect Human Art tab
     this.router.events.pipe(
@@ -83,6 +89,17 @@ export class SidebarComponent implements OnInit {
         localStorage.setItem('following_only_preference', this.isFollowingOnly.toString());
       }
     });
+
+    // Subscribe to unread notifications count
+    this.notificationSubscription = this.notificationService.unreadCount$.subscribe(count => {
+      this.unreadNotifications = count;
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.notificationSubscription) {
+      this.notificationSubscription.unsubscribe();
+    }
   }
 
   toggleFollowingOnly(): void {

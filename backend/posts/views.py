@@ -13,6 +13,7 @@ from django.db.models import Q, Case, When, F, Count, Prefetch
 from datetime import timedelta
 from django.core.cache import cache
 from django.http import Http404
+from notifications.services import create_like_notification, create_comment_notification, create_repost_notification
 
 # Create your views here.
 
@@ -197,7 +198,7 @@ class PostViewSet(viewsets.ModelViewSet):
             else:
                 conversation_chain.append(current.id)
                 
-            # Create the reply with the conversation chain
+            # Create the reply
             reply = serializer.save(
                 author=request.user,
                 parent_post=parent_post,
@@ -205,22 +206,9 @@ class PostViewSet(viewsets.ModelViewSet):
                 conversation_chain=conversation_chain
             )
             
-            # Add the reply's ID to its own chain
-            reply.conversation_chain.append(reply.id)
-            reply.save()
-
-            # Handle multiple images
-            for key in request.FILES:
-                if key.startswith('image_'):
-                    image = request.FILES[key]
-                    PostImage.objects.create(
-                        post=reply,
-                        image=image,
-                        order=int(key.split('_')[1])
-                    )
+            # Create notification for the comment
+            create_comment_notification(request.user, parent_post, reply)
             
-            # Return the updated reply with images
-            serializer = self.get_serializer(reply)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -258,6 +246,8 @@ class PostViewSet(viewsets.ModelViewSet):
                 return Response({'liked': False})
             else:
                 target_post.likes.add(user)
+                # Create notification for the like
+                create_like_notification(user, target_post)
                 return Response({'liked': True})
         except Exception as e:
             print(f"Error in like action: {str(e)}")
@@ -295,6 +285,8 @@ class PostViewSet(viewsets.ModelViewSet):
                 reposted_at=timezone.now(),  # Set reposted_at to current time
                 created_at=timezone.now()   # Use current time for created_at
             )
+            # Create notification for the repost
+            create_repost_notification(request.user, original_post)
             return Response({'status': 'reposted'})
 
     @action(detail=True, methods=['POST'])

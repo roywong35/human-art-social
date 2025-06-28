@@ -43,9 +43,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
+    'channels',
     # Local apps
     'users',
     'posts',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -76,6 +78,15 @@ TEMPLATES = [
         },
     },
 ]
+
+# Channels
+ASGI_APPLICATION = 'core.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 
 WSGI_APPLICATION = 'core.wsgi.application'
 

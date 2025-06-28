@@ -10,6 +10,7 @@ from django.db.models import Q, Count
 from .serializers import UserCreateSerializer, UserProfileSerializer, UserUpdateSerializer, UserSerializer, ChangePasswordSerializer
 from posts.serializers import PostSerializer
 from posts.models import Post
+from notifications.services import create_follow_notification
 
 User = get_user_model()
 
@@ -54,6 +55,8 @@ class UserViewSet(viewsets.ModelViewSet):
             user.followers.remove(request.user)
         else:
             user.followers.add(request.user)
+            # Create notification for the follow
+            create_follow_notification(request.user, user)
             
         # Refresh the user instance to get updated counts
         user.refresh_from_db()

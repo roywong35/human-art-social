@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, switchMap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, switchMap, throwError, map } from 'rxjs';
 import { Router } from '@angular/router';
 import { LoginCredentials, RegisterData, AuthResponse } from '../models';
 import { User } from '../models/user.model';
@@ -14,6 +14,7 @@ export class AuthService {
   private baseApiUrl = `${environment.apiUrl}/api`;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private tokenKey = 'token';
 
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
@@ -24,6 +25,12 @@ export class AuthService {
   ) {
     this.loadStoredAuth();
     console.log('Auth Service initialized with API URL:', this.baseApiUrl);
+
+    // Try to load user from local storage
+    const token = this.getToken();
+    if (token) {
+      this.loadUser().subscribe();
+    }
   }
 
   private loadStoredAuth(): void {
@@ -202,6 +209,16 @@ export class AuthService {
           localStorage.setItem('following_only_preference', value.toString());
         }
       })
+    );
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(this.tokenKey);
+  }
+
+  loadUser(): Observable<void> {
+    return this.fetchUserProfile().pipe(
+      map(() => void 0)
     );
   }
 } 

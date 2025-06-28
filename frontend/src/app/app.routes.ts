@@ -9,6 +9,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { publicGuard } from './guards/public.guard';
 import { RecommendedUsersComponent } from './components/recommended-users/recommended-users.component';
 import { LandingComponent } from './components/landing/landing.component';
+import { NotificationsComponent } from './components/notifications/notifications.component';
 
 export const routes: Routes = [
   {
@@ -19,6 +20,11 @@ export const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'notifications',
+    component: NotificationsComponent,
     canActivate: [AuthGuard]
   },
   {
@@ -37,16 +43,6 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: ':handle/connections',
-    component: ConnectionsComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: ':handle',
-    component: ProfileComponent,
-    canActivate: [AuthGuard]
-  },
-  {
     path: ':handle/post/:id',
     component: PostDetailComponent,
     canActivate: [AuthGuard]
@@ -59,6 +55,16 @@ export const routes: Routes = [
   {
     path: ':handle/following',
     component: ConnectionsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: ':handle/connections',
+    component: ConnectionsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: ':handle',
+    component: ProfileComponent,
     canActivate: [AuthGuard]
   },
   {

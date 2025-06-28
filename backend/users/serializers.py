@@ -79,20 +79,19 @@ class UserSerializer(serializers.ModelSerializer):
     following_count = serializers.IntegerField(read_only=True)
     posts_count = serializers.IntegerField(read_only=True)
     is_following = serializers.SerializerMethodField()
-    url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'username', 'handle', 'email',
             'profile_picture', 'bio', 'location', 'website',
-            'created_at', 'followers_count', 'following_count',
-            'posts_count', 'is_following', 'is_verified',
-            'is_private', 'profile_banner', 'url'
+            'date_joined', 'followers_count', 'following_count',
+            'posts_count', 'is_following', 'verified_artist',
+            'banner_image'
         ]
         read_only_fields = [
-            'id', 'created_at', 'followers_count', 'following_count',
-            'posts_count', 'is_following', 'is_verified', 'url'
+            'id', 'date_joined', 'followers_count', 'following_count',
+            'posts_count', 'is_following', 'verified_artist'
         ]
 
     def get_is_following(self, obj):
@@ -100,9 +99,6 @@ class UserSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return request.user in obj.followers.all()
         return False
-
-    def get_url(self, obj):
-        return obj.get_absolute_url()
 
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
