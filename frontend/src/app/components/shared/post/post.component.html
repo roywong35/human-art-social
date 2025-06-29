@@ -1,4 +1,4 @@
-<div [class]="'post-container pb-1 pt-3 px-4 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors duration-200 ' + (!isConnectedToParent ? 'border-b border-gray-200 dark:[border-color:var(--color-border)]' : '')" (click)="navigateToPost($event)">
+<div [class]="'post-container pb-1 pt-4 px-4 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors duration-200 ' + (!isConnectedToParent ? 'border-b border-gray-200 dark:[border-color:var(--color-border)]' : '')" (click)="navigateToPost($event)">
   <!-- Repost header -->
   <div *ngIf="post.post_type === 'repost'" class="flex items-center gap-2 mb-2 text-gray-500 dark:[color:var(--color-text-secondary)]">
     <i class="fas fa-retweet"></i>
@@ -9,7 +9,7 @@
   </div>
 
   <!-- User avatar and content -->
-  <div class="flex space-x-3">
+  <div class="flex space-x-2">
     <!-- Avatar container with fixed width for consistent line positioning -->
     <div class="w-[40px] flex-shrink-0">
       <img [src]="post.author.profile_picture || defaultAvatar" 
@@ -182,23 +182,21 @@
       </div>
 
       <!-- Post actions -->
-      <div class="flex items-center justify-between mt-2">
+      <div class="flex items-center justify-between my-2">
         <!-- Reply button -->
-        <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 p-1.5 rounded-full transition-colors group"
+        <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 rounded-full transition-colors group"
                 (click)="onReply($event); $event.stopPropagation()">
           <i class="far fa-comment text-[18px] group-hover:text-blue-500"></i>
-          <span class="text-sm min-w-[20px] text-center">{{ post.replies_count || 0 }}</span>
+          <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center">{{ post.replies_count ? post.replies_count : '' }}</span>
         </button>
 
         <!-- Repost button -->
         <div class="relative" (click)="$event.stopPropagation()">
-          <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-green-500 p-1.5 rounded-full transition-colors group"
+          <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-green-500 rounded-full transition-colors group"
                   [class.text-green-500]="isReposted"
                   (click)="toggleRepostMenu($event); $event.stopPropagation()">
             <i class="fas fa-retweet text-[18px]" [class.text-green-500]="isReposted"></i>
-            <span class="text-sm min-w-[20px] text-center" [class.text-green-500]="isReposted">
-              {{ repostsCount }}
-            </span>
+            <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center" [class.text-green-500]="isReposted">{{ repostsCount ? repostsCount : '' }}</span>
           </button>
 
           <!-- Repost Menu -->
@@ -210,21 +208,21 @@
         </div>
 
         <!-- Like button -->
-        <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-red-500 p-1.5 rounded-full transition-colors group"
+        <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-red-500 rounded-full transition-colors group"
                 [class.text-red-500]="post.is_liked"
                 (click)="onLike($event); $event.stopPropagation()">
           <i class="far fa-heart text-[18px] group-hover:text-red-500" [class.fas]="post.is_liked" [class.text-red-500]="post.is_liked"></i>
-          <span class="text-sm min-w-[20px] text-center" [class.text-red-500]="post.is_liked">{{ post.likes_count }}</span>
+          <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center" [class.text-red-500]="post.is_liked">{{ post.likes_count ? post.likes_count : '' }}</span>
         </button>
 
         <!-- Share button -->
-        <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 p-1.5 rounded-full transition-colors group"
+        <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 rounded-full transition-colors group"
                 (click)="onShare($event); $event.stopPropagation()">
           <i class="far fa-share-square text-[18px] group-hover:text-blue-500"></i>
         </button>
 
         <!-- Bookmark button -->
-        <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 p-1.5 rounded-full transition-colors group"
+        <button class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 rounded-full transition-colors group"
                 [class.text-blue-500]="post.is_bookmarked"
                 (click)="onBookmark($event); $event.stopPropagation()">
           <i class="far fa-bookmark text-[18px] group-hover:text-blue-500" [class.fas]="post.is_bookmarked"></i>
