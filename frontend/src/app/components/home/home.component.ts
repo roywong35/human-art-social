@@ -230,7 +230,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   onComment(post: Post): void {
     const dialogRef = this.dialog.open(CommentDialogComponent, {
-      width: '500px',
+      panelClass: ['comment-dialog', 'dialog-position-top'],
       data: { post }
     });
 
