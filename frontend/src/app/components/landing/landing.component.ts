@@ -20,8 +20,6 @@ import { MatDialogModule } from '@angular/material/dialog';
     RouterModule,
     PostComponent,
     SearchBarComponent,
-    LoginModalComponent,
-    RegisterModalComponent,
     MatDialogModule
   ],
   templateUrl: './landing.component.html',
@@ -129,7 +127,7 @@ export class LandingComponent implements OnInit {
 
   openRegisterModal() {
     const dialogRef = this.dialog.open(RegisterModalComponent, {
-      width: '400px',
+      width: '450px',
       panelClass: ['custom-dialog-container', 'centered-dialog'],
       disableClose: false,
       autoFocus: true

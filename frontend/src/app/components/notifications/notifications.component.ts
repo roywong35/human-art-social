@@ -8,75 +8,8 @@ import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
   selector: 'app-notifications',
   standalone: true,
   imports: [CommonModule, TimeAgoPipe, RouterModule],
-  template: `
-    <div class="max-w-2xl mx-auto">
-      <div class="sticky top-0 z-10 bg-white dark:bg-[color:var(--color-background)] border-b dark:border-[color:var(--color-border)] p-4">
-        <h1 class="text-xl font-bold dark:text-[color:var(--color-text)]">Notifications</h1>
-        <button *ngIf="notifications.length > 0" 
-                (click)="markAllAsRead()"
-                class="text-sm text-primary hover:underline mt-2">
-          Mark all as read
-        </button>
-      </div>
-
-      <div class="divide-y dark:divide-[color:var(--color-border)]">
-        <div *ngFor="let notification of notifications"
-             [class.bg-gray-50]="!notification.is_read"
-             class="p-4 hover:bg-gray-50 dark:hover:bg-[color:var(--color-surface-hover)] transition-colors cursor-pointer"
-             (click)="onNotificationClick(notification)">
-          <div class="flex items-center">
-            <!-- Avatar - Always links to sender's profile -->
-            <a [routerLink]="['/', notification.sender.handle]" 
-               class="flex-shrink-0"
-               (click)="$event.stopPropagation(); markAsRead(notification)">
-              <img [src]="notification.sender.profile_picture || defaultAvatar"
-                   [alt]="notification.sender.username"
-                   class="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity">
-            </a>
-            
-            <!-- Notification Content -->
-            <div class="flex-1 mx-3">
-              <p class="dark:text-[color:var(--color-text)] leading-none">
-                <!-- Username - Always links to sender's profile -->
-                <a [routerLink]="['/', notification.sender.handle]"
-                   class="font-bold hover:underline"
-                   (click)="$event.stopPropagation(); markAsRead(notification)">
-                  {{ notification.sender.username }}
-                </a>
-                <!-- Rest of the notification message -->
-                <span class="ml-1">{{ getFormattedMessageWithoutUsername(notification) }}</span>
-              </p>
-            </div>
-            
-            <div class="text-sm text-gray-500 dark:text-[color:var(--color-text-secondary)] whitespace-nowrap flex-shrink-0">
-              {{ notification.created_at | timeAgo }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="notifications.length === 0" class="p-4 text-center text-gray-500 dark:text-[color:var(--color-text-secondary)]">
-        No notifications yet
-      </div>
-
-      <div *ngIf="loading" class="p-4 text-center">
-        <span class="text-gray-500 dark:text-[color:var(--color-text-secondary)]">Loading...</span>
-      </div>
-
-      <div *ngIf="hasMore && !loading" class="p-4 text-center">
-        <button (click)="loadMore()" 
-                class="text-primary hover:underline">
-          Load more
-        </button>
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-      min-height: 100vh;
-    }
-  `]
+  templateUrl: './notifications.component.html',
+  styleUrls: ['./notifications.component.scss']
 })
 export class NotificationsComponent implements OnInit {
   notifications: Notification[] = [];
@@ -147,10 +80,6 @@ export class NotificationsComponent implements OnInit {
         }
       });
     }
-  }
-
-  getFormattedMessage(notification: Notification): string {
-    return this.notificationService.getFormattedMessage(notification);
   }
 
   getFormattedMessageWithoutUsername(notification: Notification): string {

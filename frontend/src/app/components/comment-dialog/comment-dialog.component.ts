@@ -6,15 +6,13 @@ import { Post } from '../../models/post.model';
 import { User } from '../../models/user.model';
 import { CommentService } from '../../services/comment.service';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
-import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { Router } from '@angular/router';
 import { EmojiPickerService } from '../../services/emoji-picker.service';
-import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 
 @Component({
   selector: 'app-comment-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatDialogModule, TimeAgoPipe, PickerComponent, EmojiPickerComponent],
+  imports: [CommonModule, FormsModule, MatDialogModule, TimeAgoPipe],
   templateUrl: './comment-dialog.component.html',
   styleUrls: ['./comment-dialog.component.scss']
 })

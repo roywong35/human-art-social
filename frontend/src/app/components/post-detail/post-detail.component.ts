@@ -3,21 +3,18 @@ import { CommonModule, DatePipe, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Post } from '../../models/post.model';
-import { Comment } from '../../models/comment.model';
 import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { CommentService } from '../../services/comment.service';
 import { PostComponent } from '../shared/post/post.component';
 import { User } from '../../models/user.model';
-import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { EmojiPickerService } from '../../services/emoji-picker.service';
-import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
-import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
+
 
 @Component({
   selector: 'app-post-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, PostComponent, TimeAgoPipe],
+  imports: [CommonModule, FormsModule, PostComponent],
   templateUrl: './post-detail.component.html',
   styles: []
 })

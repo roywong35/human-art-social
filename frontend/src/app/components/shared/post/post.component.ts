@@ -4,9 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
-import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { Post } from '../../../models/post.model';
-import { Comment } from '../../../models/comment.model';
 import { User } from '../../../models/user.model';
 import { environment } from '../../../../environments/environment';
 import { BookmarkService } from '../../../services/bookmark.service';
@@ -15,7 +13,6 @@ import { CommentService } from '../../../services/comment.service';
 import { AuthService } from '../../../services/auth.service';
 import { PostUpdateService } from '../../../services/post-update.service';
 import { Subscription } from 'rxjs';
-import { PostInputBoxComponent } from '../post-input-box/post-input-box.component';
 import { CommentDialogComponent } from '../../comment-dialog/comment-dialog.component';
 import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
 import { NewPostModalComponent } from '../../new-post-modal/new-post-modal.component';
@@ -33,8 +30,7 @@ import { LoginModalComponent } from '../../login-modal/login-modal.component';
     MatDialogModule,
     RouterModule,
     TimeAgoPipe,
-    RepostMenuComponent,
-    LoginModalComponent
+    RepostMenuComponent
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss'],

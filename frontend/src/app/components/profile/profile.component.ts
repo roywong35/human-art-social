@@ -11,48 +11,11 @@ import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { PostComponent } from '../shared/post/post.component';
 import { take } from 'rxjs/operators';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule} from '@angular/material/dialog';
 import { UserListDialogComponent } from '../shared/user-list-dialog/user-list-dialog.component';
 import { Subscription } from 'rxjs';
+import { UnfollowDialogComponent } from '../unfollow-dialogs/unfollow-dialog.component';
 
-@Component({
-  selector: 'app-unfollow-dialog',
-  template: `
-    <div class="p-6 max-w-sm">
-      <h2 class="text-xl font-bold mb-4">Unfollow {{'@'}}{{ data.handle }}</h2>
-      <p class="text-gray-600 mb-6">Their posts will no longer show up in your home timeline.</p>
-      <div class="flex justify-end gap-3">
-        <button mat-button 
-                class="px-4 py-2 rounded-full hover:bg-gray-100" 
-                (click)="onCancel()">
-          Cancel
-        </button>
-        <button mat-button 
-                class="px-4 py-2 rounded-full bg-black text-white hover:bg-gray-900" 
-                (click)="onConfirm()">
-          Unfollow
-        </button>
-      </div>
-    </div>
-  `,
-  standalone: true,
-  imports: [CommonModule, MatDialogModule]
-})
-export class UnfollowDialogComponent {
-  constructor(
-    public dialogRef: MatDialogRef<UnfollowDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { handle: string }
-  ) {}
-
-  onCancel(): void {
-    this.dialogRef.close(false);
-  }
-
-  onConfirm(): void {
-    this.dialogRef.close(true);
-  }
-}
 
 @Component({
   selector: 'app-profile',
@@ -62,8 +25,7 @@ export class UnfollowDialogComponent {
     FormsModule, 
     RouterModule, 
     PostComponent, 
-    MatDialogModule,
-    UserListDialogComponent
+    MatDialogModule
   ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']

@@ -71,7 +71,7 @@ export class LoginModalComponent {
     
     // Open the register modal
     this.dialog.open(RegisterModalComponent, {
-      width: '400px',
+      width: '450px',
       panelClass: 'custom-dialog-container'
     });
   }

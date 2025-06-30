@@ -1,10 +1,8 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { MatDialog } from '@angular/material/dialog';
 import { EmojiPickerService } from '../../../services/emoji-picker.service';
-import { EmojiPickerComponent } from '../../shared/emoji-picker/emoji-picker.component';
 
 @Component({
   selector: 'app-post-input-box',

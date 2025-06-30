@@ -5,12 +5,9 @@ import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { PostComponent } from '../shared/post/post.component';
-import { HumanArtPostComponent } from '../shared/human-art-post/human-art-post.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { SubmitDrawingModalComponent } from '../submit-drawing-modal/submit-drawing-modal.component';
 import { FormsModule } from '@angular/forms';
-import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { PostInputBoxComponent } from '../shared/post-input-box/post-input-box.component';
 import { PostUpdateService } from '../../services/post-update.service';
 import { Subscription } from 'rxjs';
@@ -23,7 +20,6 @@ import { ToastService } from '../../services/toast.service';
   imports: [
     CommonModule, 
     PostComponent,
-    HumanArtPostComponent,
     MatDialogModule,
     FormsModule,
     PostInputBoxComponent

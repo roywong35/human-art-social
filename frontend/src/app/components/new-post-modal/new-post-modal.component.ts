@@ -5,12 +5,10 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angu
 import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
-import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ImageUploadService, ImageFile } from '../../services/image-upload.service';
 import { Subscription } from 'rxjs';
 import { Post } from '../../models/post.model';
 import { EmojiPickerService } from '../../services/emoji-picker.service';
-import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 import { PhotoViewerComponent } from '../photo-viewer/photo-viewer.component';
 import { environment } from '../../../environments/environment';
 
@@ -25,10 +23,7 @@ interface DialogData {
     CommonModule,
     FormsModule,
     MatDialogModule,
-    TimeAgoPipe,
-    PickerComponent,
-    EmojiPickerComponent,
-    PhotoViewerComponent
+    TimeAgoPipe
   ],
   templateUrl: './new-post-modal.component.html',
   styleUrls: ['./new-post-modal.component.scss']

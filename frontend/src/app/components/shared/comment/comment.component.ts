@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { Comment } from '../../../models/comment.model';
 import { Post } from '../../../models/post.model';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
-import { User } from '../../../models/user.model';
 
 @Component({
   selector: 'app-comment',

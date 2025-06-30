@@ -12,10 +12,9 @@ import { take, filter } from 'rxjs/operators';
 import { ChangePasswordDialogComponent } from '../change-password-dialog/change-password-dialog.component';
 import { ToastService } from '../../services/toast.service';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
-import { ComponentPortal, PortalModule, TemplatePortal } from '@angular/cdk/portal';
+import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
 import { NotificationService } from '../../services/notification.service';
-import { Subscription, interval } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
