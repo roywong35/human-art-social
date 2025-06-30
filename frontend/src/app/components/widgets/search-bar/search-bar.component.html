@@ -1,0 +1,86 @@
+<div class="relative">
+  <!-- Search Input -->
+  <div class="bg-gray-100 dark:bg-gray-800 rounded-full flex items-center px-4 py-1.5" 
+       [class.focus-within:bg-white]="!isPreview" 
+       [class.dark:focus-within:[background-color:var(--color-surface)]]="!isPreview"
+       [class.focus-within:ring-2]="!isPreview" 
+       [class.focus-within:ring-blue-100]="!isPreview">
+    <i class="fas fa-search text-gray-500 dark:[color:var(--color-text-secondary)]"></i>
+    <input
+      #searchInput
+      [(ngModel)]="searchQuery"
+      (input)="onSearchInput($event)"
+      (keydown.enter)="onEnterPressed()"
+      type="text"
+      [placeholder]="isPreview ? 'Sign in to search' : 'Search'"
+      class="bg-transparent ml-3 outline-none w-full text-gray-900 dark:[color:var(--color-text)] placeholder-gray-500 dark:placeholder-gray-400"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      [disabled]="isPreview">
+  </div>
+
+  <!-- Search Results Dropdown -->
+  <div *ngIf="!isPreview && showResults && (isLoading || results.length > 0 || noResults)"
+       class="absolute top-full left-0 right-0 mt-2 bg-white dark:[background-color:var(--color-surface)] rounded-lg shadow-lg border border-gray-200 dark:[border-color:var(--color-border)] max-h-[400px] overflow-y-auto z-50">
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
+      <i class="fas fa-spinner fa-spin mr-2"></i>
+      Searching...
+    </div>
+
+    <!-- No Results -->
+    <div *ngIf="!isLoading && noResults" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
+      <div>No results found for "{{searchQuery}}"</div>
+      <div class="mt-2">
+        <button (click)="performFullSearch()" 
+                class="text-blue-500 hover:text-blue-600 text-sm">
+          Search for "{{searchQuery}}" instead
+        </button>
+      </div>
+    </div>
+
+    <!-- Results List -->
+    <div *ngIf="!isLoading && results.length > 0" class="divide-y divide-gray-100 dark:divide-gray-700">
+      <!-- See All Results Option -->
+      <div *ngIf="searchQuery.trim()"
+           (click)="performFullSearch()"
+           class="p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700">
+        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+          <i class="fas fa-search text-blue-500"></i>
+        </div>
+        <div>
+          <div class="font-semibold text-gray-900 dark:[color:var(--color-text)]">Search for "{{searchQuery}}"</div>
+          <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">See all results</div>
+        </div>
+      </div>
+
+      <div *ngFor="let result of results"
+           (click)="navigateToResult(result)"
+           class="p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors">
+        
+        <!-- User Result -->
+        <ng-container *ngIf="result.type === 'user'">
+          <img [src]="getProfilePicture($any(result.data))" 
+               [alt]="$any(result.data).username"
+               class="w-10 h-10 rounded-full object-cover">
+          <div>
+            <div class="font-semibold text-gray-900 dark:[color:var(--color-text)]">{{$any(result.data).username}}</div>
+            <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@' + $any(result.data).handle}}</div>
+          </div>
+        </ng-container>
+
+        <!-- Hashtag Result -->
+        <ng-container *ngIf="result.type === 'hashtag'">
+          <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+            <i class="fas fa-hashtag text-blue-500"></i>
+          </div>
+          <div>
+            <div class="font-semibold text-gray-900 dark:[color:var(--color-text)]">#{{$any(result.data).name}}</div>
+            <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">{{$any(result.data).post_count}} posts</div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div> 

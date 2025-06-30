@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterModule, Router, Event, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { SidebarComponent } from './components/sidebar/sidebar.component';
-import { RightSidebarComponent } from './components/right-sidebar/right-sidebar.component';
+import { SidebarComponent } from './components/layout/sidebar/sidebar.component';
 import { ToastComponent } from './components/shared/toast/toast.component';
 import { AuthService } from './services/auth.service';
 import { RouterOutlet } from '@angular/router';
@@ -12,7 +11,8 @@ import { Title } from '@angular/platform-browser';
 import { UserService } from './services/user.service';
 import { User } from './models/user.model';
 import { OverlayService } from './services/overlay.service';
-import { MobileHeaderComponent } from './components/mobile-header/mobile-header.component';
+import { RightSidebarComponent } from './components/layout/right-sidebar/right-sidebar.component';
+import { MobileHeaderComponent } from './components/layout/mobile-header/mobile-header.component';
 
 @Component({
   selector: 'app-root',

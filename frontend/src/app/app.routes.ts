@@ -1,15 +1,17 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './components/home/home.component';
-import { ProfileComponent } from './components/profile/profile.component';
-import { BookmarksComponent } from './components/bookmarks/bookmarks.component';
-import { PostDetailComponent } from './components/post-detail/post-detail.component';
-import { SearchComponent } from './components/search/search.component';
-import { ConnectionsComponent } from './components/connections/connections.component';
+import { HomeComponent } from './components/pages/home/home.component';
+import { ProfileComponent } from './components/pages/profile/profile.component';
+
 import { AuthGuard } from './guards/auth.guard';
 import { publicGuard } from './guards/public.guard';
-import { RecommendedUsersComponent } from './components/recommended-users/recommended-users.component';
-import { LandingComponent } from './components/landing/landing.component';
-import { NotificationsComponent } from './components/notifications/notifications.component';
+
+import { LandingComponent } from './components/pages/landing/landing.component';
+import { NotificationsComponent } from './components/pages/notifications/notifications.component';
+import { SearchComponent } from './components/pages/search/search.component';
+import { PostDetailComponent } from './components/features/posts/post-detail/post-detail.component';
+import { BookmarksComponent } from './components/pages/bookmarks/bookmarks.component';
+import { ConnectionsComponent } from './components/pages/connections/connections.component';
+import { RecommendedUsersComponent } from './components/widgets/recommended-users/recommended-users.component';
 
 export const routes: Routes = [
   {
