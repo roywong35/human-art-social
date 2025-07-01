@@ -30,13 +30,16 @@
     </div>
 
     <!-- No Results -->
-    <div *ngIf="!isLoading && noResults" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
-      <div>No results found for "{{searchQuery}}"</div>
-      <div class="mt-2">
-        <button (click)="performFullSearch()" 
-                class="text-blue-500 hover:text-blue-600 text-sm">
-          Search for "{{searchQuery}}" instead
-        </button>
+    <div *ngIf="!isLoading && noResults" class="divide-y divide-gray-100 dark:divide-gray-700">
+      <div (click)="performFullSearch()"
+           class="p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors">
+        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+          <i class="fas fa-search text-blue-500"></i>
+        </div>
+        <div>
+          <div class="font-semibold text-gray-900 dark:[color:var(--color-text)]">Search for "{{searchQuery}}"</div>
+          <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">See all results</div>
+        </div>
       </div>
     </div>
 

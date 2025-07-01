@@ -82,13 +82,13 @@
           </button>
         </div>
         
-        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+        <div class="border-b border-gray-200 dark:[border-color:var(--color-border)]">
           <div *ngFor="let user of limitedUsers; trackBy: trackByUserId"
-               class="flex items-start px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
+               class="flex items-center px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
             
             <div class="flex space-x-2 flex-1" (click)="navigateToProfile(user)">
               <!-- Avatar container with fixed width for consistent alignment -->
-              <div class="w-[40px] flex-shrink-0 pt-0.5">
+              <div class="w-[40px] flex-shrink-0 pt-1">
                 <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
                      [alt]="user.username"
                      class="h-10 w-10 rounded-full object-cover cursor-pointer">
@@ -100,11 +100,11 @@
                   <p class="text-[16px] font-extrabold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter']">
                     {{user.username}}
                   </p>
-                  <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">
+                  <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)] -mt-0.5">
                     &#64;{{user.handle}}
                   </p>
                 </div>
-                <div *ngIf="user.bio" class="text-[15px] text-gray-600 dark:[color:var(--color-text-secondary)] mt-1 line-clamp-2">
+                <div *ngIf="user.bio" class="text-[15px] text-gray-600 dark:[color:var(--color-text-secondary)] mt-0.5 line-clamp-2">
                   {{user.bio}}
                 </div>
               </div>
@@ -135,6 +135,7 @@
         <div class="divide-y divide-gray-200 dark:divide-gray-700">
           <div *ngFor="let post of posts; trackBy: trackByPostId" class="post-container">
             <app-post [post]="post" 
+                      [isInSearchResults]="true"
                       class="block"></app-post>
           </div>
         </div>
@@ -143,9 +144,9 @@
 
     <!-- People Tab Content -->
     <div *ngIf="!isLoading && hasSearched && activeTab === 'people' && users.length > 0">
-      <div class="divide-y divide-gray-200 dark:divide-gray-700">
+      <div>
         <div *ngFor="let user of users; trackBy: trackByUserId"
-             class="flex items-start px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
+             class="flex items-center px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
           
           <div class="flex space-x-2 flex-1" (click)="navigateToProfile(user)">
             <!-- Avatar container with fixed width for consistent alignment -->
@@ -161,7 +162,7 @@
                 <p class="text-[16px] font-extrabold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter']">
                   {{user.username}}
                 </p>
-                <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">
+                <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)] -mt-1">
                   &#64;{{user.handle}}
                 </p>
               </div>

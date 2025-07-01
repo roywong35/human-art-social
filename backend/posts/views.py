@@ -202,7 +202,9 @@ class PostViewSet(viewsets.ModelViewSet):
             reply = serializer.save(
                 author=request.user,
                 parent_post=parent_post,
-                post_type='reply'
+                post_type='reply',
+                parent_post_author_handle=parent_post.author.handle,
+                parent_post_author_username=parent_post.author.username
             )
             
             # Add the new reply's ID to the conversation chain and save

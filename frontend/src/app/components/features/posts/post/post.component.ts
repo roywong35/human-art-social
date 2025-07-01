@@ -44,6 +44,7 @@ export class PostComponent implements OnInit, OnDestroy {
   @Input() showReplies: boolean = false;
   @Input() isConnectedToParent: boolean = false;
   @Input() isPreview = false;
+  @Input() isInSearchResults = false;
 
   @Output() postUpdated = new EventEmitter<Post>();
   @Output() postDeleted = new EventEmitter<number>();
@@ -103,6 +104,8 @@ export class PostComponent implements OnInit, OnDestroy {
     this.authService.currentUser$.pipe(take(1)).subscribe(user => {
       this.currentUser = user;
     });
+
+
 
     // Load replies if we're showing them
     if (this.showReplies || this.isDetailView) {
@@ -477,5 +480,12 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected getDisplayUrl(): string {
     return window.location.origin.replace('https://', '').replace('http://', '');
+  }
+
+  protected navigateToParentAuthor(event: Event): void {
+    event.stopPropagation();
+    if (this.post.parent_post_author_handle) {
+      this.router.navigate(['/', this.post.parent_post_author_handle]);
+    }
   }
 } 

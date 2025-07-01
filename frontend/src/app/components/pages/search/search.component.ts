@@ -103,9 +103,9 @@ export class SearchComponent implements OnInit {
     return this.users.slice(0, 3);
   }
 
-  // Filter out reposted posts and replies from search results
+  // Filter out reposted posts from search results
   get filteredPosts(): Post[] {
-    return this.posts.filter(post => post.post_type !== 'repost' && post.post_type !== 'reply');
+    return this.posts.filter(post => post.post_type !== 'repost');
   }
 
   private performSearch(query: string) {
@@ -144,8 +144,11 @@ export class SearchComponent implements OnInit {
         next: (results) => {
           console.log('Search results received:', results);
           this.users = results.users;
-          // Filter out reposted posts and replies from search results
-          this.posts = results.posts.filter(post => post.post_type !== 'repost' && post.post_type !== 'reply');
+          // Filter out reposted posts from search results
+          this.posts = results.posts.filter(post => post.post_type !== 'repost');
+          
+
+          
           this.isLoading = false;
           this.isLoadingUsers = false;
           this.isLoadingPosts = false;
@@ -168,7 +171,7 @@ export class SearchComponent implements OnInit {
     this.postService.searchPosts(query).subscribe({
       next: (posts) => {
         console.log('Post search results received:', posts);
-        // Filter out reposted posts and replies from search results
+        // Filter out reposted posts from search results
         this.posts = posts.filter(post => post.post_type !== 'repost');
         this.isLoading = false;
         this.isLoadingPosts = false;

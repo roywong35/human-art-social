@@ -53,4 +53,6 @@ export interface Post {
   conversation_chain?: number[];
   reposted_by_current_user?: boolean;
   evidence_files: EvidenceFile[];
+  parent_post_author_handle?: string;
+  parent_post_author_username?: string;
 } 

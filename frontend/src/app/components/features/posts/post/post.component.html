@@ -11,7 +11,7 @@
   <!-- User avatar and content -->
   <div class="flex space-x-2">
     <!-- Avatar container with fixed width for consistent line positioning -->
-    <div class="w-[40px] flex-shrink-0">
+    <div class="w-[40px] flex-shrink-0 pt-1">
       <img [src]="post.author.profile_picture || defaultAvatar" 
            [alt]="post.author.username" 
            class="h-10 w-10 rounded-full cursor-pointer relative z-10"
@@ -47,6 +47,14 @@
             </span>
           </div>
         </div>
+
+        <!-- Replying to header (only shown in search results) -->
+        <div *ngIf="post.post_type === 'reply' && isInSearchResults && post.parent_post_author_handle" class="flex items-center gap-1 mt-1 text-gray-500 dark:[color:var(--color-text-secondary)]">
+          <span class="text-sm">Replying to</span>
+          <span class="text-sm text-blue-500 hover:underline cursor-pointer" (click)="navigateToParentAuthor($event)">&#64;{{ post.parent_post_author_handle }}</span>
+        </div>
+        
+
 
         <!-- Post content -->
         <p class="text-gray-800 dark:[color:var(--color-text)] mt-1 pl-0.5 break-words whitespace-pre-wrap">{{ post.content }}</p>

@@ -109,6 +109,10 @@ class Post(models.Model):
     conversation_chain = models.JSONField(default=list, blank=True, help_text='Ordered list of post IDs in the conversation chain')
     reposted_at = models.DateTimeField(null=True, blank=True, help_text='When this post was reposted by the current user')
     
+    # Parent post author fields for replies (for faster lookups in search)
+    parent_post_author_handle = models.CharField(max_length=50, blank=True, null=True, help_text='Handle of the parent post author for replies')
+    parent_post_author_username = models.CharField(max_length=100, blank=True, null=True, help_text='Username of the parent post author for replies')
+    
     # Human drawing fields
     is_human_drawing = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
