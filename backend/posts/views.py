@@ -202,9 +202,13 @@ class PostViewSet(viewsets.ModelViewSet):
             reply = serializer.save(
                 author=request.user,
                 parent_post=parent_post,
-                post_type='reply',
-                conversation_chain=conversation_chain
+                post_type='reply'
             )
+            
+            # Add the new reply's ID to the conversation chain and save
+            conversation_chain.append(reply.id)
+            reply.conversation_chain = conversation_chain
+            reply.save()
             
             # Create notification for the comment
             create_comment_notification(request.user, parent_post, reply)

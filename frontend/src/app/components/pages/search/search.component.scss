@@ -1,1 +1,140 @@
-// Styles for search component 
+// Styles for search component
+:host {
+  display: block;
+  width: 100%;
+}
+
+.search-section {
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+  }
+}
+
+.user-card {
+  transition: all 0.15s ease;
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+  
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.follow-button {
+  transition: all 0.15s ease;
+  min-width: 80px;
+  flex-shrink: 0;
+  
+  &:hover {
+    transform: scale(1.02);
+  }
+}
+
+.post-container {
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  
+  &:first-child {
+    border-top: none;
+  }
+  
+  ::ng-deep app-post {
+    display: block;
+    width: 100%;
+    
+    .post-content {
+      border: none;
+      border-radius: 0;
+      margin: 0;
+    }
+  }
+}
+
+// Full width tabs
+.tab-container {
+  width: 100%;
+  
+  button {
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.03);
+    }
+    
+    &.active {
+      border-bottom-color: #1d9bf0;
+    }
+  }
+}
+
+// Section headers
+.section-header {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  
+  h3 {
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+}
+
+// Remove any default spacing from post components
+::ng-deep {
+  app-post {
+    .post-wrapper,
+    .post-container,
+    .post-content {
+      margin: 0 !important;
+      border-radius: 0 !important;
+      border-left: none !important;
+      border-right: none !important;
+    }
+    
+    .post-wrapper:first-child {
+      border-top: none !important;
+    }
+  }
+}
+
+// Dark mode support
+:host-context(.dark) {
+  .user-card:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+  
+  .tab-container button:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+  
+  .section-header {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .user-card {
+    padding: 12px 16px;
+    
+    .follow-button {
+      min-width: 70px;
+      padding: 6px 12px;
+      font-size: 0.875rem;
+    }
+  }
+  
+  .section-header {
+    padding: 12px 16px;
+    
+    h3 {
+      font-size: 1.125rem;
+    }
+  }
+} 

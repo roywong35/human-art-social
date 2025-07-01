@@ -530,7 +530,7 @@ textarea {
 
 /* Follow Button Styles */
 .follow-button {
-  @apply px-4 py-2 font-bold rounded-full border-2 transition-all duration-200 flex items-center gap-2;
+  @apply px-4 py-1 font-bold rounded-full border-2 transition-all duration-200 flex items-center gap-2;
 
   /* Not Following State */
   &:not(.following) {

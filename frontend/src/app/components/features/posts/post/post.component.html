@@ -14,7 +14,7 @@
     <div class="w-[40px] flex-shrink-0">
       <img [src]="post.author.profile_picture || defaultAvatar" 
            [alt]="post.author.username" 
-           class="h-10 w-10 rounded-full cursor-pointer"
+           class="h-10 w-10 rounded-full cursor-pointer relative z-10"
            (click)="navigateToProfile($event)"
            (error)="onImageError($event)">
     </div>
@@ -58,7 +58,7 @@
           <div class="flex items-center space-x-2 mb-2">
             <img [src]="post.referenced_post.author.profile_picture || defaultAvatar" 
                  [alt]="post.referenced_post.author.username" 
-                 class="h-6 w-6 rounded-full">
+                 class="h-6 w-6 rounded-full relative z-10">
             <div class="flex items-center space-x-1">
               <p class="text-[16px] font-extrabold text-gray-900 dark:[color:var(--color-text)]">{{ post.referenced_post.author.username }}</p>
               <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">{{"@"}}{{ post.referenced_post.author.handle }}</p>

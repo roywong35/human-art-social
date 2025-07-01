@@ -25,7 +25,7 @@
       <ng-container *ngFor="let parentPost of parentChain; let i = index">
         <div class="relative">
           <!-- Connecting Line -->
-          <div class="absolute left-[31px] w-0.5 bg-gray-200 dark:bg-gray-800 z-[5]"
+          <div class="absolute left-[34px] w-0.5 bg-gray-200 dark:bg-gray-800 z-[1]"
                [style]="i === 0 ? 'top: 45px; height: calc(100% - 45px);' : 'top: 0; height: 100%;'">
           </div>
           <app-post 
@@ -42,7 +42,7 @@
     <div class="relative" #mainPost>
       <!-- Thread Line for Replies -->
       <div *ngIf="post.post_type === 'reply'" 
-           class="absolute left-[31px] w-0.5 bg-gray-200 dark:bg-gray-800 z-[5]"
+           class="absolute left-[34px] w-0.5 bg-gray-200 dark:bg-gray-800 z-[1]"
            style="top: 0; height: 45px;">
       </div>
       <app-post 
@@ -60,7 +60,7 @@
         <img 
           [src]="currentUser.profile_picture || defaultAvatar" 
           [alt]="currentUser.username" 
-          class="w-10 h-10 rounded-full mr-3">
+          class="w-10 h-10 rounded-full mx-1">
         <div class="flex-grow">
           <!-- Reply to text (only shown when expanded) -->
           <div *ngIf="replyFocused" class="text-gray-500 dark:[color:var(--color-text-secondary)] text-base mb-2 ml-2">

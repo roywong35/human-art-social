@@ -1,7 +1,7 @@
 <div class="max-w-4xl mx-auto">
   <!-- Search Header -->
   <div class="sticky top-0 bg-white dark:[background-color:var(--color-background)] z-10">
-    <div class="flex items-center gap-4 px-6 py-3">
+    <div class="flex items-center gap-4 px-6">
       <button (click)="goBack()" class="text-gray-600 dark:[color:var(--color-text-secondary)] hover:text-gray-900 dark:hover:[color:var(--color-text)]">
         <i class="fas fa-arrow-left text-xl"></i>
       </button>
@@ -9,31 +9,37 @@
         <app-search-bar [initialSearchValue]="searchQuery"></app-search-bar>
       </div>
     </div>
+
+    <!-- Tabs -->
+    <div *ngIf="hasSearched && !isLoading && (users.length > 0 || posts.length > 0)" 
+         class="flex border-b border-gray-200 dark:[border-color:var(--color-border)]">
+      <button (click)="switchTab('top')"
+              [class.border-b-2]="activeTab === 'top'"
+              [class.border-blue-500]="activeTab === 'top'"
+              [class.text-blue-500]="activeTab === 'top'"
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:[color:var(--color-text)]">
+        Top
+      </button>
+      <button (click)="switchTab('people')"
+              [class.border-b-2]="activeTab === 'people'"
+              [class.border-blue-500]="activeTab === 'people'"
+              [class.text-blue-500]="activeTab === 'people'"
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:[color:var(--color-text)]">
+        People
+      </button>
+    </div>
   </div>
 
   <!-- Search Results Content -->
-  <div class="px-6">
-    <!-- Search Query Display -->
-    <div *ngIf="hasSearched && searchQuery" class="py-4 border-b border-gray-200 dark:[border-color:var(--color-border)]">
-      <h2 class="text-xl font-bold text-gray-900 dark:[color:var(--color-text)]">
-        <span *ngIf="isHashtagSearch">Hashtag: </span>
-        <span *ngIf="!isHashtagSearch">Search results for: </span>
-        <span class="text-blue-600 dark:text-blue-400">{{searchQuery}}</span>
-      </h2>
-      <p class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] mt-1">
-        <span *ngIf="!isLoading">{{posts.length}} result{{posts.length !== 1 ? 's' : ''}} found</span>
-        <span *ngIf="isLoading">Searching...</span>
-      </p>
-    </div>
-
+  <div>
     <!-- Loading State -->
-    <div *ngIf="isLoading" class="text-center py-8">
+    <div *ngIf="isLoading" class="text-center py-8 px-6">
       <i class="fas fa-spinner fa-spin text-2xl text-gray-500 dark:[color:var(--color-text-secondary)]"></i>
-      <p class="mt-2 text-gray-500 dark:[color:var(--color-text-secondary)]">Searching for posts...</p>
+      <p class="mt-2 text-gray-500 dark:[color:var(--color-text-secondary)]">Searching for posts and people...</p>
     </div>
 
     <!-- No Search Performed Yet -->
-    <div *ngIf="!hasSearched && !isLoading" class="text-center py-12">
+    <div *ngIf="!hasSearched && !isLoading" class="text-center py-12 px-6">
       <i class="fas fa-search text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
         Search for posts, users, and hashtags
@@ -44,11 +50,11 @@
     </div>
 
     <!-- No Results -->
-    <div *ngIf="!isLoading && hasSearched && posts.length === 0 && searchQuery" 
-         class="text-center py-12">
+    <div *ngIf="!isLoading && hasSearched && users.length === 0 && posts.length === 0 && searchQuery" 
+         class="text-center py-12 px-6">
       <i class="fas fa-search text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
-        No posts found
+        No results found
       </h3>
       <p class="text-gray-500 dark:[color:var(--color-text-secondary)] mb-4">
         Try searching for something else or check your spelling
@@ -56,17 +62,139 @@
       <div class="space-y-2 text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">
         <p>• Search for posts containing specific words</p>
         <p>• Use hashtags like #art or #drawing</p>
-        <p>• Search for users by typing their username</p>
+        <p>• Search for users by typing their username or &#64;handle</p>
       </div>
     </div>
 
-    <!-- Posts List -->
-    <div *ngIf="!isLoading && posts.length > 0" class="pb-6">
-      <app-post 
-        *ngFor="let post of posts; trackBy: trackByPostId" 
-        [post]="post"
-        class="border-b border-gray-200 dark:[border-color:var(--color-border)] last:border-b-0">
-      </app-post>
+    <!-- Top Tab Content -->
+    <div *ngIf="!isLoading && hasSearched && activeTab === 'top' && (users.length > 0 || posts.length > 0)">
+      
+      <!-- People Section (Max 3 users) -->
+      <div *ngIf="!isHashtagSearch && limitedUsers.length > 0">
+        <div class="flex items-center justify-between px-3 py-3 bg-white dark:bg-black">
+          <h3 class="text-xl font-extrabold text-gray-900 dark:[color:var(--color-text)] text-left">
+            People
+          </h3>
+          <button *ngIf="users.length > 3" 
+                  (click)="switchTab('people')"
+                  class="text-sm text-blue-500 hover:text-blue-600 font-medium">
+            View all {{users.length}}
+          </button>
+        </div>
+        
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+          <div *ngFor="let user of limitedUsers; trackBy: trackByUserId"
+               class="flex items-start px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
+            
+            <div class="flex space-x-2 flex-1" (click)="navigateToProfile(user)">
+              <!-- Avatar container with fixed width for consistent alignment -->
+              <div class="w-[40px] flex-shrink-0 pt-0.5">
+                <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
+                     [alt]="user.username"
+                     class="h-10 w-10 rounded-full object-cover cursor-pointer">
+              </div>
+              
+              <!-- Content section -->
+              <div class="flex-grow min-w-0">
+                <div>
+                  <p class="text-[16px] font-extrabold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter']">
+                    {{user.username}}
+                  </p>
+                  <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">
+                    &#64;{{user.handle}}
+                  </p>
+                </div>
+                <div *ngIf="user.bio" class="text-[15px] text-gray-600 dark:[color:var(--color-text-secondary)] mt-1 line-clamp-2">
+                  {{user.bio}}
+                </div>
+              </div>
+            </div>
+            
+            <button (click)="followUser(user, $event)" 
+                    class="follow-button flex-shrink-0 ml-3"
+                    [class.following]="user.is_following"
+                    (mouseenter)="onFollowButtonHover(user, true)"
+                    (mouseleave)="onFollowButtonHover(user, false)">
+              <span>
+                <span *ngIf="user.is_following">Following</span>
+                <span *ngIf="!user.is_following">Follow</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Posts Section -->
+      <div *ngIf="posts.length > 0">
+        <div *ngIf="isHashtagSearch" class="flex items-center px-4 py-4 bg-gray-50 dark:bg-gray-800">
+          <h3 class="text-xl font-bold text-gray-900 dark:[color:var(--color-text)] text-left">
+            Posts with {{searchQuery}}
+          </h3>
+        </div>
+        
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+          <div *ngFor="let post of posts; trackBy: trackByPostId" class="post-container">
+            <app-post [post]="post" 
+                      class="block"></app-post>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- People Tab Content -->
+    <div *ngIf="!isLoading && hasSearched && activeTab === 'people' && users.length > 0">
+      <div class="divide-y divide-gray-200 dark:divide-gray-700">
+        <div *ngFor="let user of users; trackBy: trackByUserId"
+             class="flex items-start px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
+          
+          <div class="flex space-x-2 flex-1" (click)="navigateToProfile(user)">
+            <!-- Avatar container with fixed width for consistent alignment -->
+            <div class="w-[40px] flex-shrink-0 pt-0.5">
+              <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
+                   [alt]="user.username"
+                   class="h-10 w-10 rounded-full object-cover cursor-pointer">
+            </div>
+            
+            <!-- Content section -->
+            <div class="flex-grow min-w-0">
+              <div>
+                <p class="text-[16px] font-extrabold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter']">
+                  {{user.username}}
+                </p>
+                <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">
+                  &#64;{{user.handle}}
+                </p>
+              </div>
+              <div *ngIf="user.bio" class="text-[15px] text-gray-600 dark:[color:var(--color-text-secondary)] mt-1 line-clamp-2">
+                {{user.bio}}
+              </div>
+            </div>
+          </div>
+          
+          <button (click)="followUser(user, $event)" 
+                  class="follow-button flex-shrink-0 ml-3"
+                  [class.following]="user.is_following"
+                  (mouseenter)="onFollowButtonHover(user, true)"
+                  (mouseleave)="onFollowButtonHover(user, false)">
+            <span>
+              <span *ngIf="user.is_following">Following</span>
+              <span *ngIf="!user.is_following">Follow</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- No People Results for People Tab -->
+    <div *ngIf="!isLoading && hasSearched && activeTab === 'people' && users.length === 0 && searchQuery" 
+         class="text-center py-12 px-6">
+      <i class="fas fa-users text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
+        No people found
+      </h3>
+      <p class="text-gray-500 dark:[color:var(--color-text-secondary)] mb-4">
+        Try searching for different keywords or check your spelling
+      </p>
     </div>
   </div>
 </div> 
