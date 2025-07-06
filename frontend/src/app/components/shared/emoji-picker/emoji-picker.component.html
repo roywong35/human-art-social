@@ -4,8 +4,8 @@
      [style.left.px]="position.left"
      (click)="$event.stopPropagation()">
   <emoji-mart
-    [darkMode]="true"
-    [enableSearch]="false"
+    [darkMode]="false"
+    [enableSearch]="true"
     [showPreview]="false"
     [style]="{ border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }"
     (emojiSelect)="onEmojiSelect($event)">

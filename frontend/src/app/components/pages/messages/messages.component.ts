@@ -1,0 +1,163 @@
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ChatService } from '../../../services/chat.service';
+import { AuthService } from '../../../services/auth.service';
+import { UserService } from '../../../services/user.service';
+import { Conversation, ConversationDetail, User } from '../../../models';
+import { Subscription } from 'rxjs';
+import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
+import { ChatRoomComponent } from '../../features/chat-room/chat-room.component';
+
+@Component({
+  selector: 'app-messages',
+  standalone: true,
+  imports: [CommonModule, RouterModule, FormsModule, TimeAgoPipe, ChatRoomComponent],
+  templateUrl: './messages.component.html',
+  styleUrls: ['./messages.component.scss']
+})
+export class MessagesComponent implements OnInit, OnDestroy {
+  conversations: Conversation[] = [];
+  selectedConversation: ConversationDetail | null = null;
+  currentUser: User | null = null;
+  
+  // Create chat modal
+  showCreateChatModal = false;
+  searchQuery = '';
+  searchResults: User[] = [];
+  isSearching = false;
+  
+  private conversationsSub?: Subscription;
+  private routeSub?: Subscription;
+  private currentUserSub?: Subscription;
+  
+  constructor(
+    private chatService: ChatService,
+    private authService: AuthService,
+    private userService: UserService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
+
+  ngOnInit() {
+    // Get current user
+    this.currentUserSub = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+
+    // Load conversations
+    this.loadConversations();
+
+    // Listen for route changes
+    this.routeSub = this.route.paramMap.subscribe(params => {
+      const conversationId = params.get('conversationId');
+      if (conversationId) {
+        this.loadConversation(conversationId);
+      } else {
+        this.selectedConversation = null;
+      }
+    });
+
+    // Subscribe to conversations updates
+    this.conversationsSub = this.chatService.conversations$.subscribe(conversations => {
+      this.conversations = conversations;
+    });
+  }
+
+  ngOnDestroy() {
+    this.conversationsSub?.unsubscribe();
+    this.routeSub?.unsubscribe();
+    this.currentUserSub?.unsubscribe();
+  }
+
+  loadConversations() {
+    this.chatService.getConversations().subscribe({
+      next: (conversations) => {
+        this.conversations = conversations;
+      },
+      error: (error) => {
+        console.error('Error loading conversations:', error);
+      }
+    });
+  }
+
+  loadConversation(conversationId: string) {
+    const numericId = parseInt(conversationId, 10);
+    this.chatService.getConversation(numericId).subscribe({
+      next: (conversation) => {
+        this.selectedConversation = conversation;
+        // Connect to WebSocket for this conversation
+        this.chatService.connectToConversation(numericId);
+      },
+      error: (error) => {
+        console.error('Error loading conversation:', error);
+      }
+    });
+  }
+
+  selectConversation(conversation: Conversation) {
+    this.router.navigate(['/messages', conversation.id]);
+  }
+
+  openCreateChatModal() {
+    this.showCreateChatModal = true;
+    this.searchQuery = '';
+    this.searchResults = [];
+  }
+
+  closeCreateChatModal() {
+    this.showCreateChatModal = false;
+    this.searchQuery = '';
+    this.searchResults = [];
+  }
+
+  searchUsers() {
+    if (this.searchQuery.trim().length < 2) {
+      this.searchResults = [];
+      return;
+    }
+
+    this.isSearching = true;
+    this.userService.searchUsers(this.searchQuery).subscribe({
+      next: (users) => {
+        // Filter out current user
+        this.searchResults = users.filter(user => user.id !== this.currentUser?.id);
+        this.isSearching = false;
+      },
+      error: (error) => {
+        console.error('Error searching users:', error);
+        this.isSearching = false;
+      }
+    });
+  }
+
+  async createChat(user: User) {
+    try {
+      const conversation = await this.chatService.getOrCreateConversation(user.id).toPromise();
+      if (conversation) {
+        this.closeCreateChatModal();
+        
+        // Navigate to the new conversation
+        this.router.navigate(['/messages', conversation.id]);
+        
+        // Refresh conversations list
+        this.loadConversations();
+      }
+    } catch (error) {
+      console.error('Error creating chat:', error);
+    }
+  }
+
+  getConversationDisplayName(conversation: Conversation): string {
+    return conversation.other_participant?.username || 'Unknown User';
+  }
+
+  getConversationAvatar(conversation: Conversation): string {
+    return conversation.other_participant?.profile_picture || 'assets/placeholder-image.svg';
+  }
+
+  getConversationHandle(conversation: Conversation): string {
+    return conversation.other_participant?.handle || '';
+  }
+} 

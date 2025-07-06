@@ -32,6 +32,8 @@
 /* Prevent unwanted scrollbars and set background color */
 html, body {
   overflow-x: hidden;
+  /* Force scrollbar gutter to prevent layout shifts */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -275,143 +277,6 @@ body {
         border-radius: 0 !important;
       }
     }
-  }
-}
-
-em-emoji-picker {
-  z-index: 50;
-  height: 350px !important;
-  --background-rgb: 255, 255, 255;
-  --border-radius: 16px;
-  --category-icon-size: 15px;
-  --font-family: inherit;
-  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-.picmo__picker {
-  --accent-color: rgb(29, 155, 240);
-  --background-color: #fff;
-  --border-radius: 16px;
-  --input-border-radius: 8px;
-  --input-font-size: 14px;
-  --input-padding: 8px;
-  --category-font-size: 13px;
-  --category-font-weight: 600;
-  --font-family: inherit;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-.emoji-picker-container {
-  position: absolute !important;
-  z-index: 1000 !important;
-}
-
-/* Emoji Picker Styles */
-.emoji-picker-wrapper {
-  position: fixed;
-  z-index: 99999;
-  display: block;
-}
-
-.emoji-mart {
-  position: fixed !important;
-  z-index: 99999 !important;
-  display: block !important;
-  border-radius: 16px !important;
-  overflow: hidden !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-
-  .emoji-mart {
-    width: 320px !important;
-    height: auto !important;
-    max-height: 435px !important;
-    border: 1px solid rgb(239, 243, 244) !important;
-    border-radius: 16px !important;
-    box-shadow: rgb(101 119 134 / 20%) 0px 0px 15px, rgb(101 119 134 / 15%) 0px 0px 3px 1px !important;
-    background: white !important;
-    font-family: inherit !important;
-    overflow: hidden !important;
-
-    * {
-      border-radius: 0 !important;
-    }
-
-    .emoji-mart-bar {
-      border: none !important;
-    }
-  }
-
-  .emoji-mart-scroll {
-    height: 270px !important;
-    padding: 0 8px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background: #E8E8E8;
-      border-radius: 4px;
-      &:hover {
-        background: #D8D8D8;
-      }
-    }
-  }
-
-  .emoji-mart-search {
-    margin: 6px;
-    padding: 0 8px;
-    position: relative;
-    
-    input {
-      width: 100%;
-      border: 1px solid rgb(239, 243, 244);
-      border-radius: 24px;
-      padding: 8px 12px;
-      font-size: 14px;
-      background: rgb(239, 243, 244);
-      
-      &:focus {
-        background: white;
-        border-color: rgb(29, 155, 240);
-        outline: none;
-      }
-    }
-  }
-
-  .emoji-mart-category-label {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: white;
-    padding: 8px 0;
-    font-weight: 700;
-    font-size: 12px;
-    color: rgb(83, 100, 113);
-  }
-
-  .emoji-mart-category .emoji-mart-emoji {
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    
-    &:hover {
-      background: rgb(247, 249, 249);
-    }
-    
-    > * {
-      cursor: pointer;
-    }
-  }
-
-  .emoji-mart-preview {
-    display: none !important;
   }
 }
 

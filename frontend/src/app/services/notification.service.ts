@@ -85,21 +85,23 @@ export class NotificationService {
 
     const token = this.authService.getToken();
     if (!token) {
+      console.log('No token available for notifications WebSocket');
       return;
     }
 
-    const wsUrl = environment.apiUrl.replace(/^http/, 'ws') + '/ws/notifications/';
+    // Use query parameter for token authentication like chat service
+    const wsUrl = environment.apiUrl.replace(/^http/, 'ws') + `/ws/notifications/?token=${token}`;
+    
     this.socket$ = webSocket({
       url: wsUrl,
-      protocol: ['Bearer', token],
       openObserver: {
         next: () => {
-          console.log('WebSocket connected');
+          console.log('✅ Notifications WebSocket connected');
         }
       },
       closeObserver: {
         next: () => {
-          console.log('WebSocket disconnected');
+          console.log('Notifications WebSocket disconnected');
           // Attempt to reconnect after 5 seconds
           setTimeout(() => this.connectWebSocket(), 5000);
         }
@@ -114,7 +116,7 @@ export class NotificationService {
         }
       },
       error: (error) => {
-        console.error('WebSocket error:', error);
+        console.error('Notifications WebSocket error:', error);
         this.socket$ = undefined;
         // Attempt to reconnect after 5 seconds
         setTimeout(() => this.connectWebSocket(), 5000);

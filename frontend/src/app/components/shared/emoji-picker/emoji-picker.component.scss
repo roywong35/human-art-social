@@ -1,26 +1,56 @@
 .emoji-picker-container {
-  position: fixed;
-  z-index: 100000 !important;
-  background: var(--color-surface);
+  position: fixed !important;
+  z-index: 1000001 !important;
+  background: transparent; /* Make container transparent */
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: none; /* Remove container shadow, emoji-mart will have its own */
+  border: none; /* Remove container border, emoji-mart will have its own */
+  transform: translateZ(0); /* Force hardware acceleration */
+  width: 320px; /* Match emoji-mart width exactly */
+  height: 350px; /* Match emoji-mart height exactly */
 
   ::ng-deep {
     .emoji-mart {
-      border: none !important;
-      border-radius: 8px;
-      overflow: hidden;
-      z-index: 100000 !important;
+      width: 320px !important;
+      height: 350px !important; /* Fixed height instead of auto */
+      max-height: 350px !important;
+      border: 1px solid var(--color-border) !important;
+      border-radius: 8px !important;
+      overflow: hidden !important;
+      z-index: 1000002 !important;
       background: var(--color-surface) !important;
+      font-family: inherit !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important; /* Add shadow to emoji-mart directly */
     }
 
     .emoji-mart-category-label {
-      background: transparent !important;
-      color: var(--color-text) !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 10 !important;
+      background: var(--color-surface) !important;
+      color: var(--color-text-secondary) !important;
+      font-weight: 500;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 0 !important;
     }
 
     .emoji-mart-search {
-      display: none !important;
+      margin: 6px;
+      input {
+        width: 100%;
+        padding: 6px 25px;
+        border: 1px solid var(--color-border);
+        border-radius: 20px;
+        outline: none;
+        background: var(--color-surface);
+        color: var(--color-text);
+        
+        &:focus {
+          border-color: var(--color-primary);
+        }
+      }
     }
 
     .emoji-mart-preview {
@@ -32,7 +62,27 @@
     }
 
     .emoji-mart-scroll {
+      height: 270px !important;
       max-height: 300px !important;
+      padding: 0 8px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: var(--color-border);
+        border-radius: 4px;
+        &:hover {
+          background: var(--color-text-secondary);
+        }
+      }
     }
 
     .emoji-mart-category-list {
@@ -42,5 +92,63 @@
     .emoji-mart-bar {
       border-color: var(--color-border) !important;
     }
+
+    // FIX THE BLACK HOVER ISSUE: Override the problematic hover effect
+    .emoji-mart-category .emoji-mart-emoji {
+      cursor: pointer !important;
+      padding: 4px !important;
+      border-radius: 4px !important;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: var(--color-surface-hover) !important;
+        transform: scale(1.1);
+      }
+
+      // Override the problematic :before pseudo-element
+      &:hover:before {
+        display: none !important; // This fixes the black hover issue
+      }
+
+      > * {
+        cursor: pointer !important;
+      }
+    }
+
+    // Category navigation buttons
+    .emoji-mart-anchor {
+      color: var(--color-text-secondary) !important;
+      
+      &:hover {
+        background: var(--color-surface-hover) !important;
+        color: var(--color-text) !important;
+      }
+      
+      &.emoji-mart-anchor-selected {
+        color: var(--color-primary) !important;
+        background: rgba(59, 130, 246, 0.1) !important;
+      }
+    }
+
+    // Emoji in category icons
+    .emoji-mart-category-icon .emoji-mart-emoji {
+      background: transparent !important;
+    }
+
+    // Skin tone picker
+    .emoji-mart-skin-swatches {
+      background: var(--color-surface) !important;
+      border-color: var(--color-border) !important;
+    }
+
+    .emoji-mart-skin-swatch {
+      border-color: var(--color-border) !important;
+      
+      &:hover {
+        background: var(--color-surface-hover) !important;
+      }
+    }
   }
-} 
+}
+
+ 

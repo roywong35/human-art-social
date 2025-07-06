@@ -112,4 +112,8 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     // Add any initialization logic here
   }
+
+  isMessagesPage(): boolean {
+    return this.router.url.startsWith('/messages');
+  }
 }

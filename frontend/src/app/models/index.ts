@@ -31,4 +31,5 @@ export interface AuthResponse {
   user?: User;
 }
 
-export { User } from './user.model'; 
+export { User } from './user.model';
+export { Message, Conversation, ConversationDetail, ChatMessage } from './chat.model'; 

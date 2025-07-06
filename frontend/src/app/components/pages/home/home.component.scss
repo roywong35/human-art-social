@@ -72,24 +72,4 @@
   }
 }
 
-.emoji-picker-container {
-  position: absolute;
-  z-index: 1000;
-}
 
-:host ::ng-deep {
-  .emoji-mart-search {
-    margin: 6px;
-    input {
-      width: 100%;
-      padding: 6px 25px;
-      border: 1px solid #d9d9d9;
-      border-radius: 20px;
-      outline: none;
-      
-      &:focus {
-        border-color: #4a9eff;
-      }
-    }
-  }
-}

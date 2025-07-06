@@ -23,40 +23,59 @@ export class EmojiPickerService {
   pickerState$ = this.pickerSubject.asObservable();
 
   showPicker(event: MouseEvent, targetElement?: HTMLElement, callback?: (emoji: any) => void) {
-    console.log('Showing picker with callback:', !!callback);
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
+    const spaceAbove = rect.top;
     const spaceBelow = viewportHeight - rect.bottom;
-    const spaceRight = viewportWidth - rect.left;
-    const pickerHeight = 435; // Height of the emoji picker
+    const pickerHeight = 350; // Height of the emoji picker
     const pickerWidth = 320; // Width of the emoji picker
+    const gap = 8; // Gap between picker and button
     
-    // Calculate vertical position
+    // Calculate vertical position - prefer above the button
     let top;
-    if (spaceBelow < pickerHeight && rect.top > pickerHeight) {
-      // Position above if not enough space below
-      top = rect.top - pickerHeight - 5;
+    const shouldPositionAbove = spaceAbove >= pickerHeight + gap + 10; // Ensure enough space above
+    
+    if (shouldPositionAbove) {
+      // Position above the button with gap
+      top = rect.top - pickerHeight - gap;
+    } else if (spaceBelow >= pickerHeight + gap + 10) {
+      // Position below the button with gap
+      top = rect.bottom + gap;
     } else {
-      // Position below
-      top = rect.bottom + 5;
+      // Not enough space above or below, position wherever fits better
+      if (spaceAbove > spaceBelow) {
+        // More space above, position at top of viewport with margin
+        top = 10;
+      } else {
+        // More space below, position as low as possible
+        top = viewportHeight - pickerHeight - 10;
+      }
     }
 
-    // Calculate horizontal position
+    // Calculate horizontal position - center the picker relative to the button
+    const buttonCenter = rect.left + (rect.width / 2);
+    const pickerLeftForCentering = buttonCenter - (pickerWidth / 2);
+    
     let left;
-    if (spaceRight < pickerWidth) {
-      // Position from right edge if not enough space on right
-      left = rect.right - pickerWidth;
+    if (pickerLeftForCentering < 10) {
+      // If centering would push picker off left edge, position from left edge
+      left = 10;
+    } else if (pickerLeftForCentering + pickerWidth > viewportWidth - 10) {
+      // If centering would push picker off right edge, position from right edge
+      left = viewportWidth - pickerWidth - 10;
     } else {
-      // Position from left edge
-      left = rect.left;
+      // Center the picker relative to the button
+      left = pickerLeftForCentering;
     }
+    
+
 
     this.pickerSubject.next({
       show: true,
       position: {
         top: top,
-        left: left
+        left: left + 5
       },
       targetElement,
       callback
