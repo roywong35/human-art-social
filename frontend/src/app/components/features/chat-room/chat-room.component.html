@@ -6,7 +6,7 @@
       <img 
         [src]="getOtherParticipant()?.profile_picture || 'assets/placeholder-image.svg'" 
         [alt]="getOtherParticipant()?.username"
-        class="w-8 h-8 rounded-full object-cover">
+        class="w-9 h-9 rounded-full object-cover">
       <div>
         <h2 class="font-bold text-gray-900 dark:text-white">{{ getOtherParticipant()?.username }}</h2>
         <p class="text-sm text-gray-500 dark:text-gray-400">{{"@"}}{{ getOtherParticipant()?.handle }}</p>

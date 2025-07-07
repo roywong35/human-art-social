@@ -13,6 +13,7 @@ export class ChatService {
   private apiUrl = `${environment.apiUrl}/api/chat`;
   private socket$?: WebSocketSubject<any>;
   private currentConversationId?: number;
+  private currentUserId?: number;
   
   // State management
   private conversationsSubject = new BehaviorSubject<Conversation[]>([]);
@@ -27,7 +28,12 @@ export class ChatService {
   constructor(
     private http: HttpClient,
     private authService: AuthService
-  ) {}
+  ) {
+    // Track current user ID for unread count logic
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUserId = user?.id;
+    });
+  }
 
   // Conversation API methods
   getConversations(): Observable<Conversation[]> {
@@ -196,15 +202,24 @@ export class ChatService {
     const conversations = this.conversationsSubject.value;
     const updatedConversations = conversations.map(conv => {
       if (conv.id === conversationId) {
+        // Only increment unread count if this is not our own message and we're not currently viewing this conversation
+        const shouldIncrementUnread = message.sender.id !== this.getCurrentUserId() && 
+                                    this.currentConversationId !== conversationId;
+        
         return {
           ...conv,
           last_message: message,
-          last_message_at: message.created_at
+          last_message_at: message.created_at,
+          unread_count: shouldIncrementUnread ? (conv.unread_count || 0) + 1 : conv.unread_count
         };
       }
       return conv;
     });
     this.conversationsSubject.next(updatedConversations);
+  }
+
+  private getCurrentUserId(): number | null {
+    return this.currentUserId || null;
   }
 
   private handleWebSocketMessage(message: ChatMessage) {

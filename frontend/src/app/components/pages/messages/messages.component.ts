@@ -34,7 +34,6 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private readonly DESKTOP_BREAKPOINT = 1120;
   private readonly MOBILE_BREAKPOINT = 800;
   
-  private conversationsSub?: Subscription;
   private routeSub?: Subscription;
   private currentUserSub?: Subscription;
   
@@ -76,14 +75,10 @@ export class MessagesComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Subscribe to conversations updates
-    this.conversationsSub = this.chatService.conversations$.subscribe(conversations => {
-      this.conversations = conversations;
-    });
+
   }
 
   ngOnDestroy() {
-    this.conversationsSub?.unsubscribe();
     this.routeSub?.unsubscribe();
     this.currentUserSub?.unsubscribe();
   }
@@ -132,6 +127,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
         this.selectedConversation = conversation;
         // Connect to WebSocket for this conversation
         this.chatService.connectToConversation(numericId);
+        // Mark conversation as read when opened
+        this.markConversationAsRead(numericId);
       },
       error: (error) => {
         console.error('Error loading conversation:', error);
@@ -141,6 +138,24 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   selectConversation(conversation: Conversation) {
     this.router.navigate(['/messages', conversation.id]);
+  }
+
+  private markConversationAsRead(conversationId: number) {
+    this.chatService.markConversationAsRead(conversationId).subscribe({
+      next: () => {
+        // Update the local conversations array to reset unread count
+        this.conversations = this.conversations.map(conv => {
+          if (conv.id === conversationId) {
+            return { ...conv, unread_count: 0 };
+          }
+          return conv;
+        });
+        console.log('Conversation marked as read:', conversationId);
+      },
+      error: (error) => {
+        console.error('Error marking conversation as read:', error);
+      }
+    });
   }
 
   goBackToChatList() {

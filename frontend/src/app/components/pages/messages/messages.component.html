@@ -35,7 +35,7 @@
         <div 
           *ngFor="let conversation of conversations" 
           (click)="selectConversation(conversation)"
-          class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors"
+          class="p-3 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors"
           [class.bg-blue-50]="selectedConversation?.id === conversation.id"
           [class.dark:bg-blue-900]="selectedConversation?.id === conversation.id">
           
@@ -52,7 +52,7 @@
             <div class="flex-1 min-w-0"
                  [class.max-w-[240px]]="isDesktop"
                  [class.max-w-[calc(100vw-120px)]]="!isDesktop">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
                 <p class="text-base font-medium text-gray-900 dark:text-white truncate"
                    [class.max-w-[140px]]="isDesktop"
                    [class.max-w-[calc(100vw-200px)]]="!isDesktop">
@@ -63,18 +63,20 @@
                 </p>
               </div>
               
-              <div class="flex items-center justify-between">
-                <p class="text-sm text-gray-500 dark:text-gray-400 truncate"
+              <div class="flex items-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400 truncate flex-1"
                    [class.max-w-[200px]]="isDesktop"
                    [class.max-w-[calc(100vw-180px)]]="!isDesktop">
                   {{ conversation.last_message?.content || 'No messages yet' }}
                 </p>
-                <div 
-                  *ngIf="conversation.unread_count > 0"
-                  class="bg-blue-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center flex-shrink-0">
-                  {{ conversation.unread_count }}
-                </div>
               </div>
+            </div>
+
+            <!-- Unread Count (Centered vertically) -->
+            <div 
+              *ngIf="conversation.unread_count > 0"
+              class="bg-blue-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
+              {{ conversation.unread_count }}
             </div>
           </div>
         </div>
