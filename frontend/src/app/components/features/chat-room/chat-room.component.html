@@ -93,14 +93,14 @@
   </div>
 
   <!-- Image Preview -->
-  <div *ngIf="imagePreviews.length > 0" class="px-4 py-2 border-t border-gray-200 dark:border-gray-800">
-    <div class="flex items-center space-x-2">
-      <div *ngFor="let preview of imagePreviews; let i = index" class="relative">
+  <div *ngIf="imagePreviews.length > 0" class="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
+    <div class="flex flex-col items-start space-y-2">
+      <div *ngFor="let preview of imagePreviews; let i = index" class="relative inline-block">
         <img [src]="preview" 
              alt="Image preview"
-             class="w-16 h-16 object-cover rounded-lg">
+             class="max-h-[150px] max-w-full object-contain rounded-lg">
         <button (click)="removeImage(i)"
-                class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600">
+                class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 shadow-lg">
           ×
         </button>
       </div>
