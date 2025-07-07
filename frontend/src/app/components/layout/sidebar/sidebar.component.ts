@@ -16,6 +16,8 @@ import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
 import { NotificationService } from '../../../services/notification.service';
 import { Subscription } from 'rxjs';
 
+
+
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
@@ -39,6 +41,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   @ViewChild('userMenuTpl') userMenuTpl!: TemplateRef<any>;
   @ViewChild('userMenuButton', { read: ElementRef }) userMenuButton!: ElementRef;
+
+  // === MORE DROPDOWN FUNCTIONALITY ===
+  showMoreMenu = false;
+  private moreOverlayRef: OverlayRef | null = null;
+  @ViewChild('moreMenuTpl') moreMenuTpl!: TemplateRef<any>;
+  @ViewChild('moreMenuButton', { read: ElementRef }) moreMenuButton!: ElementRef;
 
   constructor(
     public authService: AuthService,
@@ -93,13 +101,95 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.notificationSubscription = this.notificationService.unreadCount$.subscribe(count => {
       this.unreadNotifications = count;
     });
+
   }
 
   ngOnDestroy() {
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
     }
+    
+    // Clean up overlays
+    this.closeUserMenu();
+    this.closeMoreMenu();
   }
+
+  // More menu functionality
+  toggleMoreMenu(event: MouseEvent) {
+    event.stopPropagation();
+    if (this.showMoreMenu) {
+      this.closeMoreMenu();
+    } else {
+      this.openMoreMenu();
+    }
+  }
+
+  openMoreMenu() {
+    if (!this.moreMenuButton || !this.moreMenuTpl) {
+      return;
+    }
+
+    // Create the overlay
+    const positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(this.moreMenuButton)
+      .withPositions([{
+        originX: 'start',
+        originY: 'bottom',
+        overlayX: 'start',
+        overlayY: 'bottom',
+        offsetX: -15,
+        offsetY: 10
+      }]);
+
+    this.moreOverlayRef = this.overlay.create({
+      positionStrategy,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      panelClass: 'more-menu-overlay'
+    });
+
+    // Create and attach the portal
+    const portal = new TemplatePortal(this.moreMenuTpl, this.viewContainerRef);
+    this.moreOverlayRef.attach(portal);
+
+    // Handle backdrop clicks
+    this.moreOverlayRef.backdropClick().subscribe(() => this.closeMoreMenu());
+
+    this.showMoreMenu = true;
+  }
+
+  closeMoreMenu() {
+    if (this.moreOverlayRef) {
+      this.moreOverlayRef.dispose();
+      this.moreOverlayRef = null;
+    }
+    this.showMoreMenu = false;
+  }
+
+
+
+  // === WIDTH RESPONSIVE LOGIC (EXISTING) ===
+  
+  getDesktopLinkClasses(): string {
+    const baseClasses = 'flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]';
+    return baseClasses + ' xl:justify-start xl:w-full xl:h-auto xl:p-3';
+  }
+
+  getDesktopTextClasses(): string {
+    return 'ml-4 xl:block hidden';
+  }
+
+  getUserMenuClasses(): string {
+    const baseClasses = 'w-14 h-14 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors';
+    return baseClasses + ' xl:w-full xl:h-auto xl:p-3 xl:justify-start';
+  }
+
+  // More button specific classes
+  getMoreButtonClasses(): string {
+    return this.getDesktopLinkClasses();
+  }
+
+  // === EXISTING FUNCTIONALITY (UNCHANGED) ===
 
   toggleFollowingOnly(): void {
     if (this.isTogglingFollowingOnly) {
@@ -237,20 +327,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return this.router.url.startsWith('/messages');
   }
 
-  getDesktopLinkClasses(): string {
-    const baseClasses = 'flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]';
-    return baseClasses + ' xl:justify-start xl:w-full xl:h-auto xl:p-3';
-  }
-
-  getDesktopTextClasses(): string {
-    return 'ml-4 xl:block hidden';
-  }
-
-  getUserMenuClasses(): string {
-    const baseClasses = 'w-14 h-14 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors';
-    return baseClasses + ' xl:w-full xl:h-auto xl:p-3 xl:justify-start';
-  }
-
   private updateDarkMode(isDark: boolean): void {
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -265,6 +341,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const clickedInside = this.elementRef.nativeElement.contains(event.target);
     if (!clickedInside && this.showUserMenu) {
       this.closeUserMenu();
+    }
+    if (!clickedInside && this.showMoreMenu) {
+      this.closeMoreMenu();
     }
   }
 
@@ -292,4 +371,4 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     });
   }
-} 
+}

@@ -1,1 +1,73 @@
 /* This component uses Tailwind CSS classes for styling */
+
+/* Height-responsive sidebar layout */
+
+/* Default: Hide everything until we determine what to show */
+.navigation-container {
+  overflow: hidden;
+}
+
+.more-button-container {
+  display: none;
+}
+
+/* Case 1: >768px - Show everything, no More button needed */
+@media (min-height: 768px) {
+  .secondary-item {
+    display: block !important;
+  }
+  
+  .more-button-container {
+    display: none !important;
+  }
+}
+
+/* Case 2: 656px-768px - Show core + bookmarks + More (with following, dark mode inside) */
+@media (min-height: 656px) and (max-height: 767px) {
+  .secondary-item-high {
+    display: block !important; /* Show bookmarks */
+  }
+  
+  .secondary-item-medium,
+  .secondary-item-low {
+    display: none !important; /* Hide following and dark mode */
+  }
+  
+  .more-button-container {
+    display: block !important;
+  }
+}
+
+/* Case 3: 601px-655px - Show core + More (with bookmarks, following, dark mode inside) */
+@media (min-height: 601px) and (max-height: 655px) {
+  .secondary-item {
+    display: none !important; /* Hide all secondary items */
+  }
+  
+  .more-button-container {
+    display: block !important;
+  }
+}
+
+/* Case 4: <=600px - Enable scrollbar, keep More button with all secondary items inside */
+@media (max-height: 600px) {
+  .navigation-container {
+    overflow-y: auto !important;
+  }
+  
+  .secondary-item {
+    display: none !important; /* Keep secondary items hidden */
+  }
+  
+  .more-button-container {
+    display: block !important; /* Keep More button */
+  }
+}
+
+/* Mobile: Always show all items in horizontal layout */
+@media (max-width: 500px) {
+  .secondary-item,
+  .more-button-container {
+    display: block !important;
+  }
+}

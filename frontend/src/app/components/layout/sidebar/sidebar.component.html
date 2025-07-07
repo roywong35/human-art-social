@@ -9,10 +9,11 @@
   </div>
 
   <!-- Navigation Links -->
-  <div [class]="isMobile ? 'flex justify-around py-2' : 'flex-1 overflow-y-auto'">
+  <div [class]="isMobile ? 'flex justify-around py-2' : 'flex-1 navigation-container'">
     <ul [class]="isMobile ? 'flex justify-around w-full items-center' : 'px-3 py-3 space-y-3'">
+      
       <!-- Home -->
-      <li>
+      <li class="core-item">
         <a routerLink="/home" 
            routerLinkActive="text-blue-500"
            [routerLinkActiveOptions]="{exact: true}"
@@ -25,7 +26,7 @@
       </li>
 
       <!-- Search -->
-      <li>
+      <li class="core-item">
         <a routerLink="/search" 
           routerLinkActive="text-blue-500"
           [routerLinkActiveOptions]="{exact: true}"
@@ -38,7 +39,7 @@
       </li>
 
       <!-- Notifications -->
-      <li>
+      <li class="core-item">
         <a routerLink="/notifications" 
            routerLinkActive="text-blue-500"
            [routerLinkActiveOptions]="{exact: true}"
@@ -56,7 +57,7 @@
       </li>
 
       <!-- Messages -->
-      <li>
+      <li class="core-item">
         <a routerLink="/messages" 
            routerLinkActive="text-blue-500"
            [routerLinkActiveOptions]="{exact: false}"
@@ -68,21 +69,8 @@
         </a>
       </li>
 
-      <!-- Profile -->
-      <li>
-        <a [routerLink]="['/', (authService.currentUser$ | async)?.handle]"
-           routerLinkActive="text-blue-500"
-           [routerLinkActiveOptions]="{exact: true}"
-           [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : getDesktopLinkClasses()">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <span [class]="isMobile ? 'hidden' : getDesktopTextClasses()" [ngClass]="{'font-bold': router.url === '/' + (authService.currentUser$ | async)?.handle}">Profile</span>
-        </a>
-      </li>
-
-      <!-- Bookmarks -->
-      <li>
+      <!-- Bookmarks - Hidden on medium heights -->
+      <li class="secondary-item secondary-item-high">
         <a routerLink="/bookmarks" 
            routerLinkActive="text-blue-500"
            [routerLinkActiveOptions]="{exact: true}"
@@ -94,8 +82,21 @@
         </a>
       </li>
 
-      <!-- Dynamic Action Button -->
-      <li class="mt-2 hidden min-[500px]:block">
+      <!-- Profile -->
+      <li class="core-item">
+        <a [routerLink]="['/', (authService.currentUser$ | async)?.handle]"
+           routerLinkActive="text-blue-500"
+           [routerLinkActiveOptions]="{exact: true}"
+           [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]' : getDesktopLinkClasses()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span [class]="isMobile ? 'hidden' : getDesktopTextClasses()" [ngClass]="{'font-bold': router.url === '/' + (authService.currentUser$ | async)?.handle}">Profile</span>
+        </a>
+      </li>
+
+      <!-- Create Post Button -->
+      <li class="mt-2 hidden min-[500px]:block core-item">
         <button 
           (click)="openContextModal()"
           [class]="getDesktopLinkClasses()"
@@ -108,8 +109,8 @@
         </button>
       </li>
 
-      <!-- All Posts Toggle -->
-      <li>
+      <!-- Following/All Posts Toggle - Hidden on smaller heights -->
+      <li class="secondary-item secondary-item-medium">
         <button (click)="toggleFollowingOnly()" 
                 [disabled]="isTogglingFollowingOnly"
                 [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg' : getDesktopLinkClasses() + ' border-2 border-gray-200 dark:border-gray-700'"
@@ -121,8 +122,8 @@
         </button>
       </li>
 
-      <!-- Dark Mode Toggle -->
-      <li>
+      <!-- Dark Mode Toggle - Hidden on smaller heights -->
+      <li class="secondary-item secondary-item-low">
         <button (click)="toggleDarkMode()"
                 [class]="isMobile ? 'flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg' : getDesktopLinkClasses() + ' border-2 border-gray-200 dark:border-gray-700'"
                 [ngClass]="{
@@ -135,6 +136,18 @@
           <span [class]="isMobile ? 'hidden' : getDesktopTextClasses()">{{ isDarkMode ? 'Dark Mode' : 'Light Mode' }}</span>
         </button>
       </li>
+
+      <!-- More Button - Shows when secondary items are hidden -->
+      <li class="more-button-container" *ngIf="!isMobile">
+        <button #moreMenuButton
+                (click)="toggleMoreMenu($event)"
+                [class]="getMoreButtonClasses()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+          </svg>
+          <span [class]="getDesktopTextClasses()">More</span>
+        </button>
+      </li>
     </ul>
   </div>
 
@@ -143,7 +156,7 @@
     <button #userMenuButton
             (click)="toggleUserMenu($event)" 
             [class]="getUserMenuClasses()">
-              <div class="flex items-center justify-center xl:justify-start w-full">
+      <div class="flex items-center justify-center xl:justify-start w-full">
         <div class="w-11 h-11 rounded-full overflow-hidden flex-shrink-0">
           <img *ngIf="(authService.currentUser$ | async)?.profile_picture" 
                [src]="(authService.currentUser$ | async)?.profile_picture" 
@@ -192,6 +205,47 @@
         </svg>
         <span>Log out</span>
       </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- More Menu Template -->
+<ng-template #moreMenuTpl>
+  <div class="w-[280px] bg-white dark:[background-color:var(--color-background)] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_20px_rgba(255,255,255,0.15)] cursor-pointer overflow-visible">
+    <div class="rounded-xl overflow-hidden py-2">
+      
+      <!-- Bookmarks in More Menu -->
+      <a routerLink="/bookmarks" 
+         (click)="closeMoreMenu()"
+         routerLinkActive="text-blue-500"
+         [routerLinkActiveOptions]="{exact: true}"
+         class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+        </svg>
+        <span class="text-lg">Bookmarks</span>
+      </a>
+
+      <!-- Following Toggle in More Menu -->
+      <button (click)="toggleFollowingOnly(); closeMoreMenu()" 
+              [disabled]="isTogglingFollowingOnly"
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]"
+              [ngClass]="{'text-blue-500': isFollowingOnly}">
+        <i class="fas fa-user-friends text-xl w-6 flex justify-center"></i>
+        <span class="text-lg">{{ isFollowingOnly ? 'Following' : 'All Posts' }}</span>
+      </button>
+
+      <!-- Dark Mode Toggle in More Menu -->
+      <button (click)="toggleDarkMode(); closeMoreMenu()"
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]"
+              [ngClass]="{'text-blue-500': isDarkMode}">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path *ngIf="isDarkMode" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          <path *ngIf="!isDarkMode" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2M5.636 5.636l1.414 1.414m10.607 10.607l1.414 1.414M3 12h2m14 0h2M7.05 7.05L5.636 5.636m12.728 0l-1.414 1.414M5.636 18.364L7.05 16.95m10.607-10.607l1.414-1.414M17 12a5 5 0 11-10 0 5 5 0 0110 0z" />
+        </svg>
+        <span class="text-lg">{{ isDarkMode ? 'Dark Mode' : 'Light Mode' }}</span>
+      </button>
+
     </div>
   </div>
 </ng-template> 
