@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +28,12 @@ export class MessagesComponent implements OnInit, OnDestroy {
   searchResults: User[] = [];
   isSearching = false;
   
+  // Responsive design
+  isDesktop = true;
+  showChatList = true; // For mobile view switching
+  private readonly DESKTOP_BREAKPOINT = 1120;
+  private readonly MOBILE_BREAKPOINT = 800;
+  
   private conversationsSub?: Subscription;
   private routeSub?: Subscription;
   private currentUserSub?: Subscription;
@@ -41,6 +47,9 @@ export class MessagesComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    // Initialize responsive state
+    this.checkScreenSize();
+
     // Get current user
     this.currentUserSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -54,8 +63,16 @@ export class MessagesComponent implements OnInit, OnDestroy {
       const conversationId = params.get('conversationId');
       if (conversationId) {
         this.loadConversation(conversationId);
+        // On mobile, show chat room when conversation is selected
+        if (!this.isDesktop) {
+          this.showChatList = false;
+        }
       } else {
         this.selectedConversation = null;
+        // On mobile, show chat list when no conversation is selected
+        if (!this.isDesktop) {
+          this.showChatList = true;
+        }
       }
     });
 
@@ -69,6 +86,32 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.conversationsSub?.unsubscribe();
     this.routeSub?.unsubscribe();
     this.currentUserSub?.unsubscribe();
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.checkScreenSize();
+  }
+
+  private checkScreenSize() {
+    this.isDesktop = window.innerWidth >= this.DESKTOP_BREAKPOINT;
+    
+    // Reset mobile view state when switching to desktop
+    if (this.isDesktop) {
+      this.showChatList = true;
+    } else if (window.innerWidth >= this.MOBILE_BREAKPOINT) {
+      // Tablet/mobile view with 720px width (>800px <1120px)
+      const hasConversation = this.selectedConversation !== null;
+      this.showChatList = !hasConversation;
+    } else {
+      // Small mobile view (<800px) - full width
+      const hasConversation = this.selectedConversation !== null;
+      this.showChatList = !hasConversation;
+    }
+  }
+
+  get shouldUseFixedWidth(): boolean {
+    return window.innerWidth >= this.MOBILE_BREAKPOINT;
   }
 
   loadConversations() {
@@ -98,6 +141,10 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   selectConversation(conversation: Conversation) {
     this.router.navigate(['/messages', conversation.id]);
+  }
+
+  goBackToChatList() {
+    this.router.navigate(['/messages']);
   }
 
   openCreateChatModal() {

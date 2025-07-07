@@ -19,6 +19,7 @@ import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterViewChecked {
   @Input() conversation!: ConversationDetail;
   @Input() currentUser!: User | null;
+  @Input() isMobileView: boolean = false;
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
   @ViewChild('messageInput') messageInput!: ElementRef;
   @ViewChild('fileInput') fileInput!: ElementRef;
@@ -294,12 +295,15 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
   getMessageTimeDisplay(message: Message): string {
     const date = new Date(message.created_at);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 1) {
+    // Check if message is from today
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      // Show just time for today's messages
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     } else {
+      // Show date + time for messages from previous days
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
              ' ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     }

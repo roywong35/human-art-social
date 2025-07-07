@@ -3,10 +3,21 @@
   height: 100vh;
 }
 
-// Chat list styles
+// Chat list styles - fixed width that doesn't change based on content
 .chat-list {
+  width: 320px;
   min-width: 320px;
   max-width: 320px;
+  flex-shrink: 0;
+}
+
+// Responsive behavior
+@media (max-width: 1059px) {
+  .chat-list {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
 }
 
 // Conversation item hover effects

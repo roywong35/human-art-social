@@ -12,6 +12,31 @@
   }
 }
 
+// Custom message bubble shapes to make them look like they come from avatars
+.px-4.py-2.rounded-2xl {
+  // Right side messages (current user) - make bottom-right corner sharp
+  &.bg-blue-500 {
+    border-radius: 20px 20px 3px 20px !important;
+  }
+  
+  // Left side messages (other user) - make bottom-left corner sharp
+  &.bg-gray-100 {
+    border-radius: 20px 20px 20px 3px !important;
+  }
+  
+  // Dark mode left side messages
+  &.bg-gray-100.dark\:bg-gray-800 {
+    border-radius: 20px 20px 20px 3px !important;
+  }
+}
+
+// Dark mode specific targeting
+.dark .px-4.py-2.rounded-2xl {
+  &.bg-gray-100 {
+    border-radius: 20px 20px 20px 3px !important;
+  }
+}
+
 // Typing animation
 @keyframes bounce {
   0%, 60%, 100% {

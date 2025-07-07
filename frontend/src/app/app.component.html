@@ -19,27 +19,27 @@
     <!-- Container that centers content -->
     <div class="flex justify-center">
       <!-- Fixed-width container -->
-      <div [class]="authService.isAuthenticated() ? 'relative flex w-[1225px] max-w-full' : 'w-full'">
+      <div [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'relative flex w-full min-[800px]:w-[800px] min-[1120px]:w-[1120px] min-[1340px]:w-[1315px]' : 'relative flex min-[681px]:w-[680px] min-[1060px]:w-[1030px] xl:w-[1225px]') : 'w-full'">
         <!-- Left Sidebar -->
         <div *ngIf="authService.isAuthenticated()" 
              class="hidden min-[500px]:block">
-          <div class="fixed h-screen w-[80px] xl:w-[275px]">
+          <div [class]="isMessagesPage() ? 'fixed h-screen w-[80px] min-[1340px]:w-[275px]' : 'fixed h-screen w-[80px] xl:w-[275px]'">
             <app-sidebar></app-sidebar>
           </div>
         </div>
 
         <!-- Main Content Container -->
-        <div [class]="authService.isAuthenticated() ? 'flex-1 min-[500px]:ml-[80px] xl:ml-[275px]' : 'w-full'">
+        <div [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'flex-1 min-[500px]:ml-[80px] min-[1340px]:ml-[275px]' : 'flex-1 min-[500px]:ml-[80px] xl:ml-[275px]') : 'w-full'">
           <div class="flex">
             <!-- Main Content -->
-            <main [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'w-screen min-[500px]:w-full pt-14 min-[500px]:pt-0' : 'w-screen min-[500px]:w-full max-w-[600px] border-x border-gray-100 dark:border-gray-800 pt-14 min-[500px]:pt-0') : 'w-full'">
+            <main [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'w-full pt-14 min-[500px]:pt-0' : 'w-full max-w-[600px] border-x border-gray-100 dark:border-gray-800 pt-14 min-[500px]:pt-0') : 'w-full'">
               <router-outlet></router-outlet>
               <app-emoji-picker></app-emoji-picker>
             </main>
 
             <!-- Right Sidebar -->
             <div *ngIf="authService.isAuthenticated() && !isMessagesPage()" 
-                 class="hidden min-[1050px]:block w-[350px]">
+                 class="hidden min-[1060px]:block w-[350px]">
               <app-right-sidebar></app-right-sidebar>
             </div>
           </div>
