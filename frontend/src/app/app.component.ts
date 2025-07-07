@@ -116,4 +116,8 @@ export class AppComponent implements OnInit {
   isMessagesPage(): boolean {
     return this.router.url.startsWith('/messages');
   }
+
+  isNotificationsPage(): boolean {
+    return this.router.url === '/notifications';
+  }
 }
