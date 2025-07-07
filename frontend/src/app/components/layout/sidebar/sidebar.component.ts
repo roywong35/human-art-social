@@ -239,28 +239,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   getDesktopLinkClasses(): string {
     const baseClasses = 'flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]';
-    if (this.isMessagesPage()) {
-      return baseClasses + ' min-[1340px]:justify-start min-[1340px]:w-full min-[1340px]:h-auto min-[1340px]:p-3';
-    } else {
-      return baseClasses + ' xl:justify-start xl:w-full xl:h-auto xl:p-3';
-    }
+    return baseClasses + ' xl:justify-start xl:w-full xl:h-auto xl:p-3';
   }
 
   getDesktopTextClasses(): string {
-    if (this.isMessagesPage()) {
-      return 'ml-4 min-[1340px]:block hidden';
-    } else {
-      return 'ml-4 xl:block hidden';
-    }
+    return 'ml-4 xl:block hidden';
   }
 
   getUserMenuClasses(): string {
     const baseClasses = 'w-14 h-14 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors';
-    if (this.isMessagesPage()) {
-      return baseClasses + ' min-[1340px]:w-full min-[1340px]:h-auto min-[1340px]:p-3 min-[1340px]:justify-start';
-    } else {
-      return baseClasses + ' xl:w-full xl:h-auto xl:p-3 xl:justify-start';
-    }
+    return baseClasses + ' xl:w-full xl:h-auto xl:p-3 xl:justify-start';
   }
 
   private updateDarkMode(isDark: boolean): void {
