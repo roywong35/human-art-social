@@ -177,20 +177,6 @@
           </a>
         </li>
 
-        <!-- Create Post Button -->
-        <li class="mt-2 core-item">
-          <button 
-            (click)="openContextModal()"
-            [class]="getDesktopLinkClasses()"
-            [ngStyle]="{
-              'background': isHumanArtTab ? 'linear-gradient(45deg, #0d9488, #0f766e)' : 'linear-gradient(45deg, var(--color-primary), var(--color-primary-hover))'
-            }"
-            style="color: white !important;">
-            <i class="fas h-7 w-7 text-lg flex items-center justify-center" [class.fa-plus]="!isHumanArtTab" [class.fa-paint-brush]="isHumanArtTab"></i>
-            <span [class]="getDesktopTextClasses()" style="font-weight: bold;">{{ isHumanArtTab ? 'Add Human Art' : 'Create Post' }}</span>
-          </button>
-        </li>
-
         <!-- Following/All Posts Toggle - Hidden on smaller heights -->
         <li class="secondary-item secondary-item-medium">
           <button (click)="toggleFollowingOnly()" 
@@ -225,9 +211,23 @@
                   (click)="toggleMoreMenu($event)"
                   [class]="getMoreButtonClasses()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
             <span [class]="getDesktopTextClasses()">More</span>
+          </button>
+        </li>
+
+        <!-- Create Post Button -->
+        <li class="mt-2 core-item">
+          <button 
+            (click)="openContextModal()"
+            [class]="getDesktopLinkClasses()"
+            [ngStyle]="{
+              'background': isHumanArtTab ? 'linear-gradient(45deg, #0d9488, #0f766e)' : 'linear-gradient(45deg, var(--color-primary), var(--color-primary-hover))'
+            }"
+            style="color: white !important;">
+            <i class="fas h-7 w-7 text-lg flex items-center justify-center" [class.fa-plus]="!isHumanArtTab" [class.fa-paint-brush]="isHumanArtTab"></i>
+            <span [class]="getDesktopTextClasses()" style="font-weight: bold;">{{ isHumanArtTab ? 'Add Human Art' : 'Create Post' }}</span>
           </button>
         </li>
       </ng-container>
