@@ -1,6 +1,7 @@
-<div class="flex flex-col h-full bg-white dark:bg-black">
-  <!-- Chat Header -->
-  <div class="px-4 py-3 dark:border-gray-800 flex items-center"
+<div class="flex flex-col h-full bg-white dark:bg-black"
+     [class.floating-chat-mode]="isFloatingChat">
+  <!-- Chat Header (hidden when in floating chat) -->
+  <div *ngIf="!isFloatingChat" class="px-4 py-3 dark:border-gray-800 flex items-center"
        [class.pl-16]="isMobileView">
     <div class="flex items-center space-x-3">
       <img 
@@ -33,8 +34,8 @@
          [class.justify-start]="!isMessageFromCurrentUser(message)">
       
       <div class="flex items-end space-x-2 max-w-[75%]">
-        <!-- Other user avatar -->
-        <img *ngIf="!isMessageFromCurrentUser(message)"
+        <!-- Other user avatar (hidden when in floating chat) -->
+        <img *ngIf="!isMessageFromCurrentUser(message) && !isFloatingChat"
              [src]="getOtherParticipant()?.profile_picture || 'assets/placeholder-image.svg'"
              [alt]="getOtherParticipant()?.username"
              class="w-6 h-6 rounded-full object-cover flex-shrink-0">
@@ -67,8 +68,8 @@
           </p>
         </div>
 
-        <!-- Current user avatar -->
-        <img *ngIf="isMessageFromCurrentUser(message)"
+        <!-- Current user avatar (hidden when in floating chat) -->
+        <img *ngIf="isMessageFromCurrentUser(message) && !isFloatingChat"
              [src]="currentUser?.profile_picture || 'assets/placeholder-image.svg'"
              [alt]="currentUser?.username"
              class="w-6 h-6 rounded-full object-cover flex-shrink-0">
@@ -78,7 +79,7 @@
     <!-- Typing indicator -->
     <div *ngIf="typingUsers.length > 0" class="flex justify-start">
       <div class="flex items-end space-x-2">
-        <img [src]="getOtherParticipant()?.profile_picture || 'assets/placeholder-image.svg'"
+        <img *ngIf="!isFloatingChat" [src]="getOtherParticipant()?.profile_picture || 'assets/placeholder-image.svg'"
              [alt]="getOtherParticipant()?.username"
              class="w-6 h-6 rounded-full object-cover">
         <div class="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">

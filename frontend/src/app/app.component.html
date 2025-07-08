@@ -53,6 +53,11 @@
       <app-sidebar [isMobile]="true"></app-sidebar>
     </div>
   </div>
+  
+  <!-- Floating Chat (only show when authenticated, not on messages page, and on larger screens like right sidebar) -->
+  <app-floating-chat *ngIf="authService.isAuthenticated() && !isMessagesPage()" 
+                     class="hidden min-[1060px]:block"></app-floating-chat>
+  
   <app-toast></app-toast>
 </div>
   

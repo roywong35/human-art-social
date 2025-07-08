@@ -14,12 +14,16 @@ import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
   standalone: true,
   imports: [CommonModule, FormsModule, TimeAgoPipe],
   templateUrl: './chat-room.component.html',
-  styleUrls: ['./chat-room.component.scss']
+  styleUrls: ['./chat-room.component.scss'],
+  host: {
+    '[class.floating-chat-mode]': 'isFloatingChat'
+  }
 })
 export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterViewChecked {
   @Input() conversation!: ConversationDetail;
   @Input() currentUser!: User | null;
   @Input() isMobileView: boolean = false;
+  @Input() isFloatingChat: boolean = false;
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
   @ViewChild('messageInput') messageInput!: ElementRef;
   @ViewChild('fileInput') fileInput!: ElementRef;

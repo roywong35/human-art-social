@@ -1,0 +1,399 @@
+.floating-message-box {
+  // Ensure it's above other content but below modals
+  z-index: 60;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // Default shadows (overridden by component-level classes)
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.06);
+  
+  // General button shadows (subtle)
+  button {
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-1px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  // Message box header - no competing shadows
+  .message-box-header {
+    // Removed shadow to let main container shadow be prominent
+  }
+}
+
+.chat-content {
+  // Smooth animations for expanding upward
+  animation: slideInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: bottom;
+  will-change: transform, opacity;
+  
+  // Remove height transition - instant switching between views
+  // transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // Ensure proper height constraints
+  overflow: hidden;
+  
+  // Custom scrollbar for chat list
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 #f7fafc;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f7fafc;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e0;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #a0aec0;
+      }
+    }
+  }
+  
+  // Chat room container
+  app-chat-room {
+    display: block;
+    height: 100%; // Full height within container
+    overflow: hidden; // Prevent overflow
+  }
+  
+  // Create chat modal styling
+  .create-chat-modal {
+    box-shadow: 
+      0 25px 50px -12px rgba(0, 0, 0, 0.25),
+      0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+  
+  // Conversation item hover effects
+  .conversation-item {
+    transition: all 0.2s ease;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+  }
+  
+  // Avatar glow effects
+  .avatar-glow {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+  }
+  
+  // Header shadows removed to avoid competing with main shadow
+}
+
+// COMPONENT-LEVEL shadow control (normal, pleasant levels)
+.light-mode-shadow {
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),       // Main shadow for depth
+    0 4px 10px rgba(0, 0, 0, 0.1),        // Secondary shadow
+    0 2px 4px rgba(0, 0, 0, 0.06);        // Close shadow for definition
+}
+
+// COMPONENT-LEVEL dark mode shadow (normal, pleasant levels)
+.dark-mode-shadow {
+  box-shadow: 
+    0 8px 25px rgba(255, 255, 255, 0.2),  // Main white shadow
+    0 4px 10px rgba(255, 255, 255, 0.15), // Secondary white shadow
+    0 2px 4px rgba(255, 255, 255, 0.1);   // Close white shadow for definition
+}
+
+// Enhanced animations
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.92);
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    visibility: visible;
+  }
+}
+
+// Collapse animation (using Angular animations would be better, but this works for CSS-only)
+.chat-content.closing {
+  animation: slideOutDown 0.25s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(30px) scale(0.92);
+    visibility: hidden;
+  }
+}
+
+// Remove stagger animations for conversation list items
+// .chat-content .overflow-y-auto > div {
+//   animation: fadeInUp 0.4s ease-out;
+//   animation-fill-mode: both;
+// }
+
+// .chat-content .overflow-y-auto > div:nth-child(1) { animation-delay: 0.05s; }
+// .chat-content .overflow-y-auto > div:nth-child(2) { animation-delay: 0.1s; }
+// .chat-content .overflow-y-auto > div:nth-child(3) { animation-delay: 0.15s; }
+// .chat-content .overflow-y-auto > div:nth-child(4) { animation-delay: 0.2s; }
+// .chat-content .overflow-y-auto > div:nth-child(5) { animation-delay: 0.25s; }
+
+// @keyframes fadeInUp {
+//   from {
+//     opacity: 0;
+//     transform: translateY(10px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+// Simple responsive adjustments
+@media (min-width: 1060px) and (max-width: 1110px) {
+  .floating-message-box {
+    width: 320px !important; // Smaller width for tighter screens
+    right: 1rem !important;
+  }
+}
+
+// Hide on smaller screens (handled by Tailwind classes in HTML)
+@media (max-width: 1059px) {
+  .floating-message-box {
+    display: none !important;
+  }
+}
+
+// Floating chat optimizations
+.floating-message-box {
+  app-chat-room {
+    // Ensure the chat room respects container boundaries
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    
+    // Compact message spacing for floating chat
+    .message-bubble {
+      margin-bottom: 8px;
+    }
+    
+    // Smaller avatars for compact view
+    .avatar {
+      width: 32px;
+      height: 32px;
+    }
+    
+    // Adjust message input for smaller width
+    .message-input {
+      min-height: 36px;
+      max-height: 80px; // Reduced max height for floating chat
+      font-size: 14px;
+    }
+    
+    // Compact message bubbles
+    .px-4.py-2.rounded-2xl {
+      padding: 8px 12px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    
+    // Smaller send button
+    .send-button {
+      padding: 6px 12px;
+    }
+    
+    // Compact message container
+    .messages-container {
+      padding: 8px;
+    }
+    
+    // Adjust image previews for smaller space
+    .image-preview {
+      max-width: 180px;
+      max-height: 120px;
+    }
+    
+    // Compact input area
+    .input-area {
+      padding: 8px;
+      flex-shrink: 0; // Prevent input from shrinking
+    }
+    
+    // Ensure proper layout structure
+    .flex.flex-col.h-full {
+      height: 100%;
+      
+      // Messages area
+      .flex-1.overflow-y-auto {
+        min-height: 0;
+        flex: 1;
+      }
+      
+      // Input area at bottom
+      .px-3.pt-1.border-t {
+        flex-shrink: 0;
+        margin-top: auto;
+      }
+    }
+  }
+}
+
+// Dark mode floating chat optimizations (fallback - overridden by component classes)
+:root.dark .floating-message-box {
+  background-color: #000000;
+  border-color: #374151;
+  color: #f9fafb;
+  
+  // Default dark mode shadows (overridden by component-level classes)
+  box-shadow: 
+    0 4px 12px rgba(255, 255, 255, 0.1),
+    0 2px 4px rgba(255, 255, 255, 0.06);
+  
+  // Dark mode button shadows (subtle)
+  button {
+    &:hover {
+      box-shadow: none; // Remove default shadows
+    }
+    
+    &:active {
+      box-shadow: none;
+    }
+  }
+  
+  // Message box header - no competing shadows in dark mode
+  .message-box-header {
+    // Removed shadow to let main container shadow be prominent
+  }
+  
+  // General dark mode overrides
+  .border-gray-200 {
+    border-color: #374151;
+  }
+  
+  .border-gray-100 {
+    border-color: #374151;
+  }
+  
+  .bg-gray-50 {
+    background-color: #374151;
+  }
+  
+  .text-gray-500 {
+    color: #9ca3af;
+  }
+  
+  .text-gray-600 {
+    color: #6b7280;
+  }
+  
+  .text-gray-400 {
+    color: #9ca3af;
+  }
+  
+  .text-gray-900 {
+    color: #f9fafb;
+  }
+  
+  // Dark scrollbar
+  .overflow-y-auto {
+    scrollbar-color: #4b5563 #1f2937;
+    
+    &::-webkit-scrollbar-track {
+      background: #1f2937;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      
+      &:hover {
+        background: #6b7280;
+      }
+    }
+  }
+  
+  app-chat-room {
+    // Make sure dark mode is properly applied to chat room content
+    .flex.flex-col.h-full {
+      background-color: #000000;
+    }
+    
+    // Dark mode message input styling
+    .message-input {
+      background-color: #1f2937;
+      border-color: #374151;
+      color: #f9fafb;
+      
+      &::placeholder {
+        color: #9ca3af;
+      }
+    }
+    
+    // Dark mode button styling
+    .send-button {
+      background-color: #3b82f6;
+      
+      &:hover {
+        background-color: #2563eb;
+      }
+      
+      &:disabled {
+        background-color: #374151;
+      }
+    }
+  }
+  
+  // Dark mode modal styling
+  .create-chat-modal {
+    box-shadow: 
+      0 25px 50px -12px rgba(255, 255, 255, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  
+  // Dark mode conversation hover effects
+  .conversation-item {
+    &:hover {
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    }
+  }
+  
+  // Dark mode avatar glow
+  .avatar-glow {
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.3);
+    
+    &:hover {
+      box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.4);
+    }
+  }
+  
+  // Dark mode header shadows - removed to avoid competing with main shadow
+} 

@@ -13,6 +13,7 @@ import { User } from './models/user.model';
 import { OverlayService } from './services/overlay.service';
 import { RightSidebarComponent } from './components/layout/right-sidebar/right-sidebar.component';
 import { MobileHeaderComponent } from './components/layout/mobile-header/mobile-header.component';
+import { FloatingChatComponent } from './components/shared/floating-chat/floating-chat.component';
 
 @Component({
   selector: 'app-root',
@@ -26,7 +27,8 @@ import { MobileHeaderComponent } from './components/layout/mobile-header/mobile-
     RouterOutlet,
     MatDialogModule,
     EmojiPickerComponent,
-    MobileHeaderComponent
+    MobileHeaderComponent,
+    FloatingChatComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
