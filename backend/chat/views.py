@@ -157,6 +157,30 @@ class ConversationViewSet(viewsets.ModelViewSet):
             }
         )
         
+        # Send global chat notifications to other participants
+        print(f"📬 Sending global chat notifications for conversation {conversation.id}")
+        other_participants = conversation.participants.exclude(id=request.user.id)
+        
+        for participant in other_participants:
+            async_to_sync(channel_layer.group_send)(
+                f"chat_notifications_{participant.id}",
+                {
+                    'type': 'chat_notification',
+                    'notification': {
+                        'conversation_id': conversation.id,
+                        'sender': {
+                            'id': message.sender.id,
+                            'username': message.sender.username,
+                            'handle': message.sender.handle,
+                            'profile_picture': profile_picture_url
+                        },
+                        'content': message.content,
+                        'created_at': message.created_at.isoformat()
+                    }
+                }
+            )
+            print(f"📬 Sent global chat notification to user {participant.id}")
+        
         serializer = MessageSerializer(message, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

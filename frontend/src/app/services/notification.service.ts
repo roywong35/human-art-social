@@ -46,8 +46,10 @@ export class NotificationService {
     private http: HttpClient,
     private authService: AuthService
   ) {
+    console.log('🔔 NotificationService constructor called');
     this.connectWebSocket();
     this.authService.currentUser$.subscribe((user: any) => {
+      console.log('🔔 NotificationService - user changed:', user ? `User ${user.username}` : 'No user');
       if (user) {
         this.connectWebSocket();
         this.loadUnreadCount();
@@ -58,76 +60,102 @@ export class NotificationService {
   }
 
   loadUnreadCount() {
+    console.log('🔔 NotificationService - loading unread count');
     this.getUnreadCount().subscribe(count => {
+      console.log('🔔 NotificationService - loaded unread count:', count);
       this.unreadCount.next(count);
     });
   }
 
   resetUnreadCount() {
+    console.log('🔔 NotificationService - resetUnreadCount called');
     this.unreadCount.next(0);
   }
 
   decrementUnreadCount() {
     const currentCount = this.unreadCount.value;
+    console.log('🔔 NotificationService - decrementUnreadCount called, current:', currentCount);
     if (currentCount > 0) {
       this.unreadCount.next(currentCount - 1);
     }
   }
 
   incrementUnreadCount() {
+    console.log('🔔 NotificationService - incrementUnreadCount called, current:', this.unreadCount.value);
     this.unreadCount.next(this.unreadCount.value + 1);
   }
 
   private connectWebSocket() {
+    console.log('🔔 NotificationService - connectWebSocket called');
+    
     if (this.socket$) {
+      console.log('🔔 NotificationService - WebSocket already exists, skipping connection');
       return;
     }
 
     const token = this.authService.getToken();
+    console.log('🔔 NotificationService - token check:', token ? 'Token exists' : 'No token');
+    
     if (!token) {
-      console.log('No token available for notifications WebSocket');
+      console.log('❌ No token available for notifications WebSocket');
       return;
     }
 
     // Use query parameter for token authentication like chat service
     const wsUrl = environment.apiUrl.replace(/^http/, 'ws') + `/ws/notifications/?token=${token}`;
+    console.log('🔔 NotificationService - WebSocket URL:', wsUrl);
     
     this.socket$ = webSocket({
       url: wsUrl,
       openObserver: {
         next: () => {
-          console.log('✅ Notifications WebSocket connected');
+          console.log('✅ Notifications WebSocket connected successfully');
         }
       },
       closeObserver: {
-        next: () => {
-          console.log('Notifications WebSocket disconnected');
+        next: (event) => {
+          console.log('❌ Notifications WebSocket disconnected:', event);
+          this.socket$ = undefined;
           // Attempt to reconnect after 5 seconds
-          setTimeout(() => this.connectWebSocket(), 5000);
+          setTimeout(() => {
+            console.log('🔄 Attempting to reconnect notifications WebSocket...');
+            this.connectWebSocket();
+          }, 5000);
         }
       }
     });
 
     this.socket$.subscribe({
       next: (message) => {
+        console.log('📨 Notification WebSocket message received:', message);
         // Handle incoming notifications
         if (message.type === 'notification') {
+          console.log('🔔 Processing notification, incrementing unread count');
           this.unreadCount.next(this.unreadCount.value + 1);
+        } else {
+          console.log('🔔 Unknown message type:', message.type);
         }
       },
       error: (error) => {
-        console.error('Notifications WebSocket error:', error);
+        console.error('❌ Notifications WebSocket error:', error);
         this.socket$ = undefined;
         // Attempt to reconnect after 5 seconds
-        setTimeout(() => this.connectWebSocket(), 5000);
+        setTimeout(() => {
+          console.log('🔄 Attempting to reconnect after error...');
+          this.connectWebSocket();
+        }, 5000);
       }
     });
   }
 
   private disconnectWebSocket() {
+    console.log('🔔 NotificationService - disconnectWebSocket called');
     if (this.socket$) {
+      console.log('🔔 NotificationService - closing existing WebSocket connection');
       this.socket$.complete();
       this.socket$ = undefined;
+    } else {
+      console.log('🔔 NotificationService - no WebSocket to disconnect');
     }
   }
 

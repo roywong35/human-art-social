@@ -79,6 +79,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             }
                         )
                         
+                        # Send chat notification to other participants
+                        await self.send_chat_notification(message)
+                        
             elif action == 'typing':
                 is_typing = text_data_json.get('is_typing', False)
                 print(f"⌨️ Typing indicator: {is_typing} from user {self.scope['user'].username}")
@@ -200,4 +203,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 message.save()
                 return True
         except Message.DoesNotExist:
-            return False 
+            return False
+
+    async def send_chat_notification(self, message):
+        """
+        Send chat notification to other participants via global chat notification system
+        """
+        # Get other participants in the conversation
+        other_participants = await self.get_other_participants()
+        
+        for participant_id in other_participants:
+            # Send notification to each participant's global chat notification channel
+            await self.channel_layer.group_send(
+                f"chat_notifications_{participant_id}",
+                {
+                    'type': 'chat_notification',
+                    'notification': {
+                        'conversation_id': self.conversation_id,
+                        'sender': message['sender'],
+                        'content': message['content'],
+                        'created_at': message['created_at']
+                    }
+                }
+            )
+            print(f"📬 Sent chat notification to user {participant_id}")
+
+    @database_sync_to_async
+    def get_other_participants(self):
+        """
+        Get other participants in the conversation (excluding current user)
+        """
+        try:
+            conversation = Conversation.objects.get(id=self.conversation_id)
+            other_participants = conversation.participants.exclude(id=self.scope["user"].id).values_list('id', flat=True)
+            return list(other_participants)
+        except Conversation.DoesNotExist:
+            return [] 

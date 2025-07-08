@@ -14,6 +14,7 @@ import { ToastService } from '../../../services/toast.service';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
 import { NotificationService } from '../../../services/notification.service';
+import { ChatService } from '../../../services/chat.service';
 import { Subscription } from 'rxjs';
 
 
@@ -37,7 +38,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   defaultAvatar = 'assets/placeholder-image.svg';
   private overlayRef: OverlayRef | null = null;
   unreadNotifications = 0;
+  unreadMessages = 0;
   private notificationSubscription?: Subscription;
+  private conversationsSubscription?: Subscription;
 
   @ViewChild('userMenuTpl') userMenuTpl!: TemplateRef<any>;
   @ViewChild('userMenuButton', { read: ElementRef }) userMenuButton!: ElementRef;
@@ -59,7 +62,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private overlay: Overlay,
     private viewContainerRef: ViewContainerRef,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private chatService: ChatService
   ) {
     // Subscribe to route changes to detect Human Art tab
     this.router.events.pipe(
@@ -98,15 +102,28 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
 
     // Subscribe to unread notifications count
+    console.log('🔔 Sidebar - subscribing to notification unread count');
     this.notificationSubscription = this.notificationService.unreadCount$.subscribe(count => {
+      console.log('🔔 Sidebar - received unread notification count update:', count);
       this.unreadNotifications = count;
     });
+
+    // Subscribe to conversations for unread message count
+    this.conversationsSubscription = this.chatService.conversations$.subscribe(conversations => {
+      this.unreadMessages = conversations.reduce((total, conversation) => total + conversation.unread_count, 0);
+    });
+
+    // Load conversations to get initial unread counts
+    this.chatService.loadConversations();
 
   }
 
   ngOnDestroy() {
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
+    }
+    if (this.conversationsSubscription) {
+      this.conversationsSubscription.unsubscribe();
     }
     
     // Clean up overlays

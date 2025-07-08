@@ -81,6 +81,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.routeSub?.unsubscribe();
     this.currentUserSub?.unsubscribe();
+    // Disconnect WebSocket when leaving messages page
+    this.chatService.disconnectWebSocket();
   }
 
   @HostListener('window:resize', ['$event'])
@@ -110,7 +112,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   loadConversations() {
-    this.chatService.getConversations().subscribe({
+    // Use ChatService's state management instead of local array
+    this.chatService.loadConversations();
+    
+    // Subscribe to the service's conversations observable
+    this.chatService.conversations$.subscribe({
       next: (conversations) => {
         this.conversations = conversations;
       },
@@ -143,13 +149,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private markConversationAsRead(conversationId: number) {
     this.chatService.markConversationAsRead(conversationId).subscribe({
       next: () => {
-        // Update the local conversations array to reset unread count
-        this.conversations = this.conversations.map(conv => {
-          if (conv.id === conversationId) {
-            return { ...conv, unread_count: 0 };
-          }
-          return conv;
-        });
+        // The ChatService will automatically update the conversations observable
         console.log('Conversation marked as read:', conversationId);
       },
       error: (error) => {
@@ -203,8 +203,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
         // Navigate to the new conversation
         this.router.navigate(['/messages', conversation.id]);
         
-        // Refresh conversations list
-        this.loadConversations();
+        // Refresh conversations list using ChatService state management
+        this.chatService.loadConversations();
       }
     } catch (error) {
       console.error('Error creating chat:', error);

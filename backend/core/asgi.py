@@ -23,6 +23,7 @@ from channels.security.websocket import AllowedHostsOriginValidator
 from django.urls import path
 from notifications.consumers import NotificationConsumer
 from chat.consumers import ChatConsumer
+from chat.chat_notification_consumer import ChatNotificationConsumer
 from chat.middleware import TokenAuthMiddlewareStack
 
 # Get the Django ASGI application (for HTTP)
@@ -35,6 +36,7 @@ application = ProtocolTypeRouter({
             URLRouter([
                 path('ws/notifications/', NotificationConsumer.as_asgi()),
                 path('ws/chat/<int:conversation_id>/', ChatConsumer.as_asgi()),
+                path('ws/chat_notifications/', ChatNotificationConsumer.as_asgi()),
             ])
         )
     ),

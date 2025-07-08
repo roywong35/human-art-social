@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Conversation, ConversationDetail, Message, ChatMessage } from '../models';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { AuthService } from './auth.service';
+import { ChatNotificationService } from './chat-notification.service';
 
 @Injectable({
   providedIn: 'root'
@@ -27,11 +29,22 @@ export class ChatService {
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private chatNotificationService: ChatNotificationService
   ) {
+    console.log('💬 ChatService constructor called');
+    
     // Track current user ID for unread count logic
     this.authService.currentUser$.subscribe(user => {
+      console.log('💬 ChatService - user changed:', user ? `User ${user.username}` : 'No user');
       this.currentUserId = user?.id;
+    });
+
+    // Subscribe to global chat notifications
+    console.log('💬 ChatService - subscribing to global chat notifications');
+    this.chatNotificationService.chatNotifications$.subscribe(notification => {
+      console.log('💬 ChatService - received global chat notification:', notification);
+      this.handleGlobalChatNotification(notification);
     });
   }
 
@@ -65,7 +78,12 @@ export class ChatService {
   }
 
   markConversationAsRead(conversationId: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/mark_as_read/`, {});
+    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/mark_as_read/`, {}).pipe(
+      tap(() => {
+        // Update local conversations state to reflect the read status
+        this.updateConversationUnreadCount(conversationId, 0);
+      })
+    );
   }
 
   markMessageAsRead(messageId: number): Observable<any> {
@@ -74,8 +92,8 @@ export class ChatService {
 
   // WebSocket methods
   connectToConversation(conversationId: number) {
-    this.currentConversationId = conversationId;
-    this.disconnectWebSocket(); // Close existing connection
+    this.disconnectWebSocket(); // Close existing connection first
+    this.currentConversationId = conversationId; // Then set the new conversation ID
 
     const token = this.authService.getToken();
     console.log('Attempting WebSocket connection with token:', token ? 'Token exists' : 'No token');
@@ -116,7 +134,8 @@ export class ChatService {
     this.socket$.subscribe({
       next: (message: ChatMessage) => {
         console.log('📨 WebSocket message received:', message);
-        this.handleWebSocketMessage(message);
+        // Pass the conversation ID context to the message handler
+        this.handleWebSocketMessage(message, conversationId);
       },
       error: (error) => {
         console.error('❌ WebSocket error:', error);
@@ -218,17 +237,74 @@ export class ChatService {
     this.conversationsSubject.next(updatedConversations);
   }
 
+  updateConversationUnreadCount(conversationId: number, unreadCount: number) {
+    const conversations = this.conversationsSubject.value;
+    const updatedConversations = conversations.map(conv => {
+      if (conv.id === conversationId) {
+        return {
+          ...conv,
+          unread_count: unreadCount
+        };
+      }
+      return conv;
+    });
+    this.conversationsSubject.next(updatedConversations);
+  }
+
   private getCurrentUserId(): number | null {
     return this.currentUserId || null;
   }
 
-  private handleWebSocketMessage(message: ChatMessage) {
+  private handleGlobalChatNotification(notification: any) {
+    console.log('💬 Handling global chat notification:', notification);
+    
+    if (notification.conversation_id && notification.sender) {
+      const conversationId = notification.conversation_id;
+      
+      // Only update unread count if this is not for the conversation we're currently viewing
+      // and if the message is not from the current user
+      if (conversationId !== this.currentConversationId && 
+          notification.sender.id !== this.getCurrentUserId()) {
+        
+        // Create a message object for preview updates
+        const message: Message = {
+          id: 0, // Temporary ID for preview
+          content: notification.content,
+          sender: notification.sender,
+          created_at: notification.created_at,
+          is_read: false
+        };
+        
+        // Update the conversation's last message and increment unread count
+        this.updateConversationLastMessage(conversationId, message);
+        
+        console.log(`📬 Updated unread count for conversation ${conversationId}`);
+      }
+    }
+  }
+
+  private handleWebSocketMessage(message: ChatMessage, conversationId: number) {
     switch (message.type) {
       case 'chat_message':
         if (message.message) {
-          this.addMessage(message.message);
-          if (this.currentConversationId) {
-            this.updateConversationLastMessage(this.currentConversationId, message.message);
+          // Always update the conversation's last message in the conversations list (for preview text)
+          this.updateConversationLastMessage(conversationId, message.message);
+          
+          // Only add to messages list if this is the conversation we're currently viewing
+          if (this.currentConversationId === conversationId) {
+            this.addMessage(message.message);
+            
+            // If this message is not our own message, automatically mark it as read since we're viewing the conversation
+            if (message.message.sender.id !== this.getCurrentUserId()) {
+              this.markConversationAsRead(conversationId).subscribe({
+                next: () => {
+                  console.log('Auto-marked conversation as read:', conversationId);
+                },
+                error: (error) => {
+                  console.error('Error auto-marking conversation as read:', error);
+                }
+              });
+            }
           }
         }
         break;
