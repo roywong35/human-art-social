@@ -1,11 +1,12 @@
 <!-- Floating Message Box (Always visible) -->
-<div class="floating-message-box floating-chat-shadow fixed bottom-0 right-4 z-[60] bg-white dark:bg-black border border-gray-200 dark:border-gray-800 overflow-hidden"
+<div class="floating-message-box floating-chat-shadow fixed bottom-0 right-4 z-[60] bg-white dark:bg-black border border-gray-200 dark:border-gray-800"
      [class.dark-mode-shadow]="isDarkMode"
      [class.light-mode-shadow]="!isDarkMode"
-     style="width: 350px; border-radius: 12px 12px 0 0;">
+     style="width: 350px; border-radius: 12px 12px 0 0; overflow: visible;">
   
   <!-- Message Box Header (Always visible, hidden when in chat room) -->
   <div *ngIf="currentView === 'list'" class="message-box-header bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors min-h-[60px]"
+       style="border-radius: 12px 12px 0 0;"
        (click)="toggleChat()">
     <div class="flex items-center h-8">
       <h3 class="font-bold text-lg text-gray-900 dark:text-white leading-none">Messages</h3>
@@ -42,7 +43,7 @@
 
      <!-- Expandable Chat Content (Drops upward) -->
    <div *ngIf="isOpen" 
-        class="chat-content bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800"
+        class="chat-content bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 overflow-hidden"
         [style.height.px]="currentView === 'list' ? 400 : 460">
     <!-- Chat List View -->
     <div *ngIf="currentView === 'list'" class="flex flex-col h-full">
@@ -95,7 +96,8 @@
     <!-- Chat Room View -->
     <div *ngIf="currentView === 'chat' && selectedConversation" class="flex flex-col h-full">
       <!-- Chat room header with user info -->
-      <div class="chat-header bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between flex-shrink-0">
+      <div class="chat-header bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between flex-shrink-0"
+           style="border-radius: 12px 12px 0 0;">
         <div class="flex items-center gap-3">
           <!-- Back button -->
           <button (click)="closeChatRoom()"

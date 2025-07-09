@@ -97,7 +97,18 @@
     }
   }
   
-  // Header shadows removed to avoid competing with main shadow
+  // Header shadows - needed because header blocks main container's top shadow
+  .message-box-header {
+    box-shadow: 
+      0 -4px 12px rgba(0, 0, 0, 0.1),      // Top shadow (negative Y to go upward)
+      0 2px 4px rgba(0, 0, 0, 0.06);       // Bottom shadow for definition
+  }
+  
+  .chat-header {
+    box-shadow: 
+      0 -4px 12px rgba(0, 0, 0, 0.1),      // Top shadow (negative Y to go upward)
+      0 2px 4px rgba(0, 0, 0, 0.06);       // Bottom shadow for definition
+  }
 }
 
 // COMPONENT-LEVEL shadow control (normal, pleasant levels)
@@ -114,6 +125,24 @@
     0 8px 25px rgba(255, 255, 255, 0.2),  // Main white shadow
     0 4px 10px rgba(255, 255, 255, 0.15), // Secondary white shadow
     0 2px 4px rgba(255, 255, 255, 0.1);   // Close white shadow for definition
+  
+  // Header shadows for dark mode
+  .message-box-header,
+  .chat-header {
+    box-shadow: 
+      0 -4px 12px rgba(255, 255, 255, 0.15), // Top white shadow
+      0 2px 4px rgba(255, 255, 255, 0.1);    // Bottom white shadow
+  }
+}
+
+// COMPONENT-LEVEL light mode header shadows
+.light-mode-shadow {
+  .message-box-header,
+  .chat-header {
+    box-shadow: 
+      0 -4px 12px rgba(0, 0, 0, 0.1),      // Top shadow
+      0 2px 4px rgba(0, 0, 0, 0.06);       // Bottom shadow
+  }
 }
 
 // Enhanced animations
@@ -395,5 +424,16 @@
     }
   }
   
-  // Dark mode header shadows - removed to avoid competing with main shadow
+  // Dark mode header shadows - white shadows for visibility
+  .message-box-header {
+    box-shadow: 
+      0 -4px 12px rgba(255, 255, 255, 0.15), // Top white shadow (negative Y to go upward)
+      0 2px 4px rgba(255, 255, 255, 0.1);    // Bottom white shadow for definition
+  }
+  
+  .chat-header {
+    box-shadow: 
+      0 -4px 12px rgba(255, 255, 255, 0.15), // Top white shadow (negative Y to go upward)
+      0 2px 4px rgba(255, 255, 255, 0.1);    // Bottom white shadow for definition
+  }
 } 
