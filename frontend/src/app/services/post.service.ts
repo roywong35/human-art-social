@@ -29,12 +29,18 @@ export class PostService {
     private authService: AuthService
   ) {}
 
-  createPost(contentOrFormData: string | FormData, files?: File[]): Observable<Post> {
+  createPost(contentOrFormData: string | FormData, files?: File[], scheduledTime?: Date): Observable<Post> {
     if (contentOrFormData instanceof FormData) {
+      if (scheduledTime) {
+        contentOrFormData.append('scheduled_time', scheduledTime.toISOString());
+      }
       return this.http.post<Post>(`${this.baseUrl}/posts/`, contentOrFormData).pipe(
         tap(newPost => {
-          const currentPosts = this.posts.getValue();
-          this.posts.next([newPost, ...currentPosts]);
+          // Only add to timeline if it's not scheduled (immediate post)
+          if (!scheduledTime) {
+            const currentPosts = this.posts.getValue();
+            this.posts.next([newPost, ...currentPosts]);
+          }
         })
       );
     }
@@ -46,11 +52,17 @@ export class PostService {
         formData.append(`image_${index}`, file);
       });
     }
+    if (scheduledTime) {
+      formData.append('scheduled_time', scheduledTime.toISOString());
+    }
     
     return this.http.post<Post>(`${this.baseUrl}/posts/`, formData).pipe(
       tap(newPost => {
-        const currentPosts = this.posts.getValue();
-        this.posts.next([newPost, ...currentPosts]);
+        // Only add to timeline if it's not scheduled (immediate post)
+        if (!scheduledTime) {
+          const currentPosts = this.posts.getValue();
+          this.posts.next([newPost, ...currentPosts]);
+        }
       })
     );
   }
@@ -146,24 +158,30 @@ export class PostService {
     return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/posts/`);
   }
 
-  createPostWithFormData(formData: FormData, isReply: boolean = false, handle?: string, postId?: number): Observable<Post> {
+  createPostWithFormData(formData: FormData, isReply: boolean = false, handle?: string, postId?: number, scheduledTime?: Date): Observable<Post> {
     const url = isReply && handle && postId 
       ? `${this.baseUrl}/posts/${handle}/${postId}/replies/`
       : `${this.baseUrl}/posts/`;
     
+    if (scheduledTime) {
+      formData.append('scheduled_time', scheduledTime.toISOString());
+    }
+    
     return this.http.post<Post>(url, formData).pipe(
       map(post => this.addImageUrls(post)),
       tap(newPost => {
-        // Get current posts and add the new post only if it should be shown in current tab
-        const currentPosts = this.posts.getValue();
-        const activeTab = localStorage.getItem('activeTab') || 'for-you';
-        
-        if (activeTab === 'human-drawing' && newPost.is_human_drawing && newPost.is_verified) {
-          // Only add to Human Art tab if it's a verified human drawing
-          this.posts.next([newPost, ...currentPosts]);
-        } else if (activeTab === 'for-you') {
-          // Add to For You tab
-          this.posts.next([newPost, ...currentPosts]);
+        // Only add to timeline if it's not scheduled (immediate post)
+        if (!scheduledTime) {
+          const currentPosts = this.posts.getValue();
+          const activeTab = localStorage.getItem('activeTab') || 'for-you';
+          
+          if (activeTab === 'human-drawing' && newPost.is_human_drawing && newPost.is_verified) {
+            // Only add to Human Art tab if it's a verified human drawing
+            this.posts.next([newPost, ...currentPosts]);
+          } else if (activeTab === 'for-you') {
+            // Add to For You tab
+            this.posts.next([newPost, ...currentPosts]);
+          }
         }
       })
     );
@@ -494,5 +512,9 @@ export class PostService {
     return this.http.get<{ results: Post[] }>(`${this.baseUrl}/posts/public/`, {
       params: { tab }
     });
+  }
+
+  getScheduledPosts(): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.baseUrl}/posts/scheduled/`);
   }
 } 

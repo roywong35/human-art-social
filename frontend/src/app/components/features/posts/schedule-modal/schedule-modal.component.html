@@ -1,0 +1,117 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="onClose()">
+  <div class="schedule-modal" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="modal-header">
+      <h3>Schedule post</h3>
+      <button class="close-btn" (click)="onClose()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="modal-content">
+      <!-- Date Selection -->
+      <div class="date-selection-section">
+        <label>Select date</label>
+        <div class="date-inputs-container">
+          <!-- Date Dropdowns -->
+          <div class="date-dropdowns">
+            <!-- Month Dropdown -->
+            <select [(ngModel)]="selectedMonth" class="date-select" (change)="onDropdownDateChange()">
+              <option value="" disabled>Month</option>
+              <option *ngFor="let month of months" [value]="month.value">
+                {{ month.label }}
+              </option>
+            </select>
+
+            <!-- Day Dropdown -->
+            <select [(ngModel)]="selectedDay" class="date-select" (change)="onDropdownDateChange()">
+              <option value="" disabled>Day</option>
+              <option *ngFor="let day of days" [value]="day.value">
+                {{ day.label }}
+              </option>
+            </select>
+
+            <!-- Year Dropdown -->
+            <select [(ngModel)]="selectedYear" class="date-select" (change)="onDropdownDateChange()">
+              <option value="" disabled>Year</option>
+              <option *ngFor="let year of years" [value]="year.value">
+                {{ year.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Native Date Picker (Icon) -->
+          <div class="native-date-picker">
+            <input
+              type="date"
+              [(ngModel)]="selectedDate"
+              [min]="minDate"
+              [max]="maxDate"
+              class="hidden-date-input"
+              (change)="onNativeDateChange()"
+            />
+            <button
+              type="button"
+              class="date-picker-icon"
+              (click)="onCalendarIconClick()"
+              title="Or use calendar picker">
+              <i class="far fa-calendar-alt"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Dropdowns -->
+      <div class="time-section">
+        <label>Select time</label>
+        <div class="time-dropdowns">
+          <!-- Hour Dropdown -->
+          <select [(ngModel)]="selectedHour" class="time-select">
+            <option value="" disabled>Hour</option>
+            <option *ngFor="let hour of hours" [value]="hour.value">
+              {{ hour.label }}
+            </option>
+          </select>
+
+          <!-- Minute Dropdown -->
+          <select [(ngModel)]="selectedMinute" class="time-select">
+            <option value="" disabled>Minute</option>
+            <option *ngFor="let minute of minutes" [value]="minute.value">
+              {{ minute.label }}
+            </option>
+          </select>
+
+          <!-- AM/PM Dropdown -->
+          <select [(ngModel)]="selectedPeriod" class="time-select">
+            <option value="" disabled>AM/PM</option>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Timezone Display -->
+      <div class="timezone-info">
+        <i class="fas fa-globe"></i>
+        <span>Time zone: {{ userTimezone }}</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button 
+          class="schedule-btn"
+          [disabled]="!isValidSelection()"
+          (click)="onSchedule()">
+          Schedule
+        </button>
+        
+        <button 
+          class="view-scheduled-btn"
+          (click)="onViewScheduledPosts()">
+          View scheduled posts
+        </button>
+      </div>
+    </div>
+  </div>
+</div> 

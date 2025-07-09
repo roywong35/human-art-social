@@ -1,0 +1,44 @@
+.schedule-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px; /* p-2 = 8px */
+  border-radius: 9999px; /* rounded-full */
+  transition: all 0.2s ease;
+  color: #3b82f6; /* text-blue-500 */
+  width: 2.25rem; /* w-9 = 36px */
+  height: 2.25rem; /* h-9 = 36px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(.disabled) {
+    background-color: #eff6ff; /* bg-blue-50 */
+    color: #2563eb; /* hover:text-blue-600 */
+  }
+
+  &.scheduled {
+    background-color: #eff6ff; /* bg-blue-50 */
+    color: #2563eb;
+  }
+
+  /* Dark mode */
+  :global(.dark) & {
+    &:hover:not(.disabled) {
+      background-color: rgba(30, 58, 138, 0.2); /* dark:hover:bg-blue-900/20 */
+    }
+
+    &.scheduled {
+      background-color: rgba(30, 58, 138, 0.2); /* dark:bg-blue-900/20 */
+    }
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  i {
+    pointer-events: none;
+  }
+} 

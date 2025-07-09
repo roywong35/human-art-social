@@ -55,4 +55,5 @@ export interface Post {
   evidence_files: EvidenceFile[];
   parent_post_author_handle?: string;
   parent_post_author_username?: string;
+  scheduled_time?: string;
 } 

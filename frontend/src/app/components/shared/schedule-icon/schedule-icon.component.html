@@ -1,0 +1,10 @@
+<button 
+  type="button"
+  class="schedule-icon-btn"
+  [class.scheduled]="isScheduled"
+  [class.disabled]="disabled"
+  (click)="onScheduleClick()"
+  [disabled]="disabled"
+  title="Schedule post">
+  <i class="far fa-calendar-alt text-[18px]"></i>
+</button> 

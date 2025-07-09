@@ -11,6 +11,8 @@ import { Post } from '../../../../models/post.model';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
 import { environment } from '../../../../../environments/environment';
+import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
+import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
 
 interface DialogData {
   quotePost?: Post;
@@ -23,7 +25,9 @@ interface DialogData {
     CommonModule,
     FormsModule,
     MatDialogModule,
-    TimeAgoPipe
+    TimeAgoPipe,
+    ScheduleIconComponent,
+    ScheduleModalComponent
   ],
   templateUrl: './new-post-modal.component.html',
   styleUrls: ['./new-post-modal.component.scss']
@@ -39,6 +43,10 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   protected emojiPickerPosition = { top: 0, left: 0 };
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   protected environment = environment;
+  
+  // Scheduled post properties
+  protected scheduledTime: Date | null = null;
+  protected showScheduleModal = false;
 
   protected images: ImageFile[] = [];
   private subscriptions: Subscription = new Subscription();
@@ -129,7 +137,8 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
         // Create regular post
         const response = await this.postService.createPost(
           this.content,
-          this.images.map(img => img.file)
+          this.images.map(img => img.file),
+          this.scheduledTime || undefined
         ).toPromise();
         if (!response) throw new Error('Failed to create post');
         post = response;
@@ -212,5 +221,40 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   protected onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.src = this.defaultAvatar;
+  }
+
+  // Scheduling Methods
+  protected openScheduleModal(): void {
+    this.showScheduleModal = true;
+  }
+
+  protected closeScheduleModal(): void {
+    this.showScheduleModal = false;
+  }
+
+  protected onScheduleSelected(scheduledTime: Date): void {
+    this.scheduledTime = scheduledTime;
+    this.showScheduleModal = false;
+  }
+
+  protected onViewScheduledPosts(): void {
+    // TODO: Navigate to scheduled posts view
+    console.log('View scheduled posts');
+    this.showScheduleModal = false;
+  }
+
+  protected clearSchedule(): void {
+    this.scheduledTime = null;
+  }
+
+  protected formatScheduledTime(date: Date): string {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).format(date);
   }
 } 

@@ -117,7 +117,14 @@ class Post(models.Model):
     is_human_drawing = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     verification_date = models.DateTimeField(null=True, blank=True)
-    
+
+    # Scheduled posts field
+    scheduled_time = models.DateTimeField(
+        null=True, 
+        blank=True, 
+        help_text="When this post should be published. If null, post is published immediately."
+    )
+
     hashtags = models.ManyToManyField(Hashtag, through=PostHashtag, related_name='posts')
     
     class Meta:
@@ -153,6 +160,16 @@ class Post(models.Model):
     @property
     def is_quote(self):
         return self.post_type == 'quote'
+
+    @property
+    def is_scheduled(self):
+        """Returns True if post is scheduled for future publication"""
+        return self.scheduled_time and self.scheduled_time > timezone.now()
+
+    @property 
+    def is_published(self):
+        """Returns True if post is published (not scheduled)"""
+        return not self.is_scheduled
 
     def get_absolute_url(self):
         return f'/{self.author.handle}/post/{self.id}/'

@@ -16,6 +16,17 @@
     
     <div class="flex-1">
       <div class="flex items-center min-h-[40px]">
+        <!-- Scheduled Time Indicator -->
+        <div *ngIf="scheduledTime" class="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Will be sent on {{ formatScheduledTime(scheduledTime) }}</span>
+            <button (click)="clearSchedule()" class="ml-auto text-blue-600 hover:text-blue-800">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
         <textarea
           #postTextarea
           [(ngModel)]="content"
@@ -190,7 +201,7 @@
   </div>
 
   <!-- Action Buttons -->
-  <div class="flex-shrink-0 flex justify-between items-center mt-4 px-4 py-3 border-t border-gray-200 dark:border-gray-800">
+  <div class="flex-shrink-0 flex justify-between items-center mt-4 pl-1 pr-3 py-2 border-t border-gray-200 dark:border-gray-800">
     <div class="flex items-center space-x-2">
       <input
         #fileInput
@@ -201,14 +212,20 @@
         class="hidden">
       <button
         (click)="fileInput.click()"
-        class="text-blue-500 hover:text-blue-600 p-1.5 rounded-full transition-colors">
-        <i class="far fa-image text-[15px]"></i>
+        class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        <i class="far fa-image text-[18px]"></i>
       </button>
       <button
         (click)="toggleEmojiPicker($event)"
-        class="text-blue-500 hover:text-blue-600 p-1.5 rounded-full transition-colors">
-        <i class="far fa-smile text-[15px]"></i>
+        class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        <i class="far fa-smile text-[18px]"></i>
       </button>
+      
+      <!-- Schedule Icon -->
+      <app-schedule-icon
+        [isScheduled]="!!scheduledTime"
+        (scheduleClick)="openScheduleModal()">
+      </app-schedule-icon>
     </div>
 
     <!-- Post Button -->
@@ -226,3 +243,11 @@
     {{ error }}
   </div>
 </div>
+
+<!-- Schedule Modal -->
+<app-schedule-modal
+  [isVisible]="showScheduleModal"
+  (close)="closeScheduleModal()"
+  (scheduleSelected)="onScheduleSelected($event)"
+  (viewScheduledPosts)="onViewScheduledPosts()">
+</app-schedule-modal>

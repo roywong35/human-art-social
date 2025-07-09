@@ -36,7 +36,10 @@ class PostViewSet(viewsets.ModelViewSet):
         """
         print(f"[DEBUG] User {self.request.user.username} following_only_preference: {self.request.user.following_only_preference}")
         
-        queryset = Post.objects.all().select_related('author', 'referenced_post').prefetch_related(
+        # Only show published posts (not scheduled for future)
+        queryset = Post.objects.filter(
+            Q(scheduled_time__isnull=True) | Q(scheduled_time__lte=timezone.now())
+        ).select_related('author', 'referenced_post').prefetch_related(
             'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
         )
         print(f"[DEBUG] Initial queryset count: {queryset.count()}")
@@ -109,11 +112,13 @@ class PostViewSet(viewsets.ModelViewSet):
         
         post_type = self.request.data.get('post_type', 'post')
         evidence_count = int(self.request.data.get('evidence_count', 0))
+        scheduled_time = self.request.data.get('scheduled_time', None)
         
         print("Creating post with:", {
             'is_human_drawing': is_human_drawing,
             'post_type': post_type,
-            'evidence_count': evidence_count
+            'evidence_count': evidence_count,
+            'scheduled_time': scheduled_time
         })
         
         # Create the post
@@ -121,7 +126,8 @@ class PostViewSet(viewsets.ModelViewSet):
             author=self.request.user,
             is_human_drawing=is_human_drawing,
             is_verified=False,
-            post_type=post_type
+            post_type=post_type,
+            scheduled_time=scheduled_time
         )
         print("Post created:", post.id)
 
@@ -839,8 +845,10 @@ class PostViewSet(viewsets.ModelViewSet):
             # Get tab from query params
             tab = request.query_params.get('tab', 'for-you')
             
-            # Get all posts, ordered by creation date
-            queryset = Post.objects.all().select_related(
+            # Get all published posts (not scheduled for future), ordered by creation date
+            queryset = Post.objects.filter(
+                Q(scheduled_time__isnull=True) | Q(scheduled_time__lte=timezone.now())
+            ).select_related(
                 'author',
                 'referenced_post',
                 'parent_post'
@@ -873,6 +881,25 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({
                 'results': serializer.data
             })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['GET'])
+    def scheduled(self, request):
+        """
+        Get user's scheduled posts (posts scheduled for future publication)
+        """
+        try:
+            scheduled_posts = Post.objects.filter(
+                author=request.user,
+                scheduled_time__gt=timezone.now()
+            ).order_by('scheduled_time')
+            
+            serializer = self.get_serializer(scheduled_posts, many=True)
+            return Response(serializer.data)
         except Exception as e:
             return Response(
                 {'error': str(e)},
