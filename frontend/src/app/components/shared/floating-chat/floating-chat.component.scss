@@ -108,6 +108,19 @@
     box-shadow: 
       0 -4px 12px rgba(0, 0, 0, 0.1),      // Top shadow (negative Y to go upward)
       0 2px 4px rgba(0, 0, 0, 0.06);       // Bottom shadow for definition
+    
+    // Ensure border-radius is preserved
+    border-radius: 12px 12px 0 0 !important;
+  }
+  
+  // Ensure chat content maintains rounded corners in chat view
+  .chat-content {
+    // When in chat view, ensure proper border-radius inheritance
+    overflow: hidden; // This helps with border-radius clipping
+    
+    // Ensure no gaps or background bleed-through
+    position: relative;
+    z-index: 1;
   }
 }
 
@@ -132,7 +145,12 @@
     box-shadow: 
       0 -4px 12px rgba(255, 255, 255, 0.15), // Top white shadow
       0 2px 4px rgba(255, 255, 255, 0.1);    // Bottom white shadow
+    
+    // Ensure border-radius for headers
+    border-radius: 12px 12px 0 0 !important;
   }
+  
+  // Scrollbar styling moved to component-level classes below
 }
 
 // COMPONENT-LEVEL light mode header shadows
@@ -142,6 +160,110 @@
     box-shadow: 
       0 -4px 12px rgba(0, 0, 0, 0.1),      // Top shadow
       0 2px 4px rgba(0, 0, 0, 0.06);       // Bottom shadow
+    
+    // Ensure border-radius for headers
+    border-radius: 12px 12px 0 0 !important;
+  }
+}
+
+// COMPONENT-LEVEL scrollbar control (using ::ng-deep to penetrate child components)
+.light-scrollbars {
+  // Light mode scrollbars for conversation list
+  .overflow-y-auto {
+    scrollbar-width: thin !important;
+    scrollbar-color: #cbd5e0 #f7fafc !important;
+    
+    &::-webkit-scrollbar {
+      width: 6px !important;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f7fafc !important;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e0 !important;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #a0aec0 !important;
+      }
+    }
+  }
+  
+  // Light scrollbars for ALL content (including chat room)
+    ::ng-deep * {
+    scrollbar-width: thin !important;
+    scrollbar-color: #cbd5e0 #f7fafc !important;
+    
+    &::-webkit-scrollbar {
+      width: 6px !important;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f7fafc !important;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e0 !important;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #a0aec0 !important;
+      }
+    }
+  }
+}
+
+.dark-scrollbars {
+  // Dark mode scrollbars for conversation list
+  .overflow-y-auto {
+    scrollbar-width: thin !important;
+    scrollbar-color: #4b5563 #1f2937 !important;
+    
+    &::-webkit-scrollbar {
+      width: 6px !important;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #1f2937 !important;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #4b5563 !important;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #6b7280 !important;
+      }
+    }
+  }
+  
+  // Dark scrollbars for ALL content (including chat room)
+  ::ng-deep * {
+    scrollbar-width: thin !important;
+    scrollbar-color: #4b5563 #1f2937 !important;
+    
+    &::-webkit-scrollbar {
+      width: 6px !important;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #1f2937 !important;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #4b5563 !important;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #6b7280 !important;
+      }
+    }
   }
 }
 
@@ -435,5 +557,8 @@
     box-shadow: 
       0 -4px 12px rgba(255, 255, 255, 0.15), // Top white shadow (negative Y to go upward)
       0 2px 4px rgba(255, 255, 255, 0.1);    // Bottom white shadow for definition
+    
+    // Ensure border-radius is preserved in dark mode
+    border-radius: 12px 12px 0 0 !important;
   }
 } 

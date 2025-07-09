@@ -73,14 +73,25 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
   }
 
   ngOnChanges(changes: any) {
-    // Load messages when conversation changes
-    if (changes.conversation && this.conversation) {
-      console.log('🔄 Chat room conversation changed:', this.conversation.id);
-      
-      // Debug WebSocket connection
-      this.chatService.testWebSocketConnection(this.conversation.id);
-      
-      this.chatService.loadMessages(this.conversation.id);
+    // Handle conversation changes
+    if (changes.conversation) {
+      if (this.conversation) {
+        console.log('🔄 Chat room conversation changed:', this.conversation.id);
+        
+        // Debug WebSocket connection
+        this.chatService.testWebSocketConnection(this.conversation.id);
+        
+        this.chatService.loadMessages(this.conversation.id);
+      } else {
+        // Clear ALL chat state when conversation becomes null (back button clicked)
+        console.log('🧹 Chat room clearing all state - conversation is null');
+        this.messages = [];
+        this.messageContent = '';
+        this.typingUsers = [];
+        this.isTyping = false;
+        this.clearSelectedImages();
+        this.cd.detectChanges();
+      }
     }
   }
 

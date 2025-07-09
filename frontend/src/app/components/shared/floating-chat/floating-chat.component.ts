@@ -28,6 +28,8 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
   // Dark mode detection
   isDarkMode = false;
   
+
+  
   // Create chat modal
   showCreateChatModal = false;
   searchQuery = '';
@@ -71,10 +73,12 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Subscribe to conversations
+        // Subscribe to conversations
     this.conversationsSub = this.chatService.conversations$.subscribe(conversations => {
       this.conversations = conversations;
     });
+
+
 
     // Only load conversations initially if user is authenticated
     if (this.currentUser && this.authService.isAuthenticated()) {
@@ -122,39 +126,57 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     this.closeChatRoom();
   }
 
-  // Chat list actions
+  // Chat list actions - X-style instant opening
   selectConversation(conversation: Conversation) {
     // Check if user is authenticated before trying to access conversation
     if (!this.authService.isAuthenticated() || !this.currentUser) {
       console.warn('User not authenticated, cannot access conversation');
-      console.log('Debug auth state:', {
-        isAuthenticated: this.authService.isAuthenticated(),
-        hasCurrentUser: !!this.currentUser,
-        hasToken: !!this.authService.getToken()
-      });
       return;
     }
 
-    console.log('Selecting conversation:', conversation.id, 'User authenticated:', this.authService.isAuthenticated());
-    console.log('Token exists:', !!this.authService.getToken());
+    console.log('⚡ X-style: Opening conversation', conversation.id, 'instantly');
     
-    // Load the full conversation
+    // Try to open conversation instantly with cached data
+    const cachedData = this.chatService.openConversationInstant(conversation.id);
+    
+    if (cachedData.conversation && cachedData.messages) {
+      // INSTANT OPENING - like X/Twitter!
+      this.selectedConversation = cachedData.conversation;
+      this.currentView = 'chat';
+      
+      // Connect to WebSocket for real-time updates
+      this.chatService.connectToConversation(conversation.id);
+      
+      // Mark conversation as read
+      this.markConversationAsRead(conversation.id);
+      
+      console.log('🚀 Conversation opened instantly from cache!');
+    } else {
+      // Fallback to API if not cached (shouldn't happen often)
+      console.log('⏳ Cache miss, falling back to API');
+      this.loadConversationFromAPI(conversation);
+    }
+  }
+
+  // Fallback method for cache misses
+  private loadConversationFromAPI(conversation: Conversation) {
     this.chatService.getConversation(conversation.id).subscribe({
       next: (conversationDetail) => {
         this.selectedConversation = conversationDetail;
         this.currentView = 'chat';
         
-        // Connect to WebSocket for this conversation
+        // Load messages
+        this.chatService.loadMessages(conversation.id);
+        
+        // Connect to WebSocket
         this.chatService.connectToConversation(conversation.id);
         
-        // Mark conversation as read when opened
+        // Mark as read
         this.markConversationAsRead(conversation.id);
       },
       error: (error) => {
         console.error('Error loading conversation:', error);
         if (error.status === 401) {
-          console.warn('Authentication failed, attempting to refresh auth state');
-          // Try to refresh user authentication
           this.refreshAuthAndRetry(conversation);
         }
       }
@@ -169,7 +191,6 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     
     if (!hasTokens) {
       console.error('No tokens found, user needs to log in again');
-      // Could show a toast or redirect to login
       return;
     }
 
@@ -177,25 +198,11 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     this.authService.loadUser().subscribe({
       next: () => {
         console.log('Auth refresh successful, retrying conversation load');
-        // Retry the conversation load
-        this.chatService.getConversation(conversation.id).subscribe({
-          next: (conversationDetail) => {
-            this.selectedConversation = conversationDetail;
-            this.currentView = 'chat';
-            this.chatService.connectToConversation(conversation.id);
-            this.markConversationAsRead(conversation.id);
-          },
-          error: (retryError) => {
-            console.error('Retry failed:', retryError);
-            if (retryError.status === 401) {
-              console.error('Authentication still failing, user may need to log out and log back in');
-            }
-          }
-        });
+        // Retry with API fallback
+        this.loadConversationFromAPI(conversation);
       },
       error: (authError) => {
         console.error('Auth refresh failed:', authError);
-        // Could clear tokens and redirect to login
       }
     });
   }
@@ -258,9 +265,12 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       if (conversation) {
         this.closeCreateChatModal();
         
-        // Set as selected conversation
+        // Set as selected conversation (X-style instant)
         this.selectedConversation = conversation;
         this.currentView = 'chat';
+        
+        // Load messages for new conversation
+        this.chatService.loadMessages(conversation.id);
         
         // Connect to WebSocket
         this.chatService.connectToConversation(conversation.id);

@@ -22,6 +22,11 @@ export class ChatService {
   private messagesSubject = new BehaviorSubject<Message[]>([]);
   private typingUsersSubject = new BehaviorSubject<string[]>([]);
   
+  // X-style preloading cache
+  private conversationCache = new Map<number, ConversationDetail>();
+  private messagesCache = new Map<number, Message[]>();
+  private preloadingInProgress = new Set<number>();
+  
   // Public observables
   public conversations$ = this.conversationsSubject.asObservable();
   public messages$ = this.messagesSubject.asObservable();
@@ -183,11 +188,87 @@ export class ChatService {
     this.getConversations().subscribe({
       next: (conversations) => {
         this.conversationsSubject.next(conversations);
+        
+        // X-style preloading: Start loading conversation details for all conversations
+        this.preloadConversationsData(conversations);
       },
       error: (error) => {
         console.error('Error loading conversations:', error);
       }
     });
+  }
+
+  // X-style preloading: Load conversation details and recent messages for instant access
+  private preloadConversationsData(conversations: Conversation[]) {
+    console.log('🚀 Starting X-style preloading for', conversations.length, 'conversations');
+    
+    conversations.forEach((conv, index) => {
+      // Stagger preloading to avoid overwhelming the server
+      setTimeout(() => {
+        this.preloadConversationData(conv.id);
+      }, index * 100); // 100ms between each preload
+    });
+  }
+
+  private preloadConversationData(conversationId: number) {
+    if (this.conversationCache.has(conversationId) || this.preloadingInProgress.has(conversationId)) {
+      return; // Already cached or being loaded
+    }
+
+    this.preloadingInProgress.add(conversationId);
+    console.log('📦 Preloading conversation', conversationId);
+
+    // Load conversation details
+    this.getConversation(conversationId).subscribe({
+      next: (conversationDetail) => {
+        this.conversationCache.set(conversationId, conversationDetail);
+        console.log('✅ Cached conversation', conversationId);
+        
+        // Load recent messages (limit to last 20 for performance)
+        this.getMessages(conversationId).subscribe({
+          next: (response) => {
+            const messages = response.results.reverse();
+            this.messagesCache.set(conversationId, messages);
+            console.log('✅ Cached', messages.length, 'messages for conversation', conversationId);
+            this.preloadingInProgress.delete(conversationId);
+          },
+          error: (error) => {
+            console.error('Error preloading messages for conversation', conversationId, error);
+            this.preloadingInProgress.delete(conversationId);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error preloading conversation', conversationId, error);
+        this.preloadingInProgress.delete(conversationId);
+      }
+    });
+  }
+
+  // Get conversation from cache (X-style instant access)
+  getCachedConversation(conversationId: number): ConversationDetail | null {
+    return this.conversationCache.get(conversationId) || null;
+  }
+
+  // Get messages from cache (X-style instant access)
+  getCachedMessages(conversationId: number): Message[] | null {
+    return this.messagesCache.get(conversationId) || null;
+  }
+
+  // Open conversation with cached data (X-style instant)
+  openConversationInstant(conversationId: number): {conversation: ConversationDetail | null, messages: Message[] | null} {
+    const conversation = this.getCachedConversation(conversationId);
+    const messages = this.getCachedMessages(conversationId);
+    
+    if (conversation && messages) {
+      console.log('⚡ Opening conversation', conversationId, 'instantly from cache');
+      // Update current state immediately
+      this.messagesSubject.next(messages);
+      return {conversation, messages};
+    }
+    
+    console.log('⏳ Conversation', conversationId, 'not cached, falling back to API');
+    return {conversation: null, messages: null};
   }
 
   loadMessages(conversationId: number) {
