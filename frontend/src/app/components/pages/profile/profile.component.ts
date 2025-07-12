@@ -397,4 +397,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
   onMediaClick(media: { image: string; postId: number }): void {
     this.router.navigate(['/', this.user?.handle, 'post', media.postId]);
   }
+
+  onPostReported(postId: number): void {
+    // Remove the reported post from all relevant arrays
+    this.posts = this.posts.filter(post => post.id !== postId);
+    this.replies = this.replies.filter(post => post.id !== postId);
+    this.likedPosts = this.likedPosts.filter(post => post.id !== postId);
+    this.humanArtPosts = this.humanArtPosts.filter(post => post.id !== postId);
+    
+    // Remove from media items as well
+    this.mediaItems = this.mediaItems.filter(item => item.postId !== postId);
+  }
 } 

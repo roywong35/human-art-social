@@ -13,7 +13,7 @@ from django.db.models import Q, Case, When, F, Count, Prefetch
 from datetime import timedelta
 from django.core.cache import cache
 from django.http import Http404
-from notifications.services import create_like_notification, create_comment_notification, create_repost_notification
+from notifications.services import create_like_notification, create_comment_notification, create_repost_notification, create_report_received_notification
 
 # Create your views here.
 
@@ -995,6 +995,12 @@ class PostViewSet(viewsets.ModelViewSet):
                 report_type=report_type,
                 description=description
             )
+            print(f"🔔 [POSTS VIEW] Report created with ID: {report.id}")
+            
+            # Send notification to the reporter
+            print(f"🔔 [POSTS VIEW] About to call create_report_received_notification for user: {request.user.username}")
+            create_report_received_notification(request.user, post)
+            print(f"🔔 [POSTS VIEW] create_report_received_notification call completed")
             
             # Get updated report count
             report_count = ContentReport.get_report_count_for_post(post)
@@ -1003,7 +1009,8 @@ class PostViewSet(viewsets.ModelViewSet):
                 'success': True,
                 'message': 'Report submitted successfully',
                 'report_id': report.id,
-                'report_count': report_count
+                'report_count': report_count,
+                'post_id': post.id  # Add post_id for frontend to hide the post
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
@@ -1024,8 +1031,14 @@ class PostViewSet(viewsets.ModelViewSet):
             # Get dynamic report types based on post type
             available_types = ContentReport.get_report_types_for_post(post)
             
+            # Convert tuples to objects for frontend
+            formatted_types = [
+                {'value': type_code, 'label': type_label}
+                for type_code, type_label in available_types
+            ]
+            
             return Response({
-                'report_types': available_types,
+                'report_types': formatted_types,
                 'post_type': post.post_type,
                 'is_human_drawing': post.is_human_drawing
             })

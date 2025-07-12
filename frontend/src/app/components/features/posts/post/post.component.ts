@@ -49,6 +49,7 @@ export class PostComponent implements OnInit, OnDestroy {
 
   @Output() postUpdated = new EventEmitter<Post>();
   @Output() postDeleted = new EventEmitter<number>();
+  @Output() postReported = new EventEmitter<number>();
   @Output() replyClicked = new EventEmitter<void>();
   @Output() likeClicked = new EventEmitter<Post>();
   @Output() repostClicked = new EventEmitter<Post>();
@@ -357,15 +358,15 @@ export class PostComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(ReportModalComponent, {
       width: '500px',
       maxWidth: '90vw',
-      panelClass: 'custom-dialog-container',
+      panelClass: 'report-dialog',
       data: { post: this.post }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result?.success) {
-        this.toastService.showSuccess('Report submitted successfully');
-        // Optionally hide the post from the user's view immediately
-        // since they reported it
+        // Toast message is already shown by the modal component
+        // Hide the post from the user's view immediately since they reported it
+        this.postReported.emit(this.post.id);
       }
     });
   }

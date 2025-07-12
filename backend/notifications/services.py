@@ -9,21 +9,30 @@ def create_notification(sender, recipient, notification_type, post=None, comment
     """
     Create a notification and send it through WebSocket
     """
-    print(f"🔔 Creating notification: {sender.username} -> {recipient.username} ({notification_type})")
+    sender_name = sender.username if sender else "System"
+    print(f"🔔 [CREATE_NOTIFICATION] Creating notification: {sender_name} -> {recipient.username} ({notification_type})")
+    print(f"🔔 [CREATE_NOTIFICATION] Recipient ID: {recipient.id}")
     
-    # Don't create notification if sender is recipient
-    if sender == recipient:
-        print(f"🔔 Skipping notification - sender is recipient")
+    # Don't create notification if sender is recipient (skip for system notifications)
+    if sender and sender == recipient:
+        print(f"🔔 [CREATE_NOTIFICATION] Skipping notification - sender is recipient")
         return None
 
-    notification = Notification.objects.create(
-        sender=sender,
-        recipient=recipient,
-        notification_type=notification_type,
-        post=post,
-        comment=comment
-    )
-    print(f"🔔 Notification created with ID: {notification.id}")
+    try:
+        notification = Notification.objects.create(
+            sender=sender,
+            recipient=recipient,
+            notification_type=notification_type,
+            post=post,
+            comment=comment
+        )
+        print(f"🔔 [CREATE_NOTIFICATION] Notification created with ID: {notification.id}")
+        print(f"🔔 [CREATE_NOTIFICATION] Notification saved to database successfully")
+    except Exception as e:
+        print(f"❌ [CREATE_NOTIFICATION] Error creating notification in database: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
     # Prepare notification data for WebSocket
     notification_data = {
@@ -31,9 +40,13 @@ def create_notification(sender, recipient, notification_type, post=None, comment
         'id': notification.id,
         'notification_type': notification_type,  # The specific type like 'like', 'comment', etc.
         'sender': {
-            'id': sender.id,
-            'username': sender.username,
-            'avatar': sender.profile_picture.url if sender.profile_picture else None,
+            'id': sender.id if sender else None,
+            'username': sender.username if sender else 'System',
+            'avatar': sender.profile_picture.url if sender and sender.profile_picture else None,
+        } if sender else {
+            'id': None,
+            'username': 'System',
+            'avatar': None,
         },
         'post_id': post.id if post else None,
         'comment_id': comment.id if comment else None,
@@ -41,18 +54,26 @@ def create_notification(sender, recipient, notification_type, post=None, comment
     }
 
     # Send notification through WebSocket
-    print(f"🔔 Sending WebSocket notification to notifications_{recipient.id}")
-    print(f"🔔 Notification data: {notification_data}")
+    print(f"🔔 [CREATE_NOTIFICATION] Sending WebSocket notification to notifications_{recipient.id}")
+    print(f"🔔 [CREATE_NOTIFICATION] Notification data: {notification_data}")
     
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f"notifications_{recipient.id}",
-        {
-            'type': 'notification_message',
-            'message': notification_data
-        }
-    )
-    print(f"🔔 WebSocket notification sent successfully")
+    try:
+        channel_layer = get_channel_layer()
+        print(f"🔔 [CREATE_NOTIFICATION] Got channel layer: {channel_layer}")
+        
+        async_to_sync(channel_layer.group_send)(
+            f"notifications_{recipient.id}",
+            {
+                'type': 'notification_message',
+                'message': notification_data
+            }
+        )
+        print(f"🔔 [CREATE_NOTIFICATION] WebSocket notification sent successfully")
+    except Exception as e:
+        print(f"❌ [CREATE_NOTIFICATION] Error sending WebSocket notification: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        # Don't raise here - notification was saved to DB, just WebSocket failed
 
     return notification
 
@@ -82,4 +103,21 @@ def create_repost_notification(sender, post):
     if sender != post.author:
         create_notification(sender, post.author, 'repost', post=post)
     else:
-        print(f"🔔 Skipping repost notification - user reposted their own post") 
+        print(f"🔔 Skipping repost notification - user reposted their own post")
+
+def create_report_received_notification(reporter, post):
+    """
+    Create a notification to the reporter when their report is received
+    """
+    print(f"🔔 [NOTIFICATION SERVICE] create_report_received_notification called: Report received from {reporter.username}")
+    print(f"🔔 [NOTIFICATION SERVICE] Reporter ID: {reporter.id}, Post ID: {post.id}")
+    
+    try:
+        result = create_notification(sender=None, recipient=reporter, notification_type='report_received', post=post)
+        print(f"🔔 [NOTIFICATION SERVICE] create_notification returned: {result}")
+        return result
+    except Exception as e:
+        print(f"❌ [NOTIFICATION SERVICE] Error in create_report_received_notification: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise 

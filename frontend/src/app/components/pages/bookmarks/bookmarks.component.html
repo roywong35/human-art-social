@@ -29,6 +29,7 @@
         <app-post *ngIf="bookmarkedItem.type === 'post'"
           [post]="bookmarkedItem.item"
           (postUpdated)="refreshContent()"
+          (postReported)="onPostReported($event)"
           (bookmarkUpdated)="onPostBookmarkUpdate($event)">
         </app-post>
 

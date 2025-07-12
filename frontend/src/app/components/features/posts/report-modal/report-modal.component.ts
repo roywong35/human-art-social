@@ -51,7 +51,22 @@ export class ReportModalComponent implements OnInit {
     this.loadingReportTypes = true;
     this.postService.getReportTypes(this.post.author.handle, this.post.id).subscribe({
       next: (response) => {
-        this.reportTypes = response.report_types;
+        // Handle both array format [['code', 'label'], ...] and object format [{value: 'code', label: 'label'}, ...]
+        if (response.report_types && Array.isArray(response.report_types)) {
+          if (response.report_types.length > 0 && Array.isArray(response.report_types[0])) {
+            // Convert array format to object format
+            this.reportTypes = response.report_types.map((item: [string, string]) => ({
+              value: item[0],
+              label: item[1]
+            }));
+          } else {
+            // Already in object format
+            this.reportTypes = response.report_types;
+          }
+        } else {
+          this.reportTypes = [];
+        }
+        
         this.loadingReportTypes = false;
       },
       error: (error) => {

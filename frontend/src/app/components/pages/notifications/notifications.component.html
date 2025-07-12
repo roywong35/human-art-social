@@ -14,26 +14,41 @@
          class="p-4 hover:bg-gray-50 dark:hover:bg-[color:var(--color-surface-hover)] transition-colors cursor-pointer"
          (click)="onNotificationClick(notification)">
       <div class="flex items-center">
-        <!-- Avatar - Always links to sender's profile -->
-        <a [routerLink]="['/', notification.sender.handle]" 
-           class="flex-shrink-0"
-           (click)="$event.stopPropagation(); markAsRead(notification)">
-          <img [src]="notification.sender.profile_picture || defaultAvatar"
-               [alt]="notification.sender.username"
-               class="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity">
-        </a>
+        <!-- Avatar - Links to sender's profile if sender exists, otherwise shows system avatar -->
+        <ng-container *ngIf="notification.sender; else systemAvatar">
+          <a [routerLink]="['/', notification.sender.handle]" 
+             class="flex-shrink-0"
+             (click)="$event.stopPropagation(); markAsRead(notification)">
+            <img [src]="notification.sender.profile_picture || defaultAvatar"
+                 [alt]="notification.sender.username"
+                 class="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity">
+          </a>
+        </ng-container>
+        <ng-template #systemAvatar>
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+              <i class="fas fa-check text-white text-sm"></i>
+            </div>
+          </div>
+        </ng-template>
         
         <!-- Notification Content -->
         <div class="flex-1 mx-3">
           <p class="dark:text-[color:var(--color-text)] leading-none">
-            <!-- Username - Always links to sender's profile -->
-            <a [routerLink]="['/', notification.sender.handle]"
-               class="font-bold hover:underline"
-               (click)="$event.stopPropagation(); markAsRead(notification)">
-              {{ notification.sender.username }}
-            </a>
-            <!-- Rest of the notification message -->
-            <span class="ml-1">{{ getFormattedMessageWithoutUsername(notification) }}</span>
+            <!-- Username - Links to sender's profile if sender exists -->
+            <ng-container *ngIf="notification.sender">
+              <a [routerLink]="['/', notification.sender.handle]"
+                 class="font-bold hover:underline"
+                 (click)="$event.stopPropagation(); markAsRead(notification)">
+                {{ notification.sender.username }}
+              </a>
+              <!-- Rest of the notification message -->
+              <span class="ml-1">{{ getFormattedMessageWithoutUsername(notification) }}</span>
+            </ng-container>
+            <!-- For system notifications without sender -->
+            <ng-container *ngIf="!notification.sender">
+              <span class="font-bold">{{ getFormattedMessageWithoutUsername(notification) }}</span>
+            </ng-container>
           </p>
         </div>
         

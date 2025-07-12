@@ -184,4 +184,9 @@ export class SearchComponent implements OnInit {
       }
     });
   }
+
+  onPostReported(postId: number): void {
+    // Remove the reported post from search results
+    this.posts = this.posts.filter(post => post.id !== postId);
+  }
 } 

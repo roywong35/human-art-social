@@ -158,4 +158,11 @@ export class BookmarksComponent implements OnInit {
       error: (error) => console.error('Error reposting:', error)
     });
   }
+
+  onPostReported(postId: number): void {
+    // Remove the reported post from bookmarks
+    this.bookmarkedItems = this.bookmarkedItems.filter(item => 
+      !(item.type === 'post' && item.item.id === postId)
+    );
+  }
 } 

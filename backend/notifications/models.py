@@ -7,6 +7,7 @@ class Notification(models.Model):
         ('comment', 'Comment'),
         ('follow', 'Follow'),
         ('repost', 'Repost'),
+        ('report_received', 'Report Received'),
     )
 
     recipient = models.ForeignKey(
@@ -17,9 +18,11 @@ class Notification(models.Model):
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='notifications_sent'
+        related_name='notifications_sent',
+        null=True,
+        blank=True
     )
-    notification_type = models.CharField(max_length=10, choices=NOTIFICATION_TYPES)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     post = models.ForeignKey(
         'posts.Post',
         on_delete=models.CASCADE,
@@ -46,4 +49,5 @@ class Notification(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.sender.username} {self.notification_type} - {self.created_at}"
+        sender_name = self.sender.username if self.sender else "System"
+        return f"{sender_name} {self.notification_type} - {self.created_at}"

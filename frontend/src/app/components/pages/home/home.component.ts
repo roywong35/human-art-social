@@ -397,6 +397,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.posts = this.posts.filter(post => post.id !== postId);
   }
 
+  onPostReported(postId: number): void {
+    // Remove the reported post from the timeline immediately
+    this.posts = this.posts.filter(post => post.id !== postId);
+    this.cd.markForCheck();
+  }
+
   setActiveTab(tab: 'for-you' | 'human-drawing'): void {
     if (this.activeTab !== tab) {
       this.activeTab = tab;

@@ -239,6 +239,23 @@ body {
   background: rgba(0, 0, 0, 0.6) !important;
 }
 
+/* Report Dialog Styles */
+.report-dialog {
+  .mat-mdc-dialog-container {
+    .mdc-dialog__surface {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      :global(.dark) & {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+      }
+    }
+  }
+}
+
 :root.dark .cdk-overlay-dark-backdrop {
   background: rgba(255, 255, 255, 0.5) !important;
 }
@@ -494,5 +511,25 @@ textarea {
   &.cdk-overlay-backdrop-showing {
     opacity: 0;
   }
+}
+
+/* Report Status Dialog Styles - Simple approach like create post modal */
+.report-status-dialog {
+  .mat-mdc-dialog-container {
+    opacity: 0;
+    animation: containerFadeIn 100ms ease-out forwards;
+
+    .mdc-dialog__surface {
+      background: white;
+      border-radius: 16px !important;
+      overflow: hidden;
+    }
+  }
+}
+
+/* Override global overlay styles for report dialog */
+.report-status-dialog .cdk-overlay-pane {
+  background: transparent !important;
+  padding: 0 !important;
 }
 

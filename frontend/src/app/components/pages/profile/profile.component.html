@@ -145,6 +145,7 @@
     <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
       <app-post *ngFor="let post of posts"
         [post]="post"
+        (postReported)="onPostReported($event)"
         (click)="onPostClick(post)">
       </app-post>
       <div *ngIf="!isLoading && posts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
@@ -230,6 +231,7 @@
       <app-post *ngFor="let post of likedPosts"
         [post]="post"
         [showFullHeader]="true"
+        (postReported)="onPostReported($event)"
         (click)="onPostClick(post)">
       </app-post>
       <div *ngIf="!isLoading && likedPosts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">

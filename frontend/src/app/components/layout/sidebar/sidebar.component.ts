@@ -83,6 +83,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('[Sidebar] Initializing component');
+    console.log('🔔 Sidebar - NotificationService instance:', this.notificationService);
     
     // Load dark mode preference
     const darkMode = localStorage.getItem('darkMode');
@@ -103,9 +104,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     // Subscribe to unread notifications count
     console.log('🔔 Sidebar - subscribing to notification unread count');
+    console.log('🔔 Sidebar - NotificationService.unreadCount$:', this.notificationService.unreadCount$);
     this.notificationSubscription = this.notificationService.unreadCount$.subscribe(count => {
       console.log('🔔 Sidebar - received unread notification count update:', count);
+      console.log('🔔 Sidebar - previous unread count:', this.unreadNotifications);
       this.unreadNotifications = count;
+      console.log('🔔 Sidebar - updated unread count to:', this.unreadNotifications);
     });
 
     // Subscribe to conversations for unread message count

@@ -8,6 +8,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('is_artist', 'verified_artist', 'is_staff', 'is_superuser', 'is_active')
     search_fields = ('username', 'email')
     ordering = ('username',)
+    readonly_fields = ('date_joined', 'last_login')
     
     fieldsets = (
         (None, {'fields': ('username', 'password')}),

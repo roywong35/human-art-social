@@ -346,4 +346,18 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
     return '';
   }
 
+  onPostReported(postId: number): void {
+    // If the main post is reported, navigate away
+    if (this.post && this.post.id === postId) {
+      this.goBack();
+      return;
+    }
+
+    // Remove reported post from parent chain
+    this.parentChain = this.parentChain.filter(post => post.id !== postId);
+    
+    // Remove reported post from replies
+    this.replies = this.replies.filter(post => post.id !== postId);
+  }
+
 } 

@@ -1,29 +1,10 @@
-.report-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
+// Angular Material dialog provides the overlay and container
+// We just need to style the modal content
 
-.report-modal-container {
-  background: white;
-  border-radius: 16px;
-  max-width: 500px;
-  width: 90%;
+:host {
+  display: block;
   max-height: 80vh;
-  overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
-  :global(.dark) & {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-  }
+  overflow: visible;
 }
 
 .modal-header {
@@ -78,69 +59,30 @@
 }
 
 .modal-content {
-  max-height: calc(80vh - 140px);
+  max-height: calc(80vh - 180px);
   overflow-y: auto;
   padding: 0 24px;
-}
-
-.post-preview {
-  padding: 16px 0;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 20px;
   
-  :global(.dark) & {
-    border-bottom-color: var(--color-border);
+  // Make sure scrolling works properly
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
   }
 }
 
-.post-author {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.author-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.author-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.author-username {
-  font-weight: 700;
-  color: #111827;
-  font-size: 15px;
-  
-  :global(.dark) & {
-    color: var(--color-text);
-  }
-}
-
-.author-handle {
-  color: #6b7280;
-  font-size: 15px;
-  
-  :global(.dark) & {
-    color: var(--color-text-secondary);
-  }
-}
-
-.post-content {
-  color: #374151;
-  font-size: 15px;
-  line-height: 1.5;
-  margin-left: 52px;
-  
-  :global(.dark) & {
-    color: var(--color-text);
-  }
-}
+// Post preview removed
 
 .loading-container {
   display: flex;
@@ -379,9 +321,8 @@
 
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 24px;
+  justify-content: center;
+  padding: 12px 24px 12px 24px;
   border-top: 1px solid #e5e7eb;
   
   :global(.dark) & {
@@ -389,41 +330,16 @@
   }
 }
 
-.cancel-button {
-  padding: 10px 20px;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #374151;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background-color: #f9fafb;
-    border-color: #9ca3af;
-  }
-  
-  :global(.dark) & {
-    background: var(--color-surface);
-    border-color: var(--color-border);
-    color: var(--color-text);
-    
-    &:hover {
-      background: var(--color-surface-hover);
-    }
-  }
-}
-
 .submit-button {
-  padding: 10px 20px;
+  padding: 12px 24px;
   background: #ef4444;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: 50px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 16px;
   display: flex;
   align-items: center;
   gap: 8px;

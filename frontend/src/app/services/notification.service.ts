@@ -6,15 +6,17 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { AuthService } from './auth.service';
 import { map, tap } from 'rxjs/operators';
 
+console.log('🔔 NotificationService file loaded');
+
 export interface Notification {
   id: number;
-  sender: {
+  sender?: {
     id: number;
     username: string;
     profile_picture: string | null;
     handle: string;
   };
-  notification_type: 'like' | 'comment' | 'follow' | 'repost';
+  notification_type: 'like' | 'comment' | 'follow' | 'repost' | 'report_received';
   post?: {
     id: number;
     content: string;
@@ -47,13 +49,16 @@ export class NotificationService {
     private authService: AuthService
   ) {
     console.log('🔔 NotificationService constructor called');
+    console.log('🔔 Environment API URL:', environment.apiUrl);
     this.connectWebSocket();
     this.authService.currentUser$.subscribe((user: any) => {
       console.log('🔔 NotificationService - user changed:', user ? `User ${user.username}` : 'No user');
       if (user) {
+        console.log('🔔 NotificationService - user authenticated, connecting WebSocket');
         this.connectWebSocket();
         this.loadUnreadCount();
       } else {
+        console.log('🔔 NotificationService - no user, disconnecting WebSocket');
         this.disconnectWebSocket();
       }
     });
@@ -104,34 +109,46 @@ export class NotificationService {
     // Use query parameter for token authentication like chat service
     const wsUrl = environment.apiUrl.replace(/^http/, 'ws') + `/ws/notifications/?token=${token}`;
     console.log('🔔 NotificationService - WebSocket URL:', wsUrl);
+    console.log('🔔 NotificationService - Attempting to connect to WebSocket...');
     
-    this.socket$ = webSocket({
-      url: wsUrl,
-      openObserver: {
-        next: () => {
-          console.log('✅ Notifications WebSocket connected successfully');
+    try {
+      this.socket$ = webSocket({
+        url: wsUrl,
+        openObserver: {
+          next: () => {
+            console.log('✅ Notifications WebSocket connected successfully');
+          }
+        },
+        closeObserver: {
+          next: (event) => {
+            console.log('❌ Notifications WebSocket disconnected:', event);
+            console.log('❌ Close event details:', JSON.stringify(event, null, 2));
+            this.socket$ = undefined;
+            // Attempt to reconnect after 5 seconds
+            setTimeout(() => {
+              console.log('🔄 Attempting to reconnect notifications WebSocket...');
+              this.connectWebSocket();
+            }, 5000);
+          }
         }
-      },
-      closeObserver: {
-        next: (event) => {
-          console.log('❌ Notifications WebSocket disconnected:', event);
-          this.socket$ = undefined;
-          // Attempt to reconnect after 5 seconds
-          setTimeout(() => {
-            console.log('🔄 Attempting to reconnect notifications WebSocket...');
-            this.connectWebSocket();
-          }, 5000);
-        }
-      }
-    });
+      });
+      console.log('🔔 NotificationService - WebSocket object created successfully');
+    } catch (error) {
+      console.error('❌ Error creating WebSocket:', error);
+      return;
+    }
 
     this.socket$.subscribe({
       next: (message) => {
         console.log('📨 Notification WebSocket message received:', message);
+        console.log('📨 Message type:', message.type);
+        console.log('📨 Full message object:', JSON.stringify(message, null, 2));
         // Handle incoming notifications
         if (message.type === 'notification') {
-          console.log('🔔 Processing notification, incrementing unread count');
+          console.log('🔔 Processing notification, incrementing unread count from', this.unreadCount.value, 'to', this.unreadCount.value + 1);
+          console.log('🔔 Notification type:', message.notification_type);
           this.unreadCount.next(this.unreadCount.value + 1);
+          console.log('🔔 Unread count after increment:', this.unreadCount.value);
         } else {
           console.log('🔔 Unknown message type:', message.type);
         }
@@ -180,7 +197,7 @@ export class NotificationService {
   }
 
   getFormattedMessage(notification: Notification): string {
-    const username = notification.sender.username;
+    const username = notification.sender?.username;
     switch (notification.notification_type) {
       case 'like':
         return `${username} liked your post`;
@@ -190,6 +207,8 @@ export class NotificationService {
         return `${username} followed you`;
       case 'repost':
         return `${username} reposted your post`;
+      case 'report_received':
+        return `We received your report`;
       default:
         return '';
     }

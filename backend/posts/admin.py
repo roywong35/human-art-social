@@ -46,7 +46,7 @@ class EvidenceFileInline(admin.TabularInline):
 class PostAdmin(admin.ModelAdmin):
     list_display = ('id', 'author', 'post_type', 'is_human_drawing', 'is_verified', 'verification_status', 'time_ago', 'list_image_preview', 'evidence_files_preview')
     list_filter = ('is_human_drawing', 'post_type', 'is_verified', 'created_at')
-    search_fields = ('author__username', 'content')
+    search_fields = ('author__handle', 'author__username', 'content')
     readonly_fields = ('created_at', 'updated_at', 'likes_count', 'reposts_count', 'replies_count', 'detail_image_preview', 'evidence_count')
     fieldsets = (
         ('Post Information', {
@@ -184,7 +184,7 @@ class PostAdmin(admin.ModelAdmin):
 class ContentReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'reporter_link', 'reported_post_link', 'report_type', 'status', 'time_ago', 'report_count')
     list_filter = ('report_type', 'status', 'created_at')
-    search_fields = ('reporter__username', 'reported_post__content', 'description')
+    search_fields = ('reporter__handle', 'reporter__username', 'reported_post__content', 'description')
     readonly_fields = ('created_at', 'reporter', 'reported_post', 'report_type', 'description', 'post_preview', 'total_reports_for_post')
     fieldsets = (
         ('Report Information', {
@@ -205,7 +205,7 @@ class ContentReportAdmin(admin.ModelAdmin):
         return format_html(
             '<a href="{}" style="color: #417690; text-decoration: none;">@{}</a>',
             reverse('admin:users_user_change', args=[obj.reporter.id]),
-            obj.reporter.username
+            obj.reporter.handle
         )
     reporter_link.short_description = 'Reporter'
 
@@ -236,7 +236,7 @@ class ContentReportAdmin(admin.ModelAdmin):
         
         # Post author and content
         preview_html.append(f'<div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin: 10px 0;">')
-        preview_html.append(f'<strong>@{post.author.username}</strong> ({post.get_post_type_display()})')
+        preview_html.append(f'<strong>@{post.author.handle}</strong> ({post.get_post_type_display()})')
         
         if post.content:
             content_preview = post.content[:200]
