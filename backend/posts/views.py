@@ -4,7 +4,7 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, EvidenceFile, PostImage, User, Hashtag
+from .models import Post, EvidenceFile, PostImage, User, Hashtag, ContentReport
 from .serializers import PostSerializer, HashtagSerializer
 from django.db import models, transaction
 from django.utils import timezone
@@ -32,7 +32,7 @@ class PostViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """
-        Get all posts with related data.
+        Get all posts with related data, filtered by report status.
         """
         print(f"[DEBUG] User {self.request.user.username} following_only_preference: {self.request.user.following_only_preference}")
         
@@ -43,6 +43,17 @@ class PostViewSet(viewsets.ModelViewSet):
             'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
         )
         print(f"[DEBUG] Initial queryset count: {queryset.count()}")
+
+        # Filter out posts with 3+ reports (hidden from main timeline)
+        posts_to_hide_from_timeline = ContentReport.get_posts_to_hide_from_timeline()
+        queryset = queryset.exclude(id__in=posts_to_hide_from_timeline)
+        print(f"[DEBUG] After timeline report filter queryset count: {queryset.count()}")
+
+        # Filter out posts that the current user has reported (hide from their view)
+        if self.request.user.is_authenticated:
+            posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
+            queryset = queryset.exclude(id__in=posts_reported_by_user)
+            print(f"[DEBUG] After user report filter queryset count: {queryset.count()}")
 
         # Filter by following if the user has following_only_preference enabled
         if self.request.user.following_only_preference:
@@ -818,10 +829,20 @@ class PostViewSet(viewsets.ModelViewSet):
     def user_human_art(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         human_art_posts = Post.objects.filter(
-            author=user,
-            is_human_drawing=True,
-            is_verified=True
+            Q(author=user) &
+            Q(is_human_drawing=True) &
+            Q(is_verified=True) &
+            (Q(scheduled_time__isnull=True) | Q(scheduled_time__lte=timezone.now()))
         ).select_related('author').order_by('-created_at')
+        
+        # Filter out posts with 3+ AI art reports (hidden from human art timeline)
+        posts_to_hide_from_human_art = ContentReport.get_posts_to_hide_from_human_art()
+        human_art_posts = human_art_posts.exclude(id__in=posts_to_hide_from_human_art)
+        
+        # Filter out posts that the current user has reported (hide from their view)
+        if request.user.is_authenticated:
+            posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(request.user)
+            human_art_posts = human_art_posts.exclude(id__in=posts_reported_by_user)
         
         serializer = PostSerializer(human_art_posts, many=True, context={'request': request})
         return Response(serializer.data)
@@ -863,12 +884,19 @@ class PostViewSet(viewsets.ModelViewSet):
                 post_type='reply'  # Exclude replies from public view
             )
 
+            # Filter out posts with 3+ reports (hidden from main timeline)
+            posts_to_hide_from_timeline = ContentReport.get_posts_to_hide_from_timeline()
+            queryset = queryset.exclude(id__in=posts_to_hide_from_timeline)
+
             # Filter based on tab
             if tab == 'human-drawing':
                 queryset = queryset.filter(
                     is_human_drawing=True,
                     is_verified=True
                 )
+                # Also filter out posts with 3+ AI art reports from human art tab
+                posts_to_hide_from_human_art = ContentReport.get_posts_to_hide_from_human_art()
+                queryset = queryset.exclude(id__in=posts_to_hide_from_human_art)
             
             queryset = queryset.order_by('-created_at')
 
@@ -903,5 +931,128 @@ class PostViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+    @action(detail=True, methods=['POST'])
+    def report(self, request, handle=None, pk=None):
+        """
+        Report a post for inappropriate content
+        """
+        try:
+            post = get_object_or_404(Post, author__handle=handle, pk=pk)
+            
+            # Check if user is trying to report their own post
+            if post.author == request.user:
+                return Response(
+                    {'error': 'You cannot report your own post'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            report_type = request.data.get('report_type')
+            description = request.data.get('description', '')
+            
+            if not report_type:
+                return Response(
+                    {'error': 'Report type is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate report type exists
+            valid_report_types = dict(ContentReport.REPORT_TYPES)
+            if report_type not in valid_report_types:
+                return Response(
+                    {'error': 'Invalid report type'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if AI Art report is only for human art posts
+            if report_type == 'ai_art' and not post.is_human_drawing:
+                return Response(
+                    {'error': 'AI Art reports can only be made against human art posts'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if user has already reported this post for this reason
+            existing_report = ContentReport.objects.filter(
+                reporter=request.user,
+                reported_post=post,
+                report_type=report_type,
+                status='pending'
+            ).first()
+            
+            if existing_report:
+                return Response(
+                    {'error': 'You have already reported this post for this reason'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create the report
+            report = ContentReport.objects.create(
+                reporter=request.user,
+                reported_post=post,
+                report_type=report_type,
+                description=description
+            )
+            
+            # Get updated report count
+            report_count = ContentReport.get_report_count_for_post(post)
+            
+            return Response({
+                'success': True,
+                'message': 'Report submitted successfully',
+                'report_id': report.id,
+                'report_count': report_count
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print(f"Error in report action: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while submitting the report'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['GET'])
+    def report_types(self, request, handle=None, pk=None):
+        """
+        Get available report types for a specific post
+        """
+        try:
+            post = get_object_or_404(Post, author__handle=handle, pk=pk)
+            
+            # Get dynamic report types based on post type
+            available_types = ContentReport.get_report_types_for_post(post)
+            
+            return Response({
+                'report_types': available_types,
+                'post_type': post.post_type,
+                'is_human_drawing': post.is_human_drawing
+            })
+            
+        except Exception as e:
+            print(f"Error in report_types action: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while fetching report types'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['GET'])
+    def reported(self, request):
+        """
+        Get posts that the current user has reported (for hiding from their view)
+        """
+        try:
+            reported_post_ids = ContentReport.get_posts_to_hide_from_user(request.user)
+            
+            return Response({
+                'reported_post_ids': list(reported_post_ids),
+                'count': len(reported_post_ids)
+            })
+            
+        except Exception as e:
+            print(f"Error in reported action: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while fetching reported posts'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

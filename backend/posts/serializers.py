@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Post, EvidenceFile, PostImage, Hashtag
+from .models import Post, EvidenceFile, PostImage, Hashtag, ContentReport
 
 User = get_user_model()
 
@@ -119,3 +119,35 @@ class HashtagSerializer(serializers.ModelSerializer):
     def get_post_count(self, obj):
         # Only count original posts and quotes, not reposts
         return obj.posts.exclude(post_type='repost').count() 
+
+
+class ContentReportSerializer(serializers.ModelSerializer):
+    reporter = UserSerializer(read_only=True)
+    reported_post = serializers.SerializerMethodField()
+    report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = ContentReport
+        fields = ['id', 'reporter', 'reported_post', 'report_type', 'report_type_display', 
+                 'description', 'status', 'status_display', 'created_at', 'resolved_at']
+        read_only_fields = ['reporter', 'created_at', 'resolved_at']
+    
+    def get_reported_post(self, obj):
+        # Return minimal post data to avoid circular references
+        return {
+            'id': obj.reported_post.id,
+            'content': obj.reported_post.content[:100] + '...' if len(obj.reported_post.content) > 100 else obj.reported_post.content,
+            'author': {
+                'id': obj.reported_post.author.id,
+                'username': obj.reported_post.author.username,
+                'handle': obj.reported_post.author.handle
+            },
+            'post_type': obj.reported_post.post_type,
+            'is_human_drawing': obj.reported_post.is_human_drawing,
+            'created_at': obj.reported_post.created_at
+        }
+    
+    def create(self, validated_data):
+        validated_data['reporter'] = self.context['request'].user
+        return super().create(validated_data) 

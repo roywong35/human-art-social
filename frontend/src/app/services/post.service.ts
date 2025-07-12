@@ -517,4 +517,16 @@ export class PostService {
   getScheduledPosts(): Observable<Post[]> {
     return this.http.get<Post[]>(`${this.baseUrl}/posts/scheduled/`);
   }
+
+  getReportTypes(handle: string, postId: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/posts/${handle}/${postId}/report-types/`);
+  }
+
+  reportPost(handle: string, postId: number, reportData: { report_type: string; description: string }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/posts/${handle}/${postId}/report/`, reportData);
+  }
+
+  getReportedPosts(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/posts/reported/`);
+  }
 } 

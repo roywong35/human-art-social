@@ -39,6 +39,17 @@ urlpatterns = [
         'post': 'bookmark'
     })),
 
+    # Report endpoints
+    path('posts/<str:handle>/<int:pk>/report/', PostViewSet.as_view({
+        'post': 'report'
+    })),
+    path('posts/<str:handle>/<int:pk>/report-types/', PostViewSet.as_view({
+        'get': 'report_types'
+    })),
+    path('posts/reported/', PostViewSet.as_view({
+        'get': 'reported'
+    })),
+
     # Reply URLs
     path('posts/<str:handle>/<int:pk>/replies/', PostViewSet.as_view({
         'get': 'replies',

@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.timesince import timesince
 from django.urls import reverse
-from .models import Post, EvidenceFile
+from .models import Post, EvidenceFile, ContentReport
 
 class EvidenceFileInline(admin.TabularInline):
     model = EvidenceFile
@@ -178,3 +178,127 @@ class PostAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('author').prefetch_related('evidence_files', 'images')
+
+
+@admin.register(ContentReport)
+class ContentReportAdmin(admin.ModelAdmin):
+    list_display = ('id', 'reporter_link', 'reported_post_link', 'report_type', 'status', 'time_ago', 'report_count')
+    list_filter = ('report_type', 'status', 'created_at')
+    search_fields = ('reporter__username', 'reported_post__content', 'description')
+    readonly_fields = ('created_at', 'reporter', 'reported_post', 'report_type', 'description', 'post_preview', 'total_reports_for_post')
+    fieldsets = (
+        ('Report Information', {
+            'fields': ('reporter', 'reported_post', 'report_type', 'description', 'created_at')
+        }),
+        ('Post Preview', {
+            'fields': ('post_preview', 'total_reports_for_post'),
+            'classes': ('wide',)
+        }),
+        ('Resolution', {
+            'fields': ('status', 'resolved_at', 'resolved_by'),
+            'classes': ('wide',)
+        }),
+    )
+    actions = ['resolve_reports', 'dismiss_reports']
+
+    def reporter_link(self, obj):
+        return format_html(
+            '<a href="{}" style="color: #417690; text-decoration: none;">@{}</a>',
+            reverse('admin:users_user_change', args=[obj.reporter.id]),
+            obj.reporter.username
+        )
+    reporter_link.short_description = 'Reporter'
+
+    def reported_post_link(self, obj):
+        return format_html(
+            '<a href="{}" style="color: #417690; text-decoration: none;">Post #{}</a>',
+            reverse('admin:posts_post_change', args=[obj.reported_post.id]),
+            obj.reported_post.id
+        )
+    reported_post_link.short_description = 'Post'
+
+    def time_ago(self, obj):
+        time_diff = timesince(obj.created_at)
+        color = '#e67e22' if obj.status == 'pending' else '#666'
+        return format_html('<span style="color: {};">{}</span>', color, time_diff)
+    time_ago.short_description = 'Reported'
+    time_ago.admin_order_field = 'created_at'
+
+    def report_count(self, obj):
+        count = ContentReport.get_report_count_for_post(obj.reported_post)
+        color = '#e74c3c' if count >= 3 else '#f39c12' if count >= 2 else '#27ae60'
+        return format_html('<span style="color: {}; font-weight: bold;">{}</span>', color, count)
+    report_count.short_description = 'Total Reports'
+
+    def post_preview(self, obj):
+        post = obj.reported_post
+        preview_html = []
+        
+        # Post author and content
+        preview_html.append(f'<div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin: 10px 0;">')
+        preview_html.append(f'<strong>@{post.author.username}</strong> ({post.get_post_type_display()})')
+        
+        if post.content:
+            content_preview = post.content[:200]
+            if len(post.content) > 200:
+                content_preview += '...'
+            preview_html.append(f'<p style="margin: 10px 0;">{content_preview}</p>')
+        
+        # Post image preview
+        first_image = post.images.first()
+        if first_image:
+            preview_html.append(
+                f'<div style="text-align: center; margin: 10px 0;">'
+                f'<img src="{first_image.image.url}" style="max-height: 200px; border: 1px solid #ddd; border-radius: 4px; padding: 5px;" /><br/>'
+                f'<a href="{first_image.image.url}" target="_blank" style="font-size: 12px;">View Full Size</a>'
+                f'</div>'
+            )
+        
+        # Human art status
+        if post.is_human_drawing:
+            verification_status = "✓ Verified" if post.is_verified else "⏳ Pending"
+            preview_html.append(f'<p style="margin: 10px 0;"><strong>Human Art:</strong> {verification_status}</p>')
+        
+        preview_html.append('</div>')
+        return format_html(''.join(preview_html))
+    post_preview.short_description = 'Post Preview'
+
+    def total_reports_for_post(self, obj):
+        reports = ContentReport.objects.filter(reported_post=obj.reported_post, status='pending')
+        report_types = reports.values_list('report_type', flat=True).distinct()
+        
+        html = ['<div style="margin: 10px 0;">']
+        for report_type in report_types:
+            count = reports.filter(report_type=report_type).count()
+            display_name = dict(ContentReport.REPORT_TYPES).get(report_type, report_type)
+            html.append(f'<span style="margin-right: 15px; background-color: #f0f0f0; padding: 5px 10px; border-radius: 4px;">')
+            html.append(f'{display_name}: {count}')
+            html.append('</span>')
+        html.append('</div>')
+        return format_html(''.join(html))
+    total_reports_for_post.short_description = 'All Reports for This Post'
+
+    @admin.action(description='Resolve selected reports')
+    def resolve_reports(self, request, queryset):
+        updated = 0
+        for report in queryset.filter(status='pending'):
+            report.status = 'resolved'
+            report.resolved_at = timezone.now()
+            report.resolved_by = request.user
+            report.save(update_fields=['status', 'resolved_at', 'resolved_by'])
+            updated += 1
+        self.message_user(request, f'{updated} reports were successfully resolved.')
+
+    @admin.action(description='Dismiss selected reports')
+    def dismiss_reports(self, request, queryset):
+        updated = 0
+        for report in queryset.filter(status='pending'):
+            report.status = 'dismissed'
+            report.resolved_at = timezone.now()
+            report.resolved_by = request.user
+            report.save(update_fields=['status', 'resolved_at', 'resolved_by'])
+            updated += 1
+        self.message_user(request, f'{updated} reports were successfully dismissed.')
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('reporter', 'reported_post__author').prefetch_related('reported_post__images')

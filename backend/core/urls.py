@@ -42,3 +42,5 @@ if settings.DEBUG:
     print(f"Media Root: {settings.MEDIA_ROOT}")
     # Also serve media files through static() for development
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Serve static files for admin panel CSS/JS
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { CommentDialogComponent } from '../../comments/comment-dialog/comment-dialog.component';
 import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
 import { NewPostModalComponent } from '../new-post-modal/new-post-modal.component';
+import { ReportModalComponent } from '../report-modal/report-modal.component';
 import { ToastService } from '../../../../services/toast.service';
 import { take } from 'rxjs/operators';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
@@ -58,6 +59,7 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected environment = environment;
   protected showRepostMenu = false;
+  protected showMoreMenu = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   // Reply functionality
@@ -105,7 +107,13 @@ export class PostComponent implements OnInit, OnDestroy {
       this.currentUser = user;
     });
 
-
+    // Add click listener to close menus when clicking outside
+    document.addEventListener('click', (event) => {
+      if (this.showMoreMenu) {
+        this.showMoreMenu = false;
+        this.cd.markForCheck();
+      }
+    });
 
     // Load replies if we're showing them
     if (this.showReplies || this.isDetailView) {
@@ -333,6 +341,35 @@ export class PostComponent implements OnInit, OnDestroy {
     }
   }
 
+  protected toggleMoreMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showMoreMenu = !this.showMoreMenu;
+  }
+
+  protected onReportPost(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showMoreMenu = false;
+    
+    if (!this.checkAuth('report')) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ReportModalComponent, {
+      width: '500px',
+      maxWidth: '90vw',
+      panelClass: 'custom-dialog-container',
+      data: { post: this.post }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.success) {
+        this.toastService.showSuccess('Report submitted successfully');
+        // Optionally hide the post from the user's view immediately
+        // since they reported it
+      }
+    });
+  }
+
   private openQuoteModal(): void {
     const dialogRef = this.dialog.open(NewPostModalComponent, {
       width: '600px',
@@ -465,6 +502,9 @@ export class PostComponent implements OnInit, OnDestroy {
               break;
             case 'profile':
               this.router.navigate([`/${this.post.author.handle}`]);
+              break;
+            case 'report':
+              this.onReportPost(new MouseEvent('click'));
               break;
           }
         }

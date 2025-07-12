@@ -225,3 +225,129 @@ class Post(models.Model):
         # Extract and save hashtags after saving the post
         if self.content:  # Only process if there's content
             self.extract_and_save_hashtags()
+
+
+class ContentReport(models.Model):
+    """
+    Model for content reports against posts.
+    Supports different report types with dynamic categories based on post type.
+    """
+    REPORT_TYPES = (
+        ('ai_art', 'AI Art'),
+        ('harassment', 'Harassment/Abuse'),
+        ('spam', 'Spam'),
+        ('inappropriate', 'Inappropriate Content'),
+        ('misinformation', 'Misinformation'),
+        ('copyright', 'Copyright Violation'),
+        ('other', 'Other'),
+    )
+    
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('resolved', 'Resolved'),
+        ('dismissed', 'Dismissed'),
+    )
+    
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_reports')
+    reported_post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reports')
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
+    description = models.TextField(blank=True, help_text='Optional additional details about the report')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_reports')
+    
+    class Meta:
+        unique_together = ['reporter', 'reported_post', 'report_type']  # Prevent duplicate reports
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['reported_post', 'status']),
+            models.Index(fields=['reporter', 'created_at']),
+            models.Index(fields=['status', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f'{self.reporter.username} reported {self.reported_post.author.username}\'s post for {self.get_report_type_display()}'
+    
+    @property
+    def is_resolved(self):
+        return self.status in ['resolved', 'dismissed']
+    
+    @classmethod
+    def get_report_types_for_post(cls, post):
+        """
+        Get available report types for a specific post.
+        AI Art reports are only available for human art posts.
+        """
+        base_types = [
+            ('harassment', 'Harassment/Abuse'),
+            ('spam', 'Spam'),
+            ('inappropriate', 'Inappropriate Content'),
+            ('misinformation', 'Misinformation'),
+            ('copyright', 'Copyright Violation'),
+            ('other', 'Other'),
+        ]
+        
+        # Add AI Art option only for human art posts
+        if post.is_human_drawing:
+            return [('ai_art', 'AI Art')] + base_types
+        
+        return base_types
+    
+    @classmethod
+    def get_report_count_for_post(cls, post, report_type=None):
+        """
+        Get the count of reports for a specific post, optionally filtered by report type.
+        """
+        queryset = cls.objects.filter(reported_post=post, status='pending')
+        if report_type:
+            queryset = queryset.filter(report_type=report_type)
+        return queryset.count()
+    
+    @classmethod
+    def is_post_reported_by_user(cls, post, user):
+        """
+        Check if a post has been reported by a specific user.
+        """
+        return cls.objects.filter(
+            reported_post=post,
+            reporter=user,
+            status='pending'
+        ).exists()
+    
+    @classmethod
+    def get_posts_to_hide_from_user(cls, user):
+        """
+        Get posts that should be hidden from a specific user (posts they've reported).
+        """
+        return cls.objects.filter(
+            reporter=user,
+            status='pending'
+        ).values_list('reported_post_id', flat=True)
+    
+    @classmethod
+    def get_posts_to_hide_from_timeline(cls):
+        """
+        Get posts that should be hidden from the main timeline (3+ reports).
+        """
+        from django.db.models import Count
+        
+        return cls.objects.filter(
+            status='pending'
+        ).values('reported_post_id').annotate(
+            report_count=Count('id')
+        ).filter(report_count__gte=3).values_list('reported_post_id', flat=True)
+    
+    @classmethod
+    def get_posts_to_hide_from_human_art(cls):
+        """
+        Get posts that should be hidden from human art timeline due to AI art reports.
+        """
+        from django.db.models import Count
+        
+        return cls.objects.filter(
+            status='pending',
+            report_type='ai_art'
+        ).values('reported_post_id').annotate(
+            report_count=Count('id')
+        ).filter(report_count__gte=3).values_list('reported_post_id', flat=True)
