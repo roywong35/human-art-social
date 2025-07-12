@@ -344,6 +344,10 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected toggleMoreMenu(event: MouseEvent): void {
     event.stopPropagation();
+    if (this.isPreview && !this.authService.isAuthenticated()) {
+      this.checkAuth('more');
+      return;
+    }
     this.showMoreMenu = !this.showMoreMenu;
   }
 
