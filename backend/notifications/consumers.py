@@ -75,11 +75,16 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         message = event['message']
         print(f"📤 [NOTIFICATION CONSUMER] Received notification for user {self.scope['user'].username}: {message}")
         print(f"📤 [NOTIFICATION CONSUMER] Event: {event}")
+        print(f"📤 [NOTIFICATION CONSUMER] Notification type: {message.get('notification_type')}")
+        print(f"📤 [NOTIFICATION CONSUMER] Message ID: {message.get('id')}")
+        print(f"📤 [NOTIFICATION CONSUMER] Sender: {message.get('sender')}")
+        print(f"📤 [NOTIFICATION CONSUMER] Post ID: {message.get('post_id')}")
 
         try:
             # Send message to WebSocket
             await self.send(text_data=json.dumps(message))
             print(f"📤 [NOTIFICATION CONSUMER] Successfully sent notification to WebSocket")
+            print(f"📤 [NOTIFICATION CONSUMER] Sent data: {json.dumps(message)}")
         except Exception as e:
             print(f"❌ [NOTIFICATION CONSUMER] Error sending notification to WebSocket: {str(e)}")
             import traceback

@@ -1,0 +1,74 @@
+<div class="bg-white dark:bg-gray-900 rounded-lg max-w-2xl mx-auto max-h-[90vh] flex flex-col">
+  <!-- Header - Fixed at top -->
+  <div class="flex items-center justify-between p-6 pb-4 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Post Removed</h2>
+    <button (click)="onClose()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+      <i class="fas fa-times text-xl"></i>
+    </button>
+  </div>
+
+  <!-- Scrollable Content -->
+  <div class="flex-1 overflow-y-auto p-6 pt-4">
+    <div *ngIf="loading" class="flex justify-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+
+    <div *ngIf="!loading && appealStatus" class="space-y-4">
+      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div class="flex items-center">
+          <i class="fas fa-exclamation-triangle text-red-500 mr-3 text-xl"></i>
+          <div>
+            <h3 class="font-semibold text-red-800 dark:text-red-200">Your post has been removed</h3>
+            <p class="text-sm text-red-700 dark:text-red-300 mt-1">
+              This post was automatically removed due to multiple reports from the community.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post Preview -->
+      <div class="space-y-2">
+        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Removed Post:</h4>
+        <app-post [post]="postPreview!" [isPreview]="true" [showRemovalBadge]="true"></app-post>
+      </div>
+
+      <div class="space-y-3">
+        <!-- If user can appeal -->
+        <div *ngIf="appealStatus.can_appeal">
+          <p class="text-gray-700 dark:text-gray-300 text-sm mb-3">
+            You can appeal this decision if you believe your post was removed in error.
+          </p>
+          <button 
+            (click)="onAppealClick()"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+            Submit Appeal
+          </button>
+        </div>
+
+        <!-- If appeal already exists -->
+        <div *ngIf="appealStatus.appeal" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-semibold text-blue-800 dark:text-blue-200">Appeal Status</h4>
+            <span [class]="getStatusColor(appealStatus.appeal.status)" class="text-sm font-medium">
+              {{ getStatusText(appealStatus.appeal.status) }}
+            </span>
+          </div>
+          <p class="text-sm text-blue-700 dark:text-blue-300">
+            Appeal submitted on {{ appealStatus.appeal.created_at | date:'medium' }}
+          </p>
+          <div *ngIf="appealStatus.appeal.reviewed_at" class="mt-2">
+            <p class="text-sm text-blue-700 dark:text-blue-300">
+              Reviewed on {{ appealStatus.appeal.reviewed_at | date:'medium' }}
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Appeal message -->
+      <div class="text-sm text-gray-600 dark:text-gray-400">
+        {{ appealStatus.message }}
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,138 @@
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
+  <div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Submit Appeal</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-2">
+        Appeal the removal of your post if you believe it was removed in error.
+      </p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12 text-center">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <p class="text-gray-600 dark:text-gray-400">Loading appeal information...</p>
+    </div>
+
+    <!-- Appeal Form -->
+    <div *ngIf="!loading && appealStatus" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+      <form (ngSubmit)="onSubmit()" #appealForm="ngForm">
+        <!-- Post Information -->
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+          <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-red-500 mr-3 text-xl"></i>
+            <div>
+              <h3 class="font-semibold text-red-800 dark:text-red-200">Post Removed</h3>
+              <p class="text-sm text-red-700 dark:text-red-300 mt-1">
+                This post was automatically removed due to multiple reports from the community.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Post Preview -->
+        <div class="mb-6">
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Removed Post:</h4>
+          <div *ngIf="loadingPost" class="flex justify-center py-4">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+          </div>
+          <app-post [post]="postPreview!" [isPreview]="true" [showRemovalBadge]="true"></app-post>
+        </div>
+
+        <!-- Appeal Text -->
+        <div class="mb-6">
+          <label for="appealText" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Why should this post be restored? *
+          </label>
+          <textarea
+            id="appealText"
+            name="appealText"
+            [(ngModel)]="appealText"
+            required
+            rows="6"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+            placeholder="Please explain why you believe your post was removed in error. Be specific and provide context that would help our review team understand the situation."
+          ></textarea>
+          <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {{ appealText.length }}/1000 characters
+          </div>
+        </div>
+
+        <!-- Evidence Files -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Evidence Files (Optional)
+          </label>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            You can upload evidence to support your appeal (screenshots, documents, etc.)
+          </p>
+
+          <!-- File Upload Area -->
+          <div 
+            class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+            [class.border-blue-500]="dragOver"
+            [class.bg-blue-50]="dragOver"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)">
+            <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-2"></i>
+            <p class="text-gray-600 dark:text-gray-400 mb-2">
+              Drag and drop files here, or 
+              <label for="fileInput" class="text-blue-500 hover:text-blue-600 cursor-pointer underline">
+                browse
+              </label>
+            </p>
+            <input
+              id="fileInput"
+              type="file"
+              multiple
+              accept="image/*,.pdf,.doc,.docx,.txt"
+              (change)="onFileSelected($event)"
+              class="hidden">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Maximum 5 files, 10MB each. Supported: Images, PDF, DOC, TXT
+            </p>
+          </div>
+
+          <!-- Selected Files -->
+          <div *ngIf="selectedFiles.length > 0" class="mt-4 space-y-2">
+            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Selected Files:</h4>
+            <div *ngFor="let file of selectedFiles; let i = index" 
+                 class="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+              <div class="flex items-center">
+                <i class="fas fa-file text-gray-400 mr-2"></i>
+                <div>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ file.name }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatFileSize(file.size) }}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="removeFile(i)"
+                class="text-red-500 hover:text-red-600 p-1">
+                <i class="fas fa-times text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-3">
+          <button
+            type="button"
+            (click)="onCancel()"
+            class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="!canSubmit()"
+            class="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center">
+            <div *ngIf="submitting" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+            {{ submitting ? 'Submitting...' : 'Submit Appeal' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div> 

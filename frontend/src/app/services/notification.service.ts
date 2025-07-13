@@ -16,7 +16,7 @@ export interface Notification {
     profile_picture: string | null;
     handle: string;
   };
-  notification_type: 'like' | 'comment' | 'follow' | 'repost' | 'report_received';
+  notification_type: 'like' | 'comment' | 'follow' | 'repost' | 'report_received' | 'post_removed' | 'appeal_approved' | 'appeal_rejected';
   post?: {
     id: number;
     content: string;
@@ -26,6 +26,15 @@ export interface Notification {
       handle: string;
       profile_picture: string | null;
     };
+    post_type?: string;
+    created_at?: string;
+    image?: string;
+    images?: Array<{
+      id: number;
+      image: string;
+      filename: string;
+    }>;
+    is_human_drawing?: boolean;
   };
   comment?: {
     id: number;
@@ -43,6 +52,14 @@ export class NotificationService {
   private socket$?: WebSocketSubject<any>;
   private unreadCount = new BehaviorSubject<number>(0);
   unreadCount$ = this.unreadCount.asObservable();
+
+  // Add subject for specific notification events
+  private notificationEvents = new Subject<Notification>();
+  notificationEvents$ = this.notificationEvents.asObservable();
+
+  // Global notifications list (similar to chat service)
+  private notifications = new BehaviorSubject<Notification[]>([]);
+  notifications$ = this.notifications.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -149,6 +166,25 @@ export class NotificationService {
           console.log('🔔 Notification type:', message.notification_type);
           this.unreadCount.next(this.unreadCount.value + 1);
           console.log('🔔 Unread count after increment:', this.unreadCount.value);
+          
+          // Emit the notification event for other services to handle
+          const notification: Notification = {
+            id: message.id,
+            sender: message.sender,
+            notification_type: message.notification_type,
+            post: message.post,
+            comment: message.comment,
+            is_read: false,
+            created_at: message.created_at
+          };
+          
+          console.log('🔔 Emitting notification event for type:', message.notification_type);
+          this.notificationEvents.next(notification);
+          
+          // Add notification to global list (similar to chat service)
+          const currentNotifications = this.notifications.getValue();
+          this.notifications.next([notification, ...currentNotifications]);
+          console.log('🔔 Added notification to global list, total:', currentNotifications.length + 1);
         } else {
           console.log('🔔 Unknown message type:', message.type);
         }
@@ -179,6 +215,19 @@ export class NotificationService {
   getNotifications(page: number = 1): Observable<{ results: Notification[], count: number }> {
     return this.http.get<{ results: Notification[], count: number }>(
       `${this.apiUrl}/?page=${page}`
+    ).pipe(
+      tap(response => {
+        if (page === 1) {
+          // First page - replace notifications list
+          this.notifications.next(response.results);
+          console.log('🔔 Updated global notifications list with', response.results.length, 'notifications');
+        } else {
+          // Subsequent pages - append to existing list
+          const currentNotifications = this.notifications.getValue();
+          this.notifications.next([...currentNotifications, ...response.results]);
+          console.log('🔔 Appended', response.results.length, 'notifications to global list');
+        }
+      })
     );
   }
 
@@ -189,11 +238,33 @@ export class NotificationService {
   }
 
   markAsRead(notificationId: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${notificationId}/mark_as_read/`, {});
+    return this.http.post<void>(`${this.apiUrl}/${notificationId}/mark_as_read/`, {}).pipe(
+      tap(() => {
+        // Update the global list
+        const currentNotifications = this.notifications.getValue();
+        const updatedNotifications = currentNotifications.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, is_read: true }
+            : notification
+        );
+        this.notifications.next(updatedNotifications);
+        console.log('🔔 Marked notification', notificationId, 'as read in global list');
+      })
+    );
   }
 
   markAllAsRead(): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/mark_all_as_read/`, {});
+    return this.http.post<void>(`${this.apiUrl}/mark_all_as_read/`, {}).pipe(
+      tap(() => {
+        // Update the global list
+        const currentNotifications = this.notifications.getValue();
+        const updatedNotifications = currentNotifications.map(notification => 
+          ({ ...notification, is_read: true })
+        );
+        this.notifications.next(updatedNotifications);
+        console.log('🔔 Marked all notifications as read in global list');
+      })
+    );
   }
 
   getFormattedMessage(notification: Notification): string {
@@ -209,6 +280,12 @@ export class NotificationService {
         return `${username} reposted your post`;
       case 'report_received':
         return `We received your report`;
+      case 'post_removed':
+        return `Your post has been removed`;
+      case 'appeal_approved':
+        return `Your appeal has been approved and your post restored`;
+      case 'appeal_rejected':
+        return `Your appeal has been rejected`;
       default:
         return '';
     }

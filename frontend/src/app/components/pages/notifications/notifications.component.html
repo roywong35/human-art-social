@@ -26,8 +26,9 @@
         </ng-container>
         <ng-template #systemAvatar>
           <div class="flex-shrink-0">
-            <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-              <i class="fas fa-check text-white text-sm"></i>
+            <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                 [ngClass]="getSystemNotificationStyle(notification.notification_type)">
+              <i [class]="getSystemNotificationIcon(notification.notification_type)"></i>
             </div>
           </div>
         </ng-template>

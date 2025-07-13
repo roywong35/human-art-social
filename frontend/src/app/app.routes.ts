@@ -11,6 +11,8 @@ import { BookmarksComponent } from './components/pages/bookmarks/bookmarks.compo
 import { ConnectionsComponent } from './components/pages/connections/connections.component';
 import { RecommendedUsersComponent } from './components/widgets/recommended-users/recommended-users.component';
 import { MessagesComponent } from './components/pages/messages/messages.component';
+import { AppealSubmissionComponent } from './components/pages/appeal-submission/appeal-submission.component';
+import { AppealsComponent } from './components/pages/appeals/appeals.component';
 
 export const routes: Routes = [
   {
@@ -51,6 +53,16 @@ export const routes: Routes = [
   {
     path: 'recommended-users',
     component: RecommendedUsersComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'appeals',
+    component: AppealsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'appeal/:handle/:postId',
+    component: AppealSubmissionComponent,
     canActivate: [AuthGuard]
   },
   {

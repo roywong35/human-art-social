@@ -4,8 +4,8 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, EvidenceFile, PostImage, User, Hashtag, ContentReport
-from .serializers import PostSerializer, HashtagSerializer
+from .models import Post, EvidenceFile, PostImage, User, Hashtag, ContentReport, PostAppeal, AppealEvidenceFile
+from .serializers import PostSerializer, HashtagSerializer, PostAppealSerializer, AppealEvidenceFileSerializer
 from django.db import models, transaction
 from django.utils import timezone
 import mimetypes
@@ -13,7 +13,7 @@ from django.db.models import Q, Case, When, F, Count, Prefetch
 from datetime import timedelta
 from django.core.cache import cache
 from django.http import Http404
-from notifications.services import create_like_notification, create_comment_notification, create_repost_notification, create_report_received_notification
+from notifications.services import create_like_notification, create_comment_notification, create_repost_notification, create_report_received_notification, create_post_removed_notification
 
 # Create your views here.
 
@@ -1004,6 +1004,30 @@ class PostViewSet(viewsets.ModelViewSet):
             
             # Get updated report count
             report_count = ContentReport.get_report_count_for_post(post)
+            print(f"🔔 [POSTS VIEW] Updated report count for post {post.id}: {report_count}")
+            
+            # Check if post should be removed (3+ reports) and send notification to author
+            if report_count >= 3:
+                print(f"🔔 [POSTS VIEW] Post {post.id} has reached {report_count} reports - sending removal notification to author")
+                try:
+                    # Only send notification if author hasn't been notified yet
+                    # Check if there's already a post_removed notification for this post
+                    from notifications.models import Notification
+                    existing_notification = Notification.objects.filter(
+                        recipient=post.author,
+                        post=post,
+                        notification_type='post_removed'
+                    ).first()
+                    
+                    if not existing_notification:
+                        create_post_removed_notification(post)
+                        print(f"🔔 [POSTS VIEW] Post removal notification sent to {post.author.username}")
+                    else:
+                        print(f"🔔 [POSTS VIEW] Post removal notification already exists for post {post.id}")
+                        
+                except Exception as e:
+                    print(f"❌ [POSTS VIEW] Error sending post removal notification: {str(e)}")
+                    # Don't fail the report submission if notification fails
             
             return Response({
                 'success': True,
@@ -1067,5 +1091,133 @@ class PostViewSet(viewsets.ModelViewSet):
             print(f"Error in reported action: {str(e)}")
             return Response(
                 {'error': 'An error occurred while fetching reported posts'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['POST'])
+    def appeal(self, request, handle=None, pk=None):
+        """
+        Create an appeal for a removed post
+        """
+        try:
+            post = get_object_or_404(Post, author__handle=handle, pk=pk)
+            
+            # Check if user is the post author
+            if post.author != request.user:
+                return Response(
+                    {'error': 'You can only appeal your own posts'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Check if post has 3+ reports (is actually removed)
+            report_count = ContentReport.get_report_count_for_post(post)
+            if report_count < 3:
+                return Response(
+                    {'error': 'This post has not been removed due to reports'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if appeal already exists
+            existing_appeal = PostAppeal.objects.filter(post=post).first()
+            if existing_appeal:
+                return Response(
+                    {'error': 'An appeal for this post already exists'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            appeal_text = request.data.get('appeal_text', '')
+            if not appeal_text.strip():
+                return Response(
+                    {'error': 'Appeal text is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create the appeal
+            appeal = PostAppeal.objects.create(
+                post=post,
+                author=request.user,
+                appeal_text=appeal_text
+            )
+            
+            # Handle evidence files if provided
+            evidence_files = request.FILES.getlist('evidence_files')
+            for evidence_file in evidence_files:
+                AppealEvidenceFile.objects.create(
+                    appeal=appeal,
+                    file=evidence_file,
+                    original_filename=evidence_file.name,
+                    file_type=evidence_file.content_type,
+                    file_size=evidence_file.size
+                )
+            
+            serializer = PostAppealSerializer(appeal, context={'request': request})
+            return Response({
+                'success': True,
+                'message': 'Appeal submitted successfully',
+                'appeal': serializer.data
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print(f"Error in appeal action: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while submitting the appeal'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['GET'])
+    def appeal_status(self, request, handle=None, pk=None):
+        """
+        Get appeal status for a post
+        """
+        try:
+            post = get_object_or_404(Post, author__handle=handle, pk=pk)
+            
+            # Check if user is the post author
+            if post.author != request.user:
+                return Response(
+                    {'error': 'You can only check appeal status for your own posts'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            appeal = PostAppeal.objects.filter(post=post).first()
+            if not appeal:
+                return Response({
+                    'has_appeal': False,
+                    'can_appeal': ContentReport.get_report_count_for_post(post) >= 3
+                })
+            
+            serializer = PostAppealSerializer(appeal, context={'request': request})
+            return Response({
+                'has_appeal': True,
+                'appeal': serializer.data
+            })
+            
+        except Exception as e:
+            print(f"Error in appeal_status action: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while fetching appeal status'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['GET'])
+    def my_appeals(self, request):
+        """
+        Get current user's appeals
+        """
+        try:
+            appeals = PostAppeal.objects.filter(author=request.user).select_related('post', 'post__author').order_by('-created_at')
+            
+            page = self.paginate_queryset(appeals)
+            if page is not None:
+                serializer = PostAppealSerializer(page, many=True, context={'request': request})
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = PostAppealSerializer(appeals, many=True, context={'request': request})
+            return Response(serializer.data)
+            
+        except Exception as e:
+            print(f"Error in my_appeals action: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while fetching appeals'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

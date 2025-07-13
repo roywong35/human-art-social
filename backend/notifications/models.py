@@ -8,6 +8,9 @@ class Notification(models.Model):
         ('follow', 'Follow'),
         ('repost', 'Repost'),
         ('report_received', 'Report Received'),
+        ('post_removed', 'Post Removed for Multiple Reports'),
+        ('appeal_approved', 'Appeal Approved'),
+        ('appeal_rejected', 'Appeal Rejected'),
     )
 
     recipient = models.ForeignKey(

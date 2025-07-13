@@ -38,7 +38,7 @@ export class AppComponent implements OnInit {
   isLoading = false;
 
   // Static routes that should not be treated as user handles
-  private staticRoutes = ['home', 'notifications', 'bookmarks', 'search', 'recommended-users'];
+  private staticRoutes = ['home', 'notifications', 'bookmarks', 'search', 'recommended-users', 'appeals', 'appeal', 'messages'];
 
   constructor(
     public authService: AuthService,

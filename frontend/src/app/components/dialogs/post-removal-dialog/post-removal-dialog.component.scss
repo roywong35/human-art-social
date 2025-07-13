@@ -1,0 +1,74 @@
+// Post removal dialog styles
+// Using Tailwind classes in template, minimal custom styles needed
+
+.mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+// Custom scrollbar styling for the scrollable content area
+:host ::ng-deep .overflow-y-auto {
+  // Webkit browsers (Chrome, Safari)
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5); /* gray-400 with opacity */
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.8); /* gray-400 with more opacity */
+  }
+  
+  // Dark mode scrollbar
+  :global(.dark) & {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(75, 85, 99, 0.5); /* gray-600 with opacity */
+    }
+    
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(75, 85, 99, 0.8); /* gray-600 with more opacity */
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  
+  :global(.dark) & {
+    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+  }
+}
+
+// Ensure proper spacing and prevent content from being cut off
+:host ::ng-deep .flex-1 {
+  min-height: 0; /* Allows flex item to shrink below content size */
+}
+
+// Better mobile handling
+@media (max-width: 687px) {
+  :host ::ng-deep {
+    .max-w-2xl {
+      max-width: 100vw;
+      margin: 0;
+      border-radius: 0;
+    }
+    
+    .max-h-\[90vh\] {
+      max-height: 100vh;
+      height: 100vh;
+    }
+  }
+} 

@@ -4,6 +4,8 @@ import { BehaviorSubject, Observable, tap, map, catchError, take, of } from 'rxj
 import { Post, PostImage } from '../models/post.model';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
+import { ToastService } from './toast.service';
+import { NotificationService } from './notification.service';
 
 interface PaginatedResponse {
   count: number;
@@ -26,8 +28,23 @@ export class PostService {
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private toastService: ToastService,
+    private notificationService: NotificationService
+  ) {
+    console.log('PostService constructor called');
+    
+    // Listen for appeal_approved notifications to refresh timeline
+    this.notificationService.notificationEvents$.subscribe(notification => {
+      console.log('📨 PostService received notification:', notification.notification_type);
+      if (notification.notification_type === 'appeal_approved') {
+        console.log('🔄 Appeal approved notification received, refreshing timeline');
+        // Refresh the timeline to show the restored post
+        this.refreshTimeline();
+        this.toastService.showSuccess('Your post has been restored to your timeline');
+      }
+    });
+  }
 
   createPost(contentOrFormData: string | FormData, files?: File[], scheduledTime?: Date): Observable<Post> {
     if (contentOrFormData instanceof FormData) {
@@ -305,9 +322,10 @@ export class PostService {
   }
 
   refreshTimeline() {
-    this.getPosts().subscribe(posts => {
-      this.posts.next(posts);
-    });
+    // Use the same loading mechanism as normal timeline loading
+    // This ensures proper handling of tabs, user preferences, and filtering
+    console.log('🔄 Refreshing timeline with current settings');
+    this.loadPosts(true);
   }
 
   getPosts(): Observable<Post[]> {

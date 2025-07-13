@@ -46,6 +46,7 @@ export class PostComponent implements OnInit, OnDestroy {
   @Input() isConnectedToParent: boolean = false;
   @Input() isPreview = false;
   @Input() isInSearchResults = false;
+  @Input() showRemovalBadge = false;
 
   @Output() postUpdated = new EventEmitter<Post>();
   @Output() postDeleted = new EventEmitter<number>();

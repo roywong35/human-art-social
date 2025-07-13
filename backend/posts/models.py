@@ -351,3 +351,81 @@ class ContentReport(models.Model):
         ).values('reported_post_id').annotate(
             report_count=Count('id')
         ).filter(report_count__gte=3).values_list('reported_post_id', flat=True)
+
+
+def appeal_evidence_path(instance, filename):
+    """
+    Generate upload path for appeal evidence files
+    """
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('appeal_evidence', filename)
+
+
+class PostAppeal(models.Model):
+    """
+    Model for appeals when posts are auto-removed due to multiple reports.
+    """
+    STATUS_CHOICES = (
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    
+    post = models.OneToOneField(Post, on_delete=models.CASCADE, related_name='appeal')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appeals')
+    appeal_text = models.TextField(help_text='User explanation for why the post should be restored')
+    evidence_files = models.JSONField(default=list, blank=True, help_text='List of evidence file paths')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_appeals')
+    admin_notes = models.TextField(blank=True, help_text='Admin notes about the appeal decision')
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['author', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f'Appeal by {self.author.username} for post {self.post.id} - {self.status}'
+    
+    @property
+    def is_pending(self):
+        return self.status == 'pending'
+    
+    @property
+    def is_approved(self):
+        return self.status == 'approved'
+    
+    @property
+    def is_rejected(self):
+        return self.status == 'rejected'
+    
+    def save(self, *args, **kwargs):
+        # Set reviewed_at when status changes from pending
+        if self.pk:
+            old_instance = PostAppeal.objects.get(pk=self.pk)
+            if old_instance.status == 'pending' and self.status != 'pending':
+                self.reviewed_at = timezone.now()
+        super().save(*args, **kwargs)
+
+
+class AppealEvidenceFile(models.Model):
+    """
+    Model for storing evidence files submitted with appeals
+    """
+    appeal = models.ForeignKey(PostAppeal, on_delete=models.CASCADE, related_name='evidence_files_rel')
+    file = models.FileField(upload_to=appeal_evidence_path)
+    original_filename = models.CharField(max_length=255)
+    file_type = models.CharField(max_length=50)  # image, document, etc.
+    file_size = models.PositiveIntegerField()  # in bytes
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Evidence for appeal {self.appeal.id}: {self.original_filename}"
+    
+    class Meta:
+        ordering = ['created_at']

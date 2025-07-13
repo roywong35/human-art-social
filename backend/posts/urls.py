@@ -62,6 +62,17 @@ urlpatterns = [
         'get': 'parent_chain'
     })),
 
+    # Appeal endpoints
+    path('posts/<str:handle>/<int:pk>/appeal/', PostViewSet.as_view({
+        'post': 'appeal'
+    })),
+    path('posts/<str:handle>/<int:pk>/appeal-status/', PostViewSet.as_view({
+        'get': 'appeal_status'
+    })),
+    path('posts/my-appeals/', PostViewSet.as_view({
+        'get': 'my_appeals'
+    })),
+
     # Feed URLs
     path('feed/', PostViewSet.as_view({
         'get': 'feed'

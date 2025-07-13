@@ -3,7 +3,8 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.timesince import timesince
 from django.urls import reverse
-from .models import Post, EvidenceFile, ContentReport
+from .models import Post, EvidenceFile, ContentReport, PostAppeal, AppealEvidenceFile
+from notifications.services import create_appeal_approved_notification, create_appeal_rejected_notification
 
 class EvidenceFileInline(admin.TabularInline):
     model = EvidenceFile
@@ -302,3 +303,212 @@ class ContentReportAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('reporter', 'reported_post__author').prefetch_related('reported_post__images')
+
+
+class AppealEvidenceFileInline(admin.TabularInline):
+    model = AppealEvidenceFile
+    extra = 0
+    readonly_fields = ('preview', 'file_type', 'file_size', 'created_at')
+    fields = ('preview', 'file', 'original_filename', 'file_type', 'file_size', 'created_at')
+    classes = ['collapse']
+    verbose_name = "Evidence File"
+    verbose_name_plural = "Evidence Files (Click to expand)"
+
+    def preview(self, obj):
+        if obj.file:
+            if obj.file_type and obj.file_type.startswith('image/'):
+                return format_html(
+                    '<img src="{}" style="max-width: 100px; max-height: 100px; border-radius: 4px;" />',
+                    obj.file.url
+                )
+            else:
+                return format_html(
+                    '<a href="{}" target="_blank" style="color: #417690; text-decoration: none;">'
+                    '<i class="fa fa-file"></i> View File</a>',
+                    obj.file.url
+                )
+        return "No file"
+    preview.short_description = 'Preview'
+
+
+@admin.register(PostAppeal)
+class PostAppealAdmin(admin.ModelAdmin):
+    list_display = ('id', 'post_link', 'author_link', 'status', 'time_ago', 'reviewed_status')
+    list_filter = ('status', 'created_at', 'reviewed_at')
+    search_fields = ('author__handle', 'author__username', 'post__content', 'appeal_text')
+    readonly_fields = ('created_at', 'reviewed_at', 'post_preview', 'report_count_for_post')
+    fieldsets = (
+        ('Appeal Information', {
+            'fields': ('post', 'author', 'appeal_text', 'created_at')
+        }),
+        ('Post Details', {
+            'fields': ('post_preview', 'report_count_for_post'),
+            'classes': ('wide',)
+        }),
+        ('Review', {
+            'fields': ('status', 'reviewed_at', 'reviewed_by', 'admin_notes'),
+            'classes': ('wide',)
+        }),
+    )
+    inlines = [AppealEvidenceFileInline]
+    actions = ['approve_appeals', 'reject_appeals']
+
+    def post_link(self, obj):
+        return format_html(
+            '<a href="{}" style="color: #417690; text-decoration: none;">Post #{}</a>',
+            reverse('admin:posts_post_change', args=[obj.post.id]),
+            obj.post.id
+        )
+    post_link.short_description = 'Post'
+
+    def author_link(self, obj):
+        return format_html(
+            '<a href="{}" style="color: #417690; text-decoration: none;">@{}</a>',
+            reverse('admin:users_user_change', args=[obj.author.id]),
+            obj.author.handle
+        )
+    author_link.short_description = 'Author'
+
+    def time_ago(self, obj):
+        time_diff = timesince(obj.created_at)
+        color = '#e67e22' if obj.status == 'pending' else '#666'
+        return format_html('<span style="color: {};">{}</span>', color, time_diff)
+    time_ago.short_description = 'Submitted'
+    time_ago.admin_order_field = 'created_at'
+
+    def reviewed_status(self, obj):
+        if obj.status == 'pending':
+            return format_html('<span style="color: #e67e22;">Pending Review</span>')
+        elif obj.status == 'approved':
+            reviewer = obj.reviewed_by.username if obj.reviewed_by else 'Unknown'
+            return format_html(
+                '<span style="color: #27ae60;">Approved</span><br><small>by {}</small>',
+                reviewer
+            )
+        elif obj.status == 'rejected':
+            reviewer = obj.reviewed_by.username if obj.reviewed_by else 'Unknown'
+            return format_html(
+                '<span style="color: #e74c3c;">Rejected</span><br><small>by {}</small>',
+                reviewer
+            )
+        return obj.get_status_display()
+    reviewed_status.short_description = 'Review Status'
+
+    def post_preview(self, obj):
+        post = obj.post
+        html = ['<div style="margin: 10px 0; padding: 10px; background-color: #f8f9fa; border-radius: 4px;">']
+        html.append(f'<strong>@{post.author.handle}</strong>')
+        html.append(f'<p style="margin: 5px 0;">{post.content[:200]}{"..." if len(post.content) > 200 else ""}</p>')
+        
+        if post.images.exists():
+            html.append('<div style="margin-top: 10px;">')
+            for image in post.images.all()[:3]:  # Show max 3 images
+                html.append(f'<img src="{image.image.url}" style="max-width: 100px; max-height: 100px; margin-right: 10px; border-radius: 4px;" />')
+            html.append('</div>')
+        
+        html.append(f'<small style="color: #666;">Posted: {post.created_at.strftime("%Y-%m-%d %H:%M")}</small>')
+        html.append('</div>')
+        return format_html(''.join(html))
+    post_preview.short_description = 'Post Preview'
+
+    def report_count_for_post(self, obj):
+        from .models import ContentReport
+        reports = ContentReport.objects.filter(reported_post=obj.post, status='pending')
+        count = reports.count()
+        return format_html(
+            '<span style="background-color: #e74c3c; color: white; padding: 3px 8px; border-radius: 3px;">{} reports</span>',
+            count
+        )
+    report_count_for_post.short_description = 'Current Reports'
+
+    @admin.action(description='Approve selected appeals (restore posts)')
+    def approve_appeals(self, request, queryset):
+        from django.db import transaction
+        
+        updated = 0
+        for appeal in queryset.filter(status='pending'):
+            try:
+                with transaction.atomic():
+                    print(f"🔔 [ADMIN] Processing appeal {appeal.id} for post {appeal.post.id} by {appeal.author.username}")
+                    
+                    # Update appeal status
+                    appeal.status = 'approved'
+                    appeal.reviewed_by = request.user
+                    appeal.reviewed_at = timezone.now()
+                    appeal.save()
+                    print(f"🔔 [ADMIN] Appeal {appeal.id} marked as approved")
+                    
+                    # Restore post to timeline by resolving all pending reports for this post
+                    pending_reports = ContentReport.objects.filter(reported_post=appeal.post, status='pending')
+                    print(f"🔔 [ADMIN] Found {pending_reports.count()} pending reports for post {appeal.post.id}")
+                    
+                    for report in pending_reports:
+                        report.status = 'resolved'
+                        report.resolved_at = timezone.now()
+                        report.resolved_by = request.user
+                        report.save()
+                        print(f"🔔 [ADMIN] Resolved report {report.id}")
+                    
+                    # Send notification to the appeal author
+                    try:
+                        result = create_appeal_approved_notification(appeal)
+                        print(f"🔔 [ADMIN] Appeal approved notification sent to {appeal.author.username}, result: {result}")
+                    except Exception as e:
+                        print(f"❌ [ADMIN] Error sending appeal approved notification: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                        # Don't fail the admin action if notification fails
+                    
+                    updated += 1
+                    print(f"🔔 [ADMIN] Successfully processed appeal {appeal.id}")
+                    
+            except Exception as e:
+                print(f"❌ [ADMIN] Error processing appeal {appeal.id}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                continue
+                
+        self.message_user(request, f'{updated} appeals were approved and posts restored to timeline.')
+
+    @admin.action(description='Reject selected appeals')
+    def reject_appeals(self, request, queryset):
+        from django.db import transaction
+        
+        updated = 0
+        for appeal in queryset.filter(status='pending'):
+            try:
+                with transaction.atomic():
+                    print(f"🔔 [ADMIN] Processing appeal rejection {appeal.id} for post {appeal.post.id} by {appeal.author.username}")
+                    
+                    # Update appeal status
+                    appeal.status = 'rejected'
+                    appeal.reviewed_by = request.user
+                    appeal.reviewed_at = timezone.now()
+                    appeal.save()
+                    print(f"🔔 [ADMIN] Appeal {appeal.id} marked as rejected")
+                    
+                    # Send notification to the appeal author
+                    try:
+                        result = create_appeal_rejected_notification(appeal)
+                        print(f"🔔 [ADMIN] Appeal rejected notification sent to {appeal.author.username}, result: {result}")
+                    except Exception as e:
+                        print(f"❌ [ADMIN] Error sending appeal rejected notification: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                        # Don't fail the admin action if notification fails
+                    
+                    updated += 1
+                    print(f"🔔 [ADMIN] Successfully processed appeal rejection {appeal.id}")
+                    
+            except Exception as e:
+                print(f"❌ [ADMIN] Error processing appeal rejection {appeal.id}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                continue
+                
+        self.message_user(request, f'{updated} appeals were rejected.')
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'post', 'author', 'reviewed_by', 'post__author'
+        )
