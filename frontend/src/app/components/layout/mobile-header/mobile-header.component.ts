@@ -137,7 +137,13 @@ export class MobileHeaderComponent implements OnInit {
       });
     } else {
       this.dialog.open(NewPostModalComponent, {
-        panelClass: ['create-post-dialog']
+        panelClass: ['create-post-dialog'],
+        maxWidth: '100vw',
+        maxHeight: '100vh',
+        width: '100vw',
+        height: '100vh',
+        disableClose: false,
+        hasBackdrop: true
       });
     }
   }

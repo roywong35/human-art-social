@@ -193,6 +193,12 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
     const dialogRef = this.dialog.open(PostRemovalDialogComponent, {
       panelClass: ['post-removal-dialog'],
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      width: '100vw',
+      height: '100vh',
+      disableClose: false,
+      hasBackdrop: true,
       data: {
         postId: notification.post.id,
         postHandle: notification.post.author.handle,

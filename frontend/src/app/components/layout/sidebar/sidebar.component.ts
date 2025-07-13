@@ -305,11 +305,23 @@ export class SidebarComponent implements OnInit, OnDestroy {
   openContextModal(): void {
     if (this.isHumanArtTab) {
       this.dialog.open(NewArtPostModalComponent, {
-        panelClass: ['submit-drawing-dialog']
+        panelClass: ['submit-drawing-dialog'],
+        maxWidth: '100vw',
+        maxHeight: '100vh',
+        width: '100vw',
+        height: '100vh',
+        disableClose: false,
+        hasBackdrop: true
       });
     } else {
       this.dialog.open(NewPostModalComponent, {
-        panelClass: ['create-post-dialog']
+        panelClass: ['create-post-dialog'],
+        maxWidth: '100vw',
+        maxHeight: '100vh',
+        width: '100vw',
+        height: '100vh',
+        disableClose: false,
+        hasBackdrop: true
       });
     }
   }

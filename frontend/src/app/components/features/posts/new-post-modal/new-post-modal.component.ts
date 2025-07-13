@@ -51,7 +51,6 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   protected images: ImageFile[] = [];
   private subscriptions: Subscription = new Subscription();
   protected quotePost: Post | undefined;
-  private resizeObserver: ResizeObserver;
 
   constructor(
     public dialogRef: MatDialogRef<NewPostModalComponent>,
@@ -63,20 +62,6 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
     @Optional() @Inject(MAT_DIALOG_DATA) private data?: DialogData
   ) {
     this.quotePost = data?.quotePost;
-
-    // Configure dialog based on screen size
-    this.resizeObserver = new ResizeObserver(entries => {
-      const width = entries[0].contentRect.width;
-      if (width < 688) {
-        dialogRef.updatePosition({ left: '0', top: '0' });
-        dialogRef.updateSize('100vw', '100vh');
-        dialogRef.removePanelClass('rounded-2xl');
-      } else {
-        dialogRef.updatePosition();
-        dialogRef.updateSize('600px', 'auto');
-        dialogRef.addPanelClass('rounded-2xl');
-      }
-    });
 
     // Subscribe to image updates
     this.subscriptions.add(
@@ -98,12 +83,10 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Start observing window size
-    this.resizeObserver.observe(document.body);
+    // Component initialization
   }
 
   ngOnDestroy() {
-    this.resizeObserver.disconnect();
     this.subscriptions.unsubscribe();
     this.imageUploadService.clearImages();
   }

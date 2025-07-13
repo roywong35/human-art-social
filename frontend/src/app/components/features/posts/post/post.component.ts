@@ -378,8 +378,13 @@ export class PostComponent implements OnInit, OnDestroy {
 
   private openQuoteModal(): void {
     const dialogRef = this.dialog.open(NewPostModalComponent, {
-      width: '600px',
       panelClass: ['rounded-2xl', 'create-post-dialog'],
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      width: '100vw',
+      height: '100vh',
+      disableClose: false,
+      hasBackdrop: true,
       data: { quotePost: this.post }
     });
 
