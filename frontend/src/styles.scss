@@ -666,6 +666,69 @@ textarea {
   padding: 0 !important;
 }
 
+/* Save Confirmation Dialog Styles */
+.save-confirmation-dialog {
+  .mat-mdc-dialog-container {
+    opacity: 0;
+    animation: containerFadeIn 100ms ease-out forwards;
+    max-height: 90vh;
+    max-width: 90vw;
+    
+    .mdc-dialog__surface {
+      background: white;
+      border-radius: 18px !important;
+      overflow: hidden;
+      max-height: 90vh;
+    }
+  }
+}
+
+/* Override global overlay styles for save confirmation dialog */
+.save-confirmation-dialog .cdk-overlay-pane {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Draft Modal Dialog Styles - Simple approach */
+.draft-modal-dialog {
+  .mat-mdc-dialog-container {
+    opacity: 0;
+    animation: containerFadeIn 100ms ease-out forwards;
+    
+    .mdc-dialog__surface {
+      background: white;
+      border-radius: 18px !important;
+      overflow: hidden;
+    }
+  }
+}
+
+/* Override global overlay styles for draft modal dialog */
+.draft-modal-dialog .cdk-overlay-pane {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Delete Confirmation Dialog Styles */
+.delete-confirmation-dialog {
+  .mat-mdc-dialog-container {
+    opacity: 0;
+    animation: containerFadeIn 100ms ease-out forwards;
+    
+    .mdc-dialog__surface {
+      background: white;
+      border-radius: 18px !important;
+      overflow: hidden;
+    }
+  }
+}
+
+/* Override global overlay styles for delete confirmation dialog */
+.delete-confirmation-dialog .cdk-overlay-pane {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
 /* Mobile styles for post removal dialog */
 @media (max-width: 687px) {
   .post-removal-dialog {

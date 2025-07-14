@@ -110,13 +110,14 @@ export class ScheduleModalComponent implements OnInit {
       });
     }
 
-    // Generate minutes (00, 15, 30, 45)
-    this.minutes = [
-      { value: '0', label: '00' },
-      { value: '15', label: '15' },
-      { value: '30', label: '30' },
-      { value: '45', label: '45' }
-    ];
+    // Generate minutes (00-59)
+    this.minutes = [];
+    for (let i = 0; i < 60; i++) {
+      this.minutes.push({
+        value: i.toString(),
+        label: i.toString().padStart(2, '0')
+      });
+    }
   }
 
   isValidSelection(): boolean {
@@ -179,12 +180,12 @@ export class ScheduleModalComponent implements OnInit {
 
       const scheduledDateTime = new Date(`${datePart}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`);
       
-      // Validate that the time is at least 5 minutes in the future
+      // Validate that the time is at least 1 minutes in the future
       const now = new Date();
-      const minTime = new Date(now.getTime() + 5 * 60 * 1000);
+      const minTime = new Date(now.getTime() + 1 * 60 * 1000);
       
       if (scheduledDateTime < minTime) {
-        alert('Please select a time at least 5 minutes in the future.');
+        alert('Please select a time at least 1 minutes in the future.');
         return null;
       }
 

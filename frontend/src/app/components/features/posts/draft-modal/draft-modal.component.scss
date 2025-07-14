@@ -1,0 +1,37 @@
+// Force the modal to stay within dialog bounds
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 600px; // Fixed height - match dialog
+  max-height: 600px; // Prevent overflow
+  overflow: hidden;
+}
+
+// Main container must be constrained
+.main-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+// Content area must be constrained to scroll within available space
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; // Allow shrinking
+  max-height: 100%; // Don't exceed container
+}
+
+// Header and footer never shrink
+.header-section,
+.tabs-section {
+  flex-shrink: 0;
+}
+
+// Footer always at bottom
+.footer-controls {
+  flex-shrink: 0; // Never shrink
+  z-index: 10; // Ensure it stays on top
+} 
