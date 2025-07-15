@@ -1,9 +1,4 @@
 <div [class]="'post-container pb-0.5 pt-[4px] pl-4 pr-1.5 bg-white dark:[background-color:var(--color-background)] ' + (!isPreview ? 'hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer' : '') + ' transition-colors duration-200 ' + (!isConnectedToParent ? 'border-b border-gray-200 dark:[border-color:var(--color-border)]' : '') + ' relative'" (click)="!isPreview ? navigateToPost($event) : null">
-  <!-- Removal Badge -->
-  <div *ngIf="showRemovalBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center z-10">
-    <i class="fas fa-exclamation-triangle mr-1"></i>
-    Removed
-  </div>
 
   <!-- Repost header -->
   <div *ngIf="post.post_type === 'repost'" class="flex items-center gap-2 mt-1 text-gray-500 dark:[color:var(--color-text-secondary)]">
@@ -225,60 +220,49 @@
             </div>
           </div>
 
-          <!-- Post actions (hidden in preview mode) -->
-          <div *ngIf="!isPreview" class="flex items-center justify-between ml-[-8px] mt-0.5">
+          <!-- Post actions (disabled in preview mode) -->
+          <div class="flex items-center justify-between ml-[-8px] mt-0.5">
             <!-- Reply button -->
-            <div class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group"
-                 (click)="onReply($event); $event.stopPropagation()">
-              <div class="flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer">
-                <i class="far fa-comment text-[16px] group-hover:text-blue-500"></i>
+            <div class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onReply($event) : null; $event.stopPropagation()">
+              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+                <i class="far fa-comment text-[16px]" [class.group-hover:text-blue-500]="!isPreview"></i>
               </div>
               <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]">{{ post.replies_count ? post.replies_count : '' }}</span>
             </div>
 
             <!-- Repost button -->
-            <div class="relative" (click)="$event.stopPropagation()">
-              <div class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group"
-                   [class.text-green-500]="isReposted"
-                   (click)="toggleRepostMenu($event); $event.stopPropagation()">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors cursor-pointer">
+            <div class="relative" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="$event.stopPropagation()">
+              <div class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.text-green-500]="isReposted" (click)="!isPreview ? toggleRepostMenu($event) : null; $event.stopPropagation()">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
                   <i class="fas fa-retweet text-[16px]" [class.text-green-500]="isReposted"></i>
                 </div>
                 <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]" [class.text-green-500]="isReposted">{{ repostsCount ? repostsCount : '' }}</span>
               </div>
 
               <!-- Repost Menu -->
-              <app-repost-menu *ngIf="showRepostMenu"
-                              [isReposted]="isReposted"
-                              (optionSelected)="onRepostOption($event)"
-                              (closeMenu)="showRepostMenu = false">
+              <app-repost-menu *ngIf="showRepostMenu && !isPreview" [isReposted]="isReposted" (optionSelected)="onRepostOption($event)" (closeMenu)="showRepostMenu = false">
               </app-repost-menu>
             </div>
 
             <!-- Like button -->
-            <div class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group"
-                 [class.text-red-500]="post.is_liked"
-                 (click)="onLike($event); $event.stopPropagation()">
-              <div class="flex items-center justify-center w-9 h-9 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer">
-                <i class="far fa-heart text-[16px] group-hover:text-red-500" [class.fas]="post.is_liked" [class.text-red-500]="post.is_liked"></i>
+            <div class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.text-red-500]="post.is_liked" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onLike($event) : null; $event.stopPropagation()">
+              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+                <i class="far fa-heart text-[16px]" [class.group-hover:text-red-500]="!isPreview" [class.fas]="post.is_liked" [class.text-red-500]="post.is_liked"></i>
               </div>
               <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]" [class.text-red-500]="post.is_liked">{{ post.likes_count ? post.likes_count : '' }}</span>
             </div>
 
             <!-- Share button -->
-            <div class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group"
-                 (click)="onShare($event); $event.stopPropagation()">
-              <div class="flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer">
-                <i class="far fa-share-square text-[16px] group-hover:text-blue-500"></i>
+            <div class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onShare($event) : null; $event.stopPropagation()">
+              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+                <i class="far fa-share-square text-[16px]" [class.group-hover:text-blue-500]="!isPreview"></i>
               </div>
             </div>
 
             <!-- Bookmark button -->
-            <div class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group transform translate-x-3"
-                 [class.text-blue-500]="post.is_bookmarked"
-                 (click)="onBookmark($event); $event.stopPropagation()">
-              <div class="flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer">
-                <i class="far fa-bookmark text-[16px] group-hover:text-blue-500" [class.fas]="post.is_bookmarked" [class.text-blue-500]="post.is_bookmarked" [class.dark:text-blue-400]="post.is_bookmarked"></i>
+            <div class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group transform translate-x-3" [class.text-blue-500]="post.is_bookmarked" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onBookmark($event) : null; $event.stopPropagation()">
+              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+                <i class="far fa-bookmark text-[16px]" [class.group-hover:text-blue-500]="!isPreview" [class.fas]="post.is_bookmarked" [class.text-blue-500]="post.is_bookmarked" [class.dark:text-blue-400]="post.is_bookmarked"></i>
               </div>
             </div>
           </div>

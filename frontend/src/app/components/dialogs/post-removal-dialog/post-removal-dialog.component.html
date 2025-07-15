@@ -1,4 +1,4 @@
-<div class="bg-white dark:bg-gray-900 flex flex-col w-full h-full min-h-screen">
+<div class="bg-white dark:bg-gray-900 flex flex-col w-full h-full max-[687px]:min-h-screen">
   <!-- Header - Fixed at top -->
   <div class="flex items-center justify-between p-6 pb-4 flex-shrink-0 border-b border-gray-200 dark:border-gray-700 max-[687px]:p-4 max-[687px]:pb-3">
     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Post Removed</h2>
@@ -29,7 +29,9 @@
       <!-- Post Preview -->
       <div class="space-y-2">
         <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Removed Post:</h4>
-        <app-post [post]="postPreview!" [isPreview]="true" [showRemovalBadge]="true"></app-post>
+        <div class="w-full overflow-hidden">
+          <app-post [post]="postPreview!" [isPreview]="true" [showRemovalBadge]="true"></app-post>
+        </div>
       </div>
 
       <div class="space-y-3">

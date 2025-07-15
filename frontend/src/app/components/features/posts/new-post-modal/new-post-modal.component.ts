@@ -14,7 +14,7 @@ import { environment } from '../../../../../environments/environment';
 import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
 import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
 import { DraftService, DraftPost } from '../../../../services/draft.service';
-import { DraftModalComponent } from '../draft-modal/draft-modal.component';
+import { DraftModal2Component } from '../draft-modal-2/draft-modal-2.component';
 import { SaveConfirmationDialogComponent } from '../../../dialogs/save-confirmation-dialog/save-confirmation-dialog.component';
 import { ToastService } from '../../../../services/toast.service';
 
@@ -126,8 +126,13 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
           quotePost: this.quotePost
         };
 
+        console.log('Creating scheduled post with data:', scheduledPostData);
         const scheduledPostId = this.draftService.addScheduledPost(scheduledPostData);
         console.log('Post scheduled with ID:', scheduledPostId);
+        
+        // Debug: Check if the post was actually saved
+        const savedPost = this.draftService.getScheduledPost(scheduledPostId);
+        console.log('Retrieved saved scheduled post:', savedPost);
         
         this.dialogRef.close({ scheduled: true });
         return;
@@ -254,9 +259,60 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   }
 
   protected onViewScheduledPosts(): void {
-    // TODO: Navigate to scheduled posts view
-    console.log('View scheduled posts');
     this.showScheduleModal = false;
+    
+    // Open draft modal with scheduled tab selected
+    const dialogRef = this.dialog.open(DraftModal2Component, {
+      width: '600px',
+      height: '600px',
+      panelClass: 'clean-draft-modal',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: { selectedTab: 'scheduled' } // Pass the tab to select
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'edit') {
+        if (result.draft) {
+          // Close current modal and open new one with draft data
+          this.dialogRef.close();
+          this.dialog.open(NewPostModalComponent, {
+            panelClass: ['create-post-dialog'],
+            maxWidth: '100vw',
+            maxHeight: '100vh',
+            width: '100vw',
+            height: '100vh',
+            disableClose: false,
+            hasBackdrop: true,
+            data: { draft: result.draft }
+          });
+        } else if (result.scheduledPost) {
+          // Convert scheduled post to draft format and edit
+          const draftData: DraftPost = {
+            id: result.scheduledPost.id,
+            content: result.scheduledPost.content,
+            images: result.scheduledPost.images,
+            scheduledTime: result.scheduledPost.scheduledTime,
+            quotePost: result.scheduledPost.quotePost,
+            createdAt: result.scheduledPost.createdAt,
+            updatedAt: new Date()
+          };
+          
+          // Close current modal and open new one with scheduled post data
+          this.dialogRef.close();
+          this.dialog.open(NewPostModalComponent, {
+            panelClass: ['create-post-dialog'],
+            maxWidth: '100vw',
+            maxHeight: '100vh',
+            width: '100vw',
+            height: '100vh',
+            disableClose: false,
+            hasBackdrop: true,
+            data: { draft: draftData }
+          });
+        }
+      }
+    });
   }
 
   protected clearSchedule(): void {
@@ -335,10 +391,10 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   }
 
   private openDraftsModal(): void {
-    const dialogRef = this.dialog.open(DraftModalComponent, {
+    const dialogRef = this.dialog.open(DraftModal2Component, {
       width: '600px',
       height: '600px',
-      panelClass: 'draft-modal-dialog',
+      panelClass: 'clean-draft-modal',
       maxWidth: '90vw',
       maxHeight: '90vh'
     });

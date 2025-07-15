@@ -1,0 +1,205 @@
+<div class="main-container bg-white dark:bg-black">
+  <!-- Header with Edit Button -->
+  <div class="header-section flex items-center p-4 pb-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
+    <!-- Left side: Back button -->
+    <button (click)="onBack()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
+      <i class="fas fa-arrow-left text-lg"></i>
+    </button>
+
+    <!-- Center: Title (absolute center) -->
+    <h2 class="flex-1 text-xl font-bold text-gray-900 dark:text-white text-center">Drafts</h2>
+
+    <!-- Right side: Edit button (fixed width) -->
+    <button (click)="toggleEditMode()" class="w-12 h-8 flex items-center justify-center text-sm font-medium rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
+      {{ isEditMode ? 'Done' : 'Edit' }}
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+    <div class="flex">
+      <button 
+        (click)="selectedTab = 'unsent'" 
+        [class]="selectedTab === 'unsent' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'"
+        class="flex-1 py-3 px-4 text-center font-medium text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+        Unsent ({{ drafts.length }})
+      </button>
+      <button 
+        (click)="selectedTab = 'scheduled'" 
+        [class]="selectedTab === 'scheduled' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'"
+        class="flex-1 py-3 px-4 text-center font-medium text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+        Scheduled ({{ scheduledPosts.length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Content - Scrollable Area -->
+  <div class="content-area">
+    <!-- Unsent Posts Tab -->
+    <div *ngIf="isUnsentTab()">
+      <!-- Empty State -->
+      <div *ngIf="drafts.length === 0" class="text-center py-6 px-4 text-gray-500 dark:text-gray-400">
+        <i class="fas fa-file-alt text-4xl mb-4 opacity-50"></i>
+        <p class="text-lg">No drafts saved</p>
+        <p class="text-sm">Your saved drafts will appear here</p>
+      </div>
+
+      <!-- Draft Items -->
+      <div *ngFor="let draft of drafts" 
+           class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-200 dark:border-gray-700" 
+           [class.cursor-pointer]="!isEditMode"
+           (click)="!isEditMode && onDraftEdit(draft)">
+        <!-- Main Content Area -->
+        <div class="flex gap-3 items-start">
+          <!-- Checkbox (Edit Mode) - Always reserve space -->
+          <div class="w-4 flex-shrink-0 mt-1">
+            <input 
+              *ngIf="isEditMode"
+              type="checkbox" 
+              [checked]="selectedDraftIds.has(draft.id)"
+              (change)="toggleDraftSelection(draft.id)"
+              (click)="$event.stopPropagation()"
+              class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
+          </div>
+          
+          <!-- Draft Content -->
+          <div class="flex-1 text-gray-900 dark:text-white">
+            <!-- Scheduled Time -->
+            <div *ngIf="draft.scheduledTime" class="flex items-center text-xs text-blue-600 dark:text-blue-400 mb-1">
+              <i class="fas fa-clock mr-1"></i>
+              Scheduled for {{ formatScheduledTime(draft.scheduledTime) }}
+            </div>
+            
+            <!-- Content Preview -->
+            <p class="mb-1">{{ getPreviewText(draft.content) }}</p>
+            
+            <!-- Images Preview -->
+            <div *ngIf="draft.images && draft.images.length > 0" class="flex gap-2 mb-1">
+              <div *ngFor="let image of draft.images.slice(0, 3)" class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded border">
+                <img [src]="image.preview" class="w-full h-full object-cover rounded" alt="Draft image">
+              </div>
+              <div *ngIf="draft.images.length > 3" class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded border flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
+                +{{ draft.images.length - 3 }}
+              </div>
+            </div>
+
+            <!-- Quote Post Preview -->
+            <div *ngIf="draft.quotePost" class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-sm">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold">{{ draft.quotePost.author.username }}</span>
+                <span class="text-gray-500 dark:text-gray-400">{{ draft.quotePost.author.handle }}</span>
+              </div>
+              <p class="text-gray-700 dark:text-gray-300">{{ getPreviewText(draft.quotePost.content) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scheduled Posts Tab -->
+    <div *ngIf="isScheduledTab()">
+      <!-- Empty State -->
+      <div *ngIf="scheduledPosts.length === 0" class="text-center py-6 px-4 text-gray-500 dark:text-gray-400">
+        <i class="fas fa-calendar-alt text-4xl mb-4 opacity-50"></i>
+        <p class="text-lg">No scheduled posts</p>
+        <p class="text-sm">Your scheduled posts will appear here</p>
+      </div>
+
+      <!-- Scheduled Post Items -->
+      <div *ngFor="let post of scheduledPosts" 
+           class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-200 dark:border-gray-700">
+        <!-- Main Content Area -->
+        <div class="flex gap-3 items-start">
+          <!-- Checkbox (Edit Mode) - Always reserve space -->
+          <div class="w-4 flex-shrink-0 mt-1">
+            <input 
+              *ngIf="isEditMode"
+              type="checkbox" 
+              [checked]="selectedScheduledIds.has(post.id)"
+              (change)="toggleScheduledSelection(post.id)"
+              (click)="$event.stopPropagation()"
+              class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
+          </div>
+          
+          <!-- Scheduled Post Content -->
+          <div class="flex-1 text-gray-900 dark:text-white">
+            <!-- Status Badge -->
+            <div class="mb-2">
+              <span [style.background-color]="getStatusBgColor(post.status)"
+                    [style.color]="getStatusTextColor(post.status)"
+                    class="px-2 py-1 rounded-full text-xs font-medium">
+                {{ getStatusText(post.status) }}
+              </span>
+            </div>
+            
+            <!-- Content Preview -->
+            <p class="mb-1">{{ getPreviewText(post.content) }}</p>
+            
+            <!-- Scheduled Time -->
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <i class="fas fa-clock mr-1"></i>
+              {{ formatScheduledTime(post.scheduledTime) }}
+            </p>
+            
+            <!-- Images Preview -->
+            <div *ngIf="post.images && post.images.length > 0" class="flex gap-2 mb-1">
+              <div *ngFor="let image of post.images.slice(0, 3)" class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded border">
+                <img [src]="image.preview" class="w-full h-full object-cover rounded" alt="Scheduled post image">
+              </div>
+              <div *ngIf="post.images.length > 3" class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded border flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
+                +{{ post.images.length - 3 }}
+              </div>
+            </div>
+            
+            <!-- Retry Button for Failed Posts -->
+            <div *ngIf="post.status === 'failed'" class="mt-2">
+              <button (click)="onRetryScheduledPost(post)" 
+                      class="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors">
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Controls - Edit Mode (only show when in edit mode) -->
+  <div *ngIf="isEditMode" 
+       class="footer-controls px-3 py-2 border-t border-gray-200 dark:[border-color:var(--color-border)] bg-gray-50 dark:bg-gray-900">
+    <div class="flex gap-3 items-center justify-between">
+      <!-- Select All Section aligned with checkboxes -->
+      <div class="flex gap-3 items-center">
+        <!-- Checkbox aligned with individual checkboxes -->
+        <div class="w-4 flex-shrink-0">
+          <input 
+            type="checkbox" 
+            [checked]="selectedTab === 'unsent' ? allDraftsSelected : allScheduledSelected"
+            (click)="selectedTab === 'unsent' ? selectAllDrafts() : selectAllScheduled()"
+            class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
+        </div>
+        
+        <!-- Select All Text aligned with content -->
+        <div class="flex-1 text-gray-900 dark:text-white">
+          <button 
+            (click)="selectedTab === 'unsent' ? selectAllDrafts() : selectAllScheduled()"
+            class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+            {{ (selectedTab === 'unsent' ? allDraftsSelected : allScheduledSelected) ? 'Deselect All' : 'Select All' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Delete Button -->
+      <button 
+        [disabled]="!hasSelectedItems"
+        (click)="deleteSelectedItems()"
+        class="text-sm font-medium transition-colors"
+        [class.text-red-500]="hasSelectedItems"
+        [class.hover:text-red-600]="hasSelectedItems"
+        [class.text-red-300]="!hasSelectedItems"
+        [class.cursor-not-allowed]="!hasSelectedItems">
+        Delete
+      </button>
+    </div>
+  </div>
+</div> 

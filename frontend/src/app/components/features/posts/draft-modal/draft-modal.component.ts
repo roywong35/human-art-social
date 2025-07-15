@@ -1,12 +1,18 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, Optional, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogModule, MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DraftService, DraftPost, ScheduledPost } from '../../../../services/draft.service';
+import { ScheduledPostService } from '../../../../services/scheduled-post.service';
 import { TimeAgoPipe } from '../../../../pipes/time-ago.pipe';
 import { Subscription } from 'rxjs';
 import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../../../dialogs/delete-confirmation-dialog/delete-confirmation-dialog.component';
+import { DraftModal2Component } from '../draft-modal-2/draft-modal-2.component';
+
+interface DraftModalData {
+  selectedTab?: 'unsent' | 'scheduled';
+}
 
 @Component({
   selector: 'app-draft-modal',
@@ -24,19 +30,38 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
 export class DraftModalComponent implements OnInit, OnDestroy {
   drafts: DraftPost[] = [];
   scheduledPosts: ScheduledPost[] = [];
-  selectedTab: 'unsent' | 'scheduled' = 'unsent' as 'unsent' | 'scheduled';
+  selectedTab = 'unsent';
   private subscriptions = new Subscription();
 
   // Edit mode state
   isEditMode = false;
   selectedDraftIds: Set<string> = new Set();
   selectedScheduledIds: Set<string> = new Set();
+  
+  // Test property
+  testMode = true;
+  
+  isUnsentTab(): boolean {
+    return this.selectedTab === 'unsent';
+  }
+
+  isScheduledTab(): boolean {
+    return this.selectedTab === 'scheduled';
+  }
 
   constructor(
     private dialogRef: MatDialogRef<DraftModalComponent>,
     private draftService: DraftService,
-    private dialog: MatDialog
-  ) {}
+    private dialog: MatDialog,
+    private scheduledPostService: ScheduledPostService,
+    private cdr: ChangeDetectorRef,
+    @Optional() @Inject(MAT_DIALOG_DATA) private data?: DraftModalData
+  ) {
+    // Set initial tab from data if provided
+    if (data?.selectedTab) {
+      this.selectedTab = data.selectedTab;
+    }
+  }
 
   ngOnInit(): void {
     // Subscribe to drafts
@@ -49,9 +74,83 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     // Subscribe to scheduled posts
     this.subscriptions.add(
       this.draftService.scheduledPosts$.subscribe(scheduledPosts => {
+        console.log('Draft modal received scheduled posts:', scheduledPosts);
         this.scheduledPosts = scheduledPosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        console.log('Sorted scheduled posts:', this.scheduledPosts);
       })
     );
+
+    // Debug: Check localStorage directly
+    const storedScheduledPosts = localStorage.getItem('scheduled_posts');
+    console.log('Scheduled posts in localStorage:', storedScheduledPosts);
+    console.log('Initial selected tab:', this.selectedTab);
+    console.log('Data passed to modal:', this.data);
+  }
+
+  // Debug method - can be called from browser console
+  public debugScheduledPosts(): void {
+    console.log('=== SCHEDULED POSTS DEBUG ===');
+    console.log('Current scheduledPosts array:', this.scheduledPosts);
+    console.log('scheduledPosts.length:', this.scheduledPosts.length);
+    console.log('localStorage scheduled_posts:', localStorage.getItem('scheduled_posts'));
+    console.log('DraftService scheduled posts:', this.draftService.getScheduledPosts());
+    console.log('Current selected tab:', this.selectedTab);
+    console.log('isScheduledTab getter:', this.isScheduledTab);
+    
+    // Debug each scheduled post individually
+    this.scheduledPosts.forEach((post, index) => {
+      console.log(`--- Scheduled Post ${index} ---`);
+      console.log('Full object:', post);
+      console.log('ID:', post.id);
+      console.log('Content:', post.content);
+      console.log('Status:', post.status);
+      console.log('ScheduledTime:', post.scheduledTime);
+      console.log('Images:', post.images);
+      console.log('QuotePost:', post.quotePost);
+      console.log('CreatedAt:', post.createdAt);
+    });
+    
+    // Debug template conditions
+    console.log('Template conditions:');
+    console.log('isScheduledTab:', this.isScheduledTab());
+    console.log('scheduledPosts.length === 0:', this.scheduledPosts.length === 0);
+    console.log('Should show empty message:', this.isScheduledTab() && this.scheduledPosts.length === 0);
+    console.log('Should show posts:', this.isScheduledTab() && this.scheduledPosts.length > 0);
+  }
+
+  // Debug method to clear all localStorage
+  public clearAllData(): void {
+    localStorage.removeItem('scheduled_posts');
+    localStorage.removeItem('post_drafts');
+    console.log('All draft and scheduled post data cleared');
+    location.reload();
+  }
+
+  public openNewModal(): void {
+    const dialogRef = this.dialog.open(DraftModal2Component, {
+      width: '600px',
+      height: '600px',
+      panelClass: 'clean-draft-modal',  // Use new clean panel class
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: { selectedTab: this.selectedTab }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'edit') {
+        this.dialogRef.close(result);
+      }
+    });
+  }
+
+  showScheduledTab(): boolean {
+    console.log('showScheduledTab called. selectedTab:', this.selectedTab);
+    const result = this.selectedTab === 'scheduled';
+    console.log('showScheduledTab result:', result);
+    if (result) {
+      this.cdr.detectChanges();
+    }
+    return result;
   }
 
   ngOnDestroy(): void {
@@ -129,6 +228,10 @@ export class DraftModalComponent implements OnInit, OnDestroy {
         this.draftService.deleteScheduledPost(scheduledPost.id);
       }
     });
+  }
+
+  onRetryScheduledPost(scheduledPost: ScheduledPost): void {
+    this.scheduledPostService.retryFailedPost(scheduledPost);
   }
 
   // Edit mode methods
@@ -234,9 +337,7 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     return this.selectedTab === 'unsent' ? this.hasSelectedDrafts : this.hasSelectedScheduled;
   }
 
-  get isScheduledTab(): boolean {
-    return this.selectedTab === 'scheduled';
-  }
+
 
   get allDraftsSelected(): boolean {
     return this.drafts.length > 0 && this.selectedDraftIds.size === this.drafts.length;
@@ -271,10 +372,10 @@ export class DraftModalComponent implements OnInit, OnDestroy {
 
   getStatusColor(status: ScheduledPost['status']): string {
     switch (status) {
-      case 'scheduled': return 'text-blue-600 bg-blue-50';
-      case 'sent': return 'text-green-600 bg-green-50';
-      case 'failed': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'scheduled': return 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20';
+      case 'sent': return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20';
+      case 'failed': return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20';
+      default: return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-800';
     }
   }
 

@@ -61,7 +61,7 @@ export class PostRemovalDialogComponent implements OnInit, OnDestroy {
       } else {
         console.log('🔔 Applying desktop configuration');
         dialogRef.updatePosition();
-        dialogRef.updateSize('672px', 'auto');
+        dialogRef.updateSize('600px', 'auto');
         dialogRef.addPanelClass('rounded-2xl');
       }
     });

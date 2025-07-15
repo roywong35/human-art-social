@@ -11,6 +11,7 @@ import { Title } from '@angular/platform-browser';
 import { UserService } from './services/user.service';
 import { User } from './models/user.model';
 import { OverlayService } from './services/overlay.service';
+import { ScheduledPostService } from './services/scheduled-post.service';
 import { RightSidebarComponent } from './components/layout/right-sidebar/right-sidebar.component';
 import { MobileHeaderComponent } from './components/layout/mobile-header/mobile-header.component';
 import { FloatingChatComponent } from './components/shared/floating-chat/floating-chat.component';
@@ -45,7 +46,8 @@ export class AppComponent implements OnInit {
     private router: Router,
     private titleService: Title,
     private userService: UserService,
-    public overlayService: OverlayService
+    public overlayService: OverlayService,
+    private scheduledPostService: ScheduledPostService
   ) {
     this.router.events.subscribe((event: Event) => {
       if (event instanceof NavigationEnd) {
@@ -112,7 +114,9 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Add any initialization logic here
+    // Initialize scheduled post service (constructor starts the background checking)
+    // The service is injected and started automatically, no additional action needed
+    console.log('App initialized with scheduled post service');
   }
 
   isMessagesPage(): boolean {
