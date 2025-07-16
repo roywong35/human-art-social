@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -14,6 +14,7 @@ export class ScheduleModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() scheduleSelected = new EventEmitter<Date>();
   @Output() viewScheduledPosts = new EventEmitter<void>();
+  @ViewChild('dateInput') dateInputRef!: ElementRef<HTMLInputElement>;
 
   // Date dropdown inputs
   selectedMonth: string = '';
@@ -226,34 +227,33 @@ export class ScheduleModalComponent implements OnInit {
     }
   }
 
-  onCalendarIconClick() {
-    console.log('🔍 Calendar icon clicked!');
+  openDatePicker() {
+    console.log('🔍 Date picker button clicked!');
     
-    // Trigger the hidden date input
-    const dateInput = document.querySelector('.hidden-date-input') as HTMLInputElement;
-    console.log('🔍 Found date input:', dateInput);
-    
-    if (dateInput) {
-      console.log('🔍 About to focus and click date input...');
-      dateInput.focus();
-      console.log('🔍 Date input focused');
-      dateInput.click();
-      console.log('🔍 Date input clicked');
+    if (this.dateInputRef && this.dateInputRef.nativeElement) {
+      const dateInput = this.dateInputRef.nativeElement;
+      console.log('🔍 Found date input via ViewChild:', dateInput);
       
-      // Also try showPicker() method if available
-      if ('showPicker' in dateInput) {
+      console.log('🔍 About to focus and trigger date picker...');
+      dateInput.focus();
+      
+      // Try showPicker() method if available (modern browsers)
+      if ('showPicker' in dateInput && typeof (dateInput as any).showPicker === 'function') {
         console.log('🔍 Trying showPicker() method...');
         try {
           (dateInput as any).showPicker();
           console.log('🔍 showPicker() called successfully');
         } catch (error) {
           console.log('🔍 showPicker() failed:', error);
+          // Fallback to click
+          dateInput.click();
         }
       } else {
-        console.log('🔍 showPicker() not available in this browser');
+        console.log('🔍 showPicker() not available, using click fallback');
+        dateInput.click();
       }
     } else {
-      console.log('❌ Date input not found!');
+      console.log('❌ Date input not found via ViewChild!');
     }
   }
 

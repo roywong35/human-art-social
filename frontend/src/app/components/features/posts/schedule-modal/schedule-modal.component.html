@@ -1,23 +1,23 @@
-<div class="modal-overlay" *ngIf="isVisible" (click)="onClose()">
-  <div class="schedule-modal" (click)="$event.stopPropagation()">
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="isVisible" (click)="onClose()">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl w-[90%] max-w-[540px] shadow-xl overflow-hidden" (click)="$event.stopPropagation()">
     <!-- Header -->
-    <div class="modal-header">
-      <h3>Schedule post</h3>
-      <button class="close-btn" (click)="onClose()">
+    <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-600">
+      <h3 class="text-xl font-bold text-gray-900 dark:text-white">Schedule post</h3>
+      <button class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" (click)="onClose()">
         <i class="fas fa-times"></i>
       </button>
     </div>
 
     <!-- Content -->
-    <div class="modal-content">
+    <div class="p-6">
       <!-- Date Selection -->
-      <div class="date-selection-section">
-        <label>Select date</label>
-        <div class="date-inputs-container">
+      <div class="mb-6">
+        <label class="block mb-3 font-semibold text-gray-900 dark:text-white">Select date</label>
+        <div class="flex flex-col sm:flex-row gap-4 items-center">
           <!-- Date Dropdowns -->
-          <div class="date-dropdowns">
+          <div class="flex-1 grid grid-cols-[2fr_1fr_1fr] gap-3 sm:grid-cols-3">
             <!-- Month Dropdown -->
-            <select [(ngModel)]="selectedMonth" class="date-select" (change)="onDropdownDateChange()">
+            <select [(ngModel)]="selectedMonth" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer" (change)="onDropdownDateChange()">
               <option value="" disabled>Month</option>
               <option *ngFor="let month of months" [value]="month.value">
                 {{ month.label }}
@@ -25,7 +25,7 @@
             </select>
 
             <!-- Day Dropdown -->
-            <select [(ngModel)]="selectedDay" class="date-select" (change)="onDropdownDateChange()">
+            <select [(ngModel)]="selectedDay" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer" (change)="onDropdownDateChange()">
               <option value="" disabled>Day</option>
               <option *ngFor="let day of days" [value]="day.value">
                 {{ day.label }}
@@ -33,7 +33,7 @@
             </select>
 
             <!-- Year Dropdown -->
-            <select [(ngModel)]="selectedYear" class="date-select" (change)="onDropdownDateChange()">
+            <select [(ngModel)]="selectedYear" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer" (change)="onDropdownDateChange()">
               <option value="" disabled>Year</option>
               <option *ngFor="let year of years" [value]="year.value">
                 {{ year.label }}
@@ -41,33 +41,36 @@
             </select>
           </div>
 
-          <!-- Native Date Picker (Icon) -->
-          <div class="native-date-picker">
+                    <!-- Native Date Picker (Icon) -->
+          <div class="relative w-[52px] h-[52px]">
+            <!-- Invisible date input positioned so only the icon part overlaps the button -->
             <input
+              #dateInput
               type="date"
               [(ngModel)]="selectedDate"
               [min]="minDate"
               [max]="maxDate"
-              class="hidden-date-input"
+              class="absolute top-0 -right-5 opacity-0 pointer-events-none w-20 h-full"
               (change)="onNativeDateChange()"
             />
+            <!-- Styled button that triggers the date picker -->
             <button
               type="button"
-              class="date-picker-icon"
-              (click)="onCalendarIconClick()"
-              title="Or use calendar picker">
-              <i class="far fa-calendar-alt"></i>
+              class="w-full h-full border border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900 dark:hover:bg-opacity-20 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors flex items-center justify-center cursor-pointer"
+              (click)="openDatePicker()"
+              title="Select date">
+              <i class="far fa-calendar-alt text-gray-500 dark:text-gray-400"></i>
             </button>
           </div>
         </div>
       </div>
 
       <!-- Time Dropdowns -->
-      <div class="time-section">
-        <label>Select time</label>
-        <div class="time-dropdowns">
+      <div class="mb-6">
+        <label class="block mb-3 font-semibold text-gray-900 dark:text-white">Select time</label>
+        <div class="grid grid-cols-3 gap-3">
           <!-- Hour Dropdown -->
-          <select [(ngModel)]="selectedHour" class="time-select">
+          <select [(ngModel)]="selectedHour" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
             <option value="" disabled>Hour</option>
             <option *ngFor="let hour of hours" [value]="hour.value">
               {{ hour.label }}
@@ -75,7 +78,7 @@
           </select>
 
           <!-- Minute Dropdown -->
-          <select [(ngModel)]="selectedMinute" class="time-select">
+          <select [(ngModel)]="selectedMinute" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
             <option value="" disabled>Minute</option>
             <option *ngFor="let minute of minutes" [value]="minute.value">
               {{ minute.label }}
@@ -83,7 +86,7 @@
           </select>
 
           <!-- AM/PM Dropdown -->
-          <select [(ngModel)]="selectedPeriod" class="time-select">
+          <select [(ngModel)]="selectedPeriod" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
             <option value="" disabled>AM/PM</option>
             <option value="AM">AM</option>
             <option value="PM">PM</option>
@@ -92,22 +95,22 @@
       </div>
 
       <!-- Timezone Display -->
-      <div class="timezone-info">
-        <i class="fas fa-globe"></i>
-        <span>Time zone: {{ userTimezone }}</span>
+      <div class="flex items-center gap-2 mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <i class="fas fa-globe text-blue-500"></i>
+        <span class="text-sm text-gray-600 dark:text-gray-300">Time zone: {{ userTimezone }}</span>
       </div>
 
       <!-- Action Buttons -->
-      <div class="action-buttons">
+      <div class="flex flex-col gap-4">
         <button 
-          class="schedule-btn"
+          class="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-3xl transition-all duration-200 hover:transform hover:-translate-y-0.5"
           [disabled]="!isValidSelection()"
           (click)="onSchedule()">
           Schedule
         </button>
         
         <button 
-          class="view-scheduled-btn"
+          class="w-full bg-transparent border border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900 dark:hover:bg-opacity-20 font-medium py-3 px-6 rounded-3xl transition-all duration-200 hover:transform hover:-translate-y-0.5"
           (click)="onViewScheduledPosts()">
           View scheduled posts
         </button>
