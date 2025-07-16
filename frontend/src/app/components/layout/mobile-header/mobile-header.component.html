@@ -146,9 +146,11 @@
   <div class="flex-1 flex justify-end">
     <button *ngIf="isHomepage"
             (click)="openContextModal()" 
-            class="w-10 h-10 flex items-center justify-center rounded-full transition-colors text-white"
+            [class]="isHumanArtTab ? 'w-9 h-9 flex items-center justify-center rounded-full transition-colors' : 'w-10 h-10 flex items-center justify-center rounded-full transition-colors text-white'"
             [ngStyle]="{
-              'background': isHumanArtTab ? 'linear-gradient(45deg, #0d9488, #0f766e)' : 'linear-gradient(45deg, var(--color-primary), var(--color-primary-hover))'
+              'background': isHumanArtTab ? (isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'white') : 'linear-gradient(45deg, var(--color-primary), var(--color-primary-hover))',
+              'border': isHumanArtTab ? '2px solid #3b82f6' : 'none',
+              'color': isHumanArtTab ? '#3b82f6' : 'white'
             }">
       <i class="fas h-5 w-5 text-base flex items-center justify-center" [class.fa-plus]="!isHumanArtTab" [class.fa-paint-brush]="isHumanArtTab"></i>
     </button>
