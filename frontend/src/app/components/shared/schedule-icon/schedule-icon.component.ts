@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 export class ScheduleIconComponent {
   @Input() disabled: boolean = false;
   @Input() isScheduled: boolean = false;
+  @Input() size: number = 20;
   @Output() scheduleClick = new EventEmitter<void>();
 
   onScheduleClick() {

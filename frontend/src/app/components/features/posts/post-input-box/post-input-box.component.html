@@ -5,6 +5,13 @@
            alt="User avatar" 
            class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800">
       <div class="flex-1">
+        <!-- Scheduled Time Indicator -->
+        <div *ngIf="scheduledTime" 
+             class="text-xs text-blue-500 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors mb-1"
+             (click)="openScheduleModal()">
+          <i class="fas fa-calendar-alt text-xs mr-1"></i>Will be posted {{ getScheduledTimeDisplay() }}
+        </div>
+
         <div class="flex items-center justify-between py-2">
           <textarea
             #textarea
@@ -78,27 +85,44 @@
           </div>
         </div>
   
+
+
         <!-- Actions Bar -->
-        <div class="flex items-center justify-between pr-2">
-          <div class="flex items-center gap-2">
+        <div class="flex items-center justify-between pr-2 ml-[-7px]">
+          <div class="flex items-center gap-1">
             <button 
               (click)="onImageClick()"
-              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] rounded-full p-3 transition-colors">
-              <i class="far fa-image text-[15px]"></i>
+              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+              <i class="far fa-image text-[17px]"></i>
             </button>
             <button 
               (click)="toggleEmojiPicker($event)"
-              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] rounded-full p-3 transition-colors emoji-trigger">
-              <i class="far fa-smile text-[15px]"></i>
+              class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center emoji-trigger">
+              <i class="far fa-smile text-[17px]"></i>
             </button>
+            <app-schedule-icon 
+              [size]="17"
+              (scheduleClick)="openScheduleModal()"
+              class="schedule-icon-wrapper">
+            </app-schedule-icon>
           </div>
           <button 
             (click)="onSubmit()"
             [disabled]="!canSubmit"
             class="px-5 py-2 bg-blue-500 text-white rounded-full text-[15px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors">
-            Post
+            {{ scheduledTime ? 'Schedule' : 'Post' }}
           </button>
         </div>
       </div>
     </div>
-  </div> 
+  </div>
+
+  <!-- Schedule Modal -->
+  <app-schedule-modal
+    [isVisible]="showScheduleModal"
+    [hasExistingSchedule]="!!scheduledTime"
+    (close)="closeScheduleModal()"
+    (scheduleSelected)="onScheduleSelected($event)"
+    (viewScheduledPosts)="onViewScheduledPosts()"
+    (clearSchedule)="onClearSchedule()">
+  </app-schedule-modal> 

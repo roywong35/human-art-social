@@ -1,13 +1,14 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
+import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
+import { ScheduleIconComponent } from '../../../../components/shared/schedule-icon/schedule-icon.component';
 
 @Component({
   selector: 'app-post-input-box',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ScheduleIconComponent, ScheduleModalComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './post-input-box.component.html',
   styleUrls: ['./post-input-box.component.scss']
@@ -20,7 +21,7 @@ export class PostInputBoxComponent {
   @Input() defaultAvatar: string = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   @Input() startCompact: boolean = false; // Whether to start in compact mode
 
-  @Output() submit = new EventEmitter<{ content: string, images?: File[] }>();
+  @Output() submit = new EventEmitter<{ content: string, images?: File[], scheduledTime?: Date }>();
   @Output() imageSelected = new EventEmitter<File[]>();
 
   @ViewChild('textarea') textarea!: ElementRef;
@@ -32,9 +33,10 @@ export class PostInputBoxComponent {
   protected emojiPickerPosition = { top: 0, left: 0 };
   public images: { id: string, file: File, preview: string }[] = [];
   protected isCompact: boolean = false;
+  protected scheduledTime: Date | undefined = undefined;
+  protected showScheduleModal: boolean = false;
 
   constructor(
-    private dialog: MatDialog,
     private elementRef: ElementRef,
     private emojiPickerService: EmojiPickerService
   ) {}
@@ -131,7 +133,8 @@ export class PostInputBoxComponent {
 
     this.submit.emit({
       content: this.content,
-      images: this.images.map(img => img.file)
+      images: this.images.map(img => img.file),
+      scheduledTime: this.scheduledTime
     });
 
     // Reset the input
@@ -140,10 +143,66 @@ export class PostInputBoxComponent {
       URL.revokeObjectURL(img.preview);
     });
     this.images = [];
+    this.scheduledTime = undefined;
     this.inputFocused = false;
     if (this.textarea) {
       this.textarea.nativeElement.style.height = 'auto';
     }
+  }
+
+  protected openScheduleModal(): void {
+    this.showScheduleModal = true;
+  }
+
+  protected closeScheduleModal(): void {
+    this.showScheduleModal = false;
+  }
+
+  protected onScheduleSelected(scheduledTime: Date): void {
+    this.scheduledTime = scheduledTime;
+    this.showScheduleModal = false;
+  }
+
+  protected onViewScheduledPosts(): void {
+    this.showScheduleModal = false;
+    // Handle view scheduled posts if needed
+  }
+
+  protected onClearSchedule(): void {
+    this.scheduledTime = undefined;
+    this.showScheduleModal = false;
+  }
+
+  protected clearSchedule(): void {
+    this.scheduledTime = undefined;
+  }
+
+  protected getScheduledTimeDisplay(): string {
+    if (!this.scheduledTime) return '';
+    
+    const now = new Date();
+    const scheduled = new Date(this.scheduledTime);
+    
+    // Check if it's today
+    if (scheduled.toDateString() === now.toDateString()) {
+      return `Today at ${scheduled.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    
+    // Check if it's tomorrow
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (scheduled.toDateString() === tomorrow.toDateString()) {
+      return `Tomorrow at ${scheduled.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    
+    // Otherwise show full date
+    return scheduled.toLocaleDateString([], { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   }
 
   protected removeImage(id: string): void {

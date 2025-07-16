@@ -114,6 +114,13 @@
            class="w-10 h-10 rounded-full">
     </div>
     <div class="flex-1">
+      <!-- Scheduled Time Indicator -->
+      <div *ngIf="scheduledTime" 
+           class="text-xs text-blue-500 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors mb-1"
+           (click)="openScheduleModal()">
+        <i class="fas fa-calendar-alt text-xs mr-1"></i>Will be posted {{ formatScheduledTime(scheduledTime) }}
+      </div>
+
       <textarea
         [(ngModel)]="replyContent"
         class="w-full border-none resize-none text-lg focus:outline-none dark:bg-transparent dark:[color:var(--color-text)] dark:placeholder:text-gray-500"
@@ -193,24 +200,41 @@
     <div class="flex gap-4">
       <button 
         (click)="onImageClick()"
-        class="text-blue-500 p-1.5 rounded-full hover:bg-blue-50">
-        <i class="far fa-image text-base"></i>
+        class="text-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        <i class="far fa-image text-[18px]"></i>
       </button>
       <button 
         (click)="toggleEmojiPicker($event)"
-        class="text-blue-500 p-1.5 rounded-full hover:bg-blue-50">
-        <i class="far fa-smile text-base"></i>
+        class="text-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        <i class="far fa-smile text-[18px]"></i>
       </button>
+      
+      <!-- Schedule Icon -->
+      <app-schedule-icon
+        [isScheduled]="!!scheduledTime"
+        [size]="18"
+        (scheduleClick)="openScheduleModal()">
+      </app-schedule-icon>
     </div>
     <button 
       class="px-6 py-2 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
       [disabled]="(!replyContent.trim() && images.length === 0) || isSubmitting"
       (click)="onSubmit()">
-      <span *ngIf="!isSubmitting">Reply</span>
+      <span *ngIf="!isSubmitting">{{ scheduledTime ? 'Schedule' : 'Reply' }}</span>
       <span *ngIf="isSubmitting" class="flex items-center">
         <i class="fas fa-spinner fa-spin mr-2"></i>
-        Replying...
+        {{ scheduledTime ? 'Scheduling...' : 'Replying...' }}
       </span>
     </button>
   </div>
-</div> 
+</div>
+
+<!-- Schedule Modal -->
+<app-schedule-modal
+  [isVisible]="showScheduleModal"
+  [hasExistingSchedule]="!!scheduledTime"
+  (close)="closeScheduleModal()"
+  (scheduleSelected)="onScheduleSelected($event)"
+  (viewScheduledPosts)="onViewScheduledPosts()"
+  (clearSchedule)="onClearSchedule()">
+</app-schedule-modal> 

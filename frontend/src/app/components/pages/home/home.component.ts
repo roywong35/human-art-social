@@ -384,9 +384,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected onPostSubmit(data: { content: string, images?: File[] }): void {
+  protected onPostSubmit(data: { content: string, images?: File[], scheduledTime?: Date }): void {
     this.isSubmitting = true;
-    this.postService.createPost(data.content, data.images).subscribe({
+    
+    // The PostService.createPost method already handles both regular and scheduled posts
+    this.postService.createPost(data.content, data.images, data.scheduledTime).subscribe({
       complete: () => {
         this.isSubmitting = false;
       }

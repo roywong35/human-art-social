@@ -2,18 +2,20 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px; /* p-2 = 8px */
+  padding: 8px; /* p-2 = 8px to match other circular buttons */
   border-radius: 9999px; /* rounded-full */
-  transition: all 0.2s ease;
+  transition: all 0.2s ease; /* transition-all */
   color: #3b82f6; /* text-blue-500 */
-  width: 2.25rem; /* w-9 = 36px */
-  height: 2.25rem; /* h-9 = 36px */
   display: flex;
   align-items: center;
   justify-content: center;
+  outline: none;
+  position: relative;
+  width: 36px; /* w-9 = 36px */
+  height: 36px; /* h-9 = 36px */
 
   &:hover:not(.disabled) {
-    background-color: #eff6ff; /* bg-blue-50 */
+    background-color: #eff6ff; /* hover:bg-blue-50 */
     color: #2563eb; /* hover:text-blue-600 */
   }
 
@@ -25,11 +27,11 @@
   /* Dark mode */
   :global(.dark) & {
     &:hover:not(.disabled) {
-      background-color: rgba(30, 58, 138, 0.2); /* dark:hover:bg-blue-900/20 */
+      background-color: var(--color-surface-hover, rgba(59, 130, 246, 0.1)); /* dark:hover:[background-color:var(--color-surface-hover)] */
     }
 
     &.scheduled {
-      background-color: rgba(30, 58, 138, 0.2); /* dark:bg-blue-900/20 */
+      background-color: var(--color-surface-hover, rgba(59, 130, 246, 0.1));
     }
   }
 

@@ -329,6 +329,11 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
     this.scheduledTime = null;
   }
 
+  protected onClearSchedule(): void {
+    this.scheduledTime = null;
+    this.showScheduleModal = false;
+  }
+
   protected formatScheduledTime(date: Date): string {
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',

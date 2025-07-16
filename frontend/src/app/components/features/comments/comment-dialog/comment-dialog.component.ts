@@ -8,11 +8,13 @@ import { CommentService } from '../../../../services/comment.service';
 import { TimeAgoPipe } from '../../../../pipes/time-ago.pipe';
 import { Router } from '@angular/router';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
+import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
+import { ScheduleModalComponent } from '../../posts/schedule-modal/schedule-modal.component';
 
 @Component({
   selector: 'app-comment-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatDialogModule, TimeAgoPipe],
+  imports: [CommonModule, FormsModule, MatDialogModule, TimeAgoPipe, ScheduleIconComponent, ScheduleModalComponent],
   templateUrl: './comment-dialog.component.html',
   styleUrls: ['./comment-dialog.component.scss']
 })
@@ -27,6 +29,10 @@ export class CommentDialogComponent implements OnInit, OnDestroy {
   public images: { id: string, file: File, preview: string }[] = [];
   protected isSubmitting = false;
   private resizeObserver: ResizeObserver;
+  
+  // Schedule-related properties
+  protected scheduledTime: Date | null = null;
+  protected showScheduleModal: boolean = false;
 
   constructor(
     public dialogRef: MatDialogRef<CommentDialogComponent>,
@@ -152,5 +158,40 @@ export class CommentDialogComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
       }
     });
+  }
+
+  // Schedule-related methods
+  protected openScheduleModal(): void {
+    this.showScheduleModal = true;
+  }
+
+  protected closeScheduleModal(): void {
+    this.showScheduleModal = false;
+  }
+
+  protected onScheduleSelected(scheduledTime: Date): void {
+    this.scheduledTime = scheduledTime;
+    this.showScheduleModal = false;
+  }
+
+  protected onViewScheduledPosts(): void {
+    this.showScheduleModal = false;
+    // Handle view scheduled posts if needed
+  }
+
+  protected onClearSchedule(): void {
+    this.scheduledTime = null;
+    this.showScheduleModal = false;
+  }
+
+  protected formatScheduledTime(date: Date): string {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).format(date);
   }
 } 

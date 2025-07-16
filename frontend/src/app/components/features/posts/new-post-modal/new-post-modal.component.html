@@ -9,16 +9,7 @@
     </button>
   </div>
 
-  <!-- Scheduled Time Indicator - moved to top of modal -->
-  <div *ngIf="scheduledTime" class="mx-4 mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex-shrink-0">
-    <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm">
-      <i class="fas fa-calendar-alt"></i>
-      <span>Will be sent on {{ formatScheduledTime(scheduledTime) }}</span>
-      <button (click)="clearSchedule()" class="ml-auto text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  </div>
+
 
   <!-- Post Content -->
   <div class="flex-1 overflow-y-auto px-4 flex gap-4">
@@ -29,6 +20,13 @@
     </div>
     
     <div class="flex-1">
+      <!-- Scheduled Time Indicator -->
+      <div *ngIf="scheduledTime" 
+           class="text-xs text-blue-500 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors mb-1"
+           (click)="openScheduleModal()">
+        <i class="fas fa-calendar-alt text-xs mr-1"></i>Will be sent on {{ formatScheduledTime(scheduledTime) }}
+      </div>
+
       <div class="flex items-center min-h-[40px]">
         <textarea
           #postTextarea
@@ -215,18 +213,19 @@
         class="hidden">
       <button
         (click)="fileInput.click()"
-        class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        class="text-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
         <i class="far fa-image text-[18px]"></i>
       </button>
       <button
         (click)="toggleEmojiPicker($event)"
-        class="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        class="text-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
         <i class="far fa-smile text-[18px]"></i>
       </button>
       
       <!-- Schedule Icon -->
       <app-schedule-icon
         [isScheduled]="!!scheduledTime"
+        [size]="18"
         (scheduleClick)="openScheduleModal()">
       </app-schedule-icon>
     </div>
@@ -250,7 +249,9 @@
 <!-- Schedule Modal -->
 <app-schedule-modal
   [isVisible]="showScheduleModal"
+  [hasExistingSchedule]="!!scheduledTime"
   (close)="closeScheduleModal()"
   (scheduleSelected)="onScheduleSelected($event)"
-  (viewScheduledPosts)="onViewScheduledPosts()">
+  (viewScheduledPosts)="onViewScheduledPosts()"
+  (clearSchedule)="onClearSchedule()">
 </app-schedule-modal>

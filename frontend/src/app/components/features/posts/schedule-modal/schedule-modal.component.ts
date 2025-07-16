@@ -11,9 +11,11 @@ import { FormsModule } from '@angular/forms';
 })
 export class ScheduleModalComponent implements OnInit {
   @Input() isVisible: boolean = false;
+  @Input() hasExistingSchedule: boolean = false;
   @Output() close = new EventEmitter<void>();
   @Output() scheduleSelected = new EventEmitter<Date>();
   @Output() viewScheduledPosts = new EventEmitter<void>();
+  @Output() clearSchedule = new EventEmitter<void>();
   @ViewChild('dateInput') dateInputRef!: ElementRef<HTMLInputElement>;
 
   // Date dropdown inputs
@@ -266,6 +268,20 @@ export class ScheduleModalComponent implements OnInit {
     this.selectedHour = '';
     this.selectedMinute = '';
     this.selectedPeriod = '';
+    this.close.emit();
+  }
+
+  onClear() {
+    // Clear all selections
+    this.selectedMonth = '';
+    this.selectedDay = '';
+    this.selectedYear = '';
+    this.selectedDate = '';
+    this.selectedHour = '';
+    this.selectedMinute = '';
+    this.selectedPeriod = '';
+    // Emit clear event and close modal
+    this.clearSchedule.emit();
     this.close.emit();
   }
 
