@@ -121,21 +121,27 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
         // Save as scheduled post instead of creating immediately
         const scheduledPostData = {
           content: this.content,
-          images: this.images,
-          scheduledTime: this.scheduledTime,
-          quotePost: this.quotePost
+          scheduled_time: this.scheduledTime.toISOString(),
+          quote_post: this.quotePost?.id,
+          is_human_drawing: false
         };
 
+        const imageFiles = this.images.map(img => img.file).filter(file => file instanceof File) as File[];
+
         console.log('Creating scheduled post with data:', scheduledPostData);
-        const scheduledPostId = this.draftService.addScheduledPost(scheduledPostData);
-        console.log('Post scheduled with ID:', scheduledPostId);
-        
-        // Debug: Check if the post was actually saved
-        const savedPost = this.draftService.getScheduledPost(scheduledPostId);
-        console.log('Retrieved saved scheduled post:', savedPost);
-        
-        this.dialogRef.close({ scheduled: true });
-        return;
+        try {
+          const savedScheduledPost = await this.draftService.addScheduledPost(scheduledPostData, imageFiles).toPromise();
+          console.log('Post scheduled with ID:', savedScheduledPost?.id);
+          
+          this.toastService.showSuccess('Post scheduled successfully');
+          this.dialogRef.close({ scheduled: true });
+          return;
+        } catch (error) {
+          console.error('Error scheduling post:', error);
+          this.error = 'Failed to schedule post. Please try again.';
+          this.isSubmitting = false;
+          return;
+        }
       }
 
       let post: Post;
@@ -291,11 +297,15 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
           const draftData: DraftPost = {
             id: result.scheduledPost.id,
             content: result.scheduledPost.content,
-            images: result.scheduledPost.images,
-            scheduledTime: result.scheduledPost.scheduledTime,
-            quotePost: result.scheduledPost.quotePost,
-            createdAt: result.scheduledPost.createdAt,
-            updatedAt: new Date()
+            author: result.scheduledPost.author,
+            scheduled_time: result.scheduledPost.scheduled_time,
+            quote_post: result.scheduledPost.quote_post,
+            created_at: result.scheduledPost.created_at,
+            updated_at: result.scheduledPost.updated_at,
+            post_type: result.scheduledPost.post_type,
+            parent_post: result.scheduledPost.parent_post,
+            is_human_drawing: result.scheduledPost.is_human_drawing,
+            images: result.scheduledPost.images
           };
           
           // Close current modal and open new one with scheduled post data
@@ -376,18 +386,23 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   private saveDraft(): void {
     const draftData = {
       content: this.content,
-      images: this.images,
-      scheduledTime: this.scheduledTime,
-      quotePost: this.quotePost
+      scheduled_time: this.scheduledTime?.toISOString() || null,
+      quote_post: this.quotePost?.id,
+      is_human_drawing: false
     };
 
-    const draftId = this.draftService.saveDraft(draftData);
-    console.log('Draft saved with ID:', draftId);
-    
-    // Show success toast
-    this.toastService.showSuccess('Your post is saved');
-    
-    // Note: Draft modal opening is now handled by the caller based on context
+    const imageFiles = this.images.map(img => img.file).filter(file => file instanceof File) as File[];
+
+    this.draftService.saveDraft(draftData, imageFiles).subscribe({
+      next: (savedDraft) => {
+        console.log('Draft saved with ID:', savedDraft.id);
+        this.toastService.showSuccess('Your post is saved');
+      },
+      error: (error) => {
+        console.error('Error saving draft:', error);
+        this.toastService.showError('Failed to save draft');
+      }
+    });
   }
 
   private openDraftsModal(): void {
@@ -419,11 +434,15 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
           const draftData: DraftPost = {
             id: result.scheduledPost.id,
             content: result.scheduledPost.content,
-            images: result.scheduledPost.images,
-            scheduledTime: result.scheduledPost.scheduledTime,
-            quotePost: result.scheduledPost.quotePost,
-            createdAt: result.scheduledPost.createdAt,
-            updatedAt: new Date()
+            author: result.scheduledPost.author,
+            scheduled_time: result.scheduledPost.scheduled_time,
+            quote_post: result.scheduledPost.quote_post,
+            created_at: result.scheduledPost.created_at,
+            updated_at: result.scheduledPost.updated_at,
+            post_type: result.scheduledPost.post_type,
+            parent_post: result.scheduledPost.parent_post,
+            is_human_drawing: result.scheduledPost.is_human_drawing,
+            images: result.scheduledPost.images
           };
           
           // Close current modal and open new one with scheduled post data
@@ -445,8 +464,11 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
 
   private loadDraftData(draft: DraftPost): void {
     this.content = draft.content;
-    this.scheduledTime = draft.scheduledTime ? new Date(draft.scheduledTime) : null;
-    this.images = draft.images || [];
-    this.quotePost = draft.quotePost;
+    this.scheduledTime = draft.scheduled_time ? new Date(draft.scheduled_time) : null;
+    // Note: We can't directly load images from the backend response to ImageFile[]
+    // This would need to be handled by downloading the images and creating File objects
+    // For now, we'll leave images empty when editing drafts
+    this.images = [];
+    this.quotePost = draft.quote_post;
   }
 } 

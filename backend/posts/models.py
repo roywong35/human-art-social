@@ -429,3 +429,127 @@ class AppealEvidenceFile(models.Model):
     
     class Meta:
         ordering = ['created_at']
+
+
+def draft_image_path(instance, filename):
+    """
+    Generate upload path for draft images
+    """
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('draft_images', filename)
+
+
+def scheduled_post_image_path(instance, filename):
+    """
+    Generate upload path for scheduled post images
+    """
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('scheduled_post_images', filename)
+
+
+class Draft(models.Model):
+    """
+    Model for saving draft posts that users are working on.
+    These are incomplete posts that haven't been published yet.
+    """
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='drafts')
+    content = models.TextField(blank=True)
+    scheduled_time = models.DateTimeField(null=True, blank=True, help_text="Optional scheduled time for when this draft should be published")
+    quote_post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name='quoted_in_drafts', help_text="Post being quoted in this draft")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Post type and related fields for draft context
+    post_type = models.CharField(max_length=15, choices=Post.POST_TYPES, default='post')
+    parent_post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name='reply_drafts', help_text="Parent post if this is a reply draft")
+    
+    # Human drawing fields for art posts
+    is_human_drawing = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['author', '-updated_at']),
+        ]
+    
+    def __str__(self):
+        return f"Draft by {self.author.username}: {self.content[:50]}"
+
+
+class DraftImage(models.Model):
+    """
+    Model for storing multiple images per draft
+    """
+    draft = models.ForeignKey(Draft, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to=draft_image_path)
+    order = models.IntegerField(default=0)  # To maintain image order
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Image {self.order} for draft {self.draft.id}"
+
+
+class ScheduledPost(models.Model):
+    """
+    Model for posts that are scheduled to be published in the future.
+    These are complete posts waiting to be published.
+    """
+    STATUS_CHOICES = (
+        ('scheduled', 'Scheduled'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    )
+    
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scheduled_posts')
+    content = models.TextField(blank=True)
+    scheduled_time = models.DateTimeField(help_text="When this post should be published")
+    quote_post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name='quoted_in_scheduled', help_text="Post being quoted")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='scheduled')
+    
+    # Post type and related fields
+    post_type = models.CharField(max_length=15, choices=Post.POST_TYPES, default='post')
+    parent_post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name='scheduled_replies', help_text="Parent post if this is a reply")
+    
+    # Human drawing fields for art posts
+    is_human_drawing = models.BooleanField(default=False)
+    
+    # Track the actual post created when this scheduled post is published
+    published_post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name='scheduled_source', help_text="The actual post created when this was published")
+    
+    class Meta:
+        ordering = ['scheduled_time']
+        indexes = [
+            models.Index(fields=['author', 'status', 'scheduled_time']),
+            models.Index(fields=['status', 'scheduled_time']),
+        ]
+    
+    def __str__(self):
+        return f"Scheduled post by {self.author.username} for {self.scheduled_time}: {self.content[:50]}"
+    
+    @property
+    def is_due(self):
+        """Returns True if the scheduled time has passed and post should be published"""
+        return self.scheduled_time <= timezone.now()
+
+
+class ScheduledPostImage(models.Model):
+    """
+    Model for storing multiple images per scheduled post
+    """
+    scheduled_post = models.ForeignKey(ScheduledPost, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to=scheduled_post_image_path)
+    order = models.IntegerField(default=0)  # To maintain image order
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Image {self.order} for scheduled post {self.scheduled_post.id}"

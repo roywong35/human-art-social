@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Post, EvidenceFile, PostImage, Hashtag, ContentReport, PostAppeal, AppealEvidenceFile
+from .models import Post, EvidenceFile, PostImage, Hashtag, ContentReport, PostAppeal, AppealEvidenceFile, Draft, DraftImage, ScheduledPost, ScheduledPostImage
 
 User = get_user_model()
 
@@ -178,6 +178,85 @@ class PostAppealSerializer(serializers.ModelSerializer):
                  'status', 'status_display', 'created_at', 'reviewed_at', 'reviewed_by', 'admin_notes']
         read_only_fields = ['author', 'post', 'created_at', 'reviewed_at', 'reviewed_by', 'admin_notes']
     
+    def create(self, validated_data):
+        # Set the author to the current user
+        validated_data['author'] = self.context['request'].user
+        return super().create(validated_data) 
+
+
+class DraftImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DraftImage
+        fields = ['id', 'image', 'image_url', 'order', 'created_at']
+        read_only_fields = ['created_at']
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return None
+
+
+class DraftSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    images = DraftImageSerializer(many=True, read_only=True)
+    quote_post = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Draft
+        fields = ['id', 'content', 'author', 'scheduled_time', 'quote_post', 
+                 'created_at', 'updated_at', 'post_type', 'parent_post', 
+                 'is_human_drawing', 'images']
+        read_only_fields = ['author', 'created_at', 'updated_at']
+
+    def get_quote_post(self, obj):
+        if obj.quote_post:
+            return PostSerializer(obj.quote_post, context=self.context).data
+        return None
+
+    def create(self, validated_data):
+        # Set the author to the current user
+        validated_data['author'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class ScheduledPostImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ScheduledPostImage
+        fields = ['id', 'image', 'image_url', 'order', 'created_at']
+        read_only_fields = ['created_at']
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return None
+
+
+class ScheduledPostSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    images = ScheduledPostImageSerializer(many=True, read_only=True)
+    quote_post = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    is_due = serializers.ReadOnlyField()
+
+    class Meta:
+        model = ScheduledPost
+        fields = ['id', 'content', 'author', 'scheduled_time', 'quote_post', 
+                 'created_at', 'updated_at', 'status', 'status_display', 
+                 'post_type', 'parent_post', 'is_human_drawing', 'images',
+                 'published_post', 'is_due']
+        read_only_fields = ['author', 'created_at', 'updated_at', 'published_post']
+
+    def get_quote_post(self, obj):
+        if obj.quote_post:
+            return PostSerializer(obj.quote_post, context=self.context).data
+        return None
+
     def create(self, validated_data):
         # Set the author to the current user
         validated_data['author'] = self.context['request'].user

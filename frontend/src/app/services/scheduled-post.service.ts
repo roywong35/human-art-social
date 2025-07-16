@@ -44,7 +44,7 @@ export class ScheduledPostService implements OnDestroy {
     const now = new Date();
 
     scheduledPosts.forEach(scheduledPost => {
-      if (scheduledPost.status === 'scheduled' && new Date(scheduledPost.scheduledTime) <= now) {
+      if (scheduledPost.status === 'scheduled' && new Date(scheduledPost.scheduled_time) <= now) {
         this.publishScheduledPost(scheduledPost);
       }
     });
@@ -54,38 +54,14 @@ export class ScheduledPostService implements OnDestroy {
     try {
       console.log('Publishing scheduled post:', scheduledPost.id);
       
-      // Update status to prevent multiple publishing attempts
-      this.draftService.updateScheduledPostStatus(scheduledPost.id, 'sent');
-
-      // Create FormData for the post
-      const formData = new FormData();
-      formData.append('content', scheduledPost.content);
-
-      // Add images if any
-      if (scheduledPost.images && scheduledPost.images.length > 0) {
-        // Note: This assumes images are stored as blobs or files in the scheduled post
-        // You may need to adjust this based on how images are stored
-        scheduledPost.images.forEach((image, index) => {
-          if (image.file) {
-            formData.append(`image_${index}`, image.file);
-          }
-        });
-      }
-
-      // Publish the post
-      await this.postService.createPostWithFormData(formData, false).toPromise();
+      // Use the DraftService's publishScheduledPost method which calls the backend API
+      await this.draftService.publishScheduledPost(scheduledPost.id).toPromise();
       
       console.log('Scheduled post published successfully:', scheduledPost.id);
       this.toastService.showSuccess('Your scheduled post has been published!');
       
-      // Remove from scheduled posts after successful publishing
-      this.draftService.deleteScheduledPost(scheduledPost.id);
-      
     } catch (error) {
       console.error('Error publishing scheduled post:', error);
-      
-      // Mark as failed
-      this.draftService.updateScheduledPostStatus(scheduledPost.id, 'failed');
       this.toastService.showError('Failed to publish scheduled post. Please try posting manually.');
     }
   }
@@ -93,8 +69,7 @@ export class ScheduledPostService implements OnDestroy {
   // Manual method to retry failed posts
   public retryFailedPost(scheduledPost: ScheduledPost): void {
     if (scheduledPost.status === 'failed') {
-      // Reset status and try again
-      this.draftService.updateScheduledPostStatus(scheduledPost.id, 'scheduled');
+      // Try to publish the failed post using the backend API
       this.publishScheduledPost(scheduledPost);
     }
   }

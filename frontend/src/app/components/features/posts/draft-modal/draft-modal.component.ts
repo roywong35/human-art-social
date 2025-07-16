@@ -33,8 +33,8 @@ export class DraftModalComponent implements OnInit, OnDestroy {
 
   // Edit mode functionality
   isEditMode = false;
-  selectedDraftIds: Set<string> = new Set();
-  selectedScheduledIds: Set<string> = new Set();
+  selectedDraftIds: Set<number> = new Set();
+  selectedScheduledIds: Set<number> = new Set();
 
   constructor(
     private dialogRef: MatDialogRef<DraftModalComponent>,
@@ -52,15 +52,26 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     // Subscribe to drafts
     this.subscriptions.add(
       this.draftService.drafts$.subscribe(drafts => {
-        this.drafts = drafts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        console.log('Draft modal received drafts:', drafts);
+        if (Array.isArray(drafts)) {
+          this.drafts = drafts.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+        } else {
+          console.error('Draft modal received non-array drafts:', drafts);
+          this.drafts = [];
+        }
       })
     );
 
     // Subscribe to scheduled posts
     this.subscriptions.add(
       this.draftService.scheduledPosts$.subscribe(scheduledPosts => {
-        console.log('Draft modal 2 received scheduled posts:', scheduledPosts);
-        this.scheduledPosts = scheduledPosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        console.log('Draft modal received scheduled posts:', scheduledPosts);
+        if (Array.isArray(scheduledPosts)) {
+          this.scheduledPosts = scheduledPosts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        } else {
+          console.error('Draft modal received non-array scheduled posts:', scheduledPosts);
+          this.scheduledPosts = [];
+        }
       })
     );
   }
@@ -142,7 +153,7 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleDraftSelection(draftId: string): void {
+  toggleDraftSelection(draftId: number): void {
     if (this.selectedDraftIds.has(draftId)) {
       this.selectedDraftIds.delete(draftId);
     } else {
@@ -150,7 +161,7 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleScheduledSelection(scheduledId: string): void {
+  toggleScheduledSelection(scheduledId: number): void {
     if (this.selectedScheduledIds.has(scheduledId)) {
       this.selectedScheduledIds.delete(scheduledId);
     } else {
@@ -176,14 +187,28 @@ export class DraftModalComponent implements OnInit, OnDestroy {
 
   deleteSelectedDrafts(): void {
     this.selectedDraftIds.forEach(id => {
-      this.draftService.deleteDraft(id);
+      this.draftService.deleteDraft(id).subscribe({
+        next: () => {
+          console.log(`Draft ${id} deleted successfully`);
+        },
+        error: (error) => {
+          console.error(`Error deleting draft ${id}:`, error);
+        }
+      });
     });
     this.selectedDraftIds.clear();
   }
 
   deleteSelectedScheduled(): void {
     this.selectedScheduledIds.forEach(id => {
-      this.draftService.deleteScheduledPost(id);
+      this.draftService.deleteScheduledPost(id).subscribe({
+        next: () => {
+          console.log(`Scheduled post ${id} deleted successfully`);
+        },
+        error: (error) => {
+          console.error(`Error deleting scheduled post ${id}:`, error);
+        }
+      });
     });
     this.selectedScheduledIds.clear();
   }

@@ -4,8 +4,8 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, EvidenceFile, PostImage, User, Hashtag, ContentReport, PostAppeal, AppealEvidenceFile
-from .serializers import PostSerializer, HashtagSerializer, PostAppealSerializer, AppealEvidenceFileSerializer
+from .models import Post, EvidenceFile, PostImage, User, Hashtag, ContentReport, PostAppeal, AppealEvidenceFile, Draft, DraftImage, ScheduledPost, ScheduledPostImage
+from .serializers import PostSerializer, HashtagSerializer, PostAppealSerializer, AppealEvidenceFileSerializer, DraftSerializer, DraftImageSerializer, ScheduledPostSerializer, ScheduledPostImageSerializer
 from django.db import models, transaction
 from django.utils import timezone
 import mimetypes
@@ -1221,3 +1221,307 @@ class PostViewSet(viewsets.ModelViewSet):
                 {'error': 'An error occurred while fetching appeals'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class DraftPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class DraftViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for handling draft operations.
+    """
+    serializer_class = DraftSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = DraftPagination
+
+    def get_queryset(self):
+        """
+        Get drafts for the current user only
+        """
+        return Draft.objects.filter(author=self.request.user).prefetch_related('images')
+
+    def get_file_type(self, file):
+        """
+        Determine the type of file based on its MIME type
+        """
+        mime_type = mimetypes.guess_type(file.name)[0]
+        if mime_type:
+            if mime_type.startswith('image/'):
+                return 'image'
+            elif mime_type.startswith('video/'):
+                return 'video'
+        return 'other'
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        """
+        Create draft with associated images
+        """
+        print("Creating draft with data:", self.request.data)
+        print("Received files:", self.request.FILES)
+        
+        # Create the draft
+        draft = serializer.save(author=self.request.user)
+        print("Draft created:", draft.id)
+
+        # Handle multiple images
+        for key in self.request.FILES:
+            print("Processing file key:", key)
+            if key.startswith('image_'):
+                image = self.request.FILES[key]
+                order = int(key.split('_')[1]) if '_' in key else 0
+                print("Creating DraftImage with:", {
+                    'draft_id': draft.id,
+                    'image_name': image.name,
+                    'image_size': image.size,
+                    'order': order
+                })
+                DraftImage.objects.create(
+                    draft=draft,
+                    image=image,
+                    order=order
+                )
+
+        print("Final draft state:", {
+            'id': draft.id,
+            'images_count': draft.images.count()
+        })
+
+    @transaction.atomic  
+    def perform_update(self, serializer):
+        """
+        Update draft and handle image updates
+        """
+        print("Updating draft with data:", self.request.data)
+        print("Received files:", self.request.FILES)
+        
+        draft = serializer.save()
+        
+        # Handle image updates if new images are provided
+        if self.request.FILES:
+            # For simplicity, we'll replace all images
+            # In a production app, you might want more sophisticated image management
+            draft.images.all().delete()  # Remove old images
+            
+            # Add new images
+            for key in self.request.FILES:
+                if key.startswith('image_'):
+                    image = self.request.FILES[key]
+                    order = int(key.split('_')[1]) if '_' in key else 0
+                    DraftImage.objects.create(
+                        draft=draft,
+                        image=image,
+                        order=order
+                    )
+
+    @action(detail=True, methods=['POST'])
+    def publish(self, request, pk=None):
+        """
+        Convert a draft to a published post
+        """
+        draft = self.get_object()
+        
+        try:
+            with transaction.atomic():
+                # Create the post from draft data
+                post_data = {
+                    'content': draft.content,
+                    'post_type': draft.post_type,
+                    'is_human_drawing': draft.is_human_drawing,
+                }
+                
+                if draft.scheduled_time:
+                    post_data['scheduled_time'] = draft.scheduled_time
+                if draft.parent_post:
+                    post_data['parent_post'] = draft.parent_post
+                    post_data['parent_post_author_handle'] = draft.parent_post.author.handle
+                    post_data['parent_post_author_username'] = draft.parent_post.author.username
+                
+                # Create the post
+                post = Post.objects.create(
+                    author=request.user,
+                    **post_data
+                )
+                
+                # Copy images from draft to post
+                for draft_image in draft.images.all():
+                    PostImage.objects.create(
+                        post=post,
+                        image=draft_image.image,
+                        order=draft_image.order
+                    )
+                
+                # Delete the draft since it's now published
+                draft.delete()
+                
+                # Return the created post
+                post_serializer = PostSerializer(post, context={'request': request})
+                return Response(post_serializer.data, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            print(f"Error publishing draft: {str(e)}")
+            return Response(
+                {'error': 'Failed to publish draft'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ScheduledPostViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for handling scheduled post operations.
+    """
+    serializer_class = ScheduledPostSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = DraftPagination
+
+    def get_queryset(self):
+        """
+        Get scheduled posts for the current user only
+        """
+        return ScheduledPost.objects.filter(author=self.request.user).prefetch_related('images')
+
+    def get_file_type(self, file):
+        """
+        Determine the type of file based on its MIME type
+        """
+        mime_type = mimetypes.guess_type(file.name)[0]
+        if mime_type:
+            if mime_type.startswith('image/'):
+                return 'image'
+            elif mime_type.startswith('video/'):
+                return 'video'
+        return 'other'
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        """
+        Create scheduled post with associated images
+        """
+        print("Creating scheduled post with data:", self.request.data)
+        print("Received files:", self.request.FILES)
+        
+        # Create the scheduled post
+        scheduled_post = serializer.save(author=self.request.user)
+        print("Scheduled post created:", scheduled_post.id)
+
+        # Handle multiple images
+        for key in self.request.FILES:
+            print("Processing file key:", key)
+            if key.startswith('image_'):
+                image = self.request.FILES[key]
+                order = int(key.split('_')[1]) if '_' in key else 0
+                print("Creating ScheduledPostImage with:", {
+                    'scheduled_post_id': scheduled_post.id,
+                    'image_name': image.name,
+                    'image_size': image.size,
+                    'order': order
+                })
+                ScheduledPostImage.objects.create(
+                    scheduled_post=scheduled_post,
+                    image=image,
+                    order=order
+                )
+
+        print("Final scheduled post state:", {
+            'id': scheduled_post.id,
+            'images_count': scheduled_post.images.count()
+        })
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        """
+        Update scheduled post and handle image updates
+        """
+        print("Updating scheduled post with data:", self.request.data)
+        print("Received files:", self.request.FILES)
+        
+        scheduled_post = serializer.save()
+        
+        # Handle image updates if new images are provided
+        if self.request.FILES:
+            # For simplicity, we'll replace all images
+            scheduled_post.images.all().delete()  # Remove old images
+            
+            # Add new images
+            for key in self.request.FILES:
+                if key.startswith('image_'):
+                    image = self.request.FILES[key]
+                    order = int(key.split('_')[1]) if '_' in key else 0
+                    ScheduledPostImage.objects.create(
+                        scheduled_post=scheduled_post,
+                        image=image,
+                        order=order
+                    )
+
+    @action(detail=True, methods=['POST'])
+    def publish_now(self, request, pk=None):
+        """
+        Immediately publish a scheduled post
+        """
+        scheduled_post = self.get_object()
+        
+        if scheduled_post.status != 'scheduled':
+            return Response(
+                {'error': 'This scheduled post cannot be published'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            with transaction.atomic():
+                # Create the post from scheduled post data
+                post_data = {
+                    'content': scheduled_post.content,
+                    'post_type': scheduled_post.post_type,
+                    'is_human_drawing': scheduled_post.is_human_drawing,
+                }
+                
+                if scheduled_post.parent_post:
+                    post_data['parent_post'] = scheduled_post.parent_post
+                    post_data['parent_post_author_handle'] = scheduled_post.parent_post.author.handle
+                    post_data['parent_post_author_username'] = scheduled_post.parent_post.author.username
+                
+                # Create the post (no scheduled_time = published immediately)
+                post = Post.objects.create(
+                    author=request.user,
+                    **post_data
+                )
+                
+                # Copy images from scheduled post to post
+                for scheduled_image in scheduled_post.images.all():
+                    PostImage.objects.create(
+                        post=post,
+                        image=scheduled_image.image,
+                        order=scheduled_image.order
+                    )
+                
+                # Update scheduled post status
+                scheduled_post.status = 'sent'
+                scheduled_post.published_post = post
+                scheduled_post.save()
+                
+                # Return the created post
+                post_serializer = PostSerializer(post, context={'request': request})
+                return Response(post_serializer.data, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            print(f"Error publishing scheduled post: {str(e)}")
+            return Response(
+                {'error': 'Failed to publish scheduled post'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['GET'])
+    def due(self, request):
+        """
+        Get scheduled posts that are due to be published
+        """
+        due_posts = ScheduledPost.objects.filter(
+            status='scheduled',
+            scheduled_time__lte=timezone.now()
+        ).prefetch_related('images')
+        
+        serializer = self.get_serializer(due_posts, many=True)
+        return Response(serializer.data)

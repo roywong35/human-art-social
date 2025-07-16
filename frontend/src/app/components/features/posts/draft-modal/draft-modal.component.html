@@ -65,9 +65,9 @@
           <!-- Draft Content -->
           <div class="flex-1 text-gray-900 dark:text-white">
             <!-- Scheduled Time -->
-            <div *ngIf="draft.scheduledTime" class="flex items-center text-xs text-blue-600 dark:text-blue-400 mb-1">
+            <div *ngIf="draft.scheduled_time" class="flex items-center text-xs text-blue-600 dark:text-blue-400 mb-1">
               <i class="fas fa-clock mr-1"></i>
-              Scheduled for {{ formatScheduledTime(draft.scheduledTime) }}
+              Scheduled for {{ draft.scheduled_time }}
             </div>
             
             <!-- Content Preview -->
@@ -76,7 +76,7 @@
             <!-- Images Preview -->
             <div *ngIf="draft.images && draft.images.length > 0" class="flex gap-2 mb-1">
               <div *ngFor="let image of draft.images.slice(0, 3)" class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded border">
-                <img [src]="image.preview" class="w-full h-full object-cover rounded" alt="Draft image">
+                <img [src]="image.image_url" class="w-full h-full object-cover rounded" alt="Draft image">
               </div>
               <div *ngIf="draft.images.length > 3" class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded border flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
                 +{{ draft.images.length - 3 }}
@@ -84,12 +84,12 @@
             </div>
 
             <!-- Quote Post Preview -->
-            <div *ngIf="draft.quotePost" class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-sm">
+            <div *ngIf="draft.quote_post" class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-sm">
               <div class="flex items-center gap-2 mb-1">
-                <span class="font-semibold">{{ draft.quotePost.author.username }}</span>
-                <span class="text-gray-500 dark:text-gray-400">{{ draft.quotePost.author.handle }}</span>
+                <span class="font-semibold">{{ draft.quote_post.author.username }}</span>
+                <span class="text-gray-500 dark:text-gray-400">{{ draft.quote_post.author.handle }}</span>
               </div>
-              <p class="text-gray-700 dark:text-gray-300">{{ getPreviewText(draft.quotePost.content) }}</p>
+              <p class="text-gray-700 dark:text-gray-300">{{ getPreviewText(draft.quote_post.content) }}</p>
             </div>
           </div>
         </div>
@@ -138,13 +138,13 @@
             <!-- Scheduled Time -->
             <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
               <i class="fas fa-clock mr-1"></i>
-              {{ formatScheduledTime(post.scheduledTime) }}
+              {{ post.scheduled_time }}
             </p>
             
             <!-- Images Preview -->
             <div *ngIf="post.images && post.images.length > 0" class="flex gap-2 mb-1">
               <div *ngFor="let image of post.images.slice(0, 3)" class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded border">
-                <img [src]="image.preview" class="w-full h-full object-cover rounded" alt="Scheduled post image">
+                <img [src]="image.image_url" class="w-full h-full object-cover rounded" alt="Scheduled post image">
               </div>
               <div *ngIf="post.images.length > 3" class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded border flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
                 +{{ post.images.length - 3 }}
