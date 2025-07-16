@@ -14,7 +14,7 @@ import { environment } from '../../../../../environments/environment';
 import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
 import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
 import { DraftService, DraftPost } from '../../../../services/draft.service';
-import { DraftModal2Component } from '../draft-modal-2/draft-modal-2.component';
+import { DraftModalComponent } from '../draft-modal/draft-modal.component';
 import { SaveConfirmationDialogComponent } from '../../../dialogs/save-confirmation-dialog/save-confirmation-dialog.component';
 import { ToastService } from '../../../../services/toast.service';
 
@@ -262,7 +262,7 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
     this.showScheduleModal = false;
     
     // Open draft modal with scheduled tab selected
-    const dialogRef = this.dialog.open(DraftModal2Component, {
+    const dialogRef = this.dialog.open(DraftModalComponent, {
       width: '600px',
       height: '600px',
       panelClass: 'clean-draft-modal',
@@ -391,7 +391,7 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   }
 
   private openDraftsModal(): void {
-    const dialogRef = this.dialog.open(DraftModal2Component, {
+    const dialogRef = this.dialog.open(DraftModalComponent, {
       width: '600px',
       height: '600px',
       panelClass: 'clean-draft-modal',
