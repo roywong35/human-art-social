@@ -1,4 +1,4 @@
-<div class="main-container bg-white dark:bg-black">
+<div class="main-container bg-white dark:bg-black max-[686px]:w-screen max-[686px]:h-screen max-[686px]:rounded-none max-[686px]:max-w-none max-[686px]:max-h-none">
   <!-- Header with Edit Button -->
   <div class="header-section flex items-center p-4 pb-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
     <!-- Left side: Back button -->
@@ -16,7 +16,7 @@
   </div>
 
   <!-- Tabs -->
-  <div class="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+  <div class="border-b border-gray-200 dark:border-gray-700 flex-shrink-0 max-[686px]:flex-shrink-0">
     <div class="flex">
       <button 
         (click)="selectedTab = 'unsent'" 
@@ -34,7 +34,7 @@
   </div>
 
   <!-- Tab Content - Scrollable Area -->
-  <div class="content-area">
+  <div class="content-area max-[686px]:flex-1 max-[686px]:overflow-y-auto">
     <!-- Unsent Posts Tab -->
     <div *ngIf="isUnsentTab()">
       <!-- Empty State -->
