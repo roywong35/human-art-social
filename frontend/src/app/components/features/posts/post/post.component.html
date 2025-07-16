@@ -25,27 +25,29 @@
       <!-- Author info and timestamp -->
       <div>
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-1">
-            <p class="text-[16px] font-bold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter']" (click)="navigateToProfile($event)">
-              {{ post.author.username }}
-            </p>
-            <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">{{"@"}}{{ post.author.handle }}</p>
-            <span class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">·</span>
-            <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">{{ post.created_at | timeAgo }}</p>
+          <div class="flex items-center min-w-0 flex-1">
+            <div class="flex items-center space-x-1 min-w-0 flex-shrink overflow-hidden">
+              <p class="text-[16px] font-bold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter'] truncate" (click)="navigateToProfile($event)">
+                {{ post.author.username }}
+              </p>
+              <p class="text-[15px] text-gray-500 truncate">{{"@"}}{{ post.author.handle }}</p>
+              <span class="text-[15px] text-gray-500 flex-shrink-0">·</span>
+              <p class="text-[15px] text-gray-500 truncate">{{ post.created_at | timeAgo }}</p>
+            </div>
             <!-- Add pending badge for unverified human art posts -->
             <div *ngIf="post.is_human_drawing && !post.is_verified" 
-                 class="ml-2 inline-flex items-center">
+                 class="ml-2 inline-flex items-center flex-shrink-0">
               <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 text-xs font-medium rounded-full">
                 <i class="fas fa-clock mr-1"></i>
-                Pending
+                <span class="max-[500px]:hidden">Pending</span>
               </span>
             </div>
             <!-- Add verified badge for verified human art posts -->
             <div *ngIf="post.is_human_drawing && post.is_verified" 
-                 class="ml-2 inline-flex items-center">
-              <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 text-xs font-medium rounded-full">
+                 class="ml-2 inline-flex items-center flex-shrink-0">
+              <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 text-xs font-medium rounded-full">
                 <i class="fas fa-check-circle mr-1"></i>
-                Verified Art
+                <span class="max-[500px]:hidden">Verified Art</span>
               </span>
             </div>
           </div>

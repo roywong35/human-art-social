@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
 import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
 import { ScheduleIconComponent } from '../../../../components/shared/schedule-icon/schedule-icon.component';
+import { MatDialog } from '@angular/material/dialog';
+import { DraftModalComponent } from '../draft-modal/draft-modal.component';
 
 @Component({
   selector: 'app-post-input-box',
@@ -38,7 +40,8 @@ export class PostInputBoxComponent {
 
   constructor(
     private elementRef: ElementRef,
-    private emojiPickerService: EmojiPickerService
+    private emojiPickerService: EmojiPickerService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -165,7 +168,13 @@ export class PostInputBoxComponent {
 
   protected onViewScheduledPosts(): void {
     this.showScheduleModal = false;
-    // Handle view scheduled posts if needed
+    this.dialog.open(DraftModalComponent, {
+      width: '90vw',
+      maxWidth: '600px',
+      height: '80vh',
+      panelClass: ['draft-modal-dialog'],
+      data: { selectedTab: 'scheduled' }
+    });
   }
 
   protected onClearSchedule(): void {

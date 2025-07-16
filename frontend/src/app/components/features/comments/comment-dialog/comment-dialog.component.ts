@@ -1,7 +1,7 @@
 import { Component, Inject, ViewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { Post } from '../../../../models/post.model';
 import { User } from '../../../../models/user.model';
 import { CommentService } from '../../../../services/comment.service';
@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
 import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
 import { ScheduleModalComponent } from '../../posts/schedule-modal/schedule-modal.component';
+import { DraftModalComponent } from '../../posts/draft-modal/draft-modal.component';
 
 @Component({
   selector: 'app-comment-dialog',
@@ -39,7 +40,8 @@ export class CommentDialogComponent implements OnInit, OnDestroy {
     @Inject(MAT_DIALOG_DATA) public data: { post: Post; currentUser: User | null },
     private commentService: CommentService,
     private router: Router,
-    private emojiPickerService: EmojiPickerService
+    private emojiPickerService: EmojiPickerService,
+    private dialog: MatDialog
   ) {
     // Configure dialog based on screen size
     this.resizeObserver = new ResizeObserver(entries => {
@@ -176,7 +178,13 @@ export class CommentDialogComponent implements OnInit, OnDestroy {
 
   protected onViewScheduledPosts(): void {
     this.showScheduleModal = false;
-    // Handle view scheduled posts if needed
+    this.dialog.open(DraftModalComponent, {
+      width: '90vw',
+      maxWidth: '600px',
+      height: '80vh',
+      panelClass: ['draft-modal-dialog'],
+      data: { selectedTab: 'scheduled' }
+    });
   }
 
   protected onClearSchedule(): void {

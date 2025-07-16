@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Output, Inject, Optional, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { PostService } from '../../../../services/post.service';
 import { AuthService } from '../../../../services/auth.service';
 import { Router } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
 import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
 import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
+import { DraftModalComponent } from '../draft-modal/draft-modal.component';
 
 interface EvidenceFile {
   file: File;
@@ -47,6 +48,7 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
     private postService: PostService,
     public authService: AuthService,
     private router: Router,
+    private dialog: MatDialog,
     @Optional() private dialogRef: MatDialogRef<NewArtPostModalComponent>
   ) {
     if (this.dialogRef) {
@@ -248,7 +250,13 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
   onViewScheduledPosts(): void {
     this.closeScheduleModal();
     this.closeModal();
-    this.router.navigate(['/scheduled-posts']);
+    this.dialog.open(DraftModalComponent, {
+      width: '90vw',
+      maxWidth: '600px',
+      height: '80vh',
+      panelClass: ['draft-modal-dialog'],
+      data: { selectedTab: 'scheduled' }
+    });
   }
 
   onClearSchedule(): void {
