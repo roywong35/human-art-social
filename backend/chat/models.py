@@ -15,6 +15,11 @@ def message_image_path(instance, filename):
     # Return the upload path
     return os.path.join('chat_images', filename)
 
+class ConversationManager(models.Manager):
+    """Custom manager that excludes soft-deleted conversations by default"""
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
 class Conversation(models.Model):
     """
     Model for chat conversations between users.
@@ -23,6 +28,14 @@ class Conversation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_message_at = models.DateTimeField(null=True, blank=True)
+    
+    # Soft delete fields
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
+    # Custom managers
+    objects = ConversationManager()  # Excludes soft-deleted by default
+    all_objects = models.Manager()  # Includes soft-deleted
     
     class Meta:
         ordering = ['-last_message_at', '-created_at']
@@ -42,6 +55,23 @@ class Conversation(models.Model):
     def get_unread_count(self, user):
         """Get unread message count for a specific user"""
         return self.messages.filter(is_read=False).exclude(sender=user).count()
+    
+    def soft_delete(self):
+        """Soft delete this conversation by marking it as deleted"""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+    
+    def restore(self):
+        """Restore a soft-deleted conversation"""
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
+
+class MessageManager(models.Manager):
+    """Custom manager that excludes soft-deleted messages by default"""
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
 
 class Message(models.Model):
     """
@@ -54,6 +84,14 @@ class Message(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     
+    # Soft delete fields
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
+    # Custom managers
+    objects = MessageManager()  # Excludes soft-deleted by default
+    all_objects = models.Manager()  # Includes soft-deleted
+    
     class Meta:
         ordering = ['-created_at']
     
@@ -65,3 +103,15 @@ class Message(models.Model):
         super().save(*args, **kwargs)
         self.conversation.last_message_at = self.created_at
         self.conversation.save()
+    
+    def soft_delete(self):
+        """Soft delete this message by marking it as deleted"""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+    
+    def restore(self):
+        """Restore a soft-deleted message"""
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()

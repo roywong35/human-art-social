@@ -80,6 +80,11 @@ class PostHashtag(models.Model):
             models.Index(fields=['hashtag', 'created_at'])  # For trending queries
         ]
 
+class PostManager(models.Manager):
+    """Custom manager that excludes soft-deleted posts by default"""
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
 class Post(models.Model):
     """
     Model for user posts in the social platform.
@@ -127,6 +132,14 @@ class Post(models.Model):
 
     hashtags = models.ManyToManyField(Hashtag, through=PostHashtag, related_name='posts')
     
+    # Soft delete fields
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
+    # Custom managers
+    objects = PostManager()  # Excludes soft-deleted by default
+    all_objects = models.Manager()  # Includes soft-deleted
+    
     class Meta:
         ordering = ['-created_at']
         
@@ -148,6 +161,18 @@ class Post(models.Model):
         if self.post_type == 'repost' and self.referenced_post:
             return self.referenced_post.reposts.count()
         return self.reposts.count()
+    
+    def soft_delete(self):
+        """Soft delete this post by marking it as deleted"""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+    
+    def restore(self):
+        """Restore a soft-deleted post"""
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
 
     @property
     def is_reply(self):
