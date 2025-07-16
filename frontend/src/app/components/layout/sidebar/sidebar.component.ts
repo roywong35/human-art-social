@@ -306,20 +306,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
     if (this.isHumanArtTab) {
       this.dialog.open(NewArtPostModalComponent, {
         panelClass: ['submit-drawing-dialog'],
-        maxWidth: '100vw',
-        maxHeight: '100vh',
-        width: '100vw',
-        height: '100vh',
+        maxWidth: '90vw',
+        maxHeight: '90vh',
         disableClose: false,
         hasBackdrop: true
       });
     } else {
       this.dialog.open(NewPostModalComponent, {
         panelClass: ['create-post-dialog'],
-        maxWidth: '100vw',
-        maxHeight: '100vh',
-        width: '100vw',
-        height: '100vh',
+        maxWidth: '90vw',
+        maxHeight: '90vh',
         disableClose: false,
         hasBackdrop: true
       });

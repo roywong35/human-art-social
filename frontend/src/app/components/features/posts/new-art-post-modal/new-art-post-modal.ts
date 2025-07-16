@@ -6,6 +6,8 @@ import { PostService } from '../../../../services/post.service';
 import { AuthService } from '../../../../services/auth.service';
 import { Router } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
+import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
+import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
 
 interface EvidenceFile {
   file: File;
@@ -16,7 +18,7 @@ interface EvidenceFile {
 @Component({
   selector: 'app-submit-drawing-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatDialogModule],
+  imports: [CommonModule, FormsModule, MatDialogModule, ScheduleModalComponent, ScheduleIconComponent],
   templateUrl: './new-art-post-modal.html',
   styleUrls: ['./new-art-post-modal.scss']
 })
@@ -29,6 +31,10 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
   evidenceFiles: EvidenceFile[] = [];
   isSubmitting = false;
   error: string | null = null;
+  
+  // Schedule-related properties
+  scheduledTime: Date | null = null;
+  showScheduleModal = false;
 
   // File size limits in bytes
   private readonly MAX_ART_SIZE = 50 * 1024 * 1024; // 50MB
@@ -180,6 +186,11 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
     formData.append('is_human_drawing', 'true');
     formData.append('post_type', 'post');
     formData.append('evidence_count', this.evidenceFiles.length.toString());
+    
+    // Add scheduled time if set
+    if (this.scheduledTime) {
+      formData.append('scheduled_time', this.scheduledTime.toISOString());
+    }
 
     console.log('Submitting post with files:', this.evidenceFiles);
     console.log('Art file details:', {
@@ -217,6 +228,53 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
       this.error = 'Failed to submit art. Please try again.';
     } finally {
       this.isSubmitting = false;
+    }
+  }
+
+  // Schedule-related methods
+  openScheduleModal(): void {
+    this.showScheduleModal = true;
+  }
+
+  closeScheduleModal(): void {
+    this.showScheduleModal = false;
+  }
+
+  onScheduleSelected(date: Date): void {
+    this.scheduledTime = date;
+    this.closeScheduleModal();
+  }
+
+  onViewScheduledPosts(): void {
+    this.closeScheduleModal();
+    this.closeModal();
+    this.router.navigate(['/scheduled-posts']);
+  }
+
+  onClearSchedule(): void {
+    this.scheduledTime = null;
+    this.closeScheduleModal();
+  }
+
+  formatScheduledTime(): string {
+    if (!this.scheduledTime) return '';
+    
+    const now = new Date();
+    const scheduled = new Date(this.scheduledTime);
+    const diffTime = scheduled.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return scheduled.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return `Tomorrow at ${scheduled.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      return scheduled.toLocaleDateString([], { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
   }
 } 
