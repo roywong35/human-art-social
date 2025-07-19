@@ -38,6 +38,7 @@
       <div class="w-full">
         <app-post-input-box
           [userAvatar]="(authService.currentUser$ | async)?.profile_picture || ''"
+          [userHandle]="(authService.currentUser$ | async)?.handle || ''"
           [defaultAvatar]="defaultAvatar"
           [showCard]="false"
           (submit)="onPostSubmit($event)"

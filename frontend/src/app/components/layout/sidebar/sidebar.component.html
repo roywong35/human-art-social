@@ -1,7 +1,7 @@
 <nav [class]="isMobile ? 'bg-white dark:[background-color:var(--color-background)] w-full' : 'bg-white dark:[background-color:var(--color-background)] h-screen flex flex-col'">
   <!-- Logo and Brand -->
   <div class="pt-3 px-3" *ngIf="!isMobile">
-    <a routerLink="/home" class="flex items-center">
+    <a routerLink="/home" title="Go to Home" class="flex items-center">
       <div class="flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer">
         <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">
       </div>
@@ -19,6 +19,7 @@
           <a routerLink="/home" 
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: true}"
+             title="Home"
              class="flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -31,6 +32,7 @@
           <a routerLink="/search" 
             routerLinkActive="text-blue-500"
             [routerLinkActiveOptions]="{exact: true}"
+            title="Search"
             class="flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -43,6 +45,7 @@
           <a routerLink="/notifications" 
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: true}"
+             title="Notifications"
              class="flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
             <div class="relative">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,6 +63,7 @@
           <a routerLink="/messages" 
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: false}"
+             title="Messages"
              class="flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
             <div class="relative">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -77,6 +81,7 @@
           <a routerLink="/bookmarks" 
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: true}"
+             title="Bookmarks"
              class="flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -89,6 +94,7 @@
           <a [routerLink]="['/', (authService.currentUser$ | async)?.handle]"
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: true}"
+             title="Profile"
              class="flex items-center p-2 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)]">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -104,6 +110,7 @@
           <a routerLink="/home" 
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: true}"
+             title="Home"
              [class]="getDesktopLinkClasses()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -117,6 +124,7 @@
           <a routerLink="/search" 
             routerLinkActive="text-blue-500"
             [routerLinkActiveOptions]="{exact: true}"
+            title="Search"
             [class]="getDesktopLinkClasses()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -130,6 +138,7 @@
           <a routerLink="/notifications" 
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: true}"
+             title="Notifications"
              [class]="getDesktopLinkClasses()">
             <div class="relative">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -148,6 +157,7 @@
           <a routerLink="/messages" 
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: false}"
+             title="Messages"
              [class]="getDesktopLinkClasses()">
             <div class="relative">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,6 +176,7 @@
           <a routerLink="/bookmarks" 
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: true}"
+             title="Bookmarks"
              [class]="getDesktopLinkClasses()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -179,6 +190,7 @@
           <a [routerLink]="['/', (authService.currentUser$ | async)?.handle]"
              routerLinkActive="text-blue-500"
              [routerLinkActiveOptions]="{exact: true}"
+             title="Profile"
              [class]="getDesktopLinkClasses()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -191,11 +203,12 @@
         <li class="secondary-item secondary-item-medium">
           <button (click)="toggleFollowingOnly()" 
                   [disabled]="isTogglingFollowingOnly"
+                  [title]="isFollowingOnly ? 'Click here to see posts recommended for you' : 'Click here to see posts from following users only'"
                   [class]="getDesktopLinkClasses() + ' border-2 border-gray-200 dark:border-gray-700'"
                   [ngClass]="{
                     'text-blue-500': isFollowingOnly
                   }">
-            <i class="fas fa-user-friends h-7 w-7 flex items-center justify-center"></i>
+            <i class="fas h-7 w-7 flex items-center justify-center" [class.fa-user-friends]="isFollowingOnly" [class.fa-globe]="!isFollowingOnly"></i>
             <span [class]="getDesktopTextClasses()">{{ isFollowingOnly ? 'Following' : 'All Posts' }}</span>
           </button>
         </li>
@@ -203,6 +216,7 @@
         <!-- Dark Mode Toggle - Hidden on smaller heights -->
         <li class="secondary-item secondary-item-low">
           <button (click)="toggleDarkMode()"
+                  [title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
                   [class]="getDesktopLinkClasses() + ' border-2 border-gray-200 dark:border-gray-700'"
                   [ngClass]="{
                     'text-blue-500': isDarkMode
@@ -219,6 +233,7 @@
         <li class="more-button-container">
           <button #moreMenuButton
                   (click)="toggleMoreMenu($event)"
+                  title="More options"
                   [class]="getMoreButtonClasses()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -231,6 +246,7 @@
         <li class="mt-2 core-item">
           <button 
             (click)="openContextModal()"
+            [title]="isHumanArtTab ? 'Create a Human Art post' : 'Create a new post'"
             [class]="getDesktopLinkClasses()"
             [ngStyle]="{
               'background': isHumanArtTab ? (isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'white') : 'linear-gradient(45deg, var(--color-primary), var(--color-primary-hover))',
@@ -251,6 +267,7 @@
   <div class="px-3 py-2 relative" *ngIf="!isMobile">
     <button #userMenuButton
             (click)="toggleUserMenu($event)" 
+            title="User menu"
             [class]="getUserMenuClasses()">
       <div class="flex items-center justify-center xl:justify-start w-full">
         <div class="w-11 h-11 rounded-full overflow-hidden flex-shrink-0">
@@ -315,6 +332,7 @@
          (click)="closeMoreMenu()"
          routerLinkActive="text-blue-500"
          [routerLinkActiveOptions]="{exact: true}"
+         title="Bookmarks"
          class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -325,14 +343,16 @@
       <!-- Following Toggle in More Menu -->
       <button (click)="toggleFollowingOnly(); closeMoreMenu()" 
               [disabled]="isTogglingFollowingOnly"
+              [title]="isFollowingOnly ? 'Click here to see posts recommended for you' : 'Click here to see posts from following users only'"
               class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]"
               [ngClass]="{'text-blue-500': isFollowingOnly}">
-        <i class="fas fa-user-friends text-xl w-6 flex justify-center"></i>
+        <i class="fas text-xl w-6 flex justify-center" [class.fa-user-friends]="isFollowingOnly" [class.fa-globe]="!isFollowingOnly"></i>
         <span class="text-lg">{{ isFollowingOnly ? 'Following' : 'All Posts' }}</span>
       </button>
 
       <!-- Dark Mode Toggle in More Menu -->
       <button (click)="toggleDarkMode(); closeMoreMenu()"
+              [title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
               class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]"
               [ngClass]="{'text-blue-500': isDarkMode}">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
