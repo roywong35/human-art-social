@@ -1,0 +1,40 @@
+/* User Preview Modal Styles */
+.user-preview-modal {
+  max-width: 320px;
+  min-width: 280px;
+}
+
+/* Custom animations for smooth appearance */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Apply animation to the modal */
+div[class*="fixed z-50"] {
+  animation: fadeInScale 0.2s ease-out;
+}
+
+/* Prevent text selection in the modal */
+.user-preview-modal {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Ensure links are clickable */
+a {
+  cursor: pointer;
+}
+
+/* Loading state for follow button */
+.follow-button.loading {
+  pointer-events: none;
+} 

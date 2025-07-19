@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, map, catchError, take, of } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map, catchError, take, of, forkJoin } from 'rxjs';
 import { Post, PostImage } from '../models/post.model';
+import { User } from '../models/user.model';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { ToastService } from './toast.service';
 import { NotificationService } from './notification.service';
+import { UserService } from './user.service';
 
 interface PaginatedResponse {
   count: number;
@@ -25,12 +27,14 @@ export class PostService {
   private hasMore = true;
   private loading = false;
   private apiUrl = environment.apiUrl;
+  private userCache = new Map<string, User>(); // Cache for user data
 
   constructor(
     private http: HttpClient,
     private authService: AuthService,
     private toastService: ToastService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private userService: UserService
   ) {
     console.log('PostService constructor called');
     
@@ -139,7 +143,12 @@ export class PostService {
     const postType = tab === 'human-drawing' ? 'human_drawing' : 'all';
     const followingOnly = localStorage.getItem('following_only_preference') === 'true';
     const url = `${this.baseUrl}/posts/feed/?page=${this.currentPage}&post_type=${postType}&following_only=${followingOnly}`;
-    return this.http.get<PaginatedResponse>(url);
+    return this.http.get<PaginatedResponse>(url).pipe(
+      map((response: PaginatedResponse) => ({
+        ...response,
+        results: this.enrichAuthorsSync(response.results.map(post => this.addImageUrls(post)))
+      }))
+    );
   }
 
   private getExplore(activeTab?: string): Observable<PaginatedResponse> {
@@ -147,7 +156,12 @@ export class PostService {
     const postType = tab === 'human-drawing' ? 'human_drawing' : 'all';
     const followingOnly = localStorage.getItem('following_only_preference') === 'true';
     const url = `${this.baseUrl}/posts/explore/?page=${this.currentPage}&post_type=${postType}&following_only=${followingOnly}`;
-    return this.http.get<PaginatedResponse>(url);
+    return this.http.get<PaginatedResponse>(url).pipe(
+      map((response: PaginatedResponse) => ({
+        ...response,
+        results: this.enrichAuthorsSync(response.results.map(post => this.addImageUrls(post)))
+      }))
+    );
   }
 
   // Method to refresh posts after verification
@@ -330,7 +344,8 @@ export class PostService {
 
   getPosts(): Observable<Post[]> {
     return this.http.get<Post[]>(`${this.baseUrl}/posts/`).pipe(
-      map(posts => posts.map(post => this.addImageUrls(post)))
+      map(posts => posts.map(post => this.addImageUrls(post))),
+      map(posts => this.enrichAuthorsSync(posts))
     );
   }
 
@@ -445,6 +460,67 @@ export class PostService {
     }
 
     return processedPost;
+  }
+
+  private enrichAuthorsSync(posts: Post[]): Post[] {
+    // Get unique author handles that need enrichment
+    const authorsToEnrich = posts
+      .filter(post => post.author && !post.author.bio)
+      .map(post => post.author.handle)
+      .filter((handle, index, array) => array.indexOf(handle) === index); // Remove duplicates
+
+    // Fetch author data for all missing authors
+    if (authorsToEnrich.length > 0) {
+      authorsToEnrich.forEach(handle => {
+        if (!this.userCache.has(handle)) {
+          this.userService.getUserByHandle(handle).subscribe({
+            next: (userData: User) => {
+              this.userCache.set(handle, userData);
+              // Update all posts with this author
+              this.updatePostsWithAuthorData(handle, userData);
+            },
+            error: (error) => {
+              console.error(`Error fetching user data for ${handle}:`, error);
+            }
+          });
+        }
+      });
+    }
+
+    // Apply cached data to posts
+    return posts.map(post => {
+      if (post.author && this.userCache.has(post.author.handle)) {
+        const cachedUser = this.userCache.get(post.author.handle)!;
+        post.author = {
+          ...post.author,
+          bio: cachedUser.bio,
+          followers_count: cachedUser.followers_count,
+          following_count: cachedUser.following_count,
+          is_following: cachedUser.is_following
+        };
+      }
+      return post;
+    });
+  }
+
+  private updatePostsWithAuthorData(handle: string, userData: User): void {
+    const currentPosts = this.posts.getValue();
+    const updatedPosts = currentPosts.map(post => {
+      if (post.author && post.author.handle === handle) {
+        return {
+          ...post,
+          author: {
+            ...post.author,
+            bio: userData.bio,
+            followers_count: userData.followers_count,
+            following_count: userData.following_count,
+            is_following: userData.is_following
+          }
+        };
+      }
+      return post;
+    });
+    this.posts.next(updatedPosts);
   }
 
   // Add new method to filter posts based on active tab

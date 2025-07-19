@@ -1,0 +1,71 @@
+<div *ngIf="isVisible && user" 
+     class="fixed z-50 bg-white dark:bg-black rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.15)] dark:shadow-[0_2px_8px_rgba(255,255,255,0.1)] border border-gray-200 dark:border-gray-700 p-4 w-72"
+     [style.left.px]="position.x"
+     [style.top.px]="position.y"
+     (mouseenter)="onModalHover()"
+     (mouseleave)="onModalLeave()">
+  
+  <!-- Content -->
+  <div *ngIf="user">
+    <!-- Header: Avatar (left) and Follow Button (right) -->
+    <div class="flex items-start justify-between mb-1">
+      <!-- User Avatar -->
+      <a [routerLink]="['/', user.handle]" (click)="goToProfile()" class="flex-shrink-0">
+        <img [src]="user.profile_picture || defaultAvatar" 
+             alt="User avatar" 
+             class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 hover:opacity-90 transition-opacity cursor-pointer">
+      </a>
+
+      <!-- Follow Button -->
+      <button *ngIf="!isCurrentUser" 
+              (click)="followUser()"
+              (mouseenter)="onFollowButtonHover(true)"
+              (mouseleave)="onFollowButtonHover(false)"
+              [disabled]="isFollowLoading"
+              class="follow-button"
+              [class.following]="user.is_following"
+              [class.loading]="isFollowLoading">
+        <span>
+          <span *ngIf="user.is_following">Following</span>
+          <span *ngIf="!user.is_following">Follow</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- User Info -->
+    <div>
+      <!-- Username -->
+      <a [routerLink]="['/', user.handle]" (click)="goToProfile()" class="block">
+        <h3 class="font-semibold font-['Inter'] text-[16px] dark:text-white hover:underline cursor-pointer truncate">{{ user.username }}</h3>
+      </a>
+
+      <!-- Handle -->
+      <a [routerLink]="['/', user.handle]" (click)="goToProfile()" class="block">
+        <p class="text-gray-500 dark:text-gray-400 text-[15px] hover:underline cursor-pointer">{{'@'}}{{ user.handle }}</p>
+      </a>
+
+      <!-- Bio -->
+      <div *ngIf="user.bio" class="mt-2">
+        <p class="text-gray-800 dark:text-gray-200 text-[16px] leading-relaxed whitespace-pre-wrap">{{ user.bio }}</p>
+      </div>
+
+      <!-- Following and Followers -->
+      <div class="flex gap-4 mt-2 text-sm">
+        <a [routerLink]="['/', user.handle, 'connections']" 
+           [queryParams]="{tab: 'following'}" 
+           (click)="goToProfile()"
+           class="hover:underline cursor-pointer">
+          <span class="font-bold dark:text-white">{{ user.following_count || 0 }}</span>
+          <span class="text-gray-500 dark:text-gray-400"> Following</span>
+        </a>
+        <a [routerLink]="['/', user.handle, 'connections']" 
+           [queryParams]="{tab: 'followers'}" 
+           (click)="goToProfile()"
+           class="hover:underline cursor-pointer">
+          <span class="font-bold dark:text-white">{{ user.followers_count || 0 }}</span>
+          <span class="text-gray-500 dark:text-gray-400"> Followers</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div> 

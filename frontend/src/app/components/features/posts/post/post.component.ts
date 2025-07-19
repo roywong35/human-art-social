@@ -21,6 +21,7 @@ import { ToastService } from '../../../../services/toast.service';
 import { take } from 'rxjs/operators';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
 import { LoginModalComponent } from '../../auth/login-modal/login-modal.component';
+import { UserPreviewModalComponent } from '../../../shared/user-preview-modal/user-preview-modal.component';
 
 @Component({
   selector: 'app-post',
@@ -31,7 +32,8 @@ import { LoginModalComponent } from '../../auth/login-modal/login-modal.componen
     MatDialogModule,
     RouterModule,
     TimeAgoPipe,
-    RepostMenuComponent
+    RepostMenuComponent,
+    UserPreviewModalComponent
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss'],
@@ -76,6 +78,13 @@ export class PostComponent implements OnInit, OnDestroy {
   protected showReplyOptions = false;
 
   protected repostMenuPosition = { top: 0, left: 0 };
+
+  // User preview modal
+  protected showUserPreview = false;
+  protected userPreviewPosition = { x: 0, y: 0 };
+  protected previewUser: User | null = null;
+  private hoverTimeout: any;
+  private leaveTimeout: any;
 
   private subscriptions = new Subscription();
   private imageAspectRatios: { [key: string]: number } = {};
@@ -538,5 +547,81 @@ export class PostComponent implements OnInit, OnDestroy {
     if (this.post.parent_post_author_handle) {
       this.router.navigate(['/', this.post.parent_post_author_handle]);
     }
+  }
+
+  // User preview modal methods
+  protected onUserHover(event: MouseEvent, user: User): void {
+    // Clear any pending timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+
+    this.hoverTimeout = setTimeout(() => {
+      const rect = (event.target as Element).getBoundingClientRect();
+      const modalWidth = 288; // Width of the modal (w-72)
+      const modalHeight = 180; // Approximate min height of the modal
+      
+      let x = rect.left;
+      let y = rect.bottom + 5;
+      
+      // Adjust if modal would go off-screen horizontally
+      if (x + modalWidth > window.innerWidth) {
+        x = window.innerWidth - modalWidth - 10;
+      }
+      if (x < 10) {
+        x = 10;
+      }
+      
+      // Adjust if modal would go off-screen vertically
+      if (y + modalHeight > window.innerHeight) {
+        y = rect.top - modalHeight - 5; // Show above instead
+      }
+      if (y < 10) {
+        y = 10;
+      }
+      
+      this.userPreviewPosition = { x, y };
+      this.previewUser = user;
+      this.showUserPreview = true;
+      this.cd.detectChanges();
+    }, 300); // 300ms delay - faster than Twitter
+  }
+
+  protected onUserHoverLeave(): void {
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    
+    // Longer delay to allow moving to the modal
+    this.leaveTimeout = setTimeout(() => {
+      if (!this.showUserPreview) return;
+      this.showUserPreview = false;
+      this.previewUser = null;
+      this.cd.detectChanges();
+    }, 300); // 300ms delay to allow moving to modal
+  }
+
+  protected onModalHover(): void {
+    // When hovering over the modal, cancel any pending close
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+  }
+
+  protected closeUserPreview(): void {
+    // Clear any pending timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+    
+    this.showUserPreview = false;
+    this.previewUser = null;
+    this.cd.detectChanges();
   }
 } 

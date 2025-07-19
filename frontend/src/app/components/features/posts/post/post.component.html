@@ -17,6 +17,8 @@
            [alt]="post.author.username" 
            class="h-10 w-10 rounded-full cursor-pointer relative z-10"
            (click)="navigateToProfile($event)"
+           (mouseenter)="onUserHover($event, post.author)"
+           (mouseleave)="onUserHoverLeave()"
            (error)="onImageError($event)">
     </div>
 
@@ -27,10 +29,16 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center min-w-0 flex-1">
             <div class="flex items-center space-x-1 min-w-0 flex-shrink overflow-hidden">
-              <p class="text-[16px] font-bold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter'] truncate" (click)="navigateToProfile($event)">
+              <p class="text-[16px] font-semibold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter'] truncate" 
+                 (click)="navigateToProfile($event)"
+                 (mouseenter)="onUserHover($event, post.author)"
+                 (mouseleave)="onUserHoverLeave()">
                 {{ post.author.username }}
               </p>
-              <p class="text-[15px] text-gray-500 truncate">{{"@"}}{{ post.author.handle }}</p>
+              <p class="text-[15px] text-gray-500 truncate hover:underline cursor-pointer" 
+                 (mouseenter)="onUserHover($event, post.author)"
+                 (mouseleave)="onUserHoverLeave()"
+                 (click)="navigateToProfile($event)">{{"@"}}{{ post.author.handle }}</p>
               <span class="text-[15px] text-gray-500 flex-shrink-0">·</span>
               <p class="text-[15px] text-gray-500 truncate">{{ post.created_at | timeAgo }}</p>
             </div>
@@ -272,4 +280,14 @@
       </div>
     </div>
   </div>
+  
+  <!-- User Preview Modal -->
+  <app-user-preview-modal
+    [user]="previewUser"
+    [isVisible]="showUserPreview"
+    [position]="userPreviewPosition"
+    (close)="closeUserPreview()"
+    (modalHover)="onModalHover()"
+    (modalLeave)="closeUserPreview()">
+  </app-user-preview-modal>
 </div> 
