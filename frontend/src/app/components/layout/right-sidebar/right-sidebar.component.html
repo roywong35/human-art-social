@@ -56,7 +56,6 @@
                 <div class="ml-3">
                   <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
                   <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 mt-2"></div>
-                  <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32 mt-2"></div>
                 </div>
               </div>
               <div class="w-20 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
@@ -68,7 +67,7 @@
         <div *ngIf="!isLoadingUsers">
           <!-- Actual users -->
           <div *ngFor="let user of displayedUsers" 
-               class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer group"
+               class="pl-4 pr-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer group"
                (click)="navigateToProfile(user.handle)">
             <div class="flex items-center justify-between">
               <div class="flex items-center">
@@ -78,11 +77,10 @@
                 <div class="ml-3 min-w-0 flex-1">
                   <div class="font-bold text-gray-900 dark:[color:var(--color-text)] transition-colors truncate hover:underline">{{ user.username }}</div>
                   <div class="text-gray-500 dark:[color:var(--color-text-secondary)] truncate">{{'@'}}{{ user.handle }}</div>
-                  <div class="text-sm text-gray-600 dark:[color:var(--color-text-secondary)] mt-1 truncate">{{ user.bio || 'No bio available' }}</div>
                 </div>
               </div>
               <button (click)="followUser(user, $event)" 
-                      class="follow-button flex-shrink-0 ml-3"
+                      class="follow-button flex-shrink-0"
                       [class.following]="user.is_following"
                       (mouseenter)="onFollowButtonHover(user, true)"
                       (mouseleave)="onFollowButtonHover(user, false)">
@@ -102,7 +100,6 @@
                 <div class="ml-3">
                   <div class="h-4 w-24 bg-gray-100 dark:bg-gray-700 rounded"></div>
                   <div class="h-3 w-20 bg-gray-100 dark:bg-gray-700 rounded mt-2"></div>
-                  <div class="h-3 w-32 bg-gray-100 dark:bg-gray-700 rounded mt-2"></div>
                 </div>
               </div>
               <div class="w-20 h-8 bg-gray-100 dark:bg-gray-700 rounded-full"></div>

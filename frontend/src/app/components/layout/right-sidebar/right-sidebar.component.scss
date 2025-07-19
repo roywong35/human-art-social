@@ -22,4 +22,31 @@
 * {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+/* Right sidebar specific follow button styles */
+.follow-button {
+  @apply px-3 py-1 text-sm justify-center; /* Smaller padding, text, and center content */
+  
+  /* Fix width expansion direction - expand left, not right */
+  transform-origin: right center;
+  width: auto;
+  min-width: 4rem; /* 64px minimum width */
+  
+  /* Following state - ensure it doesn't expand right */
+  &.following {
+    /* Expand to the left by using margin adjustment */
+    margin-left: auto;
+    
+    /* Specific width to prevent expansion */
+    width: 5rem; /* 80px for "Following" text */
+    @apply justify-center; /* Center the text */
+  }
+  
+  /* Not following state */
+  &:not(.following) {
+    margin-left: auto;
+    width: 4rem; /* 64px for "Follow" text */
+    @apply justify-center; /* Center the text */
+  }
 } 
