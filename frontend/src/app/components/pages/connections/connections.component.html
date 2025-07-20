@@ -57,10 +57,20 @@
           <div class="flex items-center flex-grow cursor-pointer" (click)="navigateToProfile(user.handle)">
             <img [src]="user.profile_picture || defaultAvatar" 
                  [alt]="user.username + ' avatar'" 
-                 class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800">
+                 class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 hover:opacity-80 transition-opacity cursor-pointer"
+                 (mouseenter)="onUserHover($event, user)"
+                 (mouseleave)="onUserHoverLeave()">
             <div class="ml-3 flex-grow">
-              <div class="font-bold text-gray-900 dark:[color:var(--color-text)]">{{ user.username }}</div>
-              <div class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ user.handle }}</div>
+              <div class="font-bold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer">
+                <span class="username-text"
+                      (mouseenter)="onUserHover($event, user)"
+                      (mouseleave)="onUserHoverLeave()">{{ user.username }}</span>
+              </div>
+              <div class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:underline cursor-pointer">
+                <span class="handle-text"
+                      (mouseenter)="onUserHover($event, user)"
+                      (mouseleave)="onUserHoverLeave()">{{'@'}}{{ user.handle }}</span>
+              </div>
               <div class="text-gray-600 dark:[color:var(--color-text-secondary)] text-sm mt-1">{{ user.bio || 'No bio available' }}</div>
             </div>
           </div>

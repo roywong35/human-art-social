@@ -21,7 +21,9 @@
              (click)="$event.stopPropagation(); markAsRead(notification)">
             <img [src]="notification.sender.profile_picture || defaultAvatar"
                  [alt]="notification.sender.username"
-                 class="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity">
+                 class="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
+                 (mouseenter)="onUserHover($event, notification.sender)"
+                 (mouseleave)="onUserHoverLeave()">
           </a>
         </ng-container>
         <ng-template #systemAvatar>
@@ -39,9 +41,13 @@
             <!-- Username - Links to sender's profile if sender exists -->
             <ng-container *ngIf="notification.sender">
               <a [routerLink]="['/', notification.sender.handle]"
-                 class="font-bold hover:underline"
+                 class="font-bold hover:underline cursor-pointer"
                  (click)="$event.stopPropagation(); markAsRead(notification)">
-                {{ notification.sender.username }}
+                <span class="username-text"
+                      (mouseenter)="onUserHover($event, notification.sender)"
+                      (mouseleave)="onUserHoverLeave()">
+                  {{ notification.sender.username }}
+                </span>
               </a>
               <!-- Rest of the notification message -->
               <span class="ml-1">{{ getFormattedMessageWithoutUsername(notification) }}</span>

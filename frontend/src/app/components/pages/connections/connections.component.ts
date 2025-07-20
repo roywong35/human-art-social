@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { User } from '../../../models';
 import { UserService } from '../../../services/user.service';
+import { GlobalModalService } from '../../../services/global-modal.service';
 
 
 interface UserWithState extends User {
@@ -26,10 +27,16 @@ export class ConnectionsComponent implements OnInit {
   handle = '';
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
+  // User preview modal
+  private hoverTimeout: any;
+  private leaveTimeout: any;
+  private lastHoveredElement: Element | null = null;
+
   constructor(
     private route: ActivatedRoute,
     public router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private globalModalService: GlobalModalService
   ) {}
 
   ngOnInit(): void {
@@ -129,5 +136,47 @@ export class ConnectionsComponent implements OnInit {
 
   onFollowButtonHover(user: UserWithState, hovering: boolean): void {
     user.isHoveringFollowButton = hovering;
+  }
+
+  // User preview modal methods
+  protected onUserHover(event: MouseEvent, user: UserWithState): void {
+    if (!user) return;
+    
+    // Clear any pending timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+
+    this.hoverTimeout = setTimeout(() => {
+      // Store the hovered element for accurate positioning
+      this.lastHoveredElement = event.target as Element;
+      
+      console.log('🎯 Connections: Preparing accurate modal for user', user.username);
+      
+      // Use the new accurate positioning method (no shifting!)
+      this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement);
+    }, 300); // 300ms delay - faster than Twitter
+  }
+
+  protected onUserHoverLeave(): void {
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    
+    // Longer delay to allow moving to the modal
+    this.leaveTimeout = setTimeout(() => {
+      this.globalModalService.hideUserPreview();
+    }, 300); // 300ms delay to allow moving to modal
+  }
+
+  protected onModalHover(): void {
+    // When hovering over the modal, cancel any pending close
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+    this.globalModalService.onModalHover();
   }
 } 
