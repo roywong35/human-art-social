@@ -117,9 +117,13 @@ export class PostComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.authService.currentUser$.pipe(take(1)).subscribe(user => {
-      this.currentUser = user;
-    });
+    // Subscribe to auth state changes (reactive to login/logout)
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(user => {
+        this.currentUser = user;
+        this.cd.markForCheck(); // Update view when auth state changes
+      })
+    );
 
     // Add click listener to close menus when clicking outside
     document.addEventListener('click', (event) => {

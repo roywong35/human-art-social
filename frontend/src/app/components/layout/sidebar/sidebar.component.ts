@@ -90,8 +90,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.isDarkMode = darkMode === 'true';
     this.updateDarkMode(this.isDarkMode);
     
-    // Load user's following only preference
-    this.authService.currentUser$.pipe(take(1)).subscribe(user => {
+    // Subscribe to auth state changes (reactive to login/logout)
+    this.authService.currentUser$.subscribe(user => {
       if (user) {
         console.log('[Sidebar] Got user preferences:', {
           following_only_preference: user.following_only_preference
@@ -99,6 +99,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.isFollowingOnly = user.following_only_preference || false;
         // Store the initial preference in localStorage
         localStorage.setItem('following_only_preference', this.isFollowingOnly.toString());
+      } else {
+        console.log('[Sidebar] User logged out, resetting state');
+        this.isFollowingOnly = false;
+        localStorage.removeItem('following_only_preference');
       }
     });
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -61,7 +61,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private postService: PostService,
     private authService: AuthService,
     private toastService: ToastService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -111,8 +112,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       next: (user) => {
         console.log('ProfileComponent: User profile loaded:', user);
         this.user = user;
-        this.authService.currentUser$.pipe(take(1)).subscribe(currentUser => {
+        // Subscribe to auth changes to update isCurrentUser reactively
+        this.authService.currentUser$.subscribe(currentUser => {
           this.isCurrentUser = currentUser?.id === user.id;
+          this.cd.detectChanges(); // Update view when auth state changes
         });
         this.loadTabContent(handle);
       },

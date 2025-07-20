@@ -19,12 +19,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       
       if (error.status === 0) {
         errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-      } else if (error.status === 401) {
-        if (!isAuthEndpoint) {
-          authService.logout();
-          router.navigate(['/']);
-          errorMessage = 'Your session has expired. Please sign in again.';
-        }
       } else if (error.status === 403) {
         errorMessage = 'You do not have permission to perform this action.';
       } else if (error.status === 404) {
