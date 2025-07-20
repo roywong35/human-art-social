@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, OnDestroy, HostBinding, Renderer2 } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, HostBinding, Renderer2, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -8,6 +8,7 @@ import { SearchBarComponent } from '../../widgets/search-bar/search-bar.componen
 import { HashtagResult, HashtagService } from '../../../services/hashtag.service';
 import { UserService } from '../../../services/user.service';
 import { User } from '../../../models';
+import { GlobalModalService } from '../../../services/global-modal.service';
 
 interface TrendingTopic {
   name: string;
@@ -41,6 +42,10 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   isLoadingUsers = false;
   readonly maxRecommendedUsers = 3;
 
+  // User preview modal - now handled by GlobalModalService
+  private hoverTimeout: any;
+  private leaveTimeout: any;
+
   get displayedUsers(): UserWithState[] {
     return this.recommendedUsers.slice(0, this.maxRecommendedUsers);
   }
@@ -69,7 +74,9 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     private renderer: Renderer2,
     private hashtagService: HashtagService,
     private userService: UserService,
-    private router: Router
+    private router: Router,
+    private cd: ChangeDetectorRef,
+    private globalModalService: GlobalModalService
   ) {
     this.scrollHandler = () => {
       const rect = this.elementRef.nativeElement.getBoundingClientRect();
@@ -97,6 +104,8 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
         this.renderer.setStyle(this.elementRef.nativeElement, 'position', 'fixed');
         this.renderer.setStyle(this.elementRef.nativeElement, 'top', '0');
         this.renderer.setStyle(this.elementRef.nativeElement, 'width', `${this.sidebarWidth}px`);
+        // Force change detection after style changes
+        this.cd.detectChanges();
       } else {
         // If viewport is not tall enough, use the original scroll-based logic
         const shouldBeSticky = this.initialTop !== null && 
@@ -108,11 +117,15 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
           this.renderer.setStyle(this.elementRef.nativeElement, 'position', 'fixed');
           this.renderer.setStyle(this.elementRef.nativeElement, 'top', `${topPosition}px`);
           this.renderer.setStyle(this.elementRef.nativeElement, 'width', `${this.sidebarWidth}px`);
+          // Force change detection after style changes
+          this.cd.detectChanges();
         } else {
           this.isSticky = false;
           this.renderer.removeStyle(this.elementRef.nativeElement, 'position');
           this.renderer.removeStyle(this.elementRef.nativeElement, 'top');
           this.renderer.removeStyle(this.elementRef.nativeElement, 'width');
+          // Force change detection after style changes
+          this.cd.detectChanges();
         }
       }
     };
@@ -134,6 +147,14 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     window.removeEventListener('scroll', this.scrollHandler);
+    
+    // Clean up user preview modal timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
   }
 
   onTimeframeChange() {
@@ -227,5 +248,67 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
   onFollowButtonHover(user: UserWithState, isHovering: boolean) {
     user.isHoveringFollowButton = isHovering;
+  }
+
+  // User preview modal methods
+  protected onUserHover(event: MouseEvent, user: User): void {
+    console.log('🎯 onUserHover called, isSticky:', this.isSticky);
+    
+    // Clear any pending timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+
+    this.hoverTimeout = setTimeout(() => {
+      console.log('🎯 Right sidebar: Preparing accurate modal positioning, isSticky:', this.isSticky);
+      
+      const targetElement = event.target as Element;
+      
+      console.log('🎯 Right sidebar: Using accurate positioning for user', user.username);
+      
+      // Use the new accurate positioning method (no shifting!)
+      this.globalModalService.showUserPreviewAccurate(user, targetElement);
+    }, 300);
+  }
+
+  protected onUserHoverLeave(): void {
+    console.log('🎯 onUserHoverLeave called, current state:', {
+      showUserPreview: this.globalModalService.getCurrentState().isVisible,
+      sidebarIsSticky: this.isSticky
+    });
+    
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    
+    // Delay hiding to allow moving to the modal
+    this.leaveTimeout = setTimeout(() => {
+      if (!this.globalModalService.getCurrentState().isVisible) return;
+      console.log('🎯 Hiding modal due to leave timeout');
+      this.globalModalService.hideUserPreview();
+    }, 300);
+  }
+
+  protected onModalHover(): void {
+    // When hovering over the modal, cancel any pending close
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+    this.globalModalService.onModalHover();
+  }
+
+  protected closeUserPreview(): void {
+    // Clear any pending timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+    
+    this.globalModalService.hideUserPreview();
   }
 } 

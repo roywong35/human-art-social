@@ -12,6 +12,7 @@ import { PostService } from '../../../../services/post.service';
 import { CommentService } from '../../../../services/comment.service';
 import { AuthService } from '../../../../services/auth.service';
 import { PostUpdateService } from '../../../../services/post-update.service';
+import { GlobalModalService } from '../../../../services/global-modal.service';
 import { Subscription } from 'rxjs';
 import { CommentDialogComponent } from '../../comments/comment-dialog/comment-dialog.component';
 import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
@@ -85,6 +86,7 @@ export class PostComponent implements OnInit, OnDestroy {
   protected previewUser: User | null = null;
   private hoverTimeout: any;
   private leaveTimeout: any;
+  private lastHoveredElement: Element | null = null;
 
   private subscriptions = new Subscription();
   private imageAspectRatios: { [key: string]: number } = {};
@@ -99,7 +101,8 @@ export class PostComponent implements OnInit, OnDestroy {
     private ngZone: NgZone,
     private authService: AuthService,
     private router: Router,
-    private postUpdateService: PostUpdateService
+    private postUpdateService: PostUpdateService,
+    private globalModalService: GlobalModalService
   ) {
     this.subscriptions.add(
       this.postUpdateService.postUpdate$.subscribe(
@@ -560,33 +563,13 @@ export class PostComponent implements OnInit, OnDestroy {
     }
 
     this.hoverTimeout = setTimeout(() => {
-      const rect = (event.target as Element).getBoundingClientRect();
-      const modalWidth = 288; // Width of the modal (w-72)
-      const modalHeight = 180; // Approximate min height of the modal
+      // Store the hovered element for accurate positioning
+      this.lastHoveredElement = event.target as Element;
       
-      let x = rect.left;
-      let y = rect.bottom + 5;
+      console.log('🎯 Post component: Preparing accurate modal for user', user.username);
       
-      // Adjust if modal would go off-screen horizontally
-      if (x + modalWidth > window.innerWidth) {
-        x = window.innerWidth - modalWidth - 10;
-      }
-      if (x < 10) {
-        x = 10;
-      }
-      
-      // Adjust if modal would go off-screen vertically
-      if (y + modalHeight > window.innerHeight) {
-        y = rect.top - modalHeight - 5; // Show above instead
-      }
-      if (y < 10) {
-        y = 10;
-      }
-      
-      this.userPreviewPosition = { x, y };
-      this.previewUser = user;
-      this.showUserPreview = true;
-      this.cd.detectChanges();
+      // Use the new accurate positioning method (no shifting!)
+      this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement);
     }, 300); // 300ms delay - faster than Twitter
   }
 
@@ -597,10 +580,7 @@ export class PostComponent implements OnInit, OnDestroy {
     
     // Longer delay to allow moving to the modal
     this.leaveTimeout = setTimeout(() => {
-      if (!this.showUserPreview) return;
-      this.showUserPreview = false;
-      this.previewUser = null;
-      this.cd.detectChanges();
+      this.globalModalService.hideUserPreview();
     }, 300); // 300ms delay to allow moving to modal
   }
 
@@ -609,6 +589,7 @@ export class PostComponent implements OnInit, OnDestroy {
     if (this.leaveTimeout) {
       clearTimeout(this.leaveTimeout);
     }
+    this.globalModalService.onModalHover();
   }
 
   protected closeUserPreview(): void {

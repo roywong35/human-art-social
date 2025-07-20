@@ -15,6 +15,8 @@ import { ScheduledPostService } from './services/scheduled-post.service';
 import { RightSidebarComponent } from './components/layout/right-sidebar/right-sidebar.component';
 import { MobileHeaderComponent } from './components/layout/mobile-header/mobile-header.component';
 import { FloatingChatComponent } from './components/shared/floating-chat/floating-chat.component';
+import { UserPreviewModalComponent } from './components/shared/user-preview-modal/user-preview-modal.component';
+import { GlobalModalService } from './services/global-modal.service';
 
 @Component({
   selector: 'app-root',
@@ -29,7 +31,8 @@ import { FloatingChatComponent } from './components/shared/floating-chat/floatin
     MatDialogModule,
     EmojiPickerComponent,
     MobileHeaderComponent,
-    FloatingChatComponent
+    FloatingChatComponent,
+    UserPreviewModalComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
@@ -47,7 +50,8 @@ export class AppComponent implements OnInit {
     private titleService: Title,
     private userService: UserService,
     public overlayService: OverlayService,
-    private scheduledPostService: ScheduledPostService
+    private scheduledPostService: ScheduledPostService,
+    public globalModalService: GlobalModalService
   ) {
     this.router.events.subscribe((event: Event) => {
       if (event instanceof NavigationEnd) {

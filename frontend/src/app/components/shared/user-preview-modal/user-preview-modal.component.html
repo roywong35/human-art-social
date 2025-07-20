@@ -1,9 +1,10 @@
 <div *ngIf="isVisible && user" 
-     class="fixed z-50 bg-white dark:bg-black rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.15)] dark:shadow-[0_2px_8px_rgba(255,255,255,0.1)] border border-gray-200 dark:border-gray-700 p-4 w-72"
+     class="user-preview-modal fixed z-[1000200] bg-white dark:bg-black rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.15)] dark:shadow-[0_2px_8px_rgba(255,255,255,0.1)] border border-gray-200 dark:border-gray-700 p-4 w-72"
      [style.left.px]="position.x"
      [style.top.px]="position.y"
      (mouseenter)="onModalHover()"
-     (mouseleave)="onModalLeave()">
+     (mouseleave)="onModalLeave()"
+     [style.z-index]="1000200">
   
   <!-- Content -->
   <div *ngIf="user">
