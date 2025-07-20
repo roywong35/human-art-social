@@ -45,6 +45,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isLoading = true;
   isLoadingPosts = false;
   isLoadingMorePosts = false;
+  isLoadingReplies = false;
+  isLoadingMoreReplies = false;
+  isLoadingMedia = false;
+  isLoadingHumanArt = false;
+  isLoadingLikes = false;
   error: string | null = null;
   isCurrentUser = false;
   showEditModal = false;
@@ -97,6 +102,40 @@ export class ProfileComponent implements OnInit, OnDestroy {
         }
       })
     );
+
+    // Subscribe to user replies stream just like posts
+    this.subscriptions.add(
+      this.postService.userReplies$.subscribe({
+        next: async (replies: Post[]) => {
+          console.log('📄 Profile received replies:', replies.length);
+          if (!replies) {
+            this.replies = [];
+          } else {
+            // Always replace replies array to ensure change detection
+            this.replies = [...replies];
+            
+            // Build parent chains only for newly received replies (much faster!)
+            for (const reply of this.replies) {
+              if (!this.replyParentChains[reply.id]) {
+                await this.buildParentChain(reply);
+              }
+            }
+          }
+          
+          this.isLoadingReplies = false;
+          this.isLoadingMoreReplies = false;
+          this.cd.markForCheck();
+        },
+        error: (error: Error) => {
+          console.error('Error loading replies:', error);
+          this.error = 'Failed to load replies';
+          this.replies = [];
+          this.isLoadingReplies = false;
+          this.isLoadingMoreReplies = false;
+          this.cd.markForCheck();
+        }
+      })
+    );
   }
 
   ngOnInit(): void {
@@ -131,8 +170,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.activeTab = tab as 'posts' | 'replies' | 'media' | 'human-art' | 'likes';
         
         // Set appropriate loading state for the tab
-        if (this.activeTab === 'posts') {
-          this.isLoadingPosts = true;
+        switch (this.activeTab) {
+          case 'posts':
+            this.isLoadingPosts = true;
+            break;
+          case 'replies':
+            this.isLoadingReplies = true;
+            break;
+          case 'media':
+            this.isLoadingMedia = true;
+            break;
+          case 'human-art':
+            this.isLoadingHumanArt = true;
+            break;
+          case 'likes':
+            this.isLoadingLikes = true;
+            break;
         }
         
         this.loadTabContent(this.user?.handle || '');
@@ -142,8 +195,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   @HostListener('window:scroll', ['$event'])
   onWindowScroll(): void {
-    // Only trigger pagination for posts tab
-    if (this.activeTab !== 'posts') return;
+    // Only trigger pagination for posts and replies tabs
+    if (this.activeTab !== 'posts' && this.activeTab !== 'replies') return;
 
     // Throttle scroll events
     if (this.scrollThrottleTimeout) return;
@@ -152,17 +205,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
       const scrollPosition = window.innerHeight + window.scrollY;
       const scrollThreshold = document.documentElement.scrollHeight * 0.8;
 
-      // Debug scroll events
-      if (scrollPosition >= scrollThreshold && !this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
-        console.log('📄 Scroll triggered loadMore');
+      if (this.activeTab === 'posts') {
+        if (scrollPosition >= scrollThreshold && !this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
+          console.log('📄 Triggering loadMorePosts');
+          this.ngZone.run(() => {
+            this.loadMorePosts();
+          });
+        }
+      } else if (this.activeTab === 'replies') {
+        if (scrollPosition >= scrollThreshold && !this.isLoadingMoreReplies && this.postService.hasMoreUserReplies) {
+          console.log('📄 Triggering loadMoreReplies');
+          this.ngZone.run(() => {
+            this.loadMoreReplies();
+          });
+        }
       }
 
-      if (scrollPosition >= scrollThreshold && !this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
-        console.log('📄 Triggering loadMorePosts');
-        this.ngZone.run(() => {
-          this.loadMorePosts();
-        });
-      }
       this.scrollThrottleTimeout = null;
     }, 200);
   }
@@ -173,6 +231,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.isLoadingMorePosts = true;
       this.cd.markForCheck();
       this.postService.loadMoreUserPosts();
+    }
+  }
+
+  loadMoreReplies(): void {
+    if (!this.isLoadingMoreReplies && this.postService.hasMoreUserReplies) {
+      console.log('📄 Loading more replies...');
+      this.isLoadingMoreReplies = true;
+      this.cd.markForCheck();
+      this.postService.loadMoreUserReplies();
     }
   }
 
@@ -187,8 +254,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.scrollThrottleTimeout) {
       clearTimeout(this.scrollThrottleTimeout);
     }
-    // Clear user posts when leaving profile
+    // Clear user posts and replies when leaving profile
     this.postService.clearUserPosts();
+    this.postService.clearUserReplies();
   }
 
   private loadUserProfile(handle: string): void {
@@ -218,8 +286,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.activeTab = tab;
     
     // Set appropriate loading state for the tab
-    if (tab === 'posts') {
-      this.isLoadingPosts = true;
+    switch (tab) {
+      case 'posts':
+        this.isLoadingPosts = true;
+        break;
+      case 'replies':
+        this.isLoadingReplies = true;
+        break;
+      case 'media':
+        this.isLoadingMedia = true;
+        break;
+      case 'human-art':
+        this.isLoadingHumanArt = true;
+        break;
+      case 'likes':
+        this.isLoadingLikes = true;
+        break;
     }
     
     this.router.navigate([], {
@@ -270,24 +352,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserReplies(handle: string): void {
-    this.postService.getUserReplies(handle).subscribe({
-      next: async (replies) => {
-        // Filter to ensure we only have replies
-        this.replies = replies.filter(post => post.post_type === 'reply');
-        
-        // Build parent chains for each reply
-        for (const reply of this.replies) {
-          await this.buildParentChain(reply);
-        }
-        
-        // Profile info is already loaded, don't change global loading state
-      },
-      error: (error) => {
-        console.error('Error loading user replies:', error);
-        this.error = 'Failed to load replies';
-        // Profile info is already loaded, don't change global loading state
-      }
-    });
+    this.isLoadingReplies = true;
+    this.error = null;
+    
+    // Only clear replies if switching users
+    if (this.currentHandle !== handle) {
+      this.replies = [];
+    }
+    
+    console.log('📄 Loading replies for handle:', handle);
+    
+    // Just trigger the load - we're already subscribed to userReplies$ in constructor
+    this.postService.getUserReplies(handle, true); // true = refresh
   }
 
   private async buildParentChain(reply: Post) {
@@ -320,6 +396,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserMedia(handle: string): void {
+    this.isLoadingMedia = true;
+    this.error = null;
+    
     this.postService.getUserMedia(handle).subscribe({
       next: (posts: Post[]) => {
         this.mediaItems = posts.reduce((acc: { image: string; postId: number }[], post: Post) => {
@@ -329,40 +408,52 @@ export class ProfileComponent implements OnInit, OnDestroy {
           })) || [];
           return [...acc, ...images];
         }, []);
-        // Profile info is already loaded, don't change global loading state
+        this.isLoadingMedia = false;
+        this.cd.markForCheck();
       },
       error: (error: Error) => {
         console.error('Error loading media:', error);
         this.error = 'Failed to load media';
-        // Profile info is already loaded, don't change global loading state
+        this.isLoadingMedia = false;
+        this.cd.markForCheck();
       }
     });
   }
 
   private loadUserHumanArt(handle: string): void {
+    this.isLoadingHumanArt = true;
+    this.error = null;
+    
     this.postService.getUserHumanArt(handle).subscribe({
       next: (posts: Post[]) => {
         this.humanArtPosts = posts.filter(post => post.is_verified);
-        // Profile info is already loaded, don't change global loading state
+        this.isLoadingHumanArt = false;
+        this.cd.markForCheck();
       },
       error: (error: Error) => {
         console.error('Error loading human art:', error);
         this.error = 'Failed to load human art';
-        // Profile info is already loaded, don't change global loading state
+        this.isLoadingHumanArt = false;
+        this.cd.markForCheck();
       }
     });
   }
 
   private loadUserLikes(handle: string): void {
+    this.isLoadingLikes = true;
+    this.error = null;
+    
     this.postService.getUserLikes(handle).subscribe({
       next: (posts: Post[]) => {
         this.likedPosts = posts;
-        // Profile info is already loaded, don't change global loading state
+        this.isLoadingLikes = false;
+        this.cd.markForCheck();
       },
       error: (error: Error) => {
         console.error('Error loading likes:', error);
         this.error = 'Failed to load likes';
-        // Profile info is already loaded, don't change global loading state
+        this.isLoadingLikes = false;
+        this.cd.markForCheck();
       }
     });
   }

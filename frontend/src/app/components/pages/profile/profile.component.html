@@ -176,7 +176,14 @@
 
     <!-- Replies Tab -->
     <div *ngSwitchCase="'replies'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
-      <div *ngFor="let reply of replies" class="relative">
+      <!-- Loading spinner for replies -->
+      <div *ngIf="isLoadingReplies" class="p-8 flex justify-center w-full">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+      
+      <!-- Replies list -->
+      <ng-container *ngIf="!isLoadingReplies">
+        <div *ngFor="let reply of replies" class="relative">
         <!-- Parent Chain -->
         <ng-container *ngIf="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0">
           <div *ngFor="let parentPost of replyParentChains[reply.id]; let i = index" class="relative">
@@ -210,54 +217,98 @@
           </app-post>
         </div>
       </div>
-      <div *ngIf="!isLoading && replies.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
+      
+      <!-- Loading more replies indicator -->
+      <div *ngIf="isLoadingMoreReplies" class="p-4 flex justify-center w-full">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+      </div>
+      
+      <!-- No more replies indicator -->
+      <div *ngIf="!isLoadingMoreReplies && replies.length > 0 && !postService.hasMoreUserReplies" 
+           class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] text-sm w-full">
+        You've seen all replies
+      </div>
+      
+      <!-- Empty state for replies -->
+      <div *ngIf="replies.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
         No replies yet.
       </div>
+      </ng-container>
     </div>
 
     <!-- Media Tab -->
     <div *ngSwitchCase="'media'" class="p-1 w-full">
-      <div class="grid grid-cols-3 gap-1">
-        <div *ngFor="let media of mediaItems" 
-             class="aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
-             (click)="onMediaClick(media)">
-          <img [src]="media.image" 
-               alt="Media content" 
-               class="w-full h-full object-cover">
+      <!-- Loading spinner for media -->
+      <div *ngIf="isLoadingMedia" class="p-8 flex justify-center w-full">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+      
+      <!-- Media grid -->
+      <ng-container *ngIf="!isLoadingMedia">
+        <div class="grid grid-cols-3 gap-1">
+          <div *ngFor="let media of mediaItems" 
+               class="aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
+               (click)="onMediaClick(media)">
+            <img [src]="media.image" 
+                 alt="Media content" 
+                 class="w-full h-full object-cover">
+          </div>
         </div>
-      </div>
-      <div *ngIf="!isLoading && mediaItems.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
-        No media yet.
-      </div>
+        
+        <!-- Empty state for media -->
+        <div *ngIf="mediaItems.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
+          No media yet.
+        </div>
+      </ng-container>
     </div>
 
     <!-- Human Art Tab -->
     <div *ngSwitchCase="'human-art'" class="p-1 w-full">
-      <div class="grid grid-cols-3 gap-1">
-        <div *ngFor="let art of humanArtPosts" 
-             class="aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
-             (click)="onPostClick(art)">
-          <img [src]="art.images?.[0]?.image || art.image" 
-               alt="Human art" 
-               class="w-full h-full object-cover">
+      <!-- Loading spinner for human art -->
+      <div *ngIf="isLoadingHumanArt" class="p-8 flex justify-center w-full">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+      
+      <!-- Human art grid -->
+      <ng-container *ngIf="!isLoadingHumanArt">
+        <div class="grid grid-cols-3 gap-1">
+          <div *ngFor="let art of humanArtPosts" 
+               class="aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
+               (click)="onPostClick(art)">
+            <img [src]="art.images?.[0]?.image || art.image" 
+                 alt="Human art" 
+                 class="w-full h-full object-cover">
+          </div>
         </div>
-      </div>
-      <div *ngIf="!isLoading && humanArtPosts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
-        No human art yet.
-      </div>
+        
+        <!-- Empty state for human art -->
+        <div *ngIf="humanArtPosts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
+          No human art yet.
+        </div>
+      </ng-container>
     </div>
 
     <!-- Likes Tab -->
     <div *ngSwitchCase="'likes'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
-      <app-post *ngFor="let post of likedPosts"
-        [post]="post"
-        [showFullHeader]="true"
-        (postReported)="onPostReported($event)"
-        (click)="onPostClick(post)">
-      </app-post>
-      <div *ngIf="!isLoading && likedPosts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
-        No likes yet.
+      <!-- Loading spinner for likes -->
+      <div *ngIf="isLoadingLikes" class="p-8 flex justify-center w-full">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
+      
+      <!-- Liked posts list -->
+      <ng-container *ngIf="!isLoadingLikes">
+        <app-post *ngFor="let post of likedPosts"
+          [post]="post"
+          [showFullHeader]="true"
+          (postReported)="onPostReported($event)"
+          (click)="onPostClick(post)">
+        </app-post>
+        
+        <!-- Empty state for likes -->
+        <div *ngIf="likedPosts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
+          No likes yet.
+        </div>
+      </ng-container>
     </div>
   </div>
 </div>
