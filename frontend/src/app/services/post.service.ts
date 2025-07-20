@@ -14,6 +14,7 @@ interface PaginatedResponse {
   next: string | null;
   previous: string | null;
   results: Post[];
+  isArrayResponse?: boolean;
 }
 
 @Injectable({
@@ -28,6 +29,16 @@ export class PostService {
   private loading = false;
   private apiUrl = environment.apiUrl;
   private userCache = new Map<string, User>(); // Cache for user data
+
+  // User profile posts pagination
+  private userPosts = new BehaviorSubject<Post[]>([]);
+  public userPosts$ = this.userPosts.asObservable();
+  private userPostsCurrentPage = 1;
+  private userPostsHasMore = true;
+  private userPostsLoading = false;
+  private currentUserHandle: string | null = null;
+  private allUserPosts: Post[] = []; // Store all posts for client-side pagination
+  private readonly postsPerPage = 20;
 
   constructor(
     private http: HttpClient,
@@ -177,6 +188,15 @@ export class PostService {
     return this.hasMore;
   }
 
+  // User posts pagination getters
+  get hasMoreUserPosts(): boolean {
+    return this.userPostsHasMore;
+  }
+
+  get isLoadingUserPosts(): boolean {
+    return this.userPostsLoading;
+  }
+
   getPost(handle: string, postId: number): Observable<Post> {
     return this.http.get<Post>(`${this.baseUrl}/posts/${handle}/${postId}/`);
   }
@@ -185,8 +205,128 @@ export class PostService {
     return this.http.get<Post>(`${this.baseUrl}/posts/by-id/${postId}/`);
   }
 
-  getUserPosts(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/posts/`);
+  getUserPosts(handle: string, refresh: boolean = false): void {
+    console.log('📄 getUserPosts called:', { handle, refresh, currentHandle: this.currentUserHandle });
+
+    // Reset pagination if it's a new user or refresh
+    if (refresh || this.currentUserHandle !== handle) {
+      this.userPostsCurrentPage = 1;
+      this.userPostsHasMore = true;
+      this.currentUserHandle = handle;
+      this.allUserPosts = []; // Clear cached posts
+      // Don't clear userPosts immediately - let it stay until we have new data
+    }
+
+    // If we already have all posts cached, do client-side pagination
+    if (this.allUserPosts.length > 0) {
+      console.log('📄 Using cached posts for pagination');
+      this.loadMoreFromCache();
+      return;
+    }
+
+    this.userPostsLoading = true;
+    console.log('📄 Loading posts from API for handle:', handle);
+    
+    // For first load, don't send pagination params since backend doesn't support it yet
+    const params = new HttpParams();
+
+    this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/posts/`, { params }).pipe(
+      map((posts: Post[]) => posts.map((post: Post) => this.addImageUrls(post)))
+    ).subscribe({
+      next: (posts) => {
+        console.log('📄 Received posts from API:', posts.length);
+        
+        // Store all posts for client-side pagination
+        this.allUserPosts = posts;
+        
+        // Load first page (20 posts)
+        const firstPagePosts = posts.slice(0, this.postsPerPage);
+        console.log('📄 Sending first page posts to component:', firstPagePosts.length);
+        
+        this.userPosts.next(firstPagePosts);
+        
+        // Set hasMore based on whether there are more posts to show
+        this.userPostsHasMore = posts.length > this.postsPerPage;
+        this.userPostsLoading = false;
+        
+        console.log(`📄 Loaded user posts for ${handle} (client-side pagination):`, {
+          totalAvailable: posts.length,
+          currentlyShowing: firstPagePosts.length,
+          hasMore: this.userPostsHasMore,
+          currentPage: this.userPostsCurrentPage
+        });
+      },
+      error: (error) => {
+        console.error('Error loading user posts:', error);
+        this.userPostsLoading = false;
+        this.userPostsHasMore = false;
+      }
+    });
+  }
+
+  private loadMoreFromCache(): void {
+    console.log('📄 loadMoreFromCache called:', {
+      loading: this.userPostsLoading,
+      hasMore: this.userPostsHasMore,
+      currentPosts: this.userPosts.getValue().length,
+      totalCached: this.allUserPosts.length
+    });
+
+    if (this.userPostsLoading || !this.userPostsHasMore) {
+      console.log('📄 Skipping loadMoreFromCache - already loading or no more posts');
+      return;
+    }
+
+    this.userPostsLoading = true;
+
+    // Simulate network delay for better UX
+    setTimeout(() => {
+      const currentPosts = this.userPosts.getValue();
+      const startIndex = currentPosts.length;
+      const endIndex = startIndex + this.postsPerPage;
+      const nextPagePosts = this.allUserPosts.slice(startIndex, endIndex);
+      
+      const newPosts = [...currentPosts, ...nextPagePosts];
+      this.userPosts.next(newPosts);
+      
+      // Check if there are more posts to show
+      this.userPostsHasMore = newPosts.length < this.allUserPosts.length;
+      this.userPostsLoading = false;
+      
+      console.log(`📄 Loaded more posts from cache:`, {
+        newPostsCount: nextPagePosts.length,
+        totalShowing: newPosts.length,
+        totalAvailable: this.allUserPosts.length,
+        hasMore: this.userPostsHasMore,
+        startIndex,
+        endIndex
+      });
+    }, 300); // Small delay to show loading state
+  }
+
+  loadMoreUserPosts(): void {
+    console.log('📄 loadMoreUserPosts called in service:', {
+      loading: this.userPostsLoading,
+      hasMore: this.userPostsHasMore,
+      currentPage: this.userPostsCurrentPage
+    });
+
+    if (!this.userPostsLoading && this.userPostsHasMore) {
+      this.userPostsCurrentPage++;
+      console.log('📄 Incremented page to:', this.userPostsCurrentPage);
+      this.loadMoreFromCache();
+    } else {
+      console.log('📄 Cannot load more - already loading or no more posts');
+    }
+  }
+
+  clearUserPosts(): void {
+    this.userPosts.next([]);
+    this.userPostsCurrentPage = 1;
+    this.userPostsHasMore = true;
+    this.userPostsLoading = false;
+    this.currentUserHandle = null;
+    this.allUserPosts = [];
   }
 
   createPostWithFormData(formData: FormData, isReply: boolean = false, handle?: string, postId?: number, scheduledTime?: Date): Observable<Post> {

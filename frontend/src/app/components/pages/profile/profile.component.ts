@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -32,6 +32,8 @@ import { UnfollowDialogComponent } from '../../dialogs/unfollow-dialogs/unfollow
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | undefined;
+  private userPostsSubscription: Subscription | undefined;
+  private subscriptions = new Subscription();
   user: User | null = null;
   posts: Post[] = [];
   replies: Post[] = [];
@@ -41,11 +43,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
   likedPosts: Post[] = [];
   activeTab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes' = 'posts';
   isLoading = true;
+  isLoadingPosts = false;
+  isLoadingMorePosts = false;
   error: string | null = null;
   isCurrentUser = false;
   showEditModal = false;
   isFollowLoading = false;
   isHoveringFollowButton = false;
+  private scrollThrottleTimeout: any;
+  private currentHandle: string | null = null;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   editForm = {
     username: '',
@@ -58,12 +64,40 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     public router: Router,
     private userService: UserService,
-    private postService: PostService,
+    public postService: PostService,
     private authService: AuthService,
     private toastService: ToastService,
     private dialog: MatDialog,
-    private cd: ChangeDetectorRef
-  ) {}
+    private cd: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {
+    // Subscribe to user posts stream just like homepage - in constructor
+    this.subscriptions.add(
+      this.postService.userPosts$.subscribe({
+        next: (posts: Post[]) => {
+          console.log('📄 Profile received posts:', posts.length);
+          if (!posts) {
+            this.posts = [];
+          } else {
+            // Always replace posts array to ensure change detection
+            this.posts = [...posts];
+          }
+          
+          this.isLoadingPosts = false;
+          this.isLoadingMorePosts = false;
+          this.cd.markForCheck();
+        },
+        error: (error: Error) => {
+          console.error('Error loading posts:', error);
+          this.error = 'Failed to load posts';
+          this.posts = [];
+          this.isLoadingPosts = false;
+          this.isLoadingMorePosts = false;
+          this.cd.markForCheck();
+        }
+      })
+    );
+  }
 
   ngOnInit(): void {
     // Subscribe to route parameter changes
@@ -95,15 +129,66 @@ export class ProfileComponent implements OnInit, OnDestroy {
       const tab = params['tab'];
       if (tab && ['posts', 'replies', 'media', 'human-art', 'likes'].includes(tab)) {
         this.activeTab = tab as 'posts' | 'replies' | 'media' | 'human-art' | 'likes';
+        
+        // Set appropriate loading state for the tab
+        if (this.activeTab === 'posts') {
+          this.isLoadingPosts = true;
+        }
+        
         this.loadTabContent(this.user?.handle || '');
       }
     });
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll(): void {
+    // Only trigger pagination for posts tab
+    if (this.activeTab !== 'posts') return;
+
+    // Throttle scroll events
+    if (this.scrollThrottleTimeout) return;
+
+    this.scrollThrottleTimeout = setTimeout(() => {
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const scrollThreshold = document.documentElement.scrollHeight * 0.8;
+
+      // Debug scroll events
+      if (scrollPosition >= scrollThreshold && !this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
+        console.log('📄 Scroll triggered loadMore');
+      }
+
+      if (scrollPosition >= scrollThreshold && !this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
+        console.log('📄 Triggering loadMorePosts');
+        this.ngZone.run(() => {
+          this.loadMorePosts();
+        });
+      }
+      this.scrollThrottleTimeout = null;
+    }, 200);
+  }
+
+  loadMorePosts(): void {
+    if (!this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
+      console.log('📄 Loading more posts...');
+      this.isLoadingMorePosts = true;
+      this.cd.markForCheck();
+      this.postService.loadMoreUserPosts();
+    }
   }
 
   ngOnDestroy(): void {
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();
     }
+    if (this.userPostsSubscription) {
+      this.userPostsSubscription.unsubscribe();
+    }
+    this.subscriptions.unsubscribe();
+    if (this.scrollThrottleTimeout) {
+      clearTimeout(this.scrollThrottleTimeout);
+    }
+    // Clear user posts when leaving profile
+    this.postService.clearUserPosts();
   }
 
   private loadUserProfile(handle: string): void {
@@ -112,6 +197,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       next: (user) => {
         console.log('ProfileComponent: User profile loaded:', user);
         this.user = user;
+        // Profile info is loaded, but tab content might still be loading
+        this.isLoading = false;
         // Subscribe to auth changes to update isCurrentUser reactively
         this.authService.currentUser$.subscribe(currentUser => {
           this.isCurrentUser = currentUser?.id === user.id;
@@ -129,6 +216,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   setActiveTab(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): void {
     this.activeTab = tab;
+    
+    // Set appropriate loading state for the tab
+    if (tab === 'posts') {
+      this.isLoadingPosts = true;
+    }
+    
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab },
@@ -160,17 +253,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserPosts(handle: string): void {
-    this.postService.getUserPosts(handle).subscribe({
-      next: (posts) => {
-        this.posts = posts;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading posts:', error);
-        this.error = 'Failed to load posts';
-        this.isLoading = false;
-      }
-    });
+    // Set loading state like homepage
+    this.isLoadingPosts = true;
+    this.error = null;
+    
+    // Only clear posts if switching users
+    if (this.currentHandle !== handle) {
+      this.posts = [];
+    }
+    
+    this.currentHandle = handle;
+    console.log('📄 Loading posts for handle:', handle);
+    
+    // Just trigger the load - we're already subscribed to userPosts$ in constructor
+    this.postService.getUserPosts(handle, true); // true = refresh
   }
 
   private loadUserReplies(handle: string): void {
@@ -184,12 +280,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
           await this.buildParentChain(reply);
         }
         
-        this.isLoading = false;
+        // Profile info is already loaded, don't change global loading state
       },
       error: (error) => {
         console.error('Error loading user replies:', error);
         this.error = 'Failed to load replies';
-        this.isLoading = false;
+        // Profile info is already loaded, don't change global loading state
       }
     });
   }
@@ -233,12 +329,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
           })) || [];
           return [...acc, ...images];
         }, []);
-        this.isLoading = false;
+        // Profile info is already loaded, don't change global loading state
       },
       error: (error: Error) => {
         console.error('Error loading media:', error);
         this.error = 'Failed to load media';
-        this.isLoading = false;
+        // Profile info is already loaded, don't change global loading state
       }
     });
   }
@@ -247,12 +343,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.postService.getUserHumanArt(handle).subscribe({
       next: (posts: Post[]) => {
         this.humanArtPosts = posts.filter(post => post.is_verified);
-        this.isLoading = false;
+        // Profile info is already loaded, don't change global loading state
       },
       error: (error: Error) => {
         console.error('Error loading human art:', error);
         this.error = 'Failed to load human art';
-        this.isLoading = false;
+        // Profile info is already loaded, don't change global loading state
       }
     });
   }
@@ -261,12 +357,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.postService.getUserLikes(handle).subscribe({
       next: (posts: Post[]) => {
         this.likedPosts = posts;
-        this.isLoading = false;
+        // Profile info is already loaded, don't change global loading state
       },
       error: (error: Error) => {
         console.error('Error loading likes:', error);
         this.error = 'Failed to load likes';
-        this.isLoading = false;
+        // Profile info is already loaded, don't change global loading state
       }
     });
   }

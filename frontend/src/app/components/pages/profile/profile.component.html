@@ -143,14 +143,35 @@
   <div [ngSwitch]="activeTab" class="flex-1 w-screen min-[500px]:w-full min-[500px]:min-w-[calc(100vw-80px)] min-[681px]:min-w-[600px]">
     <!-- Posts Tab -->
     <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
-      <app-post *ngFor="let post of posts"
-        [post]="post"
-        (postReported)="onPostReported($event)"
-        (click)="onPostClick(post)">
-      </app-post>
-      <div *ngIf="!isLoading && posts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
-        No posts yet.
+      <!-- Initial loading for posts -->
+      <div *ngIf="isLoadingPosts" class="p-8 flex justify-center w-full">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
+      
+      <!-- Posts list -->
+      <ng-container *ngIf="!isLoadingPosts">
+        <app-post *ngFor="let post of posts"
+          [post]="post"
+          (postReported)="onPostReported($event)"
+          (click)="onPostClick(post)">
+        </app-post>
+        
+        <!-- Loading more posts indicator -->
+        <div *ngIf="isLoadingMorePosts" class="p-4 flex justify-center w-full">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        </div>
+        
+        <!-- No more posts indicator -->
+        <div *ngIf="!isLoadingMorePosts && posts.length > 0 && !postService.hasMoreUserPosts" 
+             class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] text-sm w-full">
+          You've seen all posts
+        </div>
+        
+        <!-- Empty state -->
+        <div *ngIf="posts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
+          No posts yet.
+        </div>
+      </ng-container>
     </div>
 
     <!-- Replies Tab -->
