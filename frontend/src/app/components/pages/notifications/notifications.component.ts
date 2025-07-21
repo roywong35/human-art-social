@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService, Notification } from '../../../services/notification.service';
 import { Router, RouterModule } from '@angular/router';
@@ -22,6 +22,7 @@ import { Subscription } from 'rxjs';
 export class NotificationsComponent implements OnInit, OnDestroy {
   notifications: Notification[] = [];
   loading = true;
+  loadingMore = false; // Added for infinite scroll
   currentPage = 1;
   hasMore = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
@@ -30,6 +31,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   private hoverTimeout: any;
   private leaveTimeout: any;
   private lastHoveredElement: Element | null = null;
+  private scrollThrottleTimeout: any; // Added for scroll throttling
   
   private subscriptions: Subscription[] = [];
 
@@ -63,6 +65,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     // Clean up all subscriptions to prevent memory leaks
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.subscriptions = [];
+    
+    // Clean up scroll throttle timeout
+    if (this.scrollThrottleTimeout) {
+      clearTimeout(this.scrollThrottleTimeout);
+    }
   }
 
   loadNotifications() {
@@ -75,7 +82,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         console.log('🔔 Notification types:', response.results.map(n => n.notification_type));
         
         // The global list is updated automatically by the service
-        this.hasMore = response.results.length === 10; // Assuming page size is 10
+        this.hasMore = response.results.length === 20; // 20 notifications per page as requested
         this.loading = false;
       },
       error: (error) => {
@@ -86,8 +93,27 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   loadMore() {
+    if (this.loadingMore) return; // Prevent multiple simultaneous loads
+    
+    console.log('🔔 Loading more notifications, page:', this.currentPage + 1);
+    this.loadingMore = true;
     this.currentPage++;
-    this.loadNotifications();
+    
+    this.notificationService.getNotifications(this.currentPage).subscribe({
+      next: (response) => {
+        console.log('🔔 More notifications loaded:', response);
+        console.log('🔔 Number of new notifications:', response.results.length);
+        
+        // The global list is updated automatically by the service
+        this.hasMore = response.results.length === 20; // 20 notifications per page as requested
+        this.loadingMore = false;
+      },
+      error: (error) => {
+        console.error('❌ Error loading more notifications:', error);
+        this.loadingMore = false;
+        this.currentPage--; // Revert page increment on error
+      }
+    });
   }
 
   markAllAsRead() {
@@ -290,5 +316,31 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       clearTimeout(this.leaveTimeout);
     }
     this.globalModalService.onModalHover();
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  onScroll(event: Event): void {
+    // Throttle scroll events to improve performance
+    if (this.scrollThrottleTimeout) {
+      clearTimeout(this.scrollThrottleTimeout);
+    }
+    
+    this.scrollThrottleTimeout = setTimeout(() => {
+      // Check if user scrolled near bottom of page
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+      
+      // Trigger load more when user is 200px from bottom
+      const threshold = 200;
+      
+      if (scrollTop + clientHeight >= scrollHeight - threshold && 
+          this.hasMore && 
+          !this.loading && 
+          !this.loadingMore) {
+        console.log('🔔 Loading more notifications due to scroll');
+        this.loadMore();
+      }
+    }, 100); // 100ms throttle
   }
 } 

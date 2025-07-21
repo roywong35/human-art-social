@@ -214,7 +214,7 @@ export class NotificationService {
 
   getNotifications(page: number = 1): Observable<{ results: Notification[], count: number }> {
     return this.http.get<{ results: Notification[], count: number }>(
-      `${this.apiUrl}/?page=${page}`
+      `${this.apiUrl}/?page=${page}&page_size=20`
     ).pipe(
       tap(response => {
         if (page === 1) {

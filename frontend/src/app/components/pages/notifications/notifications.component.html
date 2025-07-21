@@ -74,10 +74,15 @@
     <span class="text-gray-500 dark:text-[color:var(--color-text-secondary)]">Loading...</span>
   </div>
 
-  <div *ngIf="hasMore && !loading" class="p-4 text-center">
-    <button (click)="loadMore()" 
-            class="text-primary hover:underline">
-      Load more
-    </button>
+  <!-- Loading more indicator for infinite scroll -->
+  <div *ngIf="loadingMore" class="p-4 text-center">
+    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+    <span class="text-gray-500 dark:text-[color:var(--color-text-secondary)] text-sm">Loading more notifications...</span>
+  </div>
+
+  <!-- End of notifications indicator -->
+  <div *ngIf="!hasMore && !loading && !loadingMore && notifications.length > 0" 
+       class="p-4 text-center text-gray-500 dark:text-[color:var(--color-text-secondary)] text-sm">
+    You've seen all notifications
   </div>
 </div> 
