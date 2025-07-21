@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, NgZone } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, NgZone, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -65,6 +65,7 @@ export class PostComponent implements OnInit, OnDestroy {
   protected environment = environment;
   protected showRepostMenu = false;
   protected showMoreMenu = false;
+  protected showShareMenu = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   // Reply functionality
@@ -317,16 +318,73 @@ export class PostComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Toggle share menu instead of direct copy
   onShare(event: MouseEvent): void {
     event.stopPropagation();
     if (this.checkAuth('share')) {
-      const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
-      navigator.clipboard.writeText(postUrl).then(() => {
-        this.toastService.showSuccess('Link copied to clipboard');
-      }).catch(() => {
-        this.toastService.showError('Failed to copy link');
-      });
+      // Close all other menus first
+      this.closeAllMenusExcept('share');
+      this.showShareMenu = !this.showShareMenu;
     }
+  }
+
+  // Individual sharing methods
+  protected copyLink(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showShareMenu = false;
+    const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+    navigator.clipboard.writeText(postUrl).then(() => {
+      this.toastService.showSuccess('Link copied to clipboard');
+    }).catch(() => {
+      this.toastService.showError('Failed to copy link');
+    });
+  }
+
+  protected shareToFacebook(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showShareMenu = false;
+    const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`;
+    window.open(facebookUrl, '_blank', 'width=600,height=400');
+  }
+
+  protected shareToWhatsApp(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showShareMenu = false;
+    const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+    const text = `Check out this post: ${postUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+  }
+
+  protected shareToTwitter(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showShareMenu = false;
+    const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+    const text = 'Check out this post!';
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(postUrl)}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+  }
+
+  protected closeAllMenus(): void {
+    this.showShareMenu = false;
+    this.showRepostMenu = false;
+    this.showMoreMenu = false;
+  }
+
+  protected closeAllMenusExcept(except?: string): void {
+    if (except !== 'share') this.showShareMenu = false;
+    if (except !== 'repost') this.showRepostMenu = false;
+    if (except !== 'more') this.showMoreMenu = false;
+  }
+
+  protected get hasAnyMenuOpen(): boolean {
+    return this.showShareMenu || this.showRepostMenu || this.showMoreMenu;
+  }
+
+  protected closeAllMenusAndBackdrop(): void {
+    this.closeAllMenus();
+    this.cd.markForCheck();
   }
 
   onBookmark(event: Event): void {
@@ -355,6 +413,8 @@ export class PostComponent implements OnInit, OnDestroy {
   protected toggleRepostMenu(event: MouseEvent): void {
     event.stopPropagation();
     if (this.checkAuth('repost')) {
+      // Close all other menus first
+      this.closeAllMenusExcept('repost');
       this.showRepostMenu = !this.showRepostMenu;
     }
   }
@@ -365,6 +425,8 @@ export class PostComponent implements OnInit, OnDestroy {
       this.checkAuth('more');
       return;
     }
+    // Close all other menus first
+    this.closeAllMenusExcept('more');
     this.showMoreMenu = !this.showMoreMenu;
   }
 
@@ -608,5 +670,14 @@ export class PostComponent implements OnInit, OnDestroy {
     this.showUserPreview = false;
     this.previewUser = null;
     this.cd.detectChanges();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    // Only close if we have menus open and the click is outside the component
+    if (this.hasAnyMenuOpen) {
+      this.closeAllMenus();
+      this.cd.markForCheck();
+    }
   }
 } 

@@ -1,3 +1,9 @@
+<!-- Backdrop for dropdown menus -->
+<div *ngIf="hasAnyMenuOpen" 
+     class="fixed inset-0 bg-transparent z-[45]"
+     (click)="closeAllMenusAndBackdrop()"
+     (keydown.escape)="closeAllMenusAndBackdrop()"></div>
+
 <div [class]="'post-container pb-0.5 pt-[4px] pl-4 pr-1.5 bg-white dark:[background-color:var(--color-background)] ' + (!isPreview ? 'hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer' : '') + ' transition-colors duration-200 ' + (!isConnectedToParent ? 'border-b border-gray-200 dark:[border-color:var(--color-border)]' : '') + ' relative'" (click)="!isPreview ? navigateToPost($event) : null">
 
   <!-- Repost header -->
@@ -69,20 +75,20 @@
             
             <!-- More Menu -->
             <div *ngIf="showMoreMenu" 
-                 class="absolute right-0 top-full mt-1 w-48 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-lg shadow-lg z-50">
+                 class="absolute left-0 bottom-full mb-2 w-48 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]">
               <div class="py-1">
                 <!-- Report option for other users' posts -->
                 <button *ngIf="!currentUser || post.author.id !== currentUser.id" 
-                        class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors"
+                        class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors"
                         (click)="onReportPost($event)">
-                  <i class="fas fa-flag mr-3 text-red-500"></i>
+                  <i class="fas fa-flag w-4 h-4 mr-3 text-red-500 flex-shrink-0"></i>
                   Report post
                 </button>
                 
                 <!-- Placeholder for own posts -->
                 <div *ngIf="currentUser && post.author.id === currentUser.id" 
-                     class="flex items-center w-full px-4 py-2 text-sm text-gray-500 dark:[color:var(--color-text-secondary)] cursor-not-allowed">
-                  <i class="fas fa-cog mr-3 text-gray-400"></i>
+                     class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-500 dark:[color:var(--color-text-secondary)] cursor-not-allowed">
+                  <i class="fas fa-cog w-4 h-4 mr-3 text-gray-400 flex-shrink-0"></i>
                   More features coming soon
                 </div>
               </div>
@@ -262,10 +268,50 @@
               <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]" [class.text-red-500]="post.is_liked">{{ post.likes_count ? post.likes_count : '' }}</span>
             </div>
 
-            <!-- Share button -->
-            <div title="Share" class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onShare($event) : null; $event.stopPropagation()">
-              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
-                <i class="far fa-share-square text-[16px]" [class.group-hover:text-blue-500]="!isPreview"></i>
+            <!-- Share button with dropdown menu -->
+            <div title="Share" class="relative" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="$event.stopPropagation()">
+              <div class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group" (click)="!isPreview ? onShare($event) : null; $event.stopPropagation()">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+                  <i class="fa-solid fa-arrow-up-from-bracket text-[16px]" [class.group-hover:text-blue-500]="!isPreview" [class.text-blue-500]="showShareMenu"></i>
+                </div>
+              </div>
+
+              <!-- Share Menu -->
+              <div *ngIf="showShareMenu && !isPreview" 
+                   class="absolute bottom-full mb-2 left-0 w-52 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]">
+                <div class="py-1">
+                  <!-- Copy Link -->
+                  <button 
+                    class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors"
+                    (click)="copyLink($event)">
+                    <i class="fas fa-link w-4 h-4 mr-3 text-blue-500 flex-shrink-0"></i>
+                    Copy link
+                  </button>
+                  
+                  <!-- Facebook -->
+                  <button 
+                    class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors"
+                    (click)="shareToFacebook($event)">
+                    <i class="fab fa-facebook w-4 h-4 mr-3 text-blue-600 flex-shrink-0"></i>
+                    Share to Facebook
+                  </button>
+                  
+                  <!-- WhatsApp -->
+                  <button 
+                    class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors"
+                    (click)="shareToWhatsApp($event)">
+                    <i class="fab fa-whatsapp w-4 h-4 mr-3 text-green-500 flex-shrink-0"></i>
+                    Share to WhatsApp
+                  </button>
+                  
+                  <!-- Twitter -->
+                  <button 
+                    class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors"
+                    (click)="shareToTwitter($event)">
+                    <i class="fab fa-twitter w-4 h-4 mr-3 text-blue-400 flex-shrink-0"></i>
+                    Share to Twitter
+                  </button>
+                </div>
               </div>
             </div>
 

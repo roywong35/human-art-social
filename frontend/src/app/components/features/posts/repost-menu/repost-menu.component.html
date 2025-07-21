@@ -1,10 +1,18 @@
-<div class="repost-menu" (click)="$event.stopPropagation()">
-  <div class="menu-item" (click)="onRepost(); $event.stopPropagation()">
-    <i class="fas font-extrabold fa-retweet"></i>
-    <span>{{ isReposted ? 'Undo Repost' : 'Repost' }}</span>
-  </div>
-  <div class="menu-item" (click)="onQuote(); $event.stopPropagation()">
-    <i class="fas font-extrabold fa-quote-right"></i>
-    <span>Quote</span>
+<div class="absolute bottom-full mb-2 left-0 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]" 
+     [class.w-36]="!isReposted" 
+     [class.w-44]="isReposted"
+     (click)="$event.stopPropagation()">
+  <div class="py-1">
+    <!-- Repost Option -->
+    <button class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors" (click)="onRepost(); $event.stopPropagation()">
+      <i class="fas fa-retweet w-4 h-4 mr-3 text-gray-500 flex-shrink-0"></i>
+      <span>{{ isReposted ? 'Undo Repost' : 'Repost' }}</span>
+    </button>
+    
+    <!-- Quote Option -->
+    <button class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:[color:var(--color-text)] hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors" (click)="onQuote(); $event.stopPropagation()">
+      <i class="fas fa-quote-right w-4 h-4 mr-3 text-gray-500 flex-shrink-0"></i>
+      <span>Quote</span>
+    </button>
   </div>
 </div> 
