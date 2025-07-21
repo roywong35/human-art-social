@@ -46,6 +46,7 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   protected error: string | null = null;
   protected showEmojiPicker = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
+  protected emojiPickerOpen = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   protected environment = environment;
   
@@ -96,6 +97,13 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Component initialization
+    
+    // Subscribe to emoji picker state
+    this.subscriptions.add(
+      this.emojiPickerService.pickerState$.subscribe(state => {
+        this.emojiPickerOpen = state.show;
+      })
+    );
   }
 
   ngOnDestroy() {
@@ -475,5 +483,9 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
     // For now, we'll leave images empty when editing drafts
     this.images = [];
     this.quotePost = draft.quote_post;
+  }
+
+  protected closeEmojiPickerBackdrop(): void {
+    this.emojiPickerService.hidePicker();
   }
 } 

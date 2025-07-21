@@ -1,3 +1,9 @@
+<!-- Backdrop for emoji picker -->
+<div *ngIf="emojiPickerOpen" 
+     class="fixed inset-0 bg-transparent z-[999]"
+     (click)="closeEmojiPickerBackdrop()"
+     (keydown.escape)="closeEmojiPickerBackdrop()"></div>
+
 <div [class.bg-white]="showCard" [class.dark:bg-black]="showCard" [class.p-4]="showCard" [class.border-b]="showCard" [class.dark:[border-color:var(--color-border)]]="showCard">
 
     <div *ngIf="!isCompact" class="flex gap-3 pt-4 pb-1 px-4">

@@ -1,3 +1,9 @@
+<!-- Backdrop for emoji picker -->
+<div *ngIf="emojiPickerOpen" 
+     class="fixed inset-0 bg-transparent z-[999]"
+     (click)="closeEmojiPickerBackdrop()"
+     (keydown.escape)="closeEmojiPickerBackdrop()"></div>
+
 <div class="bg-white dark:bg-black flex flex-col w-full h-full">
   <!-- Header with Close and Drafts buttons -->
   <div class="h-14 relative flex-shrink-0">

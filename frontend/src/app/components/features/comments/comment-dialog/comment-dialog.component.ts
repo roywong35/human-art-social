@@ -26,6 +26,7 @@ export class CommentDialogComponent implements OnInit, OnDestroy {
   protected textareaRows = 1;
   protected showEmojiPicker = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
+  protected emojiPickerOpen = false;
   protected comments: Post[] = [];
   public images: { id: string, file: File, preview: string }[] = [];
   protected isSubmitting = false;
@@ -60,6 +61,11 @@ export class CommentDialogComponent implements OnInit, OnDestroy {
     this.loadComments();
     // Start observing window size
     this.resizeObserver.observe(document.body);
+    
+    // Subscribe to emoji picker state
+    this.emojiPickerService.pickerState$.subscribe(state => {
+      this.emojiPickerOpen = state.show;
+    });
   }
 
   ngOnDestroy(): void {
@@ -201,5 +207,9 @@ export class CommentDialogComponent implements OnInit, OnDestroy {
       minute: '2-digit',
       hour12: true
     }).format(date);
+  }
+
+  protected closeEmojiPickerBackdrop(): void {
+    this.emojiPickerService.hidePicker();
   }
 } 

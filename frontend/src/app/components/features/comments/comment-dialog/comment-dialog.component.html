@@ -1,3 +1,9 @@
+<!-- Backdrop for emoji picker -->
+<div *ngIf="emojiPickerOpen" 
+     class="fixed inset-0 bg-transparent z-[999]"
+     (click)="closeEmojiPickerBackdrop()"
+     (keydown.escape)="closeEmojiPickerBackdrop()"></div>
+
 <div class="px-2 py-2 dialog-content bg-white dark:bg-black w-screen min-h-screen min-[688px]:w-[600px] min-[688px]:min-h-0 min-[688px]:max-h-[90vh] min-[688px]:rounded-2xl">
   <!-- Close Button -->
   <div class="h-14 sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 dark:[border-color:var(--color-border)] min-[688px]:relative">

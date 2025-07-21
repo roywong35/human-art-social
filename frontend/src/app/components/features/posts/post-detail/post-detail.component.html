@@ -1,3 +1,9 @@
+<!-- Backdrop for emoji picker -->
+<div *ngIf="emojiPickerOpen" 
+     class="fixed inset-0 bg-transparent z-[999]"
+     (click)="closeEmojiPickerBackdrop()"
+     (keydown.escape)="closeEmojiPickerBackdrop()"></div>
+
 <div class="max-w-2xl mx-auto bg-white dark:bg-black" #postContainer>
   <!-- Loading State -->
   <div *ngIf="loading" class="flex justify-center items-center p-8">

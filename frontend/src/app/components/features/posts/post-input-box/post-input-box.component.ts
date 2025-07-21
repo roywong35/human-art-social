@@ -35,6 +35,7 @@ export class PostInputBoxComponent {
   protected inputFocused: boolean = false;
   protected showEmojiPicker: boolean = false;
   protected emojiPickerPosition = { top: 0, left: 0 };
+  protected emojiPickerOpen = false;
   public images: { id: string, file: File, preview: string }[] = [];
   protected isCompact: boolean = false;
   protected scheduledTime: Date | undefined = undefined;
@@ -48,6 +49,11 @@ export class PostInputBoxComponent {
 
   ngOnInit() {
     this.isCompact = this.startCompact;
+    
+    // Subscribe to emoji picker state
+    this.emojiPickerService.pickerState$.subscribe(state => {
+      this.emojiPickerOpen = state.show;
+    });
   }
 
   protected get canSubmit(): boolean {
@@ -82,6 +88,10 @@ export class PostInputBoxComponent {
     this.emojiPickerService.showPicker(event, event.target as HTMLElement, (emoji: any) => {
       this.content += emoji.emoji.native;
     });
+  }
+
+  protected closeEmojiPickerBackdrop(): void {
+    this.emojiPickerService.hidePicker();
   }
 
   @HostListener('document:click', ['$event'])
