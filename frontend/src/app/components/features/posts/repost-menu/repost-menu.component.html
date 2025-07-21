@@ -1,6 +1,8 @@
-<div class="absolute bottom-full mb-2 left-0 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]" 
+<div class="absolute right-0 mt-2 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]" 
      [class.w-36]="!isReposted" 
      [class.w-44]="isReposted"
+     [class.top-[-5px]]="!isAbove"
+     [class.bottom-[-5px]]="isAbove"
      (click)="$event.stopPropagation()">
   <div class="py-1">
     <!-- Repost Option -->

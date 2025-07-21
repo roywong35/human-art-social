@@ -75,7 +75,9 @@
             
             <!-- More Menu -->
             <div *ngIf="showMoreMenu" 
-                 class="absolute left-0 bottom-full mb-2 w-48 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]">
+                 class="absolute right-0 mt-2 w-48 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]"
+                 [class.top-[-5px]]="!moreMenuAbove"
+                 [class.bottom-[-5px]]="moreMenuAbove">
               <div class="py-1">
                 <!-- Report option for other users' posts -->
                 <button *ngIf="!currentUser || post.author.id !== currentUser.id" 
@@ -256,7 +258,11 @@
               </div>
 
               <!-- Repost Menu -->
-              <app-repost-menu *ngIf="showRepostMenu && !isPreview" [isReposted]="isReposted" (optionSelected)="onRepostOption($event)" (closeMenu)="showRepostMenu = false">
+              <app-repost-menu *ngIf="showRepostMenu && !isPreview" 
+                               [isReposted]="isReposted" 
+                               [isAbove]="repostMenuAbove"
+                               (optionSelected)="onRepostOption($event)" 
+                               (closeMenu)="showRepostMenu = false">
               </app-repost-menu>
             </div>
 
@@ -278,7 +284,9 @@
 
               <!-- Share Menu -->
               <div *ngIf="showShareMenu && !isPreview" 
-                   class="absolute bottom-full mb-2 left-0 w-52 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]">
+                   class="absolute right-0 mt-2 w-52 bg-white dark:[background-color:var(--color-surface)] border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl shadow-lg z-[60]"
+                   [class.top-[-5px]]="!shareMenuAbove"
+                   [class.bottom-[-5px]]="shareMenuAbove">
                 <div class="py-1">
                   <!-- Copy Link -->
                   <button 

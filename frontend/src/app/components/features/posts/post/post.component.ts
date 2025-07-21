@@ -66,6 +66,12 @@ export class PostComponent implements OnInit, OnDestroy {
   protected showRepostMenu = false;
   protected showMoreMenu = false;
   protected showShareMenu = false;
+  
+  // Dynamic positioning states
+  protected shareMenuAbove = false;
+  protected repostMenuAbove = false;
+  protected moreMenuAbove = false;
+  
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   // Reply functionality
@@ -325,6 +331,12 @@ export class PostComponent implements OnInit, OnDestroy {
       // Close all other menus first
       this.closeAllMenusExcept('share');
       this.showShareMenu = !this.showShareMenu;
+      
+      // Calculate positioning if menu is being opened
+      if (this.showShareMenu) {
+        const buttonElement = (event.target as HTMLElement).closest('div[title="Share"]') as HTMLElement || event.target as HTMLElement;
+        this.updateMenuPositioning('share', buttonElement);
+      }
     }
   }
 
@@ -370,6 +382,11 @@ export class PostComponent implements OnInit, OnDestroy {
     this.showShareMenu = false;
     this.showRepostMenu = false;
     this.showMoreMenu = false;
+    
+    // Reset positioning states
+    this.shareMenuAbove = false;
+    this.repostMenuAbove = false;
+    this.moreMenuAbove = false;
   }
 
   protected closeAllMenusExcept(except?: string): void {
@@ -385,6 +402,38 @@ export class PostComponent implements OnInit, OnDestroy {
   protected closeAllMenusAndBackdrop(): void {
     this.closeAllMenus();
     this.cd.markForCheck();
+  }
+
+  // Dynamic positioning methods
+  protected calculateMenuPosition(buttonElement: HTMLElement, menuHeight: number = 200): boolean {
+    const buttonRect = buttonElement.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+    
+    // If there's not enough space below but enough space above, show above
+    return spaceBelow < menuHeight && spaceAbove > menuHeight;
+  }
+
+  protected updateMenuPositioning(menuType: 'share' | 'repost' | 'more', buttonElement: HTMLElement): void {
+    // Use setTimeout to ensure the calculation happens after the menu is rendered
+    setTimeout(() => {
+      const shouldShowAbove = this.calculateMenuPosition(buttonElement);
+      
+      switch (menuType) {
+        case 'share':
+          this.shareMenuAbove = shouldShowAbove;
+          break;
+        case 'repost':
+          this.repostMenuAbove = shouldShowAbove;
+          break;
+        case 'more':
+          this.moreMenuAbove = shouldShowAbove;
+          break;
+      }
+      
+      this.cd.markForCheck();
+    }, 0);
   }
 
   onBookmark(event: Event): void {
@@ -416,6 +465,12 @@ export class PostComponent implements OnInit, OnDestroy {
       // Close all other menus first
       this.closeAllMenusExcept('repost');
       this.showRepostMenu = !this.showRepostMenu;
+      
+      // Calculate positioning if menu is being opened
+      if (this.showRepostMenu) {
+        const buttonElement = (event.target as HTMLElement).closest('div[title="Repost"]') as HTMLElement || event.target as HTMLElement;
+        this.updateMenuPositioning('repost', buttonElement);
+      }
     }
   }
 
@@ -428,6 +483,12 @@ export class PostComponent implements OnInit, OnDestroy {
     // Close all other menus first
     this.closeAllMenusExcept('more');
     this.showMoreMenu = !this.showMoreMenu;
+    
+    // Calculate positioning if menu is being opened
+    if (this.showMoreMenu) {
+      const buttonElement = (event.target as HTMLElement).closest('div[title="More"]') as HTMLElement || event.target as HTMLElement;
+      this.updateMenuPositioning('more', buttonElement);
+    }
   }
 
   protected onReportPost(event: MouseEvent): void {

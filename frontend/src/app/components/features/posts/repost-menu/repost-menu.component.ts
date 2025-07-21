@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 })
 export class RepostMenuComponent {
   @Input() isReposted = false;
+  @Input() isAbove = false;
   @Output() optionSelected = new EventEmitter<'repost' | 'unrepost' | 'quote'>();
   @Output() closeMenu = new EventEmitter<void>();
 
