@@ -93,8 +93,15 @@
       </div>
     </div>
 
+    <!-- Loading View for Chat -->
+    <div *ngIf="currentView === 'chat' && isLoadingConversation" class="flex flex-col h-full">
+      <div class="flex-1 flex items-center justify-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    </div>
+
     <!-- Chat Room View -->
-    <div *ngIf="currentView === 'chat' && selectedConversation" class="flex flex-col h-full">
+    <div *ngIf="currentView === 'chat' && selectedConversation && !isLoadingConversation" class="flex flex-col h-full">
       <!-- Chat room header with user info -->
       <div class="chat-header bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between flex-shrink-0"
            style="border-radius: 12px 12px 0 0;">

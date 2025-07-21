@@ -21,6 +21,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
   conversations: Conversation[] = [];
   selectedConversation: ConversationDetail | null = null;
   currentUser: User | null = null;
+  isLoadingConversation = false;
+  loadingConversationId: number | null = null;
   
   // Create chat modal
   showCreateChatModal = false;
@@ -67,7 +69,13 @@ export class MessagesComponent implements OnInit, OnDestroy {
           this.showChatList = false;
         }
       } else {
+        // CRITICAL: Clean state when no conversation selected
         this.selectedConversation = null;
+        this.isLoadingConversation = false;
+        this.loadingConversationId = null;
+        this.chatService.disconnectWebSocket();
+        this.chatService.clearMessages();
+        
         // On mobile, show chat list when no conversation is selected
         if (!this.isDesktop) {
           this.showChatList = true;
@@ -81,8 +89,14 @@ export class MessagesComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.routeSub?.unsubscribe();
     this.currentUserSub?.unsubscribe();
-    // Disconnect WebSocket when leaving messages page
+    
+    // Clean disconnect and state clearing when leaving messages page
     this.chatService.disconnectWebSocket();
+    this.chatService.clearMessages();
+    
+    // Reset loading state
+    this.isLoadingConversation = false;
+    this.loadingConversationId = null;
   }
 
   @HostListener('window:resize', ['$event'])
@@ -128,21 +142,80 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   loadConversation(conversationId: string) {
     const numericId = parseInt(conversationId, 10);
+    
+    console.log('🔄 Loading conversation', numericId, '- applying smooth transition');
+    
+    // CRITICAL FIX: Clear previous conversation state immediately to prevent flash
+    this.selectedConversation = null;
+    this.isLoadingConversation = true;
+    
+    // Disconnect any existing WebSocket connections first
+    this.chatService.disconnectWebSocket();
+    
+    // Clear messages to prevent old conversation from showing
+    this.chatService.clearMessages();
+    
+    // Try to use cached data first (like floating chat)
+    const cachedData = this.chatService.openConversationInstant(numericId);
+    
+    if (cachedData.conversation && cachedData.messages) {
+      // INSTANT OPENING from cache - like X/Twitter!
+      console.log('⚡ Opening conversation', numericId, 'instantly from cache');
+      
+      setTimeout(() => {
+        this.selectedConversation = cachedData.conversation;
+        this.isLoadingConversation = false;
+        this.loadingConversationId = null;
+        
+        // Connect to WebSocket for real-time updates
+        this.chatService.connectToConversation(numericId);
+        
+        // Mark conversation as read
+        this.markConversationAsRead(numericId);
+        
+        console.log('🚀 Conversation opened instantly from cache!');
+      }, 50); // Minimal delay for clean transition
+    } else {
+      // Fallback to API if not cached
+      console.log('⏳ Cache miss, loading from API');
+      this.loadConversationFromAPI(numericId);
+    }
+  }
+
+  private loadConversationFromAPI(numericId: number) {
     this.chatService.getConversation(numericId).subscribe({
       next: (conversation) => {
-        this.selectedConversation = conversation;
-        // Connect to WebSocket for this conversation
-        this.chatService.connectToConversation(numericId);
-        // Mark conversation as read when opened
-        this.markConversationAsRead(numericId);
+        // Small delay to ensure clean transition
+        setTimeout(() => {
+          this.selectedConversation = conversation;
+          this.isLoadingConversation = false;
+          this.loadingConversationId = null;
+          
+          // Load messages
+          this.chatService.loadMessages(numericId);
+          
+          // Connect to WebSocket for this conversation
+          this.chatService.connectToConversation(numericId);
+          
+          // Mark conversation as read when opened
+          this.markConversationAsRead(numericId);
+        }, 50);
       },
       error: (error) => {
         console.error('Error loading conversation:', error);
+        this.isLoadingConversation = false;
+        this.loadingConversationId = null;
       }
     });
   }
 
   selectConversation(conversation: Conversation) {
+    console.log('🔄 Selecting conversation', conversation.id, 'via router navigation');
+    
+    // Show immediate loading feedback in the UI
+    this.isLoadingConversation = true;
+    this.loadingConversationId = conversation.id;
+    
     this.router.navigate(['/messages', conversation.id]);
   }
 
@@ -196,6 +269,12 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   async createChat(user: User) {
     try {
+      // Clear state before creating new conversation
+      this.selectedConversation = null;
+      this.isLoadingConversation = true;
+      this.chatService.disconnectWebSocket();
+      this.chatService.clearMessages();
+      
       const conversation = await this.chatService.getOrCreateConversation(user.id).toPromise();
       if (conversation) {
         this.closeCreateChatModal();
@@ -208,6 +287,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Error creating chat:', error);
+      this.isLoadingConversation = false;
+      this.loadingConversationId = null;
     }
   }
 

@@ -97,8 +97,16 @@ export class ChatService {
 
   // WebSocket methods
   connectToConversation(conversationId: number) {
-    this.disconnectWebSocket(); // Close existing connection first
-    this.currentConversationId = conversationId; // Then set the new conversation ID
+    console.log('🔌 Connecting to WebSocket for conversation', conversationId);
+    
+    // Ensure clean disconnection from any existing connection
+    this.disconnectWebSocket();
+    
+    // Clear any typing indicators from previous conversation
+    this.typingUsersSubject.next([]);
+    
+    // Set the new conversation ID
+    this.currentConversationId = conversationId;
 
     const token = this.authService.getToken();
     console.log('Attempting WebSocket connection with token:', token ? 'Token exists' : 'No token');
@@ -150,10 +158,16 @@ export class ChatService {
 
   disconnectWebSocket() {
     if (this.socket$) {
+      console.log('🔌 Disconnecting WebSocket from conversation', this.currentConversationId);
       this.socket$.complete();
       this.socket$ = undefined;
     }
+    
+    // Clear conversation-specific state
     this.currentConversationId = undefined;
+    this.typingUsersSubject.next([]);
+    
+    console.log('✅ WebSocket disconnected and state cleared');
   }
 
   sendMessageViaWebSocket(content: string) {
@@ -262,8 +276,12 @@ export class ChatService {
     
     if (conversation && messages) {
       console.log('⚡ Opening conversation', conversationId, 'instantly from cache');
-      // Update current state immediately
-      this.messagesSubject.next(messages);
+      // Clear previous messages first, then set new ones
+      this.messagesSubject.next([]);
+      // Small delay to ensure clean transition
+      setTimeout(() => {
+        this.messagesSubject.next(messages);
+      }, 10);
       return {conversation, messages};
     }
     
@@ -416,6 +434,11 @@ export class ChatService {
 
   updateMessages(messages: Message[]) {
     this.messagesSubject.next(messages);
+  }
+
+  clearMessages() {
+    console.log('🧹 Clearing messages to prevent flash during conversation switch');
+    this.messagesSubject.next([]);
   }
 
   replaceMessage(tempId: number, newMessage: Message) {

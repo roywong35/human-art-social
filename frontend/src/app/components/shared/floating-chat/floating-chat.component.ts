@@ -24,6 +24,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
   conversations: Conversation[] = [];
   selectedConversation: ConversationDetail | null = null;
   currentUser: User | null = null;
+  isLoadingConversation = false;
   
   // Dark mode detection
   isDarkMode = false;
@@ -111,6 +112,9 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     if (this.selectedConversation) {
       this.chatService.disconnectWebSocket();
     }
+    
+    // Reset loading state
+    this.isLoadingConversation = false;
   }
 
   // Toggle overlay
@@ -123,6 +127,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
 
   closeChat() {
     this.isOpen = false;
+    this.isLoadingConversation = false;
     this.closeChatRoom();
   }
 
@@ -136,21 +141,35 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
 
     console.log('⚡ X-style: Opening conversation', conversation.id, 'instantly');
     
+    // CRITICAL FIX: Clear previous conversation state immediately to prevent flash
+    this.selectedConversation = null;
+    this.isLoadingConversation = true;
+    
+    // Disconnect any existing WebSocket connections first
+    this.chatService.disconnectWebSocket();
+    
+    // Clear messages to prevent old conversation from showing
+    this.chatService.clearMessages();
+    
     // Try to open conversation instantly with cached data
     const cachedData = this.chatService.openConversationInstant(conversation.id);
     
     if (cachedData.conversation && cachedData.messages) {
       // INSTANT OPENING - like X/Twitter!
-      this.selectedConversation = cachedData.conversation;
-      this.currentView = 'chat';
-      
-      // Connect to WebSocket for real-time updates
-      this.chatService.connectToConversation(conversation.id);
-      
-      // Mark conversation as read
-      this.markConversationAsRead(conversation.id);
-      
-      console.log('🚀 Conversation opened instantly from cache!');
+      // Small delay to ensure clean state transition
+      setTimeout(() => {
+        this.selectedConversation = cachedData.conversation;
+        this.currentView = 'chat';
+        this.isLoadingConversation = false;
+        
+        // Connect to WebSocket for real-time updates
+        this.chatService.connectToConversation(conversation.id);
+        
+        // Mark conversation as read
+        this.markConversationAsRead(conversation.id);
+        
+        console.log('🚀 Conversation opened instantly from cache!');
+      }, 50); // Minimal delay for clean transition
     } else {
       // Fallback to API if not cached (shouldn't happen often)
       console.log('⏳ Cache miss, falling back to API');
@@ -160,22 +179,32 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
 
   // Fallback method for cache misses
   private loadConversationFromAPI(conversation: Conversation) {
+    // Ensure clean state before API call
+    this.selectedConversation = null;
+    this.isLoadingConversation = true;
+    this.chatService.clearMessages();
+    
     this.chatService.getConversation(conversation.id).subscribe({
       next: (conversationDetail) => {
-        this.selectedConversation = conversationDetail;
-        this.currentView = 'chat';
-        
-        // Load messages
-        this.chatService.loadMessages(conversation.id);
-        
-        // Connect to WebSocket
-        this.chatService.connectToConversation(conversation.id);
-        
-        // Mark as read
-        this.markConversationAsRead(conversation.id);
+        // Small delay to ensure clean transition
+        setTimeout(() => {
+          this.selectedConversation = conversationDetail;
+          this.currentView = 'chat';
+          this.isLoadingConversation = false;
+          
+          // Load messages
+          this.chatService.loadMessages(conversation.id);
+          
+          // Connect to WebSocket
+          this.chatService.connectToConversation(conversation.id);
+          
+          // Mark as read
+          this.markConversationAsRead(conversation.id);
+        }, 50);
       },
       error: (error) => {
         console.error('Error loading conversation:', error);
+        this.isLoadingConversation = false;
         if (error.status === 401) {
           this.refreshAuthAndRetry(conversation);
         }
@@ -191,6 +220,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     
     if (!hasTokens) {
       console.error('No tokens found, user needs to log in again');
+      this.isLoadingConversation = false;
       return;
     }
 
@@ -203,15 +233,21 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       },
       error: (authError) => {
         console.error('Auth refresh failed:', authError);
+        this.isLoadingConversation = false;
       }
     });
   }
 
   closeChatRoom() {
     if (this.selectedConversation) {
+      // Clean disconnection and state clearing
       this.chatService.disconnectWebSocket();
+      this.chatService.clearMessages();
       this.selectedConversation = null;
+      
+      console.log('🔙 Chat room closed, state cleared');
     }
+    this.isLoadingConversation = false;
     this.currentView = 'list';
   }
 
@@ -261,25 +297,35 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
 
   async createChat(user: User) {
     try {
+      // Clear state before creating new conversation
+      this.selectedConversation = null;
+      this.isLoadingConversation = true;
+      this.chatService.disconnectWebSocket();
+      this.chatService.clearMessages();
+      
       const conversation = await this.chatService.getOrCreateConversation(user.id).toPromise();
       if (conversation) {
         this.closeCreateChatModal();
         
-        // Set as selected conversation (X-style instant)
-        this.selectedConversation = conversation;
-        this.currentView = 'chat';
-        
-        // Load messages for new conversation
-        this.chatService.loadMessages(conversation.id);
-        
-        // Connect to WebSocket
-        this.chatService.connectToConversation(conversation.id);
-        
-        // Refresh conversations list
-        this.chatService.loadConversations();
+        // Set as selected conversation with clean transition
+        setTimeout(() => {
+          this.selectedConversation = conversation;
+          this.currentView = 'chat';
+          this.isLoadingConversation = false;
+          
+          // Load messages for new conversation
+          this.chatService.loadMessages(conversation.id);
+          
+          // Connect to WebSocket
+          this.chatService.connectToConversation(conversation.id);
+          
+          // Refresh conversations list
+          this.chatService.loadConversations();
+        }, 50);
       }
     } catch (error) {
       console.error('Error creating chat:', error);
+      this.isLoadingConversation = false;
     }
   }
 
