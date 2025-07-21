@@ -245,7 +245,7 @@
               <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
                 <i class="far fa-comment text-[16px]" [class.group-hover:text-blue-500]="!isPreview"></i>
               </div>
-              <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]">{{ post.replies_count ? post.replies_count : '' }}</span>
+              <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]">{{ repliesCount ? repliesCount : '' }}</span>
             </div>
 
             <!-- Repost button -->
@@ -267,11 +267,11 @@
             </div>
 
             <!-- Like button -->
-            <div title="Like" class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.text-red-500]="post.is_liked" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onLike($event) : null; $event.stopPropagation()">
+            <div title="Like" class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.text-red-500]="isLiked" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onLike($event) : null; $event.stopPropagation()">
               <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
-                <i class="far fa-heart text-[16px]" [class.group-hover:text-red-500]="!isPreview" [class.fas]="post.is_liked" [class.text-red-500]="post.is_liked"></i>
+                <i class="far fa-heart text-[16px]" [class.group-hover:text-red-500]="!isPreview" [class.fas]="isLiked" [class.text-red-500]="isLiked"></i>
               </div>
-              <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]" [class.text-red-500]="post.is_liked">{{ post.likes_count ? post.likes_count : '' }}</span>
+              <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]" [class.text-red-500]="isLiked">{{ likesCount ? likesCount : '' }}</span>
             </div>
 
             <!-- Share button with dropdown menu -->
@@ -324,9 +324,9 @@
             </div>
 
             <!-- Bookmark button -->
-            <div title="Bookmark" class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group transform translate-x-3" [class.text-blue-500]="post.is_bookmarked" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onBookmark($event) : null; $event.stopPropagation()">
+            <div title="Bookmark" class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group transform translate-x-3" [class.text-blue-500]="isBookmarked" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onBookmark($event) : null; $event.stopPropagation()">
               <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
-                <i class="far fa-bookmark text-[16px]" [class.group-hover:text-blue-500]="!isPreview" [class.fas]="post.is_bookmarked" [class.text-blue-500]="post.is_bookmarked" [class.dark:text-blue-400]="post.is_bookmarked"></i>
+                <i class="far fa-bookmark text-[16px]" [class.group-hover:text-blue-500]="!isPreview" [class.fas]="isBookmarked" [class.text-blue-500]="isBookmarked" [class.dark:text-blue-400]="isBookmarked"></i>
               </div>
             </div>
           </div>

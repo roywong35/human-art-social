@@ -166,8 +166,25 @@ export class HomeComponent implements OnInit, OnDestroy {
     );
   }
 
-  onPostUpdated(): void {
-    // The post is already updated via the postUpdateService subscription
+  onPostUpdated(updatedPost: Post): void {
+    this.ngZone.run(() => {
+      // Find all instances of the post (original and reposts) and update them
+      this.posts = this.posts.map(post => {
+        if (post.id === updatedPost.id) {
+          // Update the exact post that was updated
+          return { ...post, replies_count: updatedPost.replies_count };
+        }
+        // Also update any referenced posts (for reposts) - but only replies_count
+        if (post.post_type === 'repost' && post.referenced_post?.id === updatedPost.id) {
+          return {
+            ...post,
+            referenced_post: { ...post.referenced_post, replies_count: updatedPost.replies_count }
+          };
+        }
+        return post;
+      });
+      this.cd.markForCheck();
+    });
   }
 
   onLike(post: Post): void {

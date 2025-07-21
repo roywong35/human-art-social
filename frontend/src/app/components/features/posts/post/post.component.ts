@@ -282,19 +282,28 @@ export class PostComponent implements OnInit, OnDestroy {
           this.replyTextarea?.nativeElement.focus();
         });
       } else {
+        // Determine the target post for comments (original post for reposts)
+        const targetPost = this.post.post_type === 'repost' ? this.post.referenced_post! : this.post;
+        
         // Open comment dialog
         const dialogRef = this.dialog.open(CommentDialogComponent, {
           panelClass: ['comment-dialog', 'dialog-position-top'],
           data: {
-            post: this.post,
+            post: targetPost,
             currentUser: this.currentUser
           }
         });
 
         dialogRef.afterClosed().subscribe(result => {
           if (result) {
-            // Comment was added, update the post
-            this.post.replies_count = (this.post.replies_count || 0) + 1;
+            // Comment was added to the target post, update the replies count
+            if (this.post.post_type === 'repost' && this.post.referenced_post) {
+              // Update the referenced post's count
+              this.post.referenced_post.replies_count = (this.post.referenced_post.replies_count || 0) + 1;
+            } else {
+              // Update the regular post's count  
+              this.post.replies_count = (this.post.replies_count || 0) + 1;
+            }
             this.postUpdated.emit(this.post);
           }
         });
@@ -613,6 +622,10 @@ export class PostComponent implements OnInit, OnDestroy {
 
   get repostsCount(): number {
     return this.post.post_type === 'repost' ? this.post.referenced_post?.reposts_count || 0 : this.post.reposts_count || 0;
+  }
+
+  get repliesCount(): number {
+    return this.post.post_type === 'repost' ? this.post.referenced_post?.replies_count || 0 : this.post.replies_count || 0;
   }
 
   // Public method to force change detection

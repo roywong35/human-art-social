@@ -152,6 +152,10 @@
       <ng-container *ngIf="!isLoadingPosts">
         <app-post *ngFor="let post of posts"
           [post]="post"
+          (likeClicked)="onLike(post)"
+          (repostClicked)="onRepost(post)"
+          (bookmarkClicked)="onBookmark(post)"
+          (postUpdated)="onPostUpdated($event)"
           (postReported)="onPostReported($event)"
           (click)="onPostClick(post)">
         </app-post>
@@ -195,6 +199,11 @@
               [post]="parentPost"
               [isDetailView]="true"
               [isConnectedToParent]="true"
+              (likeClicked)="onLike(parentPost)"
+              (repostClicked)="onRepost(parentPost)"
+              (bookmarkClicked)="onBookmark(parentPost)"
+              (postUpdated)="onPostUpdated($event)"
+              (postReported)="onPostReported($event)"
               class="relative">
             </app-post>
           </div>
@@ -212,6 +221,11 @@
             [isDetailView]="true"
             [isConnectedToParent]="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0"
             [showFullHeader]="true"
+            (likeClicked)="onLike(reply)"
+            (repostClicked)="onRepost(reply)"
+            (bookmarkClicked)="onBookmark(reply)"
+            (postUpdated)="onPostUpdated($event)"
+            (postReported)="onPostReported($event)"
             (click)="onPostClick(reply)"
             class="relative">
           </app-post>
@@ -300,6 +314,10 @@
         <app-post *ngFor="let post of likedPosts"
           [post]="post"
           [showFullHeader]="true"
+          (likeClicked)="onLike(post)"
+          (repostClicked)="onRepost(post)"
+          (bookmarkClicked)="onBookmark(post)"
+          (postUpdated)="onPostUpdated($event)"
           (postReported)="onPostReported($event)"
           (click)="onPostClick(post)">
         </app-post>

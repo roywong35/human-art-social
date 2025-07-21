@@ -70,8 +70,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     public router: Router,
     private userService: UserService,
     public postService: PostService,
-    private authService: AuthService,
     private toastService: ToastService,
+    private authService: AuthService,
     private dialog: MatDialog,
     private cd: ChangeDetectorRef,
     private ngZone: NgZone
@@ -550,6 +550,54 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.router.navigate([`/${post.author.handle}/post/${post.id}`]);
   }
 
+  onPostUpdated(updatedPost: Post): void {
+    this.ngZone.run(() => {
+      // Update posts array
+      this.posts = this.posts.map(post => {
+        if (post.id === updatedPost.id) {
+          return { ...post, replies_count: updatedPost.replies_count };
+        }
+        if (post.post_type === 'repost' && post.referenced_post?.id === updatedPost.id) {
+          return {
+            ...post,
+            referenced_post: { ...post.referenced_post, replies_count: updatedPost.replies_count }
+          };
+        }
+        return post;
+      });
+
+      // Update replies array
+      this.replies = this.replies.map(post => {
+        if (post.id === updatedPost.id) {
+          return { ...post, replies_count: updatedPost.replies_count };
+        }
+        if (post.post_type === 'repost' && post.referenced_post?.id === updatedPost.id) {
+          return {
+            ...post,
+            referenced_post: { ...post.referenced_post, replies_count: updatedPost.replies_count }
+          };
+        }
+        return post;
+      });
+
+      // Update liked posts array
+      this.likedPosts = this.likedPosts.map(post => {
+        if (post.id === updatedPost.id) {
+          return { ...post, replies_count: updatedPost.replies_count };
+        }
+        if (post.post_type === 'repost' && post.referenced_post?.id === updatedPost.id) {
+          return {
+            ...post,
+            referenced_post: { ...post.referenced_post, replies_count: updatedPost.replies_count }
+          };
+        }
+        return post;
+      });
+
+      this.cd.markForCheck();
+    });
+  }
+
   onFollowButtonHover(isHovering: boolean): void {
     this.isHoveringFollowButton = isHovering;
   }
@@ -597,5 +645,265 @@ export class ProfileComponent implements OnInit, OnDestroy {
     
     // Remove from media items as well
     this.mediaItems = this.mediaItems.filter(item => item.postId !== postId);
+  }
+
+  onLike(post: Post): void {
+    const originalPost = post.post_type === 'repost' ? post.referenced_post! : post;
+    const newLikeState = !originalPost.is_liked;
+    const newCount = originalPost.likes_count + (newLikeState ? 1 : -1);
+
+    this.ngZone.run(() => {
+      // Update posts array
+      this.posts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_liked = newLikeState;
+          p.likes_count = newCount;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_liked = newLikeState;
+          p.referenced_post.likes_count = newCount;
+        }
+      });
+
+      // Update replies array
+      this.replies.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_liked = newLikeState;
+          p.likes_count = newCount;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_liked = newLikeState;
+          p.referenced_post.likes_count = newCount;
+        }
+      });
+
+      // Update liked posts array
+      this.likedPosts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_liked = newLikeState;
+          p.likes_count = newCount;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_liked = newLikeState;
+          p.referenced_post.likes_count = newCount;
+        }
+      });
+
+      this.cd.markForCheck();
+    });
+
+    // Backend call
+    this.postService.likePost(originalPost.author.handle, originalPost.id).subscribe({
+      error: (error) => {
+        this.ngZone.run(() => {
+          // Revert changes on error
+          this.posts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_liked = !newLikeState;
+              p.likes_count = originalPost.likes_count;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_liked = !newLikeState;
+              p.referenced_post.likes_count = originalPost.likes_count;
+            }
+          });
+
+          this.replies.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_liked = !newLikeState;
+              p.likes_count = originalPost.likes_count;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_liked = !newLikeState;
+              p.referenced_post.likes_count = originalPost.likes_count;
+            }
+          });
+
+          this.likedPosts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_liked = !newLikeState;
+              p.likes_count = originalPost.likes_count;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_liked = !newLikeState;
+              p.referenced_post.likes_count = originalPost.likes_count;
+            }
+          });
+
+          this.cd.markForCheck();
+        });
+        console.error('Error liking post:', error);
+        this.toastService.showError('Failed to update like');
+      }
+    });
+  }
+
+  onRepost(post: Post): void {
+    const originalPost = post.post_type === 'repost' ? post.referenced_post! : post;
+    const newRepostState = !originalPost.is_reposted;
+    const newCount = originalPost.reposts_count + (newRepostState ? 1 : -1);
+
+    this.ngZone.run(() => {
+      // Update posts array
+      this.posts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_reposted = newRepostState;
+          p.reposts_count = newCount;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_reposted = newRepostState;
+          p.referenced_post.reposts_count = newCount;
+        }
+      });
+
+      // Update replies array
+      this.replies.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_reposted = newRepostState;
+          p.reposts_count = newCount;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_reposted = newRepostState;
+          p.referenced_post.reposts_count = newCount;
+        }
+      });
+
+      // Update liked posts array
+      this.likedPosts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_reposted = newRepostState;
+          p.reposts_count = newCount;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_reposted = newRepostState;
+          p.referenced_post.reposts_count = newCount;
+        }
+      });
+
+      this.cd.markForCheck();
+    });
+
+    // Backend call
+    this.postService.repostPost(originalPost.author.handle, originalPost.id.toString()).subscribe({
+      error: (error) => {
+        this.ngZone.run(() => {
+          // Revert changes on error
+          this.posts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_reposted = !newRepostState;
+              p.reposts_count = originalPost.reposts_count;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_reposted = !newRepostState;
+              p.referenced_post.reposts_count = originalPost.reposts_count;
+            }
+          });
+
+          this.replies.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_reposted = !newRepostState;
+              p.reposts_count = originalPost.reposts_count;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_reposted = !newRepostState;
+              p.referenced_post.reposts_count = originalPost.reposts_count;
+            }
+          });
+
+          this.likedPosts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_reposted = !newRepostState;
+              p.reposts_count = originalPost.reposts_count;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_reposted = !newRepostState;
+              p.referenced_post.reposts_count = originalPost.reposts_count;
+            }
+          });
+
+          this.cd.markForCheck();
+        });
+        console.error('Error reposting:', error);
+        this.toastService.showError('Failed to repost');
+      }
+    });
+  }
+
+  onBookmark(post: Post): void {
+    const originalPost = post.post_type === 'repost' ? post.referenced_post! : post;
+    const newBookmarkState = !originalPost.is_bookmarked;
+
+    this.ngZone.run(() => {
+      // Update posts array
+      this.posts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_bookmarked = newBookmarkState;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_bookmarked = newBookmarkState;
+        }
+      });
+
+      // Update replies array
+      this.replies.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_bookmarked = newBookmarkState;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_bookmarked = newBookmarkState;
+        }
+      });
+
+      // Update liked posts array
+      this.likedPosts.forEach(p => {
+        if (p.id === originalPost.id) {
+          p.is_bookmarked = newBookmarkState;
+        }
+        if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+          p.referenced_post.is_bookmarked = newBookmarkState;
+        }
+      });
+
+      this.cd.markForCheck();
+    });
+
+    // Backend call
+    this.postService.bookmarkPost(originalPost.author.handle, originalPost.id).subscribe({
+      error: (error) => {
+        this.ngZone.run(() => {
+          // Revert changes on error
+          this.posts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_bookmarked = !newBookmarkState;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_bookmarked = !newBookmarkState;
+            }
+          });
+
+          this.replies.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_bookmarked = !newBookmarkState;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_bookmarked = !newBookmarkState;
+            }
+          });
+
+          this.likedPosts.forEach(p => {
+            if (p.id === originalPost.id) {
+              p.is_bookmarked = !newBookmarkState;
+            }
+            if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
+              p.referenced_post.is_bookmarked = !newBookmarkState;
+            }
+          });
+
+          this.cd.markForCheck();
+        });
+        console.error('Error bookmarking post:', error);
+        this.toastService.showError('Failed to update bookmark');
+      }
+    });
   }
 } 
