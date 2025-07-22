@@ -9,6 +9,31 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'handle', 'profile_picture']
 
+class PublicUserSerializer(serializers.ModelSerializer):
+    """
+    Minimal, secure serializer for public user data (no authentication required)
+    Only includes essential public information
+    """
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    website = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        # Only include essential public fields
+        fields = ['id', 'username', 'handle', 'profile_picture', 'bio', 
+                 'website', 'verified_artist', 'followers_count', 'following_count']
+    
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+    
+    def get_following_count(self, obj):
+        return obj.following.count()
+    
+    def get_website(self, obj):
+        # Only include website if it's not empty
+        return obj.website if obj.website else None
+
 class EvidenceFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = EvidenceFile
@@ -30,6 +55,14 @@ class PostImageSerializer(serializers.ModelSerializer):
         return None
 
 class PostSerializer(serializers.ModelSerializer):
+    """
+    ⚠️ INTERNAL USE ONLY - Contains sensitive fields (evidence_files, scheduled_time, etc.)
+    This serializer exposes internal moderation and system data that should NOT be sent to users.
+    
+    For user-facing endpoints, use:
+    - UserPostSerializer (authenticated users)  
+    - PublicPostSerializer (unauthenticated users)
+    """
     author = UserSerializer(read_only=True)
     likes_count = serializers.SerializerMethodField()
     reposts_count = serializers.SerializerMethodField()
@@ -108,6 +141,51 @@ class PostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
         return super().create(validated_data)
+
+class PublicPostSerializer(serializers.ModelSerializer):
+    """
+    Minimal, secure serializer for public posts (no authentication required)
+    Only includes essential data needed for public landing page
+    """
+    author = PublicUserSerializer(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    reposts_count = serializers.SerializerMethodField()
+    replies_count = serializers.SerializerMethodField()
+    referenced_post = serializers.SerializerMethodField()
+    images = PostImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        # Include conversation_chain for conversation threading
+        # Only include essential fields for public viewing
+        fields = ['id', 'content', 'author', 'created_at', 
+                 'likes_count', 'reposts_count', 'replies_count',
+                 'post_type', 'referenced_post', 'images',
+                 'conversation_chain', 'is_human_drawing']
+
+    def get_likes_count(self, obj):
+        # For reposts, use the original post's likes count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.likes.count()
+        return obj.likes.count()
+
+    def get_reposts_count(self, obj):
+        # For reposts, use the original post's reposts count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.reposts.count()
+        return obj.reposts.count()
+
+    def get_replies_count(self, obj):
+        # For reposts, use the original post's replies count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.replies.count()
+        return obj.replies.count()
+    
+    def get_referenced_post(self, obj):
+        if (obj.post_type == 'repost' or obj.post_type == 'quote') and obj.referenced_post:
+            # Use PublicPostSerializer for referenced posts too
+            return PublicPostSerializer(obj.referenced_post, context=self.context).data
+        return None
 
 class HashtagSerializer(serializers.ModelSerializer):
     post_count = serializers.SerializerMethodField()
@@ -261,3 +339,82 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
         # Set the author to the current user
         validated_data['author'] = self.context['request'].user
         return super().create(validated_data) 
+
+class UserPostSerializer(serializers.ModelSerializer):
+    """
+    Secure serializer for authenticated users - excludes internal fields
+    Includes user interaction fields (is_liked, is_reposted, etc.)
+    """
+    author = UserSerializer(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    reposts_count = serializers.SerializerMethodField()
+    replies_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_reposted = serializers.SerializerMethodField()
+    is_bookmarked = serializers.SerializerMethodField()
+    referenced_post = serializers.SerializerMethodField()
+    images = PostImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        # Include conversation_chain for conversation threading
+        # Exclude internal fields: evidence_files, scheduled_time, updated_at, etc.
+        fields = ['id', 'content', 'author', 'created_at', 
+                 'likes_count', 'reposts_count', 'replies_count',
+                 'is_liked', 'is_reposted', 'is_bookmarked',
+                 'post_type', 'referenced_post', 'images',
+                 'conversation_chain', 'is_human_drawing', 'is_verified']
+
+    def get_likes_count(self, obj):
+        # For reposts, use the original post's likes count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.likes.count()
+        return obj.likes.count()
+
+    def get_reposts_count(self, obj):
+        # For reposts, use the original post's reposts count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.reposts.count()
+        return obj.reposts.count()
+
+    def get_replies_count(self, obj):
+        # For reposts, use the original post's replies count
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.replies.count()
+        return obj.replies.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        # For reposts, check if the original post is liked
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.likes.filter(id=request.user.id).exists()
+        return obj.likes.filter(id=request.user.id).exists()
+
+    def get_is_reposted(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+            
+        # For reposts, check if user has reposted the referenced post
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.reposters.filter(id=request.user.id).exists()
+            
+        # For original posts, check if user has reposted this post
+        return obj.reposters.filter(id=request.user.id).exists()
+
+    def get_is_bookmarked(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        # For reposts, check if the original post is bookmarked
+        if obj.post_type == 'repost' and obj.referenced_post:
+            return obj.referenced_post.bookmarks.filter(id=request.user.id).exists()
+        return obj.bookmarks.filter(id=request.user.id).exists()
+
+    def get_referenced_post(self, obj):
+        if (obj.post_type == 'repost' or obj.post_type == 'quote') and obj.referenced_post:
+            # Use UserPostSerializer for referenced posts too
+            return UserPostSerializer(obj.referenced_post, context=self.context).data
+        return None 

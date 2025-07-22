@@ -26,7 +26,9 @@ class PostViewSet(viewsets.ModelViewSet):
     """
     ViewSet for handling post operations.
     """
-    serializer_class = PostSerializer
+    # Use secure serializer that excludes internal fields
+    from .serializers import UserPostSerializer
+    serializer_class = UserPostSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = PostPagination
     
@@ -81,11 +83,13 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """
-        Override list method to ensure consistent response format
+        Override list method to ensure consistent response format and use secure serializer
         """
         try:
             queryset = self.get_queryset()
-            serializer = self.get_serializer(queryset, many=True)
+            # Use secure UserPostSerializer instead of default PostSerializer
+            from .serializers import UserPostSerializer
+            serializer = UserPostSerializer(queryset, many=True, context={'request': request})
             return Response(serializer.data)
         except Exception as e:
             print(f"Error in list method: {str(e)}")
@@ -533,10 +537,14 @@ class PostViewSet(viewsets.ModelViewSet):
             page = self.paginate_queryset(queryset)
             if page is not None:
                 print(f"[DEBUG] Page size: {len(page)}")
-                serializer = self.get_serializer(page, many=True)
+                # Use secure UserPostSerializer instead of default PostSerializer
+                from .serializers import UserPostSerializer
+                serializer = UserPostSerializer(page, many=True, context={'request': request})
                 return self.get_paginated_response(serializer.data)
 
-            serializer = self.get_serializer(queryset, many=True)
+            # Use secure UserPostSerializer instead of default PostSerializer
+            from .serializers import UserPostSerializer
+            serializer = UserPostSerializer(queryset, many=True, context={'request': request})
             print(f"[DEBUG] Total serialized posts: {len(serializer.data)}")
             return Response({
                 'count': len(serializer.data),
@@ -572,10 +580,14 @@ class PostViewSet(viewsets.ModelViewSet):
 
             page = self.paginate_queryset(queryset)
             if page is not None:
-                serializer = self.get_serializer(page, many=True)
+                # Use secure UserPostSerializer instead of default PostSerializer
+                from .serializers import UserPostSerializer
+                serializer = UserPostSerializer(page, many=True, context={'request': request})
                 return self.get_paginated_response(serializer.data)
 
-            serializer = self.get_serializer(queryset, many=True)
+            # Use secure UserPostSerializer instead of default PostSerializer
+            from .serializers import UserPostSerializer
+            serializer = UserPostSerializer(queryset, many=True, context={'request': request})
             return Response({
                 'count': len(serializer.data),
                 'next': None,
@@ -902,10 +914,14 @@ class PostViewSet(viewsets.ModelViewSet):
 
             page = self.paginate_queryset(queryset)
             if page is not None:
-                serializer = self.get_serializer(page, many=True)
+                # Use PublicPostSerializer to include bio in author data
+                from .serializers import PublicPostSerializer
+                serializer = PublicPostSerializer(page, many=True, context={'request': request})
                 return self.get_paginated_response(serializer.data)
 
-            serializer = self.get_serializer(queryset, many=True)
+            # Use PublicPostSerializer to include bio in author data  
+            from .serializers import PublicPostSerializer
+            serializer = PublicPostSerializer(queryset, many=True, context={'request': request})
             return Response({
                 'results': serializer.data
             })

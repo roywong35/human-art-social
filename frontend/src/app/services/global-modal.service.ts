@@ -31,11 +31,12 @@ export class GlobalModalService {
 
   /**
    * Show user preview with accurate positioning (no shifting)
+   * Uses provided user data which now includes bio from public posts endpoint
    */
   showUserPreviewAccurate(user: User, targetElement: Element): void {
-    console.log('🎯 GlobalModalService: Preparing accurate positioning for', user.username);
+    console.log('🎯 GlobalModalService: Preparing accurate positioning for', user.username, 'bio:', user.bio?.substring(0, 50) || 'No bio');
     
-    // First, show modal hidden to measure dimensions
+    // Use the provided user data directly (which now includes bio from public posts)
     this.modalState.next({
       isVisible: true,
       user,
@@ -83,15 +84,15 @@ export class GlobalModalService {
         
         console.log('🎯 Accurate positioning: Perfect position calculated:', perfectPosition);
         
-        // Show modal at perfect position
+        // Show modal at perfect position with user data (already includes bio!)
         modalElement.style.visibility = 'visible';
         this.modalState.next({
           isVisible: true,
-          user,
+          user, // User data already includes bio from public posts endpoint
           position: perfectPosition
         });
         
-        console.log('✅ Modal positioned perfectly with no shifting!');
+        console.log('✅ Modal positioned perfectly with user data including bio!');
       }
     }, 16); // One frame delay to ensure rendering
   }
