@@ -130,13 +130,7 @@ export class ScheduleModalComponent implements OnInit {
     const hasDateSelection = hasDropdownDate || hasNativeDate;
     const hasTimeSelection = !!(this.selectedHour && this.selectedMinute && this.selectedPeriod);
     
-    console.log('🔍 Validation check:', {
-      hasDropdownDate,
-      hasNativeDate, 
-      hasDateSelection,
-      hasTimeSelection,
-      isValid: hasDateSelection && hasTimeSelection
-    });
+
     
     return hasDateSelection && hasTimeSelection;
   }
@@ -161,11 +155,11 @@ export class ScheduleModalComponent implements OnInit {
         const month = this.selectedMonth.padStart(2, '0');
         const day = this.selectedDay.padStart(2, '0');
         datePart = `${this.selectedYear}-${month}-${day}`;
-        console.log('🔍 Using dropdown date:', datePart);
+
       } else if (this.selectedDate) {
         // Use native date picker value
         datePart = this.selectedDate;
-        console.log('🔍 Using native picker date:', datePart);
+
       } else {
         alert('Please select a date.');
         return null;
@@ -207,55 +201,34 @@ export class ScheduleModalComponent implements OnInit {
       this.selectedDay = dateObj.getDate().toString();
       this.selectedYear = dateObj.getFullYear().toString();
       
-      console.log('🔍 Native picker date selected:', this.selectedDate);
-      console.log('🔍 Populated dropdowns:', {
-        month: this.selectedMonth,
-        day: this.selectedDay,
-        year: this.selectedYear
-      });
+
     }
   }
 
   onDropdownDateChange() {
     // When dropdowns are used, clear native date picker
     if (this.selectedMonth || this.selectedDay || this.selectedYear) {
-      console.log('🔍 Dropdown changed, clearing native picker');
-      console.log('🔍 Current dropdown values:', {
-        month: this.selectedMonth,
-        day: this.selectedDay,
-        year: this.selectedYear
-      });
+
       this.selectedDate = '';
     }
   }
 
   openDatePicker() {
-    console.log('🔍 Date picker button clicked!');
-    
     if (this.dateInputRef && this.dateInputRef.nativeElement) {
       const dateInput = this.dateInputRef.nativeElement;
-      console.log('🔍 Found date input via ViewChild:', dateInput);
-      
-      console.log('🔍 About to focus and trigger date picker...');
       dateInput.focus();
       
       // Try showPicker() method if available (modern browsers)
       if ('showPicker' in dateInput && typeof (dateInput as any).showPicker === 'function') {
-        console.log('🔍 Trying showPicker() method...');
         try {
           (dateInput as any).showPicker();
-          console.log('🔍 showPicker() called successfully');
         } catch (error) {
-          console.log('🔍 showPicker() failed:', error);
           // Fallback to click
           dateInput.click();
         }
       } else {
-        console.log('🔍 showPicker() not available, using click fallback');
         dateInput.click();
       }
-    } else {
-      console.log('❌ Date input not found via ViewChild!');
     }
   }
 

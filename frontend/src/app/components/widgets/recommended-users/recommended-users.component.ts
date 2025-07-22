@@ -36,7 +36,6 @@ export class RecommendedUsersComponent implements OnInit {
     this.isLoading = true;
     this.userService.getRecommendedUsers().subscribe({
       next: (users: User[]) => {
-        console.log('RecommendedUsersComponent: Users loaded successfully:', users);
         this.users = users.map(user => ({
           ...user,
           isFollowLoading: false,

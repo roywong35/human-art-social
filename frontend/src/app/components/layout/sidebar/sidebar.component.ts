@@ -72,18 +72,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       // Check both URL and query params for human art tab
       this.route.queryParams.pipe(take(1)).subscribe(params => {
         this.isHumanArtTab = event.url.includes('human-art') || params['tab'] === 'human-drawing';
-        console.log('[Sidebar] Route/Tab changed:', {
-          url: event.url,
-          params: params,
-          isHumanArtTab: this.isHumanArtTab
-        });
+
       });
     });
   }
 
   ngOnInit() {
-    console.log('[Sidebar] Initializing component');
-    console.log('🔔 Sidebar - NotificationService instance:', this.notificationService);
+
     
     // Load dark mode preference
     const darkMode = localStorage.getItem('darkMode');
@@ -93,27 +88,21 @@ export class SidebarComponent implements OnInit, OnDestroy {
     // Subscribe to auth state changes (reactive to login/logout)
     this.authService.currentUser$.subscribe(user => {
       if (user) {
-        console.log('[Sidebar] Got user preferences:', {
-          following_only_preference: user.following_only_preference
-        });
+
         this.isFollowingOnly = user.following_only_preference || false;
         // Store the initial preference in localStorage
         localStorage.setItem('following_only_preference', this.isFollowingOnly.toString());
       } else {
-        console.log('[Sidebar] User logged out, resetting state');
+
         this.isFollowingOnly = false;
         localStorage.removeItem('following_only_preference');
       }
     });
 
     // Subscribe to unread notifications count
-    console.log('🔔 Sidebar - subscribing to notification unread count');
-    console.log('🔔 Sidebar - NotificationService.unreadCount$:', this.notificationService.unreadCount$);
+
     this.notificationSubscription = this.notificationService.unreadCount$.subscribe(count => {
-      console.log('🔔 Sidebar - received unread notification count update:', count);
-      console.log('🔔 Sidebar - previous unread count:', this.unreadNotifications);
       this.unreadNotifications = count;
-      console.log('🔔 Sidebar - updated unread count to:', this.unreadNotifications);
     });
 
     // Subscribe to conversations for unread message count
@@ -218,18 +207,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   toggleFollowingOnly(): void {
     if (this.isTogglingFollowingOnly) {
-      console.log('[Sidebar] Toggle already in progress, ignoring click');
+
       return;
     }
 
     this.isTogglingFollowingOnly = true;
     const newPreference = !this.isFollowingOnly;
     
-    console.log('[Sidebar] Starting toggleFollowingOnly:', {
-      currentState: this.isFollowingOnly,
-      newState: newPreference,
-      isTogglingFollowingOnly: this.isTogglingFollowingOnly
-    });
+
     
     // Update local state and localStorage immediately for better UX
     this.isFollowingOnly = newPreference;
@@ -237,16 +222,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
     
     this.authService.updateFollowingOnlyPreference(newPreference).subscribe({
       next: (user) => {
-        console.log('[Sidebar] Preference updated on server:', {
-          newPreference,
-          userPreference: user.following_only_preference
-        });
+
         
         // Get the current active tab from localStorage
         const activeTab = localStorage.getItem('activeTab') || 'for-you';
         
         // Always reload posts when toggling in either direction
-        console.log('[Sidebar] Reloading posts with new preference');
+
         this.postService.loadPosts(true, activeTab);
         this.isTogglingFollowingOnly = false;
       },

@@ -252,7 +252,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
   // User preview modal methods
   protected onUserHover(event: MouseEvent, user: User): void {
-    console.log('🎯 onUserHover called, isSticky:', this.isSticky);
+
     
     // Clear any pending timeouts
     if (this.hoverTimeout) {
@@ -263,11 +263,11 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     }
 
     this.hoverTimeout = setTimeout(() => {
-      console.log('🎯 Right sidebar: Preparing accurate modal positioning, isSticky:', this.isSticky);
+
       
       const targetElement = event.target as Element;
       
-      console.log('🎯 Right sidebar: Using accurate positioning for user', user.username);
+      
       
       // Use the new accurate positioning method (no shifting!)
       this.globalModalService.showUserPreviewAccurate(user, targetElement);
@@ -275,10 +275,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   }
 
   protected onUserHoverLeave(): void {
-    console.log('🎯 onUserHoverLeave called, current state:', {
-      showUserPreview: this.globalModalService.getCurrentState().isVisible,
-      sidebarIsSticky: this.isSticky
-    });
+
     
     if (this.hoverTimeout) {
       clearTimeout(this.hoverTimeout);
@@ -287,7 +284,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     // Delay hiding to allow moving to the modal
     this.leaveTimeout = setTimeout(() => {
       if (!this.globalModalService.getCurrentState().isVisible) return;
-      console.log('🎯 Hiding modal due to leave timeout');
+
       this.globalModalService.hideUserPreview();
     }, 300);
   }

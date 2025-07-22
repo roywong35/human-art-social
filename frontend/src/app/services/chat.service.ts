@@ -37,18 +37,13 @@ export class ChatService {
     private authService: AuthService,
     private chatNotificationService: ChatNotificationService
   ) {
-    console.log('💬 ChatService constructor called');
-    
     // Track current user ID for unread count logic
     this.authService.currentUser$.subscribe(user => {
-      console.log('💬 ChatService - user changed:', user ? `User ${user.username}` : 'No user');
       this.currentUserId = user?.id;
     });
 
     // Subscribe to global chat notifications
-    console.log('💬 ChatService - subscribing to global chat notifications');
     this.chatNotificationService.chatNotifications$.subscribe(notification => {
-      console.log('💬 ChatService - received global chat notification:', notification);
       this.handleGlobalChatNotification(notification);
     });
   }
@@ -97,8 +92,6 @@ export class ChatService {
 
   // WebSocket methods
   connectToConversation(conversationId: number) {
-    console.log('🔌 Connecting to WebSocket for conversation', conversationId);
-    
     // Ensure clean disconnection from any existing connection
     this.disconnectWebSocket();
     
@@ -109,7 +102,6 @@ export class ChatService {
     this.currentConversationId = conversationId;
 
     const token = this.authService.getToken();
-    console.log('Attempting WebSocket connection with token:', token ? 'Token exists' : 'No token');
     
     if (!token) {
       console.error('No auth token found for WebSocket connection');
@@ -118,24 +110,21 @@ export class ChatService {
 
     // Pass token as query parameter instead of protocol
     const wsUrl = environment.apiUrl.replace(/^http/, 'ws') + `/ws/chat/${conversationId}/?token=${token}`;
-    console.log('WebSocket URL:', wsUrl);
     
     this.socket$ = webSocket({
       url: wsUrl,
       openObserver: {
         next: () => {
-          console.log(`✅ WebSocket connected successfully to conversation ${conversationId}`);
+          console.log(`✅ WebSocket connected to conversation ${conversationId}`);
         }
       },
       closeObserver: {
         next: (event) => {
-          console.log(`❌ WebSocket disconnected from conversation ${conversationId}`, event);
+          console.log(`❌ WebSocket disconnected from conversation ${conversationId}`);
           // Auto-reconnect after 3 seconds if the connection was not closed intentionally
           if (event.code !== 1000) { // 1000 is normal closure
-            console.log(`🔄 Will attempt to reconnect in 3 seconds...`);
             setTimeout(() => {
               if (this.currentConversationId === conversationId) {
-                console.log(`🔄 Attempting to reconnect to conversation ${conversationId}`);
                 this.connectToConversation(conversationId);
               }
             }, 3000);
@@ -146,7 +135,6 @@ export class ChatService {
 
     this.socket$.subscribe({
       next: (message: ChatMessage) => {
-        console.log('📨 WebSocket message received:', message);
         // Pass the conversation ID context to the message handler
         this.handleWebSocketMessage(message, conversationId);
       },
@@ -158,7 +146,6 @@ export class ChatService {
 
   disconnectWebSocket() {
     if (this.socket$) {
-      console.log('🔌 Disconnecting WebSocket from conversation', this.currentConversationId);
       this.socket$.complete();
       this.socket$ = undefined;
     }
@@ -166,8 +153,6 @@ export class ChatService {
     // Clear conversation-specific state
     this.currentConversationId = undefined;
     this.typingUsersSubject.next([]);
-    
-    console.log('✅ WebSocket disconnected and state cleared');
   }
 
   sendMessageViaWebSocket(content: string) {
@@ -214,8 +199,6 @@ export class ChatService {
 
   // X-style preloading: Load conversation details and recent messages for instant access
   private preloadConversationsData(conversations: Conversation[]) {
-    console.log('🚀 Starting X-style preloading for', conversations.length, 'conversations');
-    
     conversations.forEach((conv, index) => {
       // Stagger preloading to avoid overwhelming the server
       setTimeout(() => {
@@ -230,20 +213,17 @@ export class ChatService {
     }
 
     this.preloadingInProgress.add(conversationId);
-    console.log('📦 Preloading conversation', conversationId);
 
     // Load conversation details
     this.getConversation(conversationId).subscribe({
       next: (conversationDetail) => {
         this.conversationCache.set(conversationId, conversationDetail);
-        console.log('✅ Cached conversation', conversationId);
         
         // Load recent messages (limit to last 20 for performance)
         this.getMessages(conversationId).subscribe({
           next: (response) => {
             const messages = response.results.reverse();
             this.messagesCache.set(conversationId, messages);
-            console.log('✅ Cached', messages.length, 'messages for conversation', conversationId);
             this.preloadingInProgress.delete(conversationId);
           },
           error: (error) => {
@@ -275,7 +255,6 @@ export class ChatService {
     const messages = this.getCachedMessages(conversationId);
     
     if (conversation && messages) {
-      console.log('⚡ Opening conversation', conversationId, 'instantly from cache');
       // Clear previous messages first, then set new ones
       this.messagesSubject.next([]);
       // Small delay to ensure clean transition
@@ -285,7 +264,6 @@ export class ChatService {
       return {conversation, messages};
     }
     
-    console.log('⏳ Conversation', conversationId, 'not cached, falling back to API');
     return {conversation: null, messages: null};
   }
 
@@ -355,7 +333,6 @@ export class ChatService {
   }
 
   private handleGlobalChatNotification(notification: any) {
-    console.log('💬 Handling global chat notification:', notification);
     
     if (notification.conversation_id && notification.sender) {
       const conversationId = notification.conversation_id;
@@ -376,8 +353,6 @@ export class ChatService {
         
         // Update the conversation's last message and increment unread count
         this.updateConversationLastMessage(conversationId, message);
-        
-        console.log(`📬 Updated unread count for conversation ${conversationId}`);
       }
     }
   }
@@ -396,9 +371,6 @@ export class ChatService {
             // If this message is not our own message, automatically mark it as read since we're viewing the conversation
             if (message.message.sender.id !== this.getCurrentUserId()) {
               this.markConversationAsRead(conversationId).subscribe({
-                next: () => {
-                  console.log('Auto-marked conversation as read:', conversationId);
-                },
                 error: (error) => {
                   console.error('Error auto-marking conversation as read:', error);
                 }
@@ -437,7 +409,6 @@ export class ChatService {
   }
 
   clearMessages() {
-    console.log('🧹 Clearing messages to prevent flash during conversation switch');
     this.messagesSubject.next([]);
   }
 
@@ -459,12 +430,6 @@ export class ChatService {
   testWebSocketConnection(conversationId: number) {
     const token = this.authService.getToken();
     const isAuthenticated = this.authService.isAuthenticated();
-    
-    console.log('🔍 WebSocket Connection Debug Info:');
-    console.log('- Is Authenticated:', isAuthenticated);
-    console.log('- Token exists:', !!token);
-    console.log('- Token length:', token?.length || 0);
-    console.log('- Conversation ID:', conversationId);
     
     if (token) {
       console.log('- Token preview:', token.substring(0, 20) + '...');

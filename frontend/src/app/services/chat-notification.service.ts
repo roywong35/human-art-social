@@ -69,8 +69,6 @@ export class ChatNotificationService {
 
     this.socket$.subscribe({
       next: (notification: ChatNotification) => {
-        console.log('📬 Raw chat notification received from WebSocket:', notification);
-        console.log('📬 Emitting to chatNotifications$:', notification);
         this.chatNotifications.next(notification);
       },
       error: (error) => {

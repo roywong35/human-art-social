@@ -41,12 +41,12 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private globalModalService: GlobalModalService
   ) {
-    console.log('🔔 NotificationsComponent constructor called');
+
     
     // Subscribe to global notifications list (similar to chat service)
     const notificationsSub = this.notificationService.notifications$.subscribe({
       next: (notifications) => {
-        console.log('🔔 NotificationsComponent: Global notifications updated:', notifications.length);
+
         this.notifications = notifications;
       },
       error: (error) => {
@@ -54,7 +54,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       }
     });
     this.subscriptions.push(notificationsSub);
-    console.log('🔔 NotificationsComponent: Subscribed to global notifications$');
+
   }
 
   ngOnInit() {
@@ -73,13 +73,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   loadNotifications() {
-    console.log('🔔 Loading notifications, page:', this.currentPage);
+
     this.loading = true;
     this.notificationService.getNotifications(this.currentPage).subscribe({
       next: (response) => {
-        console.log('🔔 Notifications loaded:', response);
-        console.log('🔔 Number of notifications:', response.results.length);
-        console.log('🔔 Notification types:', response.results.map(n => n.notification_type));
+
         
         // The global list is updated automatically by the service
         this.hasMore = response.results.length === 20; // 20 notifications per page as requested
@@ -95,14 +93,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   loadMore() {
     if (this.loadingMore) return; // Prevent multiple simultaneous loads
     
-    console.log('🔔 Loading more notifications, page:', this.currentPage + 1);
+
     this.loadingMore = true;
     this.currentPage++;
     
     this.notificationService.getNotifications(this.currentPage).subscribe({
       next: (response) => {
-        console.log('🔔 More notifications loaded:', response);
-        console.log('🔔 Number of new notifications:', response.results.length);
+
         
         // The global list is updated automatically by the service
         this.hasMore = response.results.length === 20; // 20 notifications per page as requested
@@ -154,7 +151,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   onNotificationClick(notification: Notification) {
-    console.log('Notification clicked:', notification);
+
     this.markAsRead(notification);
 
     // Navigate based on notification type
@@ -162,17 +159,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       case 'like':
       case 'comment':
       case 'repost':
-        console.log('Post data:', notification.post);
         if (notification.post?.id && notification.post?.author?.handle) {
-          console.log('Navigating to:', ['/', notification.post.author.handle, 'post', notification.post.id]);
           this.router.navigate(['/', notification.post.author.handle, 'post', notification.post.id]);
-        } else {
-          console.log('Missing post data for navigation');
         }
         break;
       case 'follow':
         if (notification.sender) {
-          console.log('Navigating to profile:', ['/', notification.sender.handle]);
+
           this.router.navigate(['/', notification.sender.handle]);
         }
         break;
@@ -187,7 +180,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       case 'appeal_approved':
         // Navigate to the restored post
         if (notification.post?.id && notification.post?.author?.handle) {
-          console.log('Navigating to restored post:', ['/', notification.post.author.handle, 'post', notification.post.id]);
+
           this.router.navigate(['/', notification.post.author.handle, 'post', notification.post.id]);
         }
         break;
@@ -198,7 +191,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       case 'art_verified':
         // Navigate to the verified art post
         if (notification.post?.id && notification.post?.author?.handle) {
-          console.log('Navigating to verified art post:', ['/', notification.post.author.handle, 'post', notification.post.id]);
+
           this.router.navigate(['/', notification.post.author.handle, 'post', notification.post.id]);
         }
         break;
@@ -206,22 +199,22 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   private showReportDialog() {
-    console.log('🔔 Opening report status dialog');
+
     
     // Use the exact same approach as create post modal
     const dialogRef = this.dialog.open(ReportStatusDialogComponent, {
       panelClass: ['report-status-dialog']
     });
     
-    console.log('🔔 Dialog reference:', dialogRef);
+
     
     dialogRef.afterClosed().subscribe(result => {
-      console.log('🔔 Dialog closed with result:', result);
+
     });
   }
 
   private showPostRemovalDialog(notification: Notification) {
-    console.log('🔔 Opening post removal dialog for notification:', notification);
+
     
     if (!notification.post) {
       console.error('No post data in notification');
@@ -246,10 +239,10 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       }
     });
     
-    console.log('🔔 Post removal dialog reference:', dialogRef);
+
     
     dialogRef.afterClosed().subscribe(result => {
-      console.log('🔔 Post removal dialog closed with result:', result);
+
     });
   }
 
@@ -303,7 +296,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       // Store the hovered element for accurate positioning
       this.lastHoveredElement = event.target as Element;
       
-      console.log('🎯 Notifications: Preparing accurate modal for user', user.username);
+
       
       // Use the new accurate positioning method (no shifting!)
       this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement);
@@ -363,7 +356,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
           this.hasMore && 
           !this.loading && 
           !this.loadingMore) {
-        console.log('🔔 Loading more notifications due to scroll');
+
         this.loadMore();
       }
     }, 100); // 100ms throttle

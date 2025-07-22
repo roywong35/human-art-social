@@ -34,10 +34,10 @@ export class PostRemovalDialogComponent implements OnInit, OnDestroy {
     // Configure dialog based on screen size
     this.resizeObserver = new ResizeObserver(entries => {
       const width = window.innerWidth;
-      console.log('🔔 ResizeObserver triggered, window width:', width);
+
       
       if (width < 688) {
-        console.log('🔔 Applying mobile full-screen configuration');
+
         dialogRef.updatePosition({ left: '0px', top: '0px' });
         dialogRef.updateSize('100vw', '100vh');
         dialogRef.removePanelClass('rounded-2xl');
@@ -55,11 +55,11 @@ export class PostRemovalDialogComponent implements OnInit, OnDestroy {
             dialogContainer.style.padding = '0';
             dialogContainer.style.width = '100vw';
             dialogContainer.style.height = '100vh';
-            console.log('🔔 Applied direct styles to dialog container');
+
           }
         }, 0);
       } else {
-        console.log('🔔 Applying desktop configuration');
+
         dialogRef.updatePosition();
         dialogRef.updateSize('600px', 'auto');
         dialogRef.addPanelClass('rounded-2xl');

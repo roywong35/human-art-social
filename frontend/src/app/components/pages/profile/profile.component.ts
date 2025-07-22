@@ -80,7 +80,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.postService.userPosts$.subscribe({
         next: (posts: Post[]) => {
-          console.log('📄 Profile received posts:', posts.length);
+
           if (!posts) {
             this.posts = [];
           } else {
@@ -107,7 +107,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.postService.userReplies$.subscribe({
         next: async (replies: Post[]) => {
-          console.log('📄 Profile received replies:', replies.length);
+
           if (!replies) {
             this.replies = [];
           } else {
@@ -142,7 +142,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     // Subscribe to route parameter changes
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const handle = params.get('handle');
-      console.log('ProfileComponent: Route params changed, handle:', handle);
+
       if (!handle) {
         this.error = 'Invalid profile URL';
         this.isLoading = false;
@@ -207,14 +207,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
       if (this.activeTab === 'posts') {
         if (scrollPosition >= scrollThreshold && !this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
-          console.log('📄 Triggering loadMorePosts');
+
           this.ngZone.run(() => {
             this.loadMorePosts();
           });
         }
       } else if (this.activeTab === 'replies') {
         if (scrollPosition >= scrollThreshold && !this.isLoadingMoreReplies && this.postService.hasMoreUserReplies) {
-          console.log('📄 Triggering loadMoreReplies');
+
           this.ngZone.run(() => {
             this.loadMoreReplies();
           });
@@ -227,7 +227,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   loadMorePosts(): void {
     if (!this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
-      console.log('📄 Loading more posts...');
+
       this.isLoadingMorePosts = true;
       this.cd.markForCheck();
       this.postService.loadMoreUserPosts();
@@ -236,7 +236,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   loadMoreReplies(): void {
     if (!this.isLoadingMoreReplies && this.postService.hasMoreUserReplies) {
-      console.log('📄 Loading more replies...');
+
       this.isLoadingMoreReplies = true;
       this.cd.markForCheck();
       this.postService.loadMoreUserReplies();
@@ -260,10 +260,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserProfile(handle: string): void {
-    console.log('ProfileComponent: Loading user profile for handle:', handle);
+
     this.userService.getUserByHandle(handle).subscribe({
       next: (user) => {
-        console.log('ProfileComponent: User profile loaded:', user);
+
         this.user = user;
         // Profile info is loaded, but tab content might still be loading
         this.isLoading = false;
@@ -345,7 +345,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
     
     this.currentHandle = handle;
-    console.log('📄 Loading posts for handle:', handle);
+
     
     // Just trigger the load - we're already subscribed to userPosts$ in constructor
     this.postService.getUserPosts(handle, true); // true = refresh
@@ -360,14 +360,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.replies = [];
     }
     
-    console.log('📄 Loading replies for handle:', handle);
+
     
     // Just trigger the load - we're already subscribed to userReplies$ in constructor
     this.postService.getUserReplies(handle, true); // true = refresh
   }
 
   private async buildParentChain(reply: Post) {
-    console.log('Building parent chain for reply:', reply.id);
+
     
     // Initialize empty chain for this reply
     this.replyParentChains[reply.id] = [];
@@ -376,14 +376,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (reply.conversation_chain && reply.conversation_chain.length > 0) {
       // Get all posts except the last one (which is the current reply)
       const chainIds = reply.conversation_chain.slice(0, -1);
-      console.log('Using conversation chain:', chainIds);
+
       
       for (const postId of chainIds) {
         try {
           // Use getPostById since parent posts can be from different users
           const chainPost = await this.postService.getPostById(postId).toPromise();
           if (chainPost) {
-            console.log('Added parent to chain:', chainPost.id);
+
             this.replyParentChains[reply.id].push(chainPost);
           }
         } catch (error) {
@@ -392,7 +392,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       }
     }
 
-    console.log('Final parent chain for reply', reply.id, ':', this.replyParentChains[reply.id].map(p => p.id));
+
   }
 
   private loadUserMedia(handle: string): void {

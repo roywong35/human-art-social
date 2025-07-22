@@ -70,8 +70,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.adjustTextareaHeight();
-    console.log('ngAfterViewInit called');
-    console.log('Post type:', this.post?.post_type);
+
     this.scrollToMainPost();
   }
 
@@ -187,23 +186,23 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   }
 
   loadPost() {
-    console.log('Loading post...');
+
     this.loading = true;
     this.error = '';
     
     if (this.postId && this.handle) {
       this.postService.getPost(this.handle, this.postId).subscribe({
         next: (post) => {
-          console.log('Post loaded:', post);
+
           this.post = post;
           this.loading = false;
           
           // Build parent chain if this is a reply
           if (post.post_type === 'reply') {
-            console.log('This is a reply post, building parent chain');
+
             this.buildParentChain(post);
           } else {
-            console.log('This is a main post, no parent chain needed');
+
             this.parentChain = [];
           }
           
@@ -226,7 +225,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   }
 
   private async buildParentChain(post: Post) {
-    console.log('Building parent chain for post:', post.id);
+
     
     // Clear existing chain
     this.parentChain = [];
@@ -235,14 +234,14 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
     if (post.conversation_chain && post.conversation_chain.length > 0) {
       // Get all posts except the last one (which is the current post)
       const chainIds = post.conversation_chain.slice(0, -1);
-      console.log('Using conversation chain:', chainIds);
+
       
       for (const postId of chainIds) {
         try {
           // Use getPostById instead of getPost since parent posts can be from different users
           const chainPost = await this.postService.getPostById(postId).toPromise();
           if (chainPost) {
-            console.log('Added parent to chain:', chainPost.id);
+
             this.parentChain.push(chainPost);
           }
         } catch (error) {
@@ -251,7 +250,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
       }
     }
 
-    console.log('Final parent chain:', this.parentChain.map(p => p.id));
+
   }
 
   getConnectingLineHeight(index: number): number {
@@ -274,25 +273,21 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   private scrollToMainPost() {
     // Only scroll if this is a reply post
     if (this.post?.post_type === 'reply') {
-      console.log('Post is a reply, attempting to scroll');
+
       
       const tryScroll = () => {
         if (!this.mainPostElement?.nativeElement) {
-          console.log('Main post element not found');
+
           return;
         }
 
         const element = this.mainPostElement.nativeElement;
         const rect = element.getBoundingClientRect();
-        console.log('Element position:', {
-          top: rect.top,
-          pageYOffset: window.pageYOffset,
-          elementOffsetTop: element.offsetTop
-        });
+
 
         const position = rect.top + window.pageYOffset;
         
-        console.log('Scrolling to position:', position);
+
         window.scrollTo({
           top: position,
           behavior: 'instant'
@@ -308,7 +303,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   }
 
   onPhotoClick(event: MouseEvent): void {
-    console.log('Photo click handler called');
+
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -319,7 +314,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
       const files = target.files;
       
       if (files) {
-        console.log('Files selected:', files);
+
         const newFiles = Array.from(files).slice(0, 4 - this.images.length);
         newFiles.forEach(file => {
           const id = Math.random().toString(36).substring(7);
@@ -329,7 +324,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
             preview: URL.createObjectURL(file)
           });
         });
-        console.log('Images array after adding:', this.images);
+
       }
     };
     

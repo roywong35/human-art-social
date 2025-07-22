@@ -7,18 +7,12 @@ User = get_user_model()
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        print(f"🔔 [NOTIFICATION CONSUMER] Connection attempt from user: {self.scope['user']}")
-        print(f"🔔 [NOTIFICATION CONSUMER] User type: {type(self.scope['user'])}")
-        print(f"🔔 [NOTIFICATION CONSUMER] User authenticated: {not self.scope['user'].is_anonymous}")
-        
         if self.scope["user"].is_anonymous:
-            print("❌ [NOTIFICATION CONSUMER] Rejecting anonymous user notification connection")
+            print("❌ Rejecting anonymous user notification connection")
             await self.close()
         else:
             self.user_id = str(self.scope["user"].id)
             self.room_group_name = f"notifications_{self.user_id}"
-            
-            print(f"👤 [NOTIFICATION CONSUMER] User {self.scope['user'].username} (ID: {self.user_id}) connecting to notifications: {self.room_group_name}")
 
             try:
                 # Join room group
@@ -27,23 +21,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     self.channel_name
                 )
                 await self.accept()
-                print(f"✅ [NOTIFICATION CONSUMER] WebSocket connection accepted for user {self.scope['user'].username}")
-                print(f"✅ [NOTIFICATION CONSUMER] User added to group: {self.room_group_name}")
+                print(f"✅ WebSocket connected: {self.scope['user'].username}")
             except Exception as e:
-                print(f"❌ [NOTIFICATION CONSUMER] Error during connection: {str(e)}")
+                print(f"❌ Error during connection: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 await self.close()
 
     async def disconnect(self, close_code):
-        print(f"🔔 Notification WebSocket disconnection: {close_code}")
         # Leave room group
         if hasattr(self, 'room_group_name'):
             await self.channel_layer.group_discard(
                 self.room_group_name,
                 self.channel_name
             )
-            print(f"👋 Left notification group: {self.room_group_name}")
+            print(f"👋 WebSocket disconnected: {self.scope['user'].username}")
 
     async def receive(self, text_data):
         """
@@ -73,20 +65,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         Receive notification from room group
         """
         message = event['message']
-        print(f"📤 [NOTIFICATION CONSUMER] Received notification for user {self.scope['user'].username}: {message}")
-        print(f"📤 [NOTIFICATION CONSUMER] Event: {event}")
-        print(f"📤 [NOTIFICATION CONSUMER] Notification type: {message.get('notification_type')}")
-        print(f"📤 [NOTIFICATION CONSUMER] Message ID: {message.get('id')}")
-        print(f"📤 [NOTIFICATION CONSUMER] Sender: {message.get('sender')}")
-        print(f"📤 [NOTIFICATION CONSUMER] Post ID: {message.get('post_id')}")
 
         try:
             # Send message to WebSocket
             await self.send(text_data=json.dumps(message))
-            print(f"📤 [NOTIFICATION CONSUMER] Successfully sent notification to WebSocket")
-            print(f"📤 [NOTIFICATION CONSUMER] Sent data: {json.dumps(message)}")
         except Exception as e:
-            print(f"❌ [NOTIFICATION CONSUMER] Error sending notification to WebSocket: {str(e)}")
+            print(f"❌ Error sending notification to WebSocket: {str(e)}")
             import traceback
             traceback.print_exc()
 

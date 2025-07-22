@@ -52,7 +52,7 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     // Subscribe to drafts
     this.subscriptions.add(
       this.draftService.drafts$.subscribe(drafts => {
-        console.log('Draft modal received drafts:', drafts);
+
         if (Array.isArray(drafts)) {
           this.drafts = drafts.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
         } else {
@@ -65,7 +65,7 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     // Subscribe to scheduled posts
     this.subscriptions.add(
       this.draftService.scheduledPosts$.subscribe(scheduledPosts => {
-        console.log('Draft modal received scheduled posts:', scheduledPosts);
+
         if (Array.isArray(scheduledPosts)) {
           this.scheduledPosts = scheduledPosts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         } else {
@@ -189,7 +189,7 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     this.selectedDraftIds.forEach(id => {
       this.draftService.deleteDraft(id).subscribe({
         next: () => {
-          console.log(`Draft ${id} deleted successfully`);
+
         },
         error: (error) => {
           console.error(`Error deleting draft ${id}:`, error);
@@ -203,7 +203,7 @@ export class DraftModalComponent implements OnInit, OnDestroy {
     this.selectedScheduledIds.forEach(id => {
       this.draftService.deleteScheduledPost(id).subscribe({
         next: () => {
-          console.log(`Scheduled post ${id} deleted successfully`);
+
         },
         error: (error) => {
           console.error(`Error deleting scheduled post ${id}:`, error);

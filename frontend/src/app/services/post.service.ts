@@ -55,13 +55,9 @@ export class PostService {
     private notificationService: NotificationService,
     private userService: UserService
   ) {
-    console.log('PostService constructor called');
-    
     // Listen for appeal_approved notifications to refresh timeline
     this.notificationService.notificationEvents$.subscribe(notification => {
-      console.log('📨 PostService received notification:', notification.notification_type);
       if (notification.notification_type === 'appeal_approved') {
-        console.log('🔄 Appeal approved notification received, refreshing timeline');
         // Refresh the timeline to show the restored post
         this.refreshTimeline();
         this.toastService.showSuccess('Your post has been restored to your timeline');
@@ -223,8 +219,6 @@ export class PostService {
   }
 
   getUserPosts(handle: string, refresh: boolean = false): void {
-    console.log('📄 getUserPosts called:', { handle, refresh, currentHandle: this.currentUserHandle });
-
     // Reset pagination if it's a new user or refresh
     if (refresh || this.currentUserHandle !== handle) {
       this.userPostsCurrentPage = 1;
@@ -236,20 +230,16 @@ export class PostService {
 
     // If we already have all posts cached, do client-side pagination
     if (this.allUserPosts.length > 0) {
-      console.log('📄 Using cached posts for pagination');
       this.loadMoreFromCache();
       return;
     }
 
     this.userPostsLoading = true;
-    console.log('📄 Loading posts with fast-first strategy for handle:', handle);
     
     const params = new HttpParams();
 
     this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/posts/`, { params }).subscribe({
       next: (rawPosts) => {
-        console.log('📄 Received raw posts from API:', rawPosts.length);
-        
         // FAST PATH: Process and show first 20 posts immediately
         const firstBatch = rawPosts.slice(0, this.postsPerPage);
         const processedFirstBatch = firstBatch.map((post: Post) => this.addImageUrls(post));
@@ -259,16 +249,8 @@ export class PostService {
         this.userPostsLoading = false;
         this.userPostsHasMore = rawPosts.length > this.postsPerPage;
         
-        console.log(`📄 First batch shown instantly for ${handle}:`, {
-          batchSize: processedFirstBatch.length,
-          totalPosts: rawPosts.length,
-          hasMore: this.userPostsHasMore
-        });
-        
         // BACKGROUND: Process remaining posts asynchronously
         if (rawPosts.length > this.postsPerPage) {
-          console.log('📄 Processing remaining posts in background...');
-          
           // Use setTimeout to process remaining posts without blocking UI
           setTimeout(() => {
             const remainingPosts = rawPosts.slice(this.postsPerPage);
@@ -276,11 +258,6 @@ export class PostService {
             
             // Store all processed posts for pagination
             this.allUserPosts = [...processedFirstBatch, ...processedRemaining];
-            
-            console.log('📄 Background processing complete:', {
-              totalProcessed: this.allUserPosts.length,
-              backgroundProcessed: processedRemaining.length
-            });
           }, 100); // Small delay to let UI render
         } else {
           // All posts fit in first batch
@@ -296,15 +273,7 @@ export class PostService {
   }
 
   private loadMoreFromCache(): void {
-    console.log('📄 loadMoreFromCache called:', {
-      loading: this.userPostsLoading,
-      hasMore: this.userPostsHasMore,
-      currentPosts: this.userPosts.getValue().length,
-      totalCached: this.allUserPosts.length
-    });
-
     if (this.userPostsLoading || !this.userPostsHasMore) {
-      console.log('📄 Skipping loadMoreFromCache - already loading or no more posts');
       return;
     }
 
@@ -324,30 +293,14 @@ export class PostService {
       this.userPostsHasMore = newPosts.length < this.allUserPosts.length;
       this.userPostsLoading = false;
       
-      console.log(`📄 Loaded more posts from cache:`, {
-        newPostsCount: nextPagePosts.length,
-        totalShowing: newPosts.length,
-        totalAvailable: this.allUserPosts.length,
-        hasMore: this.userPostsHasMore,
-        startIndex,
-        endIndex
-      });
+
     }, 300); // Small delay to show loading state
   }
 
   loadMoreUserPosts(): void {
-    console.log('📄 loadMoreUserPosts called in service:', {
-      loading: this.userPostsLoading,
-      hasMore: this.userPostsHasMore,
-      currentPage: this.userPostsCurrentPage
-    });
-
     if (!this.userPostsLoading && this.userPostsHasMore) {
       this.userPostsCurrentPage++;
-      console.log('📄 Incremented page to:', this.userPostsCurrentPage);
       this.loadMoreFromCache();
-    } else {
-      console.log('📄 Cannot load more - already loading or no more posts');
     }
   }
 
@@ -361,15 +314,7 @@ export class PostService {
   }
 
   private loadMoreRepliesFromCache(): void {
-    console.log('📄 loadMoreRepliesFromCache called:', {
-      loading: this.userRepliesLoading,
-      hasMore: this.userRepliesHasMore,
-      currentReplies: this.userReplies.getValue().length,
-      totalCached: this.allUserReplies.length
-    });
-
     if (this.userRepliesLoading || !this.userRepliesHasMore) {
-      console.log('📄 Skipping loadMoreRepliesFromCache - already loading or no more replies');
       return;
     }
 
@@ -388,31 +333,13 @@ export class PostService {
       // Check if there are more replies to show
       this.userRepliesHasMore = newReplies.length < this.allUserReplies.length;
       this.userRepliesLoading = false;
-      
-      console.log(`📄 Loaded more replies from cache:`, {
-        newRepliesCount: nextPageReplies.length,
-        totalShowing: newReplies.length,
-        totalAvailable: this.allUserReplies.length,
-        hasMore: this.userRepliesHasMore,
-        startIndex,
-        endIndex
-      });
     }, 300);
   }
 
   loadMoreUserReplies(): void {
-    console.log('📄 loadMoreUserReplies called in service:', {
-      loading: this.userRepliesLoading,
-      hasMore: this.userRepliesHasMore,
-      currentPage: this.userRepliesCurrentPage
-    });
-
     if (!this.userRepliesLoading && this.userRepliesHasMore) {
       this.userRepliesCurrentPage++;
-      console.log('📄 Incremented replies page to:', this.userRepliesCurrentPage);
       this.loadMoreRepliesFromCache();
-    } else {
-      console.log('📄 Cannot load more replies - already loading or no more replies');
     }
   }
 
@@ -468,12 +395,7 @@ export class PostService {
   }
 
   likePost(handle: string, postId: number): Observable<{liked: boolean}> {
-    console.log('[PostService] Like post called:', { handle, postId });
-    return this.http.post<{liked: boolean}>(`${this.baseUrl}/posts/${handle}/${postId}/like/`, {}).pipe(
-      tap(response => {
-        console.log('[PostService] Like API response:', response);
-      })
-    );
+    return this.http.post<{liked: boolean}>(`${this.baseUrl}/posts/${handle}/${postId}/like/`, {});
   }
 
   repost(handle: string, postId: number): Observable<Post> {
@@ -525,12 +447,7 @@ export class PostService {
   }
 
   bookmarkPost(handle: string, postId: number): Observable<void> {
-    console.log('[PostService] Bookmark post called:', { handle, postId });
-    return this.http.post<void>(`${this.baseUrl}/posts/${handle}/${postId}/bookmark/`, {}).pipe(
-      tap(() => {
-        console.log('[PostService] Bookmark API call successful');
-      })
-    );
+    return this.http.post<void>(`${this.baseUrl}/posts/${handle}/${postId}/bookmark/`, {});
   }
 
   deletePost(handle: string, postId: number): Observable<any> {
@@ -573,7 +490,6 @@ export class PostService {
   refreshTimeline() {
     // Use the same loading mechanism as normal timeline loading
     // This ensures proper handling of tabs, user preferences, and filtering
-    console.log('🔄 Refreshing timeline with current settings');
     this.loadPosts(true);
   }
 
@@ -587,26 +503,8 @@ export class PostService {
   createReplyWithFormData(handle: string, postId: number, formData: FormData): Observable<Post> {
     const url = `${this.baseUrl}/posts/${handle}/${postId}/replies/`;
     
-    // Log FormData contents
-    console.log('FormData contents:');
-    formData.forEach((value, key) => {
-      console.log(`${key}:`, value);
-      if (value instanceof File) {
-        console.log(`${key} is a File:`, {
-          name: value.name,
-          type: value.type,
-          size: value.size
-        });
-      }
-    });
-
-    console.log('Making request to:', url);
-    
     return this.http.post<Post>(url, formData).pipe(
-      map(post => this.addImageUrls(post)),
-      tap(post => {
-        console.log('Response from server:', post);
-      })
+      map(post => this.addImageUrls(post))
     );
   }
 
@@ -622,31 +520,10 @@ export class PostService {
           return;
         }
         
-        // Log file details
-        console.log(`Appending file ${index}:`, {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          isFile: file instanceof File
-        });
-        
         formData.append(`image_${index}`, file);
       });
     }
 
-    // Log FormData contents
-    console.log('FormData contents before sending:');
-    formData.forEach((value, key) => {
-      console.log(`${key}:`, value);
-      if (value instanceof File) {
-        console.log(`${key} is a File:`, {
-          name: value.name,
-          type: value.type,
-          size: value.size
-        });
-      }
-    });
-    console.log("formData1111: ", formData);
     return this.http.post<Post>(`${this.baseUrl}/posts/${handle}/${postId}/replies/`, formData).pipe(
       map(post => this.addImageUrls(post))
     );
@@ -656,42 +533,30 @@ export class PostService {
     // Create a new post object to avoid mutations
     const processedPost = { ...post };
     
-    console.log('Processing post images for post:', post.id);
-    console.log('Raw post images:', post.images);
-    
     if (processedPost.image) {
-      console.log('Single image before processing:', processedPost.image);
       if (!processedPost.image.startsWith('http') && !processedPost.image.startsWith('data:')) {
         const imagePath = processedPost.image.startsWith('/') ? processedPost.image : `/${processedPost.image}`;
         processedPost.image = `${this.baseUrl}${imagePath}`;
-        console.log('Single image after processing:', processedPost.image);
       }
     }
     
     if (processedPost.author?.profile_picture) {
-      console.log('Profile picture before processing:', processedPost.author.profile_picture);
       if (!processedPost.author.profile_picture.startsWith('http') && !processedPost.author.profile_picture.startsWith('data:')) {
         const profilePath = processedPost.author.profile_picture.startsWith('/') ? processedPost.author.profile_picture : `/${processedPost.author.profile_picture}`;
         processedPost.author = {
           ...processedPost.author,
           profile_picture: `${this.baseUrl}${profilePath}`
         };
-        console.log('Profile picture after processing:', processedPost.author.profile_picture);
       }
     }
 
     if (processedPost.images) {
-      console.log('Processing multiple images:', processedPost.images);
       processedPost.images = processedPost.images.map(image => {
-        console.log('Processing image:', image);
-        const processedImage = {
+        return {
           ...image,
           image: !image.image.startsWith('http') ? `${this.baseUrl}${image.image.startsWith('/') ? image.image : `/${image.image}`}` : image.image
         };
-        console.log('Processed image:', processedImage);
-        return processedImage;
       });
-      console.log('Final processed images:', processedPost.images);
     }
 
     return processedPost;
@@ -761,23 +626,16 @@ export class PostService {
   // Add new method to filter posts based on active tab
   private filterPostsByTab(posts: Post[]): Post[] {
     const activeTab = localStorage.getItem('activeTab') || 'for-you';
-    console.log('Filtering posts for tab:', activeTab);
     
     if (activeTab === 'human-drawing') {
       // For Human Art tab, only show verified human drawings
-      console.log('Filtering for human art posts...');
       const humanArtPosts = posts.filter(post => {
-        console.log('Post:', post.id, 'is_human_drawing:', post.is_human_drawing, 'is_verified:', post.is_verified);
         return post.is_human_drawing === true && post.is_verified === true;
       });
-      console.log('Verified human art posts found:', humanArtPosts.length);
       return humanArtPosts;
     } else {
       // For For You tab, show all posts including unverified human art
-      console.log('Filtering for For You tab...');
-      const forYouPosts = posts;
-      console.log('For You posts found:', forYouPosts.length);
-      return forYouPosts;
+      return posts;
     }
   }
 
@@ -822,8 +680,6 @@ export class PostService {
   }
 
   getUserReplies(handle: string, refresh: boolean = false): void {
-    console.log('📄 getUserReplies called:', { handle, refresh });
-
     // Reset pagination if it's a new user or refresh
     if (refresh || this.currentUserHandle !== handle) {
       this.userRepliesCurrentPage = 1;
@@ -833,39 +689,27 @@ export class PostService {
 
     // If we already have all replies cached, do client-side pagination
     if (this.allUserReplies.length > 0) {
-      console.log('📄 Using cached replies for pagination');
       this.loadMoreRepliesFromCache();
       return;
     }
 
     this.userRepliesLoading = true;
-    console.log('📄 Loading replies from API for handle:', handle);
 
     this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/replies/`).pipe(
       map((replies: Post[]) => replies.map((reply: Post) => this.addImageUrls(reply)))
     ).subscribe({
       next: (replies) => {
-        console.log('📄 Received replies from API:', replies.length);
-        
         // Store all replies for client-side pagination  
         this.allUserReplies = replies.filter(post => post.post_type === 'reply');
         
         // Load first page (20 replies)
         const firstPageReplies = this.allUserReplies.slice(0, this.postsPerPage);
-        console.log('📄 Sending first page replies to component:', firstPageReplies.length);
         
         this.userReplies.next(firstPageReplies);
         
         // Set hasMore based on whether there are more replies to show
         this.userRepliesHasMore = this.allUserReplies.length > this.postsPerPage;
         this.userRepliesLoading = false;
-        
-        console.log(`📄 Loaded user replies for ${handle} (client-side pagination):`, {
-          totalAvailable: this.allUserReplies.length,
-          currentlyShowing: firstPageReplies.length,
-          hasMore: this.userRepliesHasMore,
-          currentPage: this.userRepliesCurrentPage
-        });
       },
       error: (error) => {
         console.error('Error loading user replies:', error);

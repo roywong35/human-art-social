@@ -95,16 +95,11 @@ export class DraftService {
   ) {
     // Listen to authentication state changes and load data when user is authenticated
     this.authService.currentUser$.subscribe(user => {
-      console.log('DraftService - User state changed:', user ? `User ${user.username}` : 'No user');
-      console.log('DraftService - isAuthenticated():', this.authService.isAuthenticated());
-      console.log('DraftService - localStorage token:', !!localStorage.getItem('access_token'));
       
       if (user) {
-        console.log('DraftService - User exists, loading drafts and scheduled posts');
         this.loadDrafts();
         this.loadScheduledPosts();
       } else {
-        console.log('DraftService - No user, clearing drafts and scheduled posts');
         this.draftsSubject.next([]);
         this.scheduledPostsSubject.next([]);
       }
@@ -386,19 +381,16 @@ export class DraftService {
 
   // Public method to manually reload drafts (useful for debugging)
   public reloadData(): void {
-    console.log('DraftService - Manual reload requested');
     this.loadDrafts();
     this.loadScheduledPosts();
   }
 
   // Private Methods
   private loadDrafts(): void {
-    console.log('DraftService - Loading drafts from:', `${this.baseUrl}/drafts/`);
     this.http.get<any>(`${this.baseUrl}/drafts/`).pipe(
       map(response => {
         // Handle both paginated and array responses
         if (response && typeof response === 'object' && 'results' in response) {
-          console.log('DraftService - Received paginated response, extracting results');
           return response.results || [];
         }
         return Array.isArray(response) ? response : [];
@@ -408,18 +400,15 @@ export class DraftService {
         return of([]);
       })
     ).subscribe(drafts => {
-        console.log('DraftService - Loaded drafts:', drafts.length, 'drafts');
         this.draftsSubject.next(drafts);
     });
   }
 
   private loadScheduledPosts(): void {
-    console.log('DraftService - Loading scheduled posts from:', `${this.baseUrl}/scheduled-posts/`);
     this.http.get<any>(`${this.baseUrl}/scheduled-posts/`).pipe(
       map(response => {
         // Handle both paginated and array responses
         if (response && typeof response === 'object' && 'results' in response) {
-          console.log('DraftService - Received paginated response, extracting results');
           return response.results || [];
         }
         return Array.isArray(response) ? response : [];
@@ -429,7 +418,6 @@ export class DraftService {
         return of([]);
       })
     ).subscribe(scheduledPosts => {
-        console.log('DraftService - Loaded scheduled posts:', scheduledPosts.length, 'posts');
         this.scheduledPostsSubject.next(scheduledPosts);
     });
   }

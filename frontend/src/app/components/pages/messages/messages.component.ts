@@ -143,7 +143,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   loadConversation(conversationId: string) {
     const numericId = parseInt(conversationId, 10);
     
-    console.log('🔄 Loading conversation', numericId, '- applying smooth transition');
+
     
     // CRITICAL FIX: Clear previous conversation state immediately to prevent flash
     this.selectedConversation = null;
@@ -160,7 +160,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
     
     if (cachedData.conversation && cachedData.messages) {
       // INSTANT OPENING from cache - like X/Twitter!
-      console.log('⚡ Opening conversation', numericId, 'instantly from cache');
+
       
       setTimeout(() => {
         this.selectedConversation = cachedData.conversation;
@@ -173,11 +173,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
         // Mark conversation as read
         this.markConversationAsRead(numericId);
         
-        console.log('🚀 Conversation opened instantly from cache!');
+
       }, 50); // Minimal delay for clean transition
     } else {
       // Fallback to API if not cached
-      console.log('⏳ Cache miss, loading from API');
+
       this.loadConversationFromAPI(numericId);
     }
   }
@@ -210,7 +210,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   selectConversation(conversation: Conversation) {
-    console.log('🔄 Selecting conversation', conversation.id, 'via router navigation');
+
     
     // Show immediate loading feedback in the UI
     this.isLoadingConversation = true;
@@ -223,7 +223,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.chatService.markConversationAsRead(conversationId).subscribe({
       next: () => {
         // The ChatService will automatically update the conversations observable
-        console.log('Conversation marked as read:', conversationId);
+
       },
       error: (error) => {
         console.error('Error marking conversation as read:', error);

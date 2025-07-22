@@ -194,31 +194,9 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
       formData.append('scheduled_time', this.scheduledTime.toISOString());
     }
 
-    console.log('Submitting post with files:', this.evidenceFiles);
-    console.log('Art file details:', {
-      name: this.artFile.name,
-      type: this.artFile.type,
-      size: this.artFile.size
-    });
-    console.log('Evidence files details:', this.evidenceFiles.map(file => ({
-      name: file.name,
-      type: file.file.type,
-      size: file.file.size
-    })));
 
-    // Log FormData contents
-    console.log('FormData contents:');
-    formData.forEach((value, key) => {
-      if (value instanceof File) {
-        console.log(`${key}:`, {
-          name: value.name,
-          type: value.type,
-          size: value.size
-        });
-      } else {
-        console.log(`${key}:`, value);
-      }
-    });
+
+
 
     try {
       await this.postService.createPostWithFormData(formData).toPromise();

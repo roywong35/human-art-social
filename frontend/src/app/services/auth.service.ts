@@ -253,7 +253,6 @@ export class AuthService {
 
     const tokenData = this.decodeToken(this.accessToken);
     if (!tokenData || !tokenData.exp) {
-      console.log('⚠️ Token missing expiry, using default refresh interval');
       // Fallback: refresh every 15 minutes if no expiry info
       this.scheduleRefresh(15 * 60 * 1000);
       return;
@@ -264,14 +263,10 @@ export class AuthService {
     const timeUntilExpiry = expiry - now;
     const refreshTime = timeUntilExpiry - this.REFRESH_BEFORE_EXPIRY;
 
-    console.log(`🔄 Token expires at ${new Date(expiry).toLocaleTimeString()}`);
-    console.log(`🕐 Scheduling refresh in ${Math.round(refreshTime / 60000)} minutes`);
-
     if (refreshTime > 0) {
       this.scheduleRefresh(refreshTime);
     } else {
       // Token expires soon, refresh immediately
-      console.log('⚡ Token expires soon, refreshing immediately');
       this.refreshAccessToken().subscribe({
         next: () => console.log('✅ Immediate token refresh successful'),
         error: (error) => console.error('❌ Immediate token refresh failed:', error)
@@ -287,7 +282,6 @@ export class AuthService {
       console.log('🔄 Proactive token refresh triggered');
       this.refreshAccessToken().subscribe({
         next: () => {
-          console.log('✅ Proactive token refresh successful');
           this.setupProactiveRefresh(); // Schedule next refresh
         },
         error: (error) => {

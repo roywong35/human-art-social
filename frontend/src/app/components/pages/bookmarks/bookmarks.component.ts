@@ -51,7 +51,7 @@ export class BookmarksComponent implements OnInit {
 
   // Handle post bookmark update
   onPostBookmarkUpdate(event: any) {
-    console.log('Post bookmark update:', event);
+
     if (!event.is_bookmarked) {
       this.removeFromBookmarks('post', event.id);
     }
@@ -59,7 +59,7 @@ export class BookmarksComponent implements OnInit {
 
   // Handle comment bookmark update
   onCommentBookmarkUpdate(event: any) {
-    console.log('Comment bookmark update:', event);
+
     if (!event.is_bookmarked) {
       this.removeFromBookmarks('comment', event.id);
     }
@@ -71,21 +71,17 @@ export class BookmarksComponent implements OnInit {
     
     this.bookmarkService.getBookmarkedPosts().subscribe({
       next: (posts) => {
-        console.log('Received posts:', posts);
+
         
         // Create a combined list of bookmarked items
         this.bookmarkedItems = [];
         
         posts.forEach(post => {
-          console.log('Processing post:', {
-            id: post.id,
-            is_bookmarked: post.is_bookmarked,
-            bookmarked_comments: (post as any).bookmarked_comments?.length || 0
-          });
+
           
           // Only add posts that are explicitly bookmarked by the user
           if (post.is_bookmarked === true) {
-            console.log('Adding bookmarked post:', post.id);
+
             this.bookmarkedItems.push({
               type: 'post',
               item: post,
@@ -96,7 +92,7 @@ export class BookmarksComponent implements OnInit {
           // Add bookmarked comments
           const comments = (post as any).bookmarked_comments || [];
           if (comments.length > 0) {
-            console.log(`Adding ${comments.length} bookmarked comments for post:`, post.id);
+
           }
           comments.forEach((comment: any) => {
             // Ensure the comment has the post ID
@@ -114,12 +110,7 @@ export class BookmarksComponent implements OnInit {
           new Date(b.bookmarked_at).getTime() - new Date(a.bookmarked_at).getTime()
         );
 
-        console.log('Final bookmarked items:', this.bookmarkedItems.map(item => ({
-          type: item.type,
-          id: item.item.id,
-          post_id: item.type === 'comment' ? item.item.post_id : null,
-          bookmarked_at: item.bookmarked_at
-        })));
+
         
         this.loading = false;
       },

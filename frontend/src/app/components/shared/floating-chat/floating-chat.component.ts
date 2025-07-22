@@ -56,17 +56,17 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     // Get current user
     this.currentUserSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      console.log('FloatingChat - Current user changed:', user ? `User ${user.username}` : 'No user');
+
       
       // Debug authentication state
       this.debugAuthState();
       
       // Only load conversations if user is authenticated
       if (user && this.authService.isAuthenticated()) {
-        console.log('FloatingChat - Loading conversations for authenticated user');
+
         this.chatService.loadConversations();
       } else {
-        console.log('FloatingChat - User not authenticated, clearing conversations');
+
         // Clear conversations if user logs out
         this.conversations = [];
         this.selectedConversation = null;
@@ -92,16 +92,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     const refreshToken = localStorage.getItem('refresh_token');
     const storedUser = localStorage.getItem('user');
     
-    console.log('🔍 Auth Debug State:', {
-      hasAccessToken: !!accessToken,
-      hasRefreshToken: !!refreshToken,
-      hasStoredUser: !!storedUser,
-      isAuthenticated: this.authService.isAuthenticated(),
-      currentUser: this.currentUser?.username || 'None',
-      tokenFromService: !!this.authService.getToken(),
-      accessTokenLength: accessToken?.length || 0,
-      accessTokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : 'None'
-    });
+
   }
 
   ngOnDestroy() {
@@ -139,7 +130,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('⚡ X-style: Opening conversation', conversation.id, 'instantly');
+
     
     // CRITICAL FIX: Clear previous conversation state immediately to prevent flash
     this.selectedConversation = null;
@@ -168,11 +159,11 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
         // Mark conversation as read
         this.markConversationAsRead(conversation.id);
         
-        console.log('🚀 Conversation opened instantly from cache!');
+
       }, 50); // Minimal delay for clean transition
     } else {
       // Fallback to API if not cached (shouldn't happen often)
-      console.log('⏳ Cache miss, falling back to API');
+
       this.loadConversationFromAPI(conversation);
     }
   }
@@ -213,7 +204,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
   }
 
   private refreshAuthAndRetry(conversation: Conversation) {
-    console.log('Attempting to refresh authentication...');
+
     
     // Check if we have tokens in localStorage
     const hasTokens = localStorage.getItem('access_token') && localStorage.getItem('refresh_token');
@@ -227,7 +218,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     // Try to load user from auth service
     this.authService.loadUser().subscribe({
       next: () => {
-        console.log('Auth refresh successful, retrying conversation load');
+
         // Retry with API fallback
         this.loadConversationFromAPI(conversation);
       },
@@ -245,7 +236,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       this.chatService.clearMessages();
       this.selectedConversation = null;
       
-      console.log('🔙 Chat room closed, state cleared');
+
     }
     this.isLoadingConversation = false;
     this.currentView = 'list';
@@ -254,7 +245,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
   private markConversationAsRead(conversationId: number) {
     this.chatService.markConversationAsRead(conversationId).subscribe({
       next: () => {
-        console.log('Conversation marked as read:', conversationId);
+
       },
       error: (error) => {
         console.error('Error marking conversation as read:', error);
@@ -369,7 +360,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
   // Dark mode detection methods
   private checkDarkMode(): void {
     this.isDarkMode = document.documentElement.classList.contains('dark');
-    console.log('FloatingChat - Dark mode detected:', this.isDarkMode);
+
   }
 
   private observeDarkModeChanges(): void {
@@ -378,7 +369,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       const newDarkMode = document.documentElement.classList.contains('dark');
       if (newDarkMode !== this.isDarkMode) {
         this.isDarkMode = newDarkMode;
-        console.log('FloatingChat - Dark mode changed to:', this.isDarkMode);
+
       }
     });
 

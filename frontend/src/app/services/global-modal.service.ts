@@ -21,7 +21,6 @@ export class GlobalModalService {
   modalState$ = this.modalState.asObservable();
 
   showUserPreview(user: User, position: { x: number, y: number }): void {
-    console.log('🎯 GlobalModalService: Showing user preview for', user.username, 'at', position);
     this.modalState.next({
       isVisible: true,
       user,
@@ -34,8 +33,6 @@ export class GlobalModalService {
    * Uses provided user data which now includes bio from public posts endpoint
    */
   showUserPreviewAccurate(user: User, targetElement: Element): void {
-    console.log('🎯 GlobalModalService: Preparing accurate positioning for', user.username, 'bio:', user.bio?.substring(0, 50) || 'No bio');
-    
     // Use the provided user data directly (which now includes bio from public posts)
     this.modalState.next({
       isVisible: true,
@@ -58,22 +55,6 @@ export class GlobalModalService {
         const modalRect = modalElement.getBoundingClientRect();
         const targetRect = targetElement.getBoundingClientRect();
         
-        console.log('🔧 Accurate positioning: Measured dimensions:', {
-          modalWidth: modalRect.width,
-          modalHeight: modalRect.height,
-          targetRect: {
-            left: targetRect.left,
-            top: targetRect.top,
-            width: targetRect.width,
-            height: targetRect.height
-          },
-          targetElement: {
-            tagName: targetElement.tagName,
-            className: targetElement.className,
-            textContent: targetElement.textContent?.substring(0, 20) + '...'
-          }
-        });
-        
         // Calculate perfect position with actual dimensions and element type
         const perfectPosition = this.calculateOptimalPositionFromRectWithElement(
           targetRect, 
@@ -82,8 +63,6 @@ export class GlobalModalService {
           modalRect.height
         );
         
-        console.log('🎯 Accurate positioning: Perfect position calculated:', perfectPosition);
-        
         // Show modal at perfect position with user data (already includes bio!)
         modalElement.style.visibility = 'visible';
         this.modalState.next({
@@ -91,14 +70,11 @@ export class GlobalModalService {
           user, // User data already includes bio from public posts endpoint
           position: perfectPosition
         });
-        
-        console.log('✅ Modal positioned perfectly with user data including bio!');
       }
     }, 16); // One frame delay to ensure rendering
   }
 
   hideUserPreview(): void {
-    console.log('🎯 GlobalModalService: Hiding user preview');
     this.modalState.next({
       isVisible: false,
       user: null,
@@ -108,7 +84,6 @@ export class GlobalModalService {
 
   onModalHover(): void {
     // Keep modal visible when hovering over it
-    console.log('🎯 GlobalModalService: Modal hover detected');
   }
 
   getCurrentState(): UserPreviewModalState {
@@ -123,22 +98,7 @@ export class GlobalModalService {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    console.log('🔧 DEBUG: Starting position calculation with:', {
-      assumedModalWidth: modalWidth,
-      assumedModalHeight: modalHeight,
-      targetElement: {
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height
-      },
-      viewport: {
-        width: viewportWidth,
-        height: viewportHeight
-      }
-    });
+
     
     // Calculate horizontal center alignment with enhanced text element detection
     const targetElement = event.target as Element;
@@ -154,11 +114,6 @@ export class GlobalModalService {
     if (isTextSpan) {
       // BEST: Use actual span dimensions for pixel-perfect positioning!
       targetCenterX = rect.left + rect.width / 2;
-      console.log('🎯 PERFECT: Initial calc using actual text span dimensions:', {
-        textContent: targetElement.textContent?.substring(0, 20),
-        actualTextWidth: rect.width,
-        perfectCenter: targetCenterX
-      });
     } else if (isTextElement) {
       // FALLBACK: Estimate text width for divs (legacy support)
       const expectedTextWidthInit = targetElement.textContent ? targetElement.textContent.length * 15 : 0;
@@ -167,23 +122,12 @@ export class GlobalModalService {
       if (hasFlexGrow || isUnusuallyWideInit) {
         const estimatedTextWidth = Math.min(targetElement.textContent!.length * 15, 250);
         targetCenterX = rect.left + estimatedTextWidth / 2;
-        
-        console.log('🔧 FALLBACK: Initial calc using estimated text width:', {
-          textContent: targetElement.textContent?.substring(0, 20),
-          estimatedTextWidth,
-          originalCenter: rect.left + rect.width / 2,
-          adjustedCenter: targetCenterX,
-          hasFlexGrow: hasFlexGrow,
-          isUnusuallyWide: isUnusuallyWideInit,
-          expectedTextWidth: expectedTextWidthInit
-        });
       } else {
         targetCenterX = rect.left + rect.width / 2;
       }
     } else {
       // DEFAULT: Use element center (images, buttons, etc.)
       targetCenterX = rect.left + rect.width / 2;
-      console.log('🔧 DEFAULT: Initial calc using element center');
     }
     
     let x = targetCenterX - modalWidth / 2;
@@ -192,13 +136,7 @@ export class GlobalModalService {
     const spaceAbove = rect.top;
     const spaceBelow = viewportHeight - rect.bottom;
     
-    console.log('🔧 DEBUG: Space calculation:', {
-      spaceAbove: spaceAbove,
-      spaceBelow: spaceBelow,
-      requiredSpace: modalHeight + 16,
-      canFitAbove: spaceAbove >= modalHeight + 16,
-      canFitBelow: spaceBelow >= modalHeight + 16
-    });
+
     
     let y: number;
     let chosenPosition: string;
@@ -219,12 +157,6 @@ export class GlobalModalService {
       // Show below - modal top edge touches element bottom edge (fallback)
       y = rect.bottom;
       chosenPosition = 'below (fallback)';
-      console.log('🔧 DEBUG: Positioning BELOW:', {
-        elementBottom: rect.bottom,
-        calculatedY: y,
-        modalBottom: y + modalHeight,
-        gapBetweenElementAndModal: y - rect.bottom
-      });
     } else {
       // Not enough space above or below, choose the side with more space
       if (spaceAbove > spaceBelow) {
@@ -234,12 +166,6 @@ export class GlobalModalService {
           y = 8;
         }
         chosenPosition = 'above (clamped)';
-        console.log('🔧 DEBUG: Positioning ABOVE (clamped):', {
-          elementTop: rect.top,
-          modalHeight: modalHeight,
-          calculatedY: y,
-          wasClamped: (rect.top - modalHeight) < 8
-        });
       } else {
         // Show below but clamp to viewport
         y = rect.bottom;
@@ -247,12 +173,6 @@ export class GlobalModalService {
           y = viewportHeight - modalHeight - 8;
         }
         chosenPosition = 'below (clamped)';
-        console.log('🔧 DEBUG: Positioning BELOW (clamped):', {
-          elementBottom: rect.bottom,
-          calculatedY: y,
-          modalBottom: y + modalHeight,
-          wasClamped: (rect.bottom + modalHeight) > (viewportHeight - 8)
-        });
       }
     }
     
@@ -263,15 +183,7 @@ export class GlobalModalService {
       x = viewportWidth - modalWidth - 8;
     }
     
-    console.log('🎯 FINAL position calculated:', {
-      targetRect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height, bottom: rect.bottom },
-      targetCenterX,
-      modalPosition: { x, y },
-      spaceAbove,
-      spaceBelow,
-      positioning: chosenPosition,
-      assumedModalDimensions: { width: modalWidth, height: modalHeight }
-    });
+
     
     return { x, y };
   }
@@ -283,23 +195,6 @@ export class GlobalModalService {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    console.log('🔧 DEBUG: Recalculating position from rect with:', {
-      modalWidth: modalWidth,
-      modalHeight: modalHeight,
-      targetElement: {
-        left: targetRect.left,
-        top: targetRect.top,
-        right: targetRect.right,
-        bottom: targetRect.bottom,
-        width: targetRect.width,
-        height: targetRect.height
-      },
-      viewport: {
-        width: viewportWidth,
-        height: viewportHeight
-      }
-    });
-    
     // Calculate horizontal center alignment
     const targetCenterX = targetRect.left + targetRect.width / 2;
     let x = targetCenterX - modalWidth / 2;
@@ -307,14 +202,6 @@ export class GlobalModalService {
     // Check space above and below
     const spaceAbove = targetRect.top;
     const spaceBelow = viewportHeight - targetRect.bottom;
-    
-    console.log('🔧 DEBUG: Space recalculation:', {
-      spaceAbove: spaceAbove,
-      spaceBelow: spaceBelow,
-      requiredSpace: modalHeight + 16,
-      canFitAbove: spaceAbove >= modalHeight + 16,
-      canFitBelow: spaceBelow >= modalHeight + 16
-    });
     
     let y: number;
     let chosenPosition: string;
@@ -324,23 +211,10 @@ export class GlobalModalService {
       // Show above - modal bottom edge touches element top edge (preferred)
       y = targetRect.top - modalHeight;
       chosenPosition = 'above (preferred)';
-      console.log('🔧 DEBUG: Repositioning ABOVE:', {
-        elementTop: targetRect.top,
-        modalHeight: modalHeight,
-        calculatedY: y,
-        modalBottom: y + modalHeight,
-        gapBetweenModalAndElement: targetRect.top - (y + modalHeight)
-      });
     } else if (spaceBelow >= modalHeight + 16) {
       // Show below - modal top edge touches element bottom edge (fallback)
       y = targetRect.bottom;
       chosenPosition = 'below (fallback)';
-      console.log('🔧 DEBUG: Repositioning BELOW:', {
-        elementBottom: targetRect.bottom,
-        calculatedY: y,
-        modalBottom: y + modalHeight,
-        gapBetweenElementAndModal: y - targetRect.bottom
-      });
     } else {
       // Not enough space above or below, choose the side with more space
       if (spaceAbove > spaceBelow) {
@@ -367,16 +241,6 @@ export class GlobalModalService {
       x = viewportWidth - modalWidth - 8;
     }
     
-    console.log('🎯 RECALCULATED position:', {
-      targetRect: { left: targetRect.left, top: targetRect.top, width: targetRect.width, height: targetRect.height, bottom: targetRect.bottom },
-      targetCenterX,
-      modalPosition: { x, y },
-      spaceAbove,
-      spaceBelow,
-      positioning: chosenPosition,
-      actualModalDimensions: { width: modalWidth, height: modalHeight }
-    });
-    
     return { x, y };
   }
 
@@ -386,26 +250,6 @@ export class GlobalModalService {
   calculateOptimalPositionFromRectWithElement(targetRect: DOMRect, targetElement: Element, modalWidth: number = 320, modalHeight: number = 250): { x: number, y: number } {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
-    console.log('🔧 DEBUG: Enhanced positioning calculation with element info:', {
-      modalWidth: modalWidth,
-      modalHeight: modalHeight,
-      targetElement: {
-        tagName: targetElement.tagName,
-        className: targetElement.className,
-        textContent: targetElement.textContent?.substring(0, 30),
-        left: targetRect.left,
-        top: targetRect.top,
-        right: targetRect.right,
-        bottom: targetRect.bottom,
-        width: targetRect.width,
-        height: targetRect.height
-      },
-      viewport: {
-        width: viewportWidth,
-        height: viewportHeight
-      }
-    });
     
     // Detect if this is a span with actual text (perfect for positioning)
     const isTextSpan = targetElement.tagName === 'SPAN' && 
@@ -420,50 +264,18 @@ export class GlobalModalService {
     const expectedTextWidth = targetElement.textContent ? targetElement.textContent.length * 15 : 0;
     const isUnusuallyWide = targetRect.width > Math.max(expectedTextWidth * 2, 180);
     
-    console.log('🔧 DEBUG: Enhanced element detection analysis:', {
-      tagName: targetElement.tagName,
-      textContent: targetElement.textContent?.substring(0, 30),
-      textContentLength: targetElement.textContent?.length,
-      className: targetElement.className,
-      rectWidth: targetRect.width,
-      isTextSpan: isTextSpan,
-      isTextElement: isTextElement,
-      hasFlexGrow: hasFlexGrow,
-      isUnusuallyWide: isUnusuallyWide,
-      strategy: isTextSpan ? 'actual-text-span' : (isTextElement && (hasFlexGrow || isUnusuallyWide)) ? 'estimated-text' : 'normal-center'
-    });
-    
     let targetCenterX: number;
     
     if (isTextSpan) {
       // BEST: Use actual span dimensions for pixel-perfect positioning!
       targetCenterX = targetRect.left + targetRect.width / 2;
-      console.log('🎯 PERFECT: Using actual text span dimensions:', {
-        textContent: targetElement.textContent,
-        actualTextWidth: targetRect.width,
-        textRect: { left: targetRect.left, top: targetRect.top, width: targetRect.width, height: targetRect.height },
-        perfectCenter: targetCenterX
-      });
     } else if (isTextElement && (hasFlexGrow || isUnusuallyWide)) {
       // FALLBACK: Estimate text width for wide divs
       const estimatedTextWidth = Math.min(targetElement.textContent!.length * 15, 250);
       targetCenterX = targetRect.left + estimatedTextWidth / 2;
-      
-      console.log('🔧 FALLBACK: Using estimated text width for wide div:', {
-        textContent: targetElement.textContent,
-        estimatedTextWidth,
-        originalCenter: targetRect.left + targetRect.width / 2,
-        adjustedCenter: targetCenterX,
-        adjustment: (targetRect.left + targetRect.width / 2) - targetCenterX
-      });
     } else {
       // DEFAULT: Use element center (good for images, buttons, etc.)
       targetCenterX = targetRect.left + targetRect.width / 2;
-      console.log('🔧 DEFAULT: Using element center for non-text element:', {
-        elementType: targetElement.tagName,
-        width: targetRect.width,
-        center: targetCenterX
-      });
     }
     
     let x = targetCenterX - modalWidth / 2;
@@ -471,14 +283,6 @@ export class GlobalModalService {
     // Check space above and below
     const spaceAbove = targetRect.top;
     const spaceBelow = viewportHeight - targetRect.bottom;
-    
-    console.log('🔧 DEBUG: Space recalculation:', {
-      spaceAbove: spaceAbove,
-      spaceBelow: spaceBelow,
-      requiredSpace: modalHeight + 16,
-      canFitAbove: spaceAbove >= modalHeight + 16,
-      canFitBelow: spaceBelow >= modalHeight + 16
-    });
     
     let y: number;
     let chosenPosition: string;
@@ -488,23 +292,10 @@ export class GlobalModalService {
       // Show above - modal bottom edge touches element top edge (preferred)
       y = targetRect.top - modalHeight;
       chosenPosition = 'above (preferred)';
-      console.log('🔧 DEBUG: Enhanced positioning ABOVE:', {
-        elementTop: targetRect.top,
-        modalHeight: modalHeight,
-        calculatedY: y,
-        modalBottom: y + modalHeight,
-        gapBetweenModalAndElement: targetRect.top - (y + modalHeight)
-      });
     } else if (spaceBelow >= modalHeight + 16) {
       // Show below - modal top edge touches element bottom edge (fallback)
       y = targetRect.bottom;
       chosenPosition = 'below (fallback)';
-      console.log('🔧 DEBUG: Enhanced positioning BELOW:', {
-        elementBottom: targetRect.bottom,
-        calculatedY: y,
-        modalBottom: y + modalHeight,
-        gapBetweenElementAndModal: y - targetRect.bottom
-      });
     } else {
       // Not enough space above or below, choose the side with more space
       if (spaceAbove > spaceBelow) {
@@ -531,18 +322,6 @@ export class GlobalModalService {
       x = viewportWidth - modalWidth - 8;
     }
     
-    console.log('🎯 ENHANCED position calculated:', {
-      targetRect: { left: targetRect.left, top: targetRect.top, width: targetRect.width, height: targetRect.height, bottom: targetRect.bottom },
-      targetCenterX,
-      modalPosition: { x, y },
-      spaceAbove,
-      spaceBelow,
-      positioning: chosenPosition,
-      actualModalDimensions: { width: modalWidth, height: modalHeight },
-      elementType: isTextElement ? 'text' : 'other',
-      hasFlexGrow: hasFlexGrow
-    });
-    
     return { x, y };
   }
 
@@ -554,25 +333,8 @@ export class GlobalModalService {
     const actualWidth = rect.width;
     const actualHeight = rect.height;
     
-    console.log('🔧 DEBUG: Actual modal dimensions:', {
-      actualWidth,
-      actualHeight,
-      assumedDimensions: { width: 320, height: 250 },
-      difference: { 
-        width: actualWidth - 320, 
-        height: actualHeight - 250 
-      }
-    });
-    
     // Recalculate with actual dimensions
     const newPosition = this.calculateOptimalPosition(originalEvent, actualWidth, actualHeight);
-    
-    console.log('🔧 DEBUG: Position correction:', {
-      originalAssumedHeight: 250,
-      actualHeight: actualHeight,
-      heightDifference: actualHeight - 250,
-      newPosition: newPosition
-    });
     
     return newPosition;
   }
