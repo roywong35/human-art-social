@@ -6,11 +6,11 @@ import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { ReportStatusDialogComponent } from './report-status-dialog/report-status-dialog.component';
 import { PostRemovalDialogComponent } from '../../dialogs/post-removal-dialog/post-removal-dialog.component';
 import { Post } from '../../../models/post.model';
 import { GlobalModalService } from '../../../services/global-modal.service';
 import { Subscription } from 'rxjs';
+import { ReportStatusDialogComponent } from '../../dialogs/report-status-dialog/report-status-dialog.component';
 
 @Component({
   selector: 'app-notifications',

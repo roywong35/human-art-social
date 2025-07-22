@@ -9,7 +9,7 @@ import { TimeAgoPipe } from '../../../../pipes/time-ago.pipe';
 import { Router } from '@angular/router';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
 import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
-import { ScheduleModalComponent } from '../../posts/schedule-modal/schedule-modal.component';
+import { ScheduleModalComponent } from '../../../shared/schedule-modal/schedule-modal.component';
 import { DraftModalComponent } from '../../posts/draft-modal/draft-modal.component';
 
 @Component({

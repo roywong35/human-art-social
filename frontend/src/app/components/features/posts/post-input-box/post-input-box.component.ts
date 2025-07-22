@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
-import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
+import { ScheduleModalComponent } from '../../../shared/schedule-modal/schedule-modal.component';
 import { ScheduleIconComponent } from '../../../../components/shared/schedule-icon/schedule-icon.component';
 import { MatDialog } from '@angular/material/dialog';
 import { DraftModalComponent } from '../draft-modal/draft-modal.component';

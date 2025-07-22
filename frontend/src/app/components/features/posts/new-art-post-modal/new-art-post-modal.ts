@@ -6,7 +6,7 @@ import { PostService } from '../../../../services/post.service';
 import { AuthService } from '../../../../services/auth.service';
 import { Router } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
-import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
+import { ScheduleModalComponent } from '../../../shared/schedule-modal/schedule-modal.component';
 import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
 import { DraftModalComponent } from '../draft-modal/draft-modal.component';
 

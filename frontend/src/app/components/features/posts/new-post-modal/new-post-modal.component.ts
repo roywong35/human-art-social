@@ -12,7 +12,7 @@ import { EmojiPickerService } from '../../../../services/emoji-picker.service';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
 import { environment } from '../../../../../environments/environment';
 import { ScheduleIconComponent } from '../../../shared/schedule-icon/schedule-icon.component';
-import { ScheduleModalComponent } from '../schedule-modal/schedule-modal.component';
+import { ScheduleModalComponent } from '../../../shared/schedule-modal/schedule-modal.component';
 import { DraftService, DraftPost } from '../../../../services/draft.service';
 import { DraftModalComponent } from '../draft-modal/draft-modal.component';
 import { SaveConfirmationDialogComponent } from '../../../dialogs/save-confirmation-dialog/save-confirmation-dialog.component';
