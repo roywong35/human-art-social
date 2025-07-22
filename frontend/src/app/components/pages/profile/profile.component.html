@@ -140,7 +140,7 @@
   </nav>
 
   <!-- Content based on active tab -->
-  <div [ngSwitch]="activeTab" class="flex-1 w-screen min-[500px]:w-full min-[500px]:min-w-[calc(100vw-80px)] min-[681px]:min-w-[600px]">
+  <div [ngSwitch]="activeTab" class="flex-1 w-full">
     <!-- Posts Tab -->
     <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
       <!-- Initial loading for posts -->

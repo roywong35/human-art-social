@@ -42,7 +42,7 @@
         <div [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'flex-1 min-[500px]:ml-[80px] xl:ml-[275px]' : 'flex-1 min-[500px]:ml-[80px] xl:ml-[275px]') : 'w-full'">
           <div class="flex">
             <!-- Main Content -->
-            <main [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'w-full pt-14 min-[500px]:pt-0' : 'w-full max-w-[600px] border-x border-gray-100 dark:border-gray-800 pt-14 min-[500px]:pt-0') : 'w-full'">
+            <main [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'w-full pt-14 min-[500px]:pt-0' : 'w-full max-w-[600px] border-x border-gray-200 dark:dark:[border-color:var(--color-border)] pt-14 min-[500px]:pt-0 min-h-screen') : 'w-full '">
               <router-outlet></router-outlet>
               <app-emoji-picker></app-emoji-picker>
             </main>
