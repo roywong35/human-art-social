@@ -11,6 +11,7 @@ class Notification(models.Model):
         ('post_removed', 'Post Removed for Multiple Reports'),
         ('appeal_approved', 'Appeal Approved'),
         ('appeal_rejected', 'Appeal Rejected'),
+        ('art_verified', 'Art Verified'),
     )
 
     recipient = models.ForeignKey(

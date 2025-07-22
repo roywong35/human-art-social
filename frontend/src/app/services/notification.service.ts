@@ -16,7 +16,7 @@ export interface Notification {
     profile_picture: string | null;
     handle: string;
   };
-  notification_type: 'like' | 'comment' | 'follow' | 'repost' | 'report_received' | 'post_removed' | 'appeal_approved' | 'appeal_rejected';
+  notification_type: 'like' | 'comment' | 'follow' | 'repost' | 'report_received' | 'post_removed' | 'appeal_approved' | 'appeal_rejected' | 'art_verified';
   post?: {
     id: number;
     content: string;
@@ -286,6 +286,8 @@ export class NotificationService {
         return `Your appeal has been approved and your post restored`;
       case 'appeal_rejected':
         return `Your appeal has been rejected`;
+      case 'art_verified':
+        return `Congrats! Your art has been verified`;
       default:
         return '';
     }

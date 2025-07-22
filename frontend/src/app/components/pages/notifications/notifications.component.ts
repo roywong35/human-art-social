@@ -195,6 +195,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         // Navigate to appeals page to view status
         this.router.navigate(['/appeals']);
         break;
+      case 'art_verified':
+        // Navigate to the verified art post
+        if (notification.post?.id && notification.post?.author?.handle) {
+          console.log('Navigating to verified art post:', ['/', notification.post.author.handle, 'post', notification.post.id]);
+          this.router.navigate(['/', notification.post.author.handle, 'post', notification.post.id]);
+        }
+        break;
     }
   }
 
@@ -256,6 +263,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         return 'bg-green-500';
       case 'appeal_rejected':
         return 'bg-red-500';
+      case 'art_verified':
+        return 'bg-blue-500';
       default:
         return 'bg-gray-500';
     }
@@ -271,6 +280,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         return 'fas fa-check-circle text-white text-sm';
       case 'appeal_rejected':
         return 'fas fa-times-circle text-white text-sm';
+      case 'art_verified':
+        return 'fas fa-certificate text-white text-sm';
       default:
         return 'fas fa-info text-white text-sm';
     }

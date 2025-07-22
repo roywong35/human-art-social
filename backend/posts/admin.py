@@ -159,13 +159,27 @@ class PostAdmin(admin.ModelAdmin):
 
     @admin.action(description='Verify selected human art posts')
     def verify_human_drawings(self, request, queryset):
+        # Import notification service
+        from notifications.services import create_art_verified_notification
+        
         updated = 0
         for post in queryset.filter(is_human_drawing=True):
-            post.is_verified = True
-            post.verification_date = timezone.now()
-            post.save(update_fields=['is_verified', 'verification_date'])
-            updated += 1
-        self.message_user(request, f'{updated} posts were successfully verified.')
+            # Only verify if not already verified to avoid duplicate notifications
+            if not post.is_verified:
+                post.is_verified = True
+                post.verification_date = timezone.now()
+                post.save(update_fields=['is_verified', 'verification_date'])
+                
+                # Send notification to the post author
+                try:
+                    create_art_verified_notification(post)
+                    print(f"🎉 Art verification notification sent to {post.author.username} for post {post.id}")
+                except Exception as e:
+                    print(f"❌ Failed to send art verification notification: {str(e)}")
+                
+                updated += 1
+        
+        self.message_user(request, f'{updated} posts were successfully verified and notifications sent.')
 
     @admin.action(description='Reject selected human art posts')
     def reject_human_drawings(self, request, queryset):

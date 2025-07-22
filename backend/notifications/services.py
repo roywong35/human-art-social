@@ -216,3 +216,23 @@ def create_appeal_rejected_notification(appeal):
         import traceback
         traceback.print_exc()
         raise 
+
+def create_art_verified_notification(post):
+    """
+    Create a notification to the post author when their human art is verified by admin
+    """
+    print(f"🔔 [NOTIFICATION SERVICE] create_art_verified_notification called: Post {post.id} by {post.author.username} verified")
+    print(f"🔔 [NOTIFICATION SERVICE] Post author ID: {post.author.id}, Post ID: {post.id}")
+    print(f"🔔 [NOTIFICATION SERVICE] Post author object: {post.author}")
+    print(f"🔔 [NOTIFICATION SERVICE] Post object: {post}")
+    
+    try:
+        result = create_notification(sender=None, recipient=post.author, notification_type='art_verified', post=post)
+        print(f"🔔 [NOTIFICATION SERVICE] create_notification returned: {result}")
+        print(f"🔔 [NOTIFICATION SERVICE] Notification ID: {result.id if result else 'None'}")
+        return result
+    except Exception as e:
+        print(f"❌ [NOTIFICATION SERVICE] Error in create_art_verified_notification: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise 

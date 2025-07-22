@@ -42,7 +42,7 @@ class PostViewSet(viewsets.ModelViewSet):
         queryset = Post.objects.filter(
             Q(scheduled_time__isnull=True) | Q(scheduled_time__lte=timezone.now())
         ).select_related('author', 'referenced_post').prefetch_related(
-            'likes', 'bookmarks', 'reposts', 'replies', 'evidence_files'
+            'likes', 'bookmarks', 'reposts', 'replies'
         )
         print(f"[DEBUG] Initial queryset count: {queryset.count()}")
 
@@ -403,7 +403,6 @@ class PostViewSet(viewsets.ModelViewSet):
                 'bookmarks',
                 'reposts',
                 'replies',
-                'evidence_files',
                 'images'
             ).order_by('-created_at')
             
@@ -464,7 +463,6 @@ class PostViewSet(viewsets.ModelViewSet):
                 'parent_post'
             ).prefetch_related(
                 'images',
-                'evidence_files',
                 'likes',
                 'bookmarks',
                 'reposts'
@@ -496,7 +494,9 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/posts')
     def user_posts(self, request, handle=None):
         posts = self.get_user_posts(handle)
-        serializer = PostSerializer(posts, many=True, context={'request': request})
+        # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
+        from .serializers import UserPostSerializer
+        serializer = UserPostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['GET'])
@@ -778,7 +778,6 @@ class PostViewSet(viewsets.ModelViewSet):
                     'parent_post'
                 ).prefetch_related(
                     'images',
-                    'evidence_files',
                     'likes',
                     'bookmarks',
                     'reposts'
@@ -812,18 +811,18 @@ class PostViewSet(viewsets.ModelViewSet):
             'parent_post__author'
         ).prefetch_related(
             'images',
-            'evidence_files',
             'likes',
             'bookmarks',
             'reposts',
             'parent_post__images',
-            'parent_post__evidence_files',
             'parent_post__likes',
             'parent_post__bookmarks',
             'parent_post__reposts'
         ).order_by('-created_at')
         
-        serializer = PostSerializer(replies, many=True, context={'request': request})
+        # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
+        from .serializers import UserPostSerializer
+        serializer = UserPostSerializer(replies, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/media')
@@ -834,7 +833,9 @@ class PostViewSet(viewsets.ModelViewSet):
             images__isnull=False
         ).distinct().select_related('author').order_by('-created_at')
         
-        serializer = PostSerializer(media_posts, many=True, context={'request': request})
+        # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
+        from .serializers import UserPostSerializer
+        serializer = UserPostSerializer(media_posts, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/human-art')
@@ -856,7 +857,9 @@ class PostViewSet(viewsets.ModelViewSet):
             posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(request.user)
             human_art_posts = human_art_posts.exclude(id__in=posts_reported_by_user)
         
-        serializer = PostSerializer(human_art_posts, many=True, context={'request': request})
+        # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
+        from .serializers import UserPostSerializer
+        serializer = UserPostSerializer(human_art_posts, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/likes')
@@ -866,7 +869,9 @@ class PostViewSet(viewsets.ModelViewSet):
             likes=user
         ).select_related('author').order_by('-created_at')
         
-        serializer = PostSerializer(liked_posts, many=True, context={'request': request})
+        # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
+        from .serializers import UserPostSerializer
+        serializer = UserPostSerializer(liked_posts, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['GET'], permission_classes=[AllowAny])
@@ -890,7 +895,6 @@ class PostViewSet(viewsets.ModelViewSet):
                 'bookmarks',
                 'reposts',
                 'replies',
-                'evidence_files',
                 'images'
             ).exclude(
                 post_type='reply'  # Exclude replies from public view
@@ -1374,7 +1378,8 @@ class DraftViewSet(viewsets.ModelViewSet):
                 draft.delete()
                 
                 # Return the created post
-                post_serializer = PostSerializer(post, context={'request': request})
+                from .serializers import UserPostSerializer
+                post_serializer = UserPostSerializer(post, context={'request': request})
                 return Response(post_serializer.data, status=status.HTTP_201_CREATED)
                 
         except Exception as e:
@@ -1519,7 +1524,8 @@ class ScheduledPostViewSet(viewsets.ModelViewSet):
                 scheduled_post.save()
                 
                 # Return the created post
-                post_serializer = PostSerializer(post, context={'request': request})
+                from .serializers import UserPostSerializer
+                post_serializer = UserPostSerializer(post, context={'request': request})
                 return Response(post_serializer.data, status=status.HTTP_201_CREATED)
                 
         except Exception as e:

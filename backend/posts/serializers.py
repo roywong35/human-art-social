@@ -161,7 +161,7 @@ class PublicPostSerializer(serializers.ModelSerializer):
         fields = ['id', 'content', 'author', 'created_at', 
                  'likes_count', 'reposts_count', 'replies_count',
                  'post_type', 'referenced_post', 'images',
-                 'conversation_chain', 'is_human_drawing']
+                 'conversation_chain', 'is_human_drawing', 'is_verified']
 
     def get_likes_count(self, obj):
         # For reposts, use the original post's likes count
