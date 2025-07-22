@@ -570,6 +570,20 @@ export class PostComponent implements OnInit, OnDestroy {
     }
   }
 
+  protected getFormattedDate(dateString: string): string {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    };
+    
+    return date.toLocaleString('en-US', options);
+  }
+
   protected getImageAspectRatio(imageUrl: string | undefined): number {
     if (!imageUrl) return 1;
     if (this.imageAspectRatios[imageUrl]) return this.imageAspectRatios[imageUrl];

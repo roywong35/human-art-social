@@ -15,7 +15,8 @@
         </p>
         <p class="text-sm text-gray-500">{{'@'}}{{ comment.author.handle }}</p>
         <span class="text-sm text-gray-500">·</span>
-        <p class="text-sm text-gray-500">{{ comment.created_at | timeAgo }}</p>
+        <p class="text-sm text-gray-500" 
+           [title]="getFormattedDate(comment.created_at)">{{ comment.created_at | timeAgo }}</p>
       </div>
 
       <!-- Comment content -->

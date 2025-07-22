@@ -62,4 +62,22 @@ export class CommentComponent {
     event.stopPropagation();
     this.bookmarkClicked.emit();
   }
+
+  onImageError(event: any): void {
+    event.target.src = this.defaultAvatar;
+  }
+
+  protected getFormattedDate(dateString: string): string {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    };
+    
+    return date.toLocaleString('en-US', options);
+  }
 } 

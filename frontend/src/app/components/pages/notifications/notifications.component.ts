@@ -321,6 +321,20 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     }, 300); // 300ms delay to allow moving to modal
   }
 
+  protected getFormattedDate(dateString: string): string {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    };
+    
+    return date.toLocaleString('en-US', options);
+  }
+
   protected onModalHover(): void {
     // When hovering over the modal, cancel any pending close
     if (this.leaveTimeout) {

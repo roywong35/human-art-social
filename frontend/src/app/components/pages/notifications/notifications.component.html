@@ -59,7 +59,8 @@
           </p>
         </div>
         
-        <div class="text-sm text-gray-500 dark:text-[color:var(--color-text-secondary)] whitespace-nowrap flex-shrink-0">
+        <div class="text-sm text-gray-500 dark:text-[color:var(--color-text-secondary)] whitespace-nowrap flex-shrink-0"
+             [title]="getFormattedDate(notification.created_at)">
           {{ notification.created_at | timeAgo }}
         </div>
       </div>

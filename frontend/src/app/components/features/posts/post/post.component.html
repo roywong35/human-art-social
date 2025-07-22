@@ -46,7 +46,8 @@
                  (mouseleave)="onUserHoverLeave()"
                  (click)="navigateToProfile($event)">{{"@"}}{{ post.author.handle }}</p>
               <span class="text-[15px] text-gray-500 flex-shrink-0">·</span>
-              <p class="text-[15px] text-gray-500 truncate">{{ post.created_at | timeAgo }}</p>
+              <p class="text-[15px] text-gray-500 truncate" 
+                 [title]="getFormattedDate(post.created_at)">{{ post.created_at | timeAgo }}</p>
             </div>
             <!-- Add pending badge for unverified human art posts -->
             <div *ngIf="post.is_human_drawing && !post.is_verified" 
