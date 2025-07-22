@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PostComponent } from '../../features/posts/post/post.component';
@@ -25,10 +25,17 @@ import { RegisterModalComponent } from '../../features/auth/register-modal/regis
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.scss']
 })
-export class LandingComponent implements OnInit {
+export class LandingComponent implements OnInit, OnDestroy {
   posts: Post[] = [];
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
   isDarkMode = false;
+  
+  // Infinite scroll properties
+  loading = false;
+  loadingMore = false;
+  currentPage = 1;
+  hasMore = true;
+  private scrollThrottleTimeout: any;
 
   constructor(
     private postService: PostService,
@@ -37,6 +44,39 @@ export class LandingComponent implements OnInit {
     private authService: AuthService,
     private dialog: MatDialog
   ) {}
+
+  ngOnDestroy() {
+    // Clean up scroll throttle timeout
+    if (this.scrollThrottleTimeout) {
+      clearTimeout(this.scrollThrottleTimeout);
+    }
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  onScroll(event: Event): void {
+    // Throttle scroll events to improve performance
+    if (this.scrollThrottleTimeout) {
+      clearTimeout(this.scrollThrottleTimeout);
+    }
+    
+    this.scrollThrottleTimeout = setTimeout(() => {
+      // Check if user scrolled near bottom of page
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+      
+      // Trigger load more when user is 200px from bottom
+      const threshold = 200;
+      
+      if (scrollTop + clientHeight >= scrollHeight - threshold && 
+          this.hasMore && 
+          !this.loading && 
+          !this.loadingMore) {
+        console.log('🌍 Loading more public posts due to scroll');
+        this.loadMore();
+      }
+    }, 100); // 100ms throttle
+  }
 
   ngOnInit() {
     // Check if user is authenticated
@@ -94,19 +134,47 @@ export class LandingComponent implements OnInit {
         replaceUrl: true
       });
 
-      // Reload posts for the new tab
+      // Reset pagination and reload posts for the new tab
+      this.currentPage = 1;
+      this.hasMore = true;
+      this.posts = [];
       this.loadPosts();
     }
   }
 
   private loadPosts() {
-    this.postService.getPublicPosts(this.activeTab).subscribe(
-      response => {
+    this.loading = true;
+    this.postService.getPublicPosts(this.activeTab, this.currentPage).subscribe({
+      next: response => {
         // Handle paginated response
         const posts = response.results || [];
-        this.posts = posts;
+        if (this.currentPage === 1) {
+          // First page - replace posts
+          this.posts = posts;
+        } else {
+          // Subsequent pages - append posts
+          this.posts = [...this.posts, ...posts];
+        }
+        
+        // Check if there are more posts
+        this.hasMore = !!response.next;
+        this.loading = false;
+        this.loadingMore = false;
+      },
+      error: (error) => {
+        console.error('Error loading public posts:', error);
+        this.loading = false;
+        this.loadingMore = false;
       }
-    );
+    });
+  }
+
+  private loadMore() {
+    if (this.loadingMore || !this.hasMore) return;
+    
+    this.loadingMore = true;
+    this.currentPage++;
+    this.loadPosts();
   }
 
   openLoginModal() {

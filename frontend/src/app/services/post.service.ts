@@ -887,10 +887,15 @@ export class PostService {
     return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/likes/`);
   }
 
-  getPublicPosts(tab: string = 'for-you'): Observable<{ results: Post[] }> {
-    return this.http.get<{ results: Post[] }>(`${this.baseUrl}/posts/public/`, {
-      params: { tab }
-    });
+  getPublicPosts(tab: string = 'for-you', page: number = 1): Observable<{ results: Post[], next: string | null, count: number }> {
+    return this.http.get<{ results: Post[], next: string | null, count: number }>(`${this.baseUrl}/posts/public/`, {
+      params: { tab, page: page.toString() }
+    }).pipe(
+      map(response => ({
+        ...response,
+        results: response.results.map(post => this.addImageUrls(post))
+      }))
+    );
   }
 
   getScheduledPosts(): Observable<Post[]> {
