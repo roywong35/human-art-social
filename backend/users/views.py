@@ -188,6 +188,14 @@ class UserViewSet(viewsets.ModelViewSet):
         Handle user profile updates and return full profile data.
         """
         instance = get_object_or_404(User, handle=handle)
+        
+        # Check if user is trying to update their own profile
+        if request.user != instance:
+            return Response(
+                {'error': 'You can only update your own profile.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)

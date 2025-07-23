@@ -315,7 +315,7 @@ class PostViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['POST'], permission_classes=[IsAdminUser])
-    def verify_drawing(self, request, pk=None):
+    def verify_drawing(self, request, handle=None, pk=None):
         """
         Verify a human drawing post (admin only)
         """

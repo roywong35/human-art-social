@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework.permissions import IsAdminUser
 
 from .views import PostViewSet, DraftViewSet, ScheduledPostViewSet, PostModerationViewSet
 
@@ -7,7 +8,7 @@ router = DefaultRouter()
 router.register(r'posts', PostViewSet, basename='post')
 router.register(r'drafts', DraftViewSet, basename='draft')
 router.register(r'scheduled-posts', ScheduledPostViewSet, basename='scheduledpost')
-router.register(r'posts', PostModerationViewSet, basename='post-moderation')
+router.register(r'moderation', PostModerationViewSet, basename='post-moderation')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -44,13 +45,13 @@ urlpatterns = [
     })),
 
     # Report endpoints
-    path('posts/<str:handle>/<int:pk>/report/', PostModerationViewSet.as_view({
+    path('moderation/posts/<str:handle>/<int:pk>/report/', PostModerationViewSet.as_view({
         'post': 'report'
     })),
-    path('posts/<str:handle>/<int:pk>/report-types/', PostModerationViewSet.as_view({
+    path('moderation/posts/<str:handle>/<int:pk>/report-types/', PostModerationViewSet.as_view({
         'get': 'report_types'
     })),
-    path('posts/reported/', PostModerationViewSet.as_view({
+    path('moderation/posts/reported/', PostModerationViewSet.as_view({
         'get': 'reported'
     })),
 
@@ -67,13 +68,13 @@ urlpatterns = [
     })),
 
     # Appeal endpoints
-    path('posts/<str:handle>/<int:pk>/appeal/', PostModerationViewSet.as_view({
+    path('moderation/posts/<str:handle>/<int:pk>/appeal/', PostModerationViewSet.as_view({
         'post': 'appeal'
     })),
-    path('posts/<str:handle>/<int:pk>/appeal-status/', PostModerationViewSet.as_view({
+    path('moderation/posts/<str:handle>/<int:pk>/appeal-status/', PostModerationViewSet.as_view({
         'get': 'appeal_status'
     })),
-    path('posts/my-appeals/', PostModerationViewSet.as_view({
+    path('moderation/posts/my-appeals/', PostModerationViewSet.as_view({
         'get': 'my_appeals'
     })),
 
@@ -93,7 +94,7 @@ urlpatterns = [
     # Verification URLs
     path('posts/<str:handle>/<int:pk>/verify_drawing/', PostViewSet.as_view({
         'post': 'verify_drawing'
-    })),
+    }, permission_classes=[IsAdminUser])),
 
     # The router will add the following URLs:
     # - /api/posts/search_hashtags/

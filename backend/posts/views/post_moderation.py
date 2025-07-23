@@ -3,12 +3,14 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from ..models import Post, ContentReport, PostAppeal, AppealEvidenceFile
 from ..serializers import PostAppealSerializer
 from notifications.services import create_report_received_notification, create_post_removed_notification
 
 class PostModerationViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination
     
     def get_object(self):
         """Get post by handle and id"""
@@ -282,16 +284,36 @@ class PostModerationViewSet(viewsets.ViewSet):
         try:
             appeals = PostAppeal.objects.filter(author=request.user).select_related('post', 'post__author').order_by('-created_at')
             
-            page = self.paginate_queryset(appeals)
-            if page is not None:
-                serializer = PostAppealSerializer(page, many=True, context={'request': request})
-                return self.get_paginated_response(serializer.data)
+            # Return simple response without serializer to avoid any issues
+            appeals_data = []
+            for appeal in appeals:
+                try:
+                    appeals_data.append({
+                        'id': appeal.id,
+                        'appeal_text': appeal.appeal_text,
+                        'status': appeal.status,
+                        'created_at': appeal.created_at,
+                        'post': {
+                            'id': appeal.post.id,
+                            'content': appeal.post.content[:100] + '...' if len(appeal.post.content) > 100 else appeal.post.content,
+                            'author': {
+                                'id': appeal.post.author.id,
+                                'username': appeal.post.author.username,
+                                'handle': appeal.post.author.handle
+                            }
+                        }
+                    })
+                except Exception as appeal_error:
+                    print(f"❌ Error processing appeal {appeal.id}: {str(appeal_error)}")
+                    # Skip this appeal and continue
+                    continue
             
-            serializer = PostAppealSerializer(appeals, many=True, context={'request': request})
-            return Response(serializer.data)
+            return Response(appeals_data)
             
         except Exception as e:
             print(f"❌ Error in my_appeals action: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return Response(
                 {'error': 'An error occurred while fetching appeals'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

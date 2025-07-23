@@ -246,7 +246,7 @@ class PostAppealSerializer(serializers.ModelSerializer):
     Serializer for post appeals
     """
     author = UserSerializer(read_only=True)
-    post = PostSerializer(read_only=True)
+    post = serializers.SerializerMethodField()
     evidence_files_rel = AppealEvidenceFileSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     
@@ -254,7 +254,19 @@ class PostAppealSerializer(serializers.ModelSerializer):
         model = PostAppeal
         fields = ['id', 'post', 'author', 'appeal_text', 'evidence_files', 'evidence_files_rel',
                  'status', 'status_display', 'created_at', 'reviewed_at', 'reviewed_by', 'admin_notes']
-        read_only_fields = ['author', 'post', 'created_at', 'reviewed_at', 'reviewed_by', 'admin_notes']
+        read_only_fields = ['author', 'created_at', 'reviewed_at', 'reviewed_by', 'admin_notes']
+    
+    def get_post(self, obj):
+        """Return minimal post data to avoid circular references"""
+        return {
+            'id': obj.post.id,
+            'content': obj.post.content[:100] + '...' if len(obj.post.content) > 100 else obj.post.content,
+            'author': {
+                'id': obj.post.author.id,
+                'username': obj.post.author.username,
+                'handle': obj.post.author.handle
+            }
+        }
     
     def create(self, validated_data):
         # Set the author to the current user
