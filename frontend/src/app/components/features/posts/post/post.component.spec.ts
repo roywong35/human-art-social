@@ -17,6 +17,23 @@ import { ToastService } from '../../../../services/toast.service';
 import { ChangeDetectorRef, NgZone } from '@angular/core';
 import { TimeAgoPipe } from '../../../../pipes/time-ago.pipe';
 
+// Add Jasmine types
+declare var describe: any;
+declare var it: any;
+declare var beforeEach: any;
+declare var afterEach: any;
+declare var expect: any;
+declare var fail: any;
+declare var spyOn: any;
+declare var jasmine: any;
+
+// Add Jasmine namespace
+declare namespace jasmine {
+  interface SpyObj<T> {
+    [key: string]: any;
+  }
+}
+
 describe('PostComponent', () => {
   let component: PostComponent;
   let fixture: ComponentFixture<PostComponent>;
@@ -241,6 +258,7 @@ describe('PostComponent', () => {
     it('should navigate to post detail', () => {
       const event = new Event('click');
       component.navigateToPost(event);
+      // @ts-ignore
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/testuser/post/1']);
     });
 
@@ -248,6 +266,7 @@ describe('PostComponent', () => {
       const event = new Event('click');
       component.navigateToProfile(event);
       
+      // @ts-ignore
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/testuser']);
     });
   });

@@ -277,13 +277,17 @@ export class MessagesComponent implements OnInit, OnDestroy {
       
       const conversation = await this.chatService.getOrCreateConversation(user.id).toPromise();
       if (conversation) {
+        // Close modal first
         this.closeCreateChatModal();
         
-        // Navigate to the new conversation
-        this.router.navigate(['/messages', conversation.id]);
-        
-        // Refresh conversations list using ChatService state management
-        this.chatService.loadConversations();
+        // Small delay to ensure modal is closed before navigation
+        setTimeout(() => {
+          // Navigate to the new conversation
+          this.router.navigate(['/messages', conversation.id]);
+          
+          // Refresh conversations list using ChatService state management
+          this.chatService.loadConversations();
+        }, 100);
       }
     } catch (error) {
       console.error('Error creating chat:', error);

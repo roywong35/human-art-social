@@ -6,6 +6,23 @@ import { AuthService } from './auth.service';
 import { LoginCredentials, RegisterData, User } from '../models';
 import { environment } from '../../environments/environment';
 
+// Add Jasmine types
+declare var describe: any;
+declare var it: any;
+declare var beforeEach: any;
+declare var afterEach: any;
+declare var expect: any;
+declare var fail: any;
+declare var spyOn: any;
+declare var jasmine: any;
+
+// Add Jasmine namespace
+declare namespace jasmine {
+  interface SpyObj<T> {
+    [key: string]: any;
+  }
+}
+
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
@@ -220,6 +237,7 @@ describe('AuthService', () => {
         error: (error) => {
           expect(error.status).toBe(401);
           expect(service.isAuthenticated()).toBeFalse();
+          // @ts-ignore
           expect(router.navigate).toHaveBeenCalledWith(['/']);
         }
       });
@@ -244,7 +262,7 @@ describe('AuthService', () => {
   });
 
   describe('User State Management', () => {
-    it('should emit current user changes', (done) => {
+    it('should emit current user changes', (done: any) => {
       service.currentUser$.subscribe(user => {
         if (user) {
           expect(user).toEqual(mockUser);
@@ -277,6 +295,7 @@ describe('AuthService', () => {
         next: () => fail('Should have failed'),
         error: (error) => {
           expect(error.status).toBe(401);
+          // @ts-ignore
           expect(router.navigate).toHaveBeenCalledWith(['/']);
         }
       });
@@ -347,6 +366,7 @@ describe('AuthService', () => {
       expect(localStorage.getItem('access_token')).toBeNull();
       expect(localStorage.getItem('refresh_token')).toBeNull();
       expect(localStorage.getItem('user')).toBeNull();
+      // @ts-ignore
       expect(router.navigate).toHaveBeenCalledWith(['/']);
     });
 

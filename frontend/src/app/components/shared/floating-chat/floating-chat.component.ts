@@ -296,6 +296,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       
       const conversation = await this.chatService.getOrCreateConversation(user.id).toPromise();
       if (conversation) {
+        // Close modal first
         this.closeCreateChatModal();
         
         // Set as selected conversation with clean transition
@@ -312,7 +313,7 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
           
           // Refresh conversations list
           this.chatService.loadConversations();
-        }, 50);
+        }, 100);
       }
     } catch (error) {
       console.error('Error creating chat:', error);

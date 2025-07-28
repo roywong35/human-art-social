@@ -15,6 +15,23 @@ import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 import { User } from '../../../models/user.model';
 import { Post } from '../../../models/post.model';
 
+// Add Jasmine types
+declare var describe: any;
+declare var it: any;
+declare var beforeEach: any;
+declare var afterEach: any;
+declare var expect: any;
+declare var fail: any;
+declare var spyOn: any;
+declare var jasmine: any;
+
+// Add Jasmine namespace
+declare namespace jasmine {
+  interface SpyObj<T> {
+    [key: string]: any;
+  }
+}
+
 describe('ProfileComponent', () => {
   let component: ProfileComponent;
   let fixture: ComponentFixture<ProfileComponent>;
@@ -61,7 +78,9 @@ describe('ProfileComponent', () => {
     mockUserPreviewModalService = jasmine.createSpyObj('UserPreviewModalService', ['open']);
 
     // Setup default return values
+    // @ts-ignore
     mockUserService.getUserByHandle.and.returnValue(of(mockUser));
+    // @ts-ignore
     mockAuthService.isAuthenticated.and.returnValue(true);
 
     await TestBed.configureTestingModule({
@@ -116,6 +135,7 @@ describe('ProfileComponent', () => {
       is_verified: false
     };
 
+    // @ts-ignore
     mockUserService.getUserByHandle.and.returnValue(of(mockUser));
 
     // Mock route params
@@ -132,6 +152,7 @@ describe('ProfileComponent', () => {
 
     component.ngOnInit();
 
+    // @ts-ignore
     expect(mockUserService.getUserByHandle).toHaveBeenCalledWith('testuser');
   });
 

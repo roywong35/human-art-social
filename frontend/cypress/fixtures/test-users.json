@@ -1,0 +1,20 @@
+{
+  "validUser": {
+    "username": "TestUser",
+    "handle": "testuser",
+    "email": "test@example.com",
+    "password": "TestPassword123!"
+  },
+  "invalidUser": {
+    "username": "InvalidUser",
+    "handle": "invaliduser",
+    "email": "invalid-email",
+    "password": "short"
+  },
+  "existingUser": {
+    "username": "ExistingUser",
+    "handle": "existinguser",
+    "email": "existing@example.com",
+    "password": "ExistingPassword123!"
+  }
+} 

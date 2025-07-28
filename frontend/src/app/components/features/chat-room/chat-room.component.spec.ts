@@ -10,6 +10,23 @@ import { ConversationDetail, Message, User } from '../../../models';
 import { ChangeDetectorRef } from '@angular/core';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 
+// Add Jasmine types
+declare var describe: any;
+declare var it: any;
+declare var beforeEach: any;
+declare var afterEach: any;
+declare var expect: any;
+declare var fail: any;
+declare var spyOn: any;
+declare var jasmine: any;
+
+// Add Jasmine namespace
+declare namespace jasmine {
+  interface SpyObj<T> {
+    [key: string]: any;
+  }
+}
+
 describe('ChatRoomComponent', () => {
   let component: ChatRoomComponent;
   let fixture: ComponentFixture<ChatRoomComponent>;
@@ -161,6 +178,7 @@ describe('ChatRoomComponent', () => {
 
     it('should load user profile on init', () => {
       component.ngOnInit();
+      // @ts-ignore
       expect(mockChatService.loadMessages).toHaveBeenCalledWith(mockConversation.id);
     });
   });
@@ -178,6 +196,7 @@ describe('ChatRoomComponent', () => {
         }
       });
 
+      // @ts-ignore
       expect(mockChatService.loadMessages).toHaveBeenCalledWith(2);
     });
 
@@ -269,6 +288,7 @@ describe('ChatRoomComponent', () => {
       component.ngOnInit();
       
       const typingUsers = ['user1', 'user2'];
+      // @ts-ignore
       (mockChatService.typingUsers$ as BehaviorSubject<string[]>).next(typingUsers);
 
       expect(component.typingUsers).toEqual(typingUsers);
