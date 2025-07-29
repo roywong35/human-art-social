@@ -62,7 +62,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
     username: '',
     bio: '',
     profile_picture: null as File | null,
-    banner_image: null as File | null
+    banner_image: null as File | null,
+    profile_picture_preview: '',
+    banner_image_preview: ''
   };
 
   constructor(
@@ -254,6 +256,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.scrollThrottleTimeout) {
       clearTimeout(this.scrollThrottleTimeout);
     }
+    
+    // Clean up object URLs to prevent memory leaks
+    if (this.editForm.profile_picture_preview && this.editForm.profile_picture_preview.startsWith('blob:')) {
+      URL.revokeObjectURL(this.editForm.profile_picture_preview);
+    }
+    if (this.editForm.banner_image_preview && this.editForm.banner_image_preview.startsWith('blob:')) {
+      URL.revokeObjectURL(this.editForm.banner_image_preview);
+    }
+    
     // Clear user posts and replies when leaving profile
     this.postService.clearUserPosts();
     this.postService.clearUserReplies();
@@ -462,6 +473,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       this.editForm.banner_image = input.files[0];
+      this.editForm.banner_image_preview = URL.createObjectURL(input.files[0]);
     }
   }
 
@@ -469,6 +481,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       this.editForm.profile_picture = input.files[0];
+      this.editForm.profile_picture_preview = URL.createObjectURL(input.files[0]);
     }
   }
 
@@ -476,17 +489,29 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.user) {
       this.editForm.username = this.user.username;
       this.editForm.bio = this.user.bio || '';
+      this.editForm.profile_picture_preview = this.user.profile_picture || '';
+      this.editForm.banner_image_preview = this.user.banner_image || '';
     }
     this.showEditModal = true;
   }
 
   closeEditModal(): void {
+    // Revoke object URLs to prevent memory leaks
+    if (this.editForm.profile_picture_preview && this.editForm.profile_picture_preview.startsWith('blob:')) {
+      URL.revokeObjectURL(this.editForm.profile_picture_preview);
+    }
+    if (this.editForm.banner_image_preview && this.editForm.banner_image_preview.startsWith('blob:')) {
+      URL.revokeObjectURL(this.editForm.banner_image_preview);
+    }
+    
     this.showEditModal = false;
     this.editForm = {
       username: '',
       bio: '',
       profile_picture: null,
-      banner_image: null
+      banner_image: null,
+      profile_picture_preview: '',
+      banner_image_preview: ''
     };
   }
 

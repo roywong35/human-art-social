@@ -71,7 +71,7 @@
                (click)="navigateToProfile(user.handle)">
             <div class="flex items-center justify-between">
               <div class="flex items-center">
-                <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
+                <img [src]="user.profile_picture || defaultAvatar" 
                      [alt]="user.username + ' avatar'" 
                      class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 object-cover hover:opacity-80 transition-opacity cursor-pointer"
                      (mouseenter)="onUserHover($event, user)"

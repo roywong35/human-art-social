@@ -126,14 +126,58 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def search(self, request):
-        query = request.query_params.get('q', '')
+        query = request.query_params.get('q', '').strip()
         if not query:
             return Response([])
+        
+        # Get all matching users
         users = User.objects.filter(
             Q(username__icontains=query) |
             Q(handle__icontains=query)
-        ).order_by('-date_joined')
-        serializer = UserProfileSerializer(users, many=True, context={'request': request})
+        )
+        
+        # Create a list to sort by relevance
+        user_list = list(users)
+        
+        def calculate_relevance_score(user):
+            score = 0
+            username_lower = user.username.lower()
+            handle_lower = user.handle.lower()
+            query_lower = query.lower()
+            
+            # Exact matches get highest priority
+            if username_lower == query_lower:
+                score += 1000
+            if handle_lower == query_lower:
+                score += 1000
+            
+            # Starts with query gets high priority
+            if username_lower.startswith(query_lower):
+                score += 500
+            if handle_lower.startswith(query_lower):
+                score += 500
+            
+            # Contains query gets medium priority
+            if query_lower in username_lower:
+                score += 100
+            if query_lower in handle_lower:
+                score += 100
+            
+            # Shorter usernames/handles get slight preference (more likely to be exact matches)
+            if len(username_lower) <= len(query_lower) + 2:
+                score += 10
+            if len(handle_lower) <= len(query_lower) + 2:
+                score += 10
+            
+            # Newer users get slight preference as tiebreaker
+            score += (user.date_joined.year - 2020) * 0.1
+            
+            return score
+        
+        # Sort by relevance score (highest first)
+        user_list.sort(key=calculate_relevance_score, reverse=True)
+        
+        serializer = UserProfileSerializer(user_list, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['get', 'patch'])

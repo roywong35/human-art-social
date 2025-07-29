@@ -349,7 +349,10 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:[color:var(--color-text)]">Banner Image</label>
           <div class="mt-1 flex items-center gap-3">
-            <img *ngIf="user?.banner_image" [src]="user?.banner_image" alt="Current banner" class="h-20 w-40 object-cover rounded">
+            <img *ngIf="editForm.banner_image_preview || user?.banner_image" 
+                 [src]="editForm.banner_image_preview || user?.banner_image" 
+                 alt="Current banner" 
+                 class="h-20 w-40 object-cover rounded">
             <input
               type="file"
               accept="image/*"
@@ -368,7 +371,12 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:[color:var(--color-text)]">Profile Picture</label>
           <div class="mt-1 flex items-center gap-3">
-            <img [src]="user?.profile_picture || defaultAvatar" alt="Current profile picture" class="h-12 w-12 rounded-full">
+            <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0" style="width: 48px; height: 48px; min-width: 48px; min-height: 48px;">
+              <img [src]="editForm.profile_picture_preview || user?.profile_picture || defaultAvatar" 
+                   alt="Current profile picture" 
+                   class="w-full h-full object-cover"
+                   style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
             <input
               type="file"
               accept="image/*"

@@ -12,9 +12,11 @@
     <div class="flex items-start justify-between mb-1">
       <!-- User Avatar -->
       <a [routerLink]="['/', user.handle]" (click)="goToProfile()" class="flex-shrink-0">
-        <img [src]="user.profile_picture || defaultAvatar" 
-             alt="User avatar" 
-             class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 hover:opacity-90 transition-opacity cursor-pointer">
+        <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <img [src]="user.profile_picture || defaultAvatar" 
+               alt="User avatar" 
+               class="w-full h-full object-cover hover:opacity-90 transition-opacity cursor-pointer">
+        </div>
       </a>
 
       <!-- Follow Button -->

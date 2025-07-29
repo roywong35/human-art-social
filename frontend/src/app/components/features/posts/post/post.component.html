@@ -19,13 +19,15 @@
   <div class="flex space-x-2">
     <!-- Avatar container with fixed width for consistent line positioning -->
     <div class="w-[40px] flex-shrink-0 pt-[9px]">
-      <img [src]="post.author.profile_picture || defaultAvatar" 
-           [alt]="post.author.username" 
-           class="h-10 w-10 rounded-full cursor-pointer relative z-10"
-           (click)="navigateToProfile($event)"
-           (mouseenter)="onUserHover($event, post.author)"
-           (mouseleave)="onUserHoverLeave()"
-           (error)="onImageError($event)">
+      <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
+        <img [src]="post.author.profile_picture || defaultAvatar" 
+             [alt]="post.author.username" 
+             class="w-full h-full object-cover cursor-pointer relative z-10"
+             (click)="navigateToProfile($event)"
+             (mouseenter)="onUserHover($event, post.author)"
+             (mouseleave)="onUserHoverLeave()"
+             (error)="onImageError($event)">
+      </div>
     </div>
 
     <!-- Content section -->
