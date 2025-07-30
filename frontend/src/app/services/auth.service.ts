@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, switchMap, throwError, map, interval, fromEvent } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, switchMap, throwError, map } from 'rxjs';
 import { Router } from '@angular/router';
 import { LoginCredentials, RegisterData, AuthResponse } from '../models';
 import { User } from '../models/user.model';
@@ -21,10 +21,7 @@ export class AuthService {
   
   // Proactive refresh management (Twitter/X style)
   private refreshTimer: any = null;
-  private activityTimer: any = null;
-  private lastActivity: number = Date.now();
   private readonly REFRESH_BEFORE_EXPIRY = 5 * 60 * 1000; // Refresh 5 minutes before expiry
-  private readonly ACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes of inactivity = logout
 
   constructor(
     private http: HttpClient,
@@ -39,8 +36,6 @@ export class AuthService {
       this.loadUser().subscribe();
       this.setupProactiveRefresh(); // Start Twitter/X style token management
     }
-    
-    this.setupActivityDetection(); // Track user activity
   }
 
   private loadStoredAuth(): void {
@@ -292,52 +287,7 @@ export class AuthService {
     }, delay);
   }
 
-  /**
-   * Setup activity detection to extend sessions for active users
-   */
-  private setupActivityDetection(): void {
-    // Track various user activities
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    
-    activityEvents.forEach(eventName => {
-      fromEvent(document, eventName).subscribe(() => {
-        this.updateActivity();
-      });
-    });
 
-    // Check for inactivity every minute
-    interval(60000).subscribe(() => {
-      this.checkInactivity();
-    });
-  }
-
-  /**
-   * Update last activity timestamp
-   */
-  private updateActivity(): void {
-    this.lastActivity = Date.now();
-    
-    // If user is active and logged in, ensure token refresh is scheduled
-    if (this.accessToken && !this.refreshTimer) {
-      this.setupProactiveRefresh();
-    }
-  }
-
-  /**
-   * Check if user has been inactive too long
-   */
-  private checkInactivity(): void {
-    if (!this.accessToken) return; // Not logged in
-    
-    const inactiveTime = Date.now() - this.lastActivity;
-    
-    if (inactiveTime > this.ACTIVITY_TIMEOUT) {
-      console.log(`🚪 User inactive for ${Math.round(inactiveTime / 60000)} minutes, logging out`);
-      this.logout();
-    } else {
-      console.log(`👤 User active, last activity: ${Math.round(inactiveTime / 60000)} minutes ago`);
-    }
-  }
 
   /**
    * Enhanced logout that clears all timers
@@ -349,10 +299,6 @@ export class AuthService {
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
-    }
-    if (this.activityTimer) {
-      clearTimeout(this.activityTimer);
-      this.activityTimer = null;
     }
     
     this.currentUserSubject.next(null);
