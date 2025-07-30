@@ -260,8 +260,9 @@ export class PostComponent implements OnInit, OnDestroy {
         // Navigate to quoted post
         this.router.navigate(['/', quotedPost.author.handle, 'post', quotedPost.id]);
       } else {
-        // Navigate to current post
-        this.router.navigate([`/${this.post.author.handle}/post/${this.post.id}`]);
+        // Navigate to current post or referenced post for reposts
+        const targetPost = this.post.post_type === 'repost' && this.post.referenced_post ? this.post.referenced_post : this.post;
+        this.router.navigate([`/${targetPost.author.handle}/post/${targetPost.id}`]);
       }
     }
   }
@@ -269,7 +270,7 @@ export class PostComponent implements OnInit, OnDestroy {
   navigateToProfile(event: Event): void {
     event.stopPropagation();
     if (this.checkAuth('profile')) {
-      this.router.navigate([`/${this.post.author.handle}`]);
+      this.router.navigate([`/${this.getDisplayAuthor().handle}`]);
     }
   }
 
@@ -353,7 +354,8 @@ export class PostComponent implements OnInit, OnDestroy {
   protected copyLink(event: MouseEvent): void {
     event.stopPropagation();
     this.showShareMenu = false;
-    const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+    const targetPost = this.post.post_type === 'repost' && this.post.referenced_post ? this.post.referenced_post : this.post;
+    const postUrl = `${this.getBaseUrl()}/${targetPost.author.handle}/post/${targetPost.id}`;
     navigator.clipboard.writeText(postUrl).then(() => {
       this.toastService.showSuccess('Link copied to clipboard');
     }).catch(() => {
@@ -364,7 +366,8 @@ export class PostComponent implements OnInit, OnDestroy {
   protected shareToFacebook(event: MouseEvent): void {
     event.stopPropagation();
     this.showShareMenu = false;
-    const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+    const targetPost = this.post.post_type === 'repost' && this.post.referenced_post ? this.post.referenced_post : this.post;
+    const postUrl = `${this.getBaseUrl()}/${targetPost.author.handle}/post/${targetPost.id}`;
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`;
     window.open(facebookUrl, '_blank', 'width=600,height=400');
   }
@@ -372,7 +375,8 @@ export class PostComponent implements OnInit, OnDestroy {
   protected shareToWhatsApp(event: MouseEvent): void {
     event.stopPropagation();
     this.showShareMenu = false;
-    const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+    const targetPost = this.post.post_type === 'repost' && this.post.referenced_post ? this.post.referenced_post : this.post;
+    const postUrl = `${this.getBaseUrl()}/${targetPost.author.handle}/post/${targetPost.id}`;
     const text = `Check out this post: ${postUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
@@ -381,7 +385,8 @@ export class PostComponent implements OnInit, OnDestroy {
   protected shareToTwitter(event: MouseEvent): void {
     event.stopPropagation();
     this.showShareMenu = false;
-    const postUrl = `${this.getBaseUrl()}/${this.post.author.handle}/post/${this.post.id}`;
+    const targetPost = this.post.post_type === 'repost' && this.post.referenced_post ? this.post.referenced_post : this.post;
+    const postUrl = `${this.getBaseUrl()}/${targetPost.author.handle}/post/${targetPost.id}`;
     const text = 'Check out this post!';
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(postUrl)}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
@@ -602,7 +607,7 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected onPhotoClick(event: Event, index: number, sourcePost?: Post): void {
     event.stopPropagation();
-    const post = sourcePost || this.post;
+    const post = sourcePost || (this.post.post_type === 'repost' && this.post.referenced_post ? this.post.referenced_post : this.post);
     const photos = post.images || [];
     this.dialog.open(PhotoViewerComponent, {
       width: '100vw',
@@ -678,7 +683,7 @@ export class PostComponent implements OnInit, OnDestroy {
               this.router.navigate([`/${this.post.author.handle}/post/${this.post.id}`]);
               break;
             case 'profile':
-              this.router.navigate([`/${this.post.author.handle}`]);
+              this.router.navigate([`/${this.getDisplayAuthor().handle}`]);
               break;
             case 'report':
               this.onReportPost(new MouseEvent('click'));
@@ -689,6 +694,41 @@ export class PostComponent implements OnInit, OnDestroy {
       return false;
     }
     return true;
+  }
+
+  protected getDisplayAuthor(): User {
+    if (this.post.post_type === 'repost' && this.post.referenced_post?.author) {
+      return this.post.referenced_post.author;
+    }
+    return this.post.author;
+  }
+
+  protected getDisplayImages(): any[] | undefined {
+    if (this.post.post_type === 'repost' && this.post.referenced_post?.images) {
+      return this.post.referenced_post.images;
+    }
+    return this.post.images;
+  }
+
+  protected getDisplayIsHumanDrawing(): boolean {
+    if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      return this.post.referenced_post.is_human_drawing;
+    }
+    return this.post.is_human_drawing;
+  }
+
+  protected getDisplayIsVerified(): boolean {
+    if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      return this.post.referenced_post.is_verified;
+    }
+    return this.post.is_verified;
+  }
+
+  protected getDisplayCreatedAt(): string {
+    if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      return this.post.referenced_post.created_at;
+    }
+    return this.post.created_at;
   }
 
   protected getBaseUrl(): string {
