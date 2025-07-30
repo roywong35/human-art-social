@@ -42,7 +42,7 @@ export class AppComponent implements OnInit {
   isLoading = false;
 
   // Static routes that should not be treated as user handles
-  private staticRoutes = ['home', 'notifications', 'bookmarks', 'search', 'recommended-users', 'appeals', 'appeal', 'messages'];
+  private staticRoutes = ['home', 'notifications', 'bookmarks', 'search', 'recommended-users', 'appeals', 'appeal', 'messages', 'landing'];
 
   constructor(
     public authService: AuthService,
@@ -59,7 +59,9 @@ export class AppComponent implements OnInit {
         const currentRoute = this.router.url;
 
         // Set page-specific titles
-        if (currentRoute === '/home') {
+        if (currentRoute === '/') {
+          title = this.title; // Landing page uses default title
+        } else if (currentRoute === '/home') {
           title = 'Home / ' + this.title;
         } else if (currentRoute.startsWith('/search')) {
           title = 'Search / ' + this.title;
@@ -67,13 +69,26 @@ export class AppComponent implements OnInit {
           title = 'Bookmarks / ' + this.title;
         } else if (currentRoute === '/notifications') {
           title = 'Notifications / ' + this.title;
-        } else if (currentRoute.includes('/status/')) {
+        } else if (currentRoute.startsWith('/messages')) {
+          title = 'Messages / ' + this.title;
+        } else if (currentRoute === '/appeals') {
+          title = 'Appeals / ' + this.title;
+        } else if (currentRoute.startsWith('/appeal/')) {
+          title = 'Appeal / ' + this.title;
+        } else if (currentRoute === '/recommended-users') {
+          title = 'Recommended Users / ' + this.title;
+        } else if (currentRoute.includes('/post/')) {
           title = 'Post / ' + this.title;
-        } else if (currentRoute.startsWith('/@') || (this.isUserHandleRoute(currentRoute))) {
+        } else if (currentRoute.includes('/followers')) {
+          title = 'Followers / ' + this.title;
+        } else if (currentRoute.includes('/following')) {
+          title = 'Following / ' + this.title;
+        } else if (currentRoute.includes('/connections')) {
+          title = 'Connections / ' + this.title;
+        } else if (this.isUserHandleRoute(currentRoute)) {
           // Handle profile pages
-          const handle = currentRoute.startsWith('/@') 
-            ? currentRoute.split('/')[1].substring(1) // Remove @ symbol
-            : currentRoute.substring(1); // Remove leading slash
+          const segments = currentRoute.substring(1).split('/');
+          const handle = segments[0];
           
           // Get user info to set the display name in title
           this.userService.getUserByHandle(handle).subscribe({
@@ -113,8 +128,17 @@ export class AppComponent implements OnInit {
   private isUserHandleRoute(route: string): boolean {
     // Remove leading slash and get the first segment
     const segment = route.substring(1).split('/')[0];
-    // Return true only if it's a single segment and not a static route
-    return /^[^/]+$/.test(route) && !this.staticRoutes.includes(segment);
+    
+    // Check if it's a static route
+    if (this.staticRoutes.includes(segment)) {
+      return false;
+    }
+    
+    // Check if it's a valid user handle route (single segment, not empty)
+    // User handles should be alphanumeric with possible underscores/hyphens
+    const isValidHandle = /^[a-zA-Z0-9_-]+$/.test(segment);
+    
+    return isValidHandle && segment.length > 0;
   }
 
   ngOnInit() {
