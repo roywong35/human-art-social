@@ -58,7 +58,7 @@ export interface PostAppeal {
   providedIn: 'root'
 })
 export class AppealService {
-  private baseUrl = `${environment.apiUrl}/api/posts`;
+  private baseUrl = `${environment.apiUrl}/api/moderation/posts`;
 
   constructor(private http: HttpClient) {}
 
