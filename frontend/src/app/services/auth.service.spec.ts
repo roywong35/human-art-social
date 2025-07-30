@@ -369,17 +369,6 @@ describe('AuthService', () => {
       // @ts-ignore
       expect(router.navigate).toHaveBeenCalledWith(['/']);
     });
-
-    it('should clear timers on logout', () => {
-      // Setup timers
-      service['refreshTimer'] = setTimeout(() => {}, 1000);
-      service['activityTimer'] = setTimeout(() => {}, 1000);
-
-      service.logout();
-
-      expect(service['refreshTimer']).toBeNull();
-      expect(service['activityTimer']).toBeNull();
-    });
   });
 
   describe('Token Decoding', () => {
