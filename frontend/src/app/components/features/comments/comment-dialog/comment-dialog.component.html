@@ -31,7 +31,10 @@
         </div>
         
         <!-- Post Content -->
-        <p class="text-[16px] whitespace-pre-wrap dark:[color:var(--color-text)]">{{ data.post.content }}</p>
+        <p class="text-[16px] whitespace-pre-wrap dark:[color:var(--color-text)]" 
+           appHashtag 
+           [content]="data.post.content"
+           [preventClick]="false"></p>
         
         <!-- Post Image -->
         <div *ngIf="data.post.images && data.post.images.length > 0" 
@@ -128,6 +131,7 @@
       </div>
 
       <textarea
+        #replyTextarea
         [(ngModel)]="replyContent"
         class="w-full border-none resize-none text-lg focus:outline-none dark:bg-transparent dark:[color:var(--color-text)] dark:placeholder:text-gray-500"
         [ngClass]="{
@@ -135,7 +139,8 @@
           'min-h-[20px]': images.length > 0
         }"
         placeholder="Post your reply"
-        (input)="adjustTextarea($event)">
+        (input)="adjustTextarea($event)"
+        (keydown)="onHashtagKeydown($event)">
       </textarea>
 
       <!-- Image Preview Grid -->
@@ -243,4 +248,23 @@
   (scheduleSelected)="onScheduleSelected($event)"
   (viewScheduledPosts)="onViewScheduledPosts()"
   (clearSchedule)="onClearSchedule()">
-</app-schedule-modal> 
+</app-schedule-modal>
+
+<!-- Hashtag Autocomplete Dropdown -->
+<div *ngIf="showHashtagDropdown" 
+     class="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+     [style.top.px]="hashtagDropdownPosition.top"
+     [style.left.px]="hashtagDropdownPosition.left"
+     style="min-width: 200px;">
+  <ng-container *ngFor="let item of hashtagSuggestions; let i = index">
+    <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+         [class.bg-blue-50]="i === selectedHashtagIndex"
+         [class.dark:bg-blue-900]="i === selectedHashtagIndex"
+         (click)="selectHashtag(item)">
+      <div class="flex items-center justify-between gap-4">
+        <span class="text-blue-500 font-medium">#{{ item.name }}</span>
+        <span class="text-sm text-gray-500 dark:text-gray-400">{{ item.post_count }} posts</span>
+      </div>
+    </div>
+  </ng-container>
+</div> 

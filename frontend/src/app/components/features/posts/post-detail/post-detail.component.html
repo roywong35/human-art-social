@@ -82,6 +82,7 @@
               [(ngModel)]="newReply"
               (input)="onTextareaInput()"
               (focus)="replyFocused = true"
+              (keydown)="onHashtagKeydown($event)"
               placeholder="Post your reply"
               [class.h-10]="!replyFocused"
               class="w-full p-2 focus:outline-none resize-none text-base placeholder:text-lg dark:bg-transparent dark:[color:var(--color-text)] dark:placeholder:text-gray-500"
@@ -211,4 +212,23 @@
       <p class="text-gray-500 dark:[color:var(--color-text-secondary)]">No replies yet</p>
     </div>
   </div>
+</div>
+
+<!-- Hashtag Autocomplete Dropdown -->
+<div *ngIf="showHashtagDropdown" 
+     class="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+     [style.top.px]="hashtagDropdownPosition.top"
+     [style.left.px]="hashtagDropdownPosition.left"
+     style="min-width: 200px;">
+  <ng-container *ngFor="let item of hashtagSuggestions; let i = index">
+    <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+         [class.bg-blue-50]="i === selectedHashtagIndex"
+         [class.dark:bg-blue-900]="i === selectedHashtagIndex"
+         (click)="selectHashtag(item)">
+      <div class="flex items-center justify-between gap-4">
+        <span class="text-blue-500 font-medium">#{{ item.name }}</span>
+        <span class="text-sm text-gray-500 dark:text-gray-400">{{ item.post_count }} posts</span>
+      </div>
+    </div>
+  </ng-container>
 </div> 

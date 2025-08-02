@@ -111,7 +111,10 @@
           
 
           <!-- Post content -->
-          <p class="text-gray-800 dark:[color:var(--color-text)] pl-[1px] mt-[-5px] break-words whitespace-pre-wrap">{{ post.post_type === 'repost' && post.referenced_post ? post.referenced_post.content : post.content }}</p>
+          <p class="text-gray-800 dark:[color:var(--color-text)] pl-[1px] mt-[-5px] break-words whitespace-pre-wrap" 
+             appHashtag 
+             [content]="getDisplayContent()"
+             [preventClick]="isPreview"></p>
 
           <!-- Referenced post for quotes -->
           <div *ngIf="post.post_type === 'quote' && post.referenced_post" 
@@ -126,7 +129,10 @@
                 <p class="text-[15px] text-gray-500 dark:[color:var(--color-text-secondary)]">{{"@"}}{{ post.referenced_post.author.handle }}</p>
               </div>
             </div>
-            <p class="text-[16px] text-gray-800 dark:[color:var(--color-text)] break-words whitespace-pre-wrap">{{ post.referenced_post.content }}</p>
+            <p class="text-[16px] text-gray-800 dark:[color:var(--color-text)] break-words whitespace-pre-wrap" 
+               appHashtag 
+               [content]="getReferencedPostContent()"
+               [preventClick]="isPreview"></p>
 
             <!-- Show truncated URL if this quoted post is quoting another post -->
             <div *ngIf="post.referenced_post.post_type === 'quote' && post.referenced_post.referenced_post" class="mt-2 text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">

@@ -23,6 +23,7 @@ import { take } from 'rxjs/operators';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
 import { LoginModalComponent } from '../../auth/login-modal/login-modal.component';
 import { UserPreviewModalComponent } from '../../../shared/user-preview-modal/user-preview-modal.component';
+import { HashtagDirective } from '../../../../directives/hashtag.directive';
 
 @Component({
   selector: 'app-post',
@@ -34,7 +35,8 @@ import { UserPreviewModalComponent } from '../../../shared/user-preview-modal/us
     RouterModule,
     TimeAgoPipe,
     RepostMenuComponent,
-    UserPreviewModalComponent
+    UserPreviewModalComponent,
+    HashtagDirective
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss'],
@@ -729,6 +731,17 @@ export class PostComponent implements OnInit, OnDestroy {
       return this.post.referenced_post.created_at;
     }
     return this.post.created_at;
+  }
+
+  protected getDisplayContent(): string {
+    if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      return this.post.referenced_post.content;
+    }
+    return this.post.content;
+  }
+
+  protected getReferencedPostContent(): string {
+    return this.post.referenced_post ? this.post.referenced_post.content : '';
   }
 
   protected getBaseUrl(): string {

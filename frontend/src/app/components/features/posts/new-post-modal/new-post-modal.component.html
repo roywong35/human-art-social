@@ -44,7 +44,8 @@
             'min-h-[20px]': quotePost || images.length > 0
           }"
           [maxlength]="280"
-          (input)="adjustTextareaHeight($event)">
+          (input)="adjustTextareaHeight($event)"
+          (keydown)="onHashtagKeydown($event)">
         </textarea>
       </div>
 
@@ -261,3 +262,22 @@
   (viewScheduledPosts)="onViewScheduledPosts()"
   (clearSchedule)="onClearSchedule()">
 </app-schedule-modal>
+
+<!-- Hashtag Autocomplete Dropdown -->
+<div *ngIf="showHashtagDropdown" 
+     class="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+     [style.top.px]="hashtagDropdownPosition.top"
+     [style.left.px]="hashtagDropdownPosition.left"
+     style="min-width: 200px;">
+  <ng-container *ngFor="let item of hashtagSuggestions; let i = index">
+    <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+         [class.bg-blue-50]="i === selectedHashtagIndex"
+         [class.dark:bg-blue-900]="i === selectedHashtagIndex"
+         (click)="selectHashtag(item)">
+      <div class="flex items-center justify-between gap-4">
+        <span class="text-blue-500 font-medium">#{{ item.name }}</span>
+        <span class="text-sm text-gray-500 dark:text-gray-400">{{ item.post_count }} posts</span>
+      </div>
+    </div>
+  </ng-container>
+</div>
