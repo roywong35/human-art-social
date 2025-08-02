@@ -36,6 +36,19 @@ html, body {
   scrollbar-gutter: stable;
 }
 
+/* Better Japanese font rendering */
+body {
+  font-feature-settings: "palt" 1, "pkna" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Ensure Japanese characters render with proper weight */
+* {
+  font-family: inherit;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-text);

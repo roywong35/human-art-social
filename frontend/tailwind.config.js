@@ -8,7 +8,28 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        sans: [
+          'Inter', 
+          'Noto Sans JP',
+          'Hiragino Sans',
+          'Hiragino Kaku Gothic ProN',
+          'Yu Gothic',
+          'Yu Gothic UI',
+          'Meiryo',
+          'Takao',
+          'IPAexGothic',
+          'IPAPGothic',
+          'VL PGothic',
+          'Osaka',
+          'system-ui', 
+          '-apple-system', 
+          'BlinkMacSystemFont', 
+          'Segoe UI', 
+          'Roboto', 
+          'Helvetica Neue', 
+          'Arial', 
+          'sans-serif'
+        ],
       },
       colors: {
         'primary': 'var(--color-primary)',
