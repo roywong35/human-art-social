@@ -9,7 +9,7 @@ from ..serializers import HashtagSerializer
 from django.db import transaction
 from django.utils import timezone
 import mimetypes
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 from datetime import timedelta
 from django.core.cache import cache
 from django.http import Http404
@@ -616,8 +616,8 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'])
     def trending_hashtags(self, request):
         """Get trending hashtags from cache or calculate if needed"""
-        timeframe = request.query_params.get('timeframe', 'hour')
-        cache_key = f'trending_hashtags:{timeframe}'
+        # Use a fixed cache key since our new algorithm doesn't use timeframe
+        cache_key = 'trending_hashtags:new_algorithm'
         
         # Try to get from cache first
         results = cache.get(cache_key)
@@ -625,7 +625,7 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({'results': results})
             
         # If not in cache, calculate
-        results = self._calculate_trending(timeframe)
+        results = self._calculate_trending()
         cache.set(cache_key, results, 300)  # Cache for 5 minutes
         
         return Response({'results': results})
@@ -633,40 +633,92 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['POST'])
     def calculate_trending(self, request):
         """Force calculate trending hashtags"""
-        timeframe = request.data.get('timeframe', 'hour')
-        
         # Calculate fresh results
-        results = self._calculate_trending(timeframe)
+        results = self._calculate_trending()
         
         # Update cache
-        cache_key = f'trending_hashtags:{timeframe}'
+        cache_key = 'trending_hashtags:new_algorithm'
         cache.set(cache_key, results, 300)  # Cache for 5 minutes
         
         return Response({'results': results})
 
     def _calculate_trending(self, timeframe='hour'):
-        """Calculate trending hashtags for the specified timeframe"""
+        """Calculate trending hashtags with burst detection and sustained popularity"""
         now = timezone.now()
         
-        # Set time threshold based on timeframe
-        if timeframe == 'hour':
-            time_threshold = now - timedelta(hours=1)
-        else:  # day
-            time_threshold = now - timedelta(days=1)
+        # Multiple time windows for different trend types
+        burst_window = now - timedelta(hours=2)      # Recent spikes
+        rising_window = now - timedelta(hours=24)    # Growing trends  
+        sustained_window = now - timedelta(days=7)   # Long-term popularity
         
-        # Get trending hashtags - simplified query
         trending = Hashtag.objects.annotate(
-            post_count=Count(
+            # Burst activity (last 2 hours) - heavily weighted
+            burst_posts=Count(
                 'posts',
                 distinct=True,
                 filter=Q(
-                    posts__created_at__gte=time_threshold,
+                    posts__created_at__gte=burst_window,
+                    posts__post_type__in=['post', 'quote']
+                )
+            ),
+            
+            # Rising activity (last 24 hours) - medium weight
+            rising_posts=Count(
+                'posts',
+                distinct=True,
+                filter=Q(
+                    posts__created_at__gte=rising_window,
+                    posts__post_type__in=['post', 'quote']
+                )
+            ),
+            
+            # Sustained popularity (last 7 days) - lower weight
+            sustained_posts=Count(
+                'posts',
+                distinct=True,
+                filter=Q(
+                    posts__created_at__gte=sustained_window,
+                    posts__post_type__in=['post', 'quote']
+                )
+            ),
+            
+            # Engagement score (likes, comments, reposts) - count the related objects
+            engagement_score=Count(
+                'posts__likes',
+                filter=Q(posts__post_type__in=['post', 'quote'])
+            ) + Count(
+                'posts__replies',
+                filter=Q(posts__post_type__in=['post', 'quote'])
+            ) + Count(
+                'posts__reposters',
+                filter=Q(posts__post_type__in=['post', 'quote'])
+            ),
+            
+            # Recent engagement (last 24 hours)
+            recent_engagement=Count(
+                'posts__likes',
+                filter=Q(
+                    posts__created_at__gte=rising_window,
+                    posts__post_type__in=['post', 'quote']
+                )
+            ) + Count(
+                'posts__replies',
+                filter=Q(
+                    posts__created_at__gte=rising_window,
                     posts__post_type__in=['post', 'quote']
                 )
             )
         ).filter(
-            post_count__gt=0
-        ).order_by('-post_count')[:10]
+            # Must have some recent activity
+            Q(burst_posts__gt=0) | Q(rising_posts__gt=0)
+        ).order_by(
+            # Prioritize burst trends, then rising trends, then sustained popularity
+            '-burst_posts',
+            '-rising_posts', 
+            '-recent_engagement',
+            '-sustained_posts',
+            '-engagement_score'
+        )[:10]
         
         # Serialize results
         serializer = HashtagSerializer(trending, many=True)

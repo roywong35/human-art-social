@@ -34,14 +34,12 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   private sidebarHeight: number = 0;
   private sidebarWidth: number = 0;
   private lastScrollY: number = 0;
-  selectedTimeframe: 'hour' | 'day' = 'hour';
-  isRefreshing = false;
   trendingTopics: HashtagResult[] = [];
   readonly maxTrendingTopics = 5;
   recommendedUsers: UserWithState[] = [];
   isLoadingUsers = false;
   readonly maxRecommendedUsers = 3;
-  defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
+  defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM3MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   // User preview modal - now handled by GlobalModalService
   private hoverTimeout: any;
@@ -133,21 +131,17 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Initial calculation
-    setTimeout(() => {
-      const rect = this.elementRef.nativeElement.getBoundingClientRect();
-      this.initialTop = rect.top + window.scrollY;
-      this.sidebarHeight = rect.height;
-      this.sidebarWidth = rect.width; // Store the initial width
-    }, 0);
-
-    window.addEventListener('scroll', this.scrollHandler, { passive: true });
     this.loadTrending();
     this.loadRecommendedUsers();
+    this.setupScrollHandler();
   }
 
   ngOnDestroy() {
-    window.removeEventListener('scroll', this.scrollHandler);
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler);
+    }
     
     // Clean up user preview modal timeouts
     if (this.hoverTimeout) {
@@ -158,33 +152,8 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     }
   }
 
-  onTimeframeChange() {
-    this.loadTrending();
-  }
-
-  refreshTrending() {
-    this.isRefreshing = true;
-    this.hashtagService.calculateTrending(this.selectedTimeframe).subscribe({
-      next: (response) => {
-        this.trendingTopics = response.results;
-        this.isRefreshing = false;
-      },
-      error: (error) => {
-        console.error('Error refreshing trending:', error);
-        this.isRefreshing = false;
-      }
-    });
-  }
-
-  private loadTrending() {
-    this.hashtagService.getTrendingHashtags(this.selectedTimeframe).subscribe({
-      next: (response) => {
-        this.trendingTopics = response.results;
-      },
-      error: (error) => {
-        console.error('Error loading trending:', error);
-      }
-    });
+  navigateToHashtag(hashtag: string) {
+    this.router.navigate(['/search'], { queryParams: { q: `#${hashtag}` } });
   }
 
   formatCount(count: number): string {
@@ -197,8 +166,27 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     return count.toString();
   }
 
-  navigateToHashtag(hashtag: string) {
-    this.router.navigate(['/search'], { queryParams: { q: `#${hashtag}` } });
+  private setupScrollHandler() {
+    // Initial calculation
+    setTimeout(() => {
+      const rect = this.elementRef.nativeElement.getBoundingClientRect();
+      this.initialTop = rect.top + window.scrollY;
+      this.sidebarHeight = rect.height;
+      this.sidebarWidth = rect.width; // Store the initial width
+    }, 0);
+
+    window.addEventListener('scroll', this.scrollHandler, { passive: true });
+  }
+
+  private loadTrending() {
+    this.hashtagService.getTrendingHashtags().subscribe({
+      next: (response) => {
+        this.trendingTopics = response.results;
+      },
+      error: (error) => {
+        console.error('Error loading trending:', error);
+      }
+    });
   }
 
   private loadRecommendedUsers() {
