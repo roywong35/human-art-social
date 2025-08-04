@@ -444,6 +444,13 @@ class DonationSerializer(serializers.ModelSerializer):
         fields = ['id', 'donor', 'artist', 'post', 'amount', 'message', 'is_public', 'created_at']
         read_only_fields = ['donor', 'artist', 'created_at']
 
+    def to_representation(self, instance):
+        """Convert Decimal amount to float for frontend"""
+        data = super().to_representation(instance)
+        if 'amount' in data and data['amount'] is not None:
+            data['amount'] = float(data['amount'])
+        return data
+
     def get_post(self, obj):
         # Return minimal post data to avoid circular references
         return {
@@ -465,13 +472,6 @@ class DonationSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def validate(self, data):
-        # Ensure the post is a verified human art post
-        post = data['post']
-        if not post.is_human_drawing or not post.is_verified:
-            raise serializers.ValidationError("Donations can only be made to verified human art posts")
-        
-        # Ensure user is not donating to their own post
-        if post.author == self.context['request'].user:
-            raise serializers.ValidationError("You cannot donate to your own post")
-        
+        # The post will be added by the view before validation
+        # We don't need to validate it here since the view handles that
         return data 

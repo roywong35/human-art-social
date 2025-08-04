@@ -10,6 +10,7 @@ export interface Donation {
     id: number;
     username: string;
     handle: string;
+    profile_picture?: string;
   };
   post: number;
   amount: number;

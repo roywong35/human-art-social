@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
@@ -7,6 +9,7 @@ class Notification(models.Model):
         ('comment', 'Comment'),
         ('follow', 'Follow'),
         ('repost', 'Repost'),
+        ('donation', 'Donation'),
         ('report_received', 'Report Received'),
         ('post_removed', 'Post Removed for Multiple Reports'),
         ('appeal_approved', 'Appeal Approved'),
@@ -34,6 +37,12 @@ class Notification(models.Model):
         blank=True,
         related_name='notifications'
     )
+    # Generic foreign key to handle both comments (Post) and donations (Donation)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+    
+    # Keep the old comment field for backward compatibility
     comment = models.ForeignKey(
         'posts.Post',  # Since comments are also posts in your system
         on_delete=models.CASCADE,

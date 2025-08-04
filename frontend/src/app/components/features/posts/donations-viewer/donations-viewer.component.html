@@ -1,0 +1,115 @@
+<div class="donations-viewer">
+  <!-- Header -->
+  <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex items-center">
+             <button 
+         (click)="close()"
+         class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-3 w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+         <i class="fas fa-times text-xl"></i>
+       </button>
+      <h2 class="text-xl font-bold text-gray-900 dark:text-white">Donations to this post</h2>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-4">
+    <!-- Summary -->
+    <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+          {{ formatAmount(getTotalDonations()) }}
+        </div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+          Total donations from {{ donations.length }} supporter{{ donations.length !== 1 ? 's' : '' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="loading" class="flex justify-center items-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="error" class="text-center py-8">
+      <div class="text-red-500 mb-2">
+        <i class="fas fa-exclamation-triangle text-2xl"></i>
+      </div>
+      <p class="text-gray-600 dark:text-gray-400">{{ error }}</p>
+    </div>
+
+    <!-- Donations list -->
+    <div *ngIf="!loading && !error">
+      <div *ngIf="donations.length === 0" class="text-center py-8">
+        <div class="text-gray-400 mb-2">
+          <i class="fas fa-heart text-3xl"></i>
+        </div>
+        <p class="text-gray-600 dark:text-gray-400">No donations yet</p>
+        <p class="text-sm text-gray-500 dark:text-gray-500">Be the first to support this artist!</p>
+      </div>
+
+      <div *ngIf="donations.length > 0" class="space-y-3">
+        <div *ngFor="let donation of donations" 
+             class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                     <div class="flex items-center space-x-3">
+                           <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
+                   *ngIf="donation.is_public"
+                   (click)="navigateToProfile(donation.donor.handle, $event)"
+                   (mouseenter)="onUserHover($event, donation.donor)"
+                   (mouseleave)="onUserHoverLeave()">
+                <img *ngIf="donation.donor.profile_picture" 
+                     [src]="donation.donor.profile_picture" 
+                     [alt]="donation.donor.username"
+                     class="w-full h-full object-cover">
+                <div *ngIf="!donation.donor.profile_picture" 
+                     class="w-full h-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <i class="fas fa-heart text-green-600 dark:text-green-400"></i>
+                </div>
+              </div>
+              <div *ngIf="!donation.is_public" 
+                   class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                <div class="w-full h-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <i class="fas fa-heart text-green-600 dark:text-green-400"></i>
+                </div>
+              </div>
+                         <div class="flex-1 min-w-0">
+                               <div class="flex items-center space-x-1 min-w-0 overflow-hidden">
+                  <p class="text-[16px] font-semibold text-gray-900 dark:text-white hover:underline cursor-pointer truncate min-w-0"
+                     *ngIf="donation.is_public"
+                     (click)="navigateToProfile(donation.donor.handle, $event)"
+                     (mouseenter)="onUserHover($event, donation.donor)"
+                     (mouseleave)="onUserHoverLeave()">
+                    {{ donation.donor.username }}
+                  </p>
+                  <p class="text-[16px] font-semibold text-gray-900 dark:text-white truncate min-w-0"
+                     *ngIf="!donation.is_public">
+                    Anonymous
+                  </p>
+                  <p class="text-[15px] text-gray-500 truncate hover:underline cursor-pointer min-w-0"
+                     *ngIf="donation.is_public"
+                     (click)="navigateToProfile(donation.donor.handle, $event)"
+                     (mouseenter)="onUserHover($event, donation.donor)"
+                     (mouseleave)="onUserHoverLeave()">
+                    {{'@'}}{{ donation.donor.handle }}
+                  </p>
+                  <span class="text-[15px] text-gray-500 flex-shrink-0">·</span>
+                  <p class="text-[15px] text-gray-500 truncate flex-shrink-0" 
+                     [title]="getFormattedDate(donation.created_at)">
+                    {{ donation.created_at | timeAgo }}
+                  </p>
+                </div>
+               <div *ngIf="donation.message" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                 "{{ donation.message }}"
+               </div>
+             </div>
+          </div>
+          <div class="text-lg font-bold text-green-600 dark:text-green-400">
+            {{ formatAmount(donation.amount) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div> 

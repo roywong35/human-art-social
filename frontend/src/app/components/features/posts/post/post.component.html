@@ -72,13 +72,14 @@
           </div>
           
           <!-- Donation button (only for verified human art posts) -->
-          <div *ngIf="getDisplayIsHumanDrawing() && getDisplayIsVerified() && currentUser && post.author.id !== currentUser.id" 
-               title="Support this artist" 
+          <div *ngIf="getDisplayIsHumanDrawing() && getDisplayIsVerified() && currentUser" 
+               [title]="post.author.id === currentUser.id ? 'View donations to this post' : 'Support this artist'" 
                class="relative mr-[-5px]" 
                (click)="$event.stopPropagation()">
             <button class="flex items-center justify-center w-9 h-9 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-full transition-colors"
                     [class.text-green-500]="hasDonated"
-                    (click)="onDonate($event)">
+                    [class.opacity-50]="post.author.id === currentUser.id"
+                    (click)="post.author.id !== currentUser.id ? onDonate($event) : onViewDonations($event)">
               <i class="fa-solid fa-money-bill-1-wave text-[16px]"></i>
             </button>
           </div>

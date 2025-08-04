@@ -26,6 +26,7 @@ import { LoginModalComponent } from '../../auth/login-modal/login-modal.componen
 import { UserPreviewModalComponent } from '../../../shared/user-preview-modal/user-preview-modal.component';
 import { HashtagDirective } from '../../../../directives/hashtag.directive';
 import { DonationModalComponent } from '../donation-modal/donation-modal.component';
+import { DonationsViewerComponent } from '../donations-viewer/donations-viewer.component';
 
 @Component({
   selector: 'app-post',
@@ -403,9 +404,9 @@ export class PostComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     if (this.checkAuth('donate')) {
       const dialogRef = this.dialog.open(DonationModalComponent, {
-        width: '500px',
+        width: '600px',
         maxWidth: '90vw',
-        panelClass: ['donation-dialog'],
+        panelClass: ['donation-modal-fixed'],
         data: { post: this.post }
       });
 
@@ -417,6 +418,16 @@ export class PostComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  onViewDonations(event: MouseEvent): void {
+    event.stopPropagation();
+          const dialogRef = this.dialog.open(DonationsViewerComponent, {
+        width: '600px',
+        maxWidth: '90vw',
+        panelClass: ['donation-modal-fixed'],
+        data: { post: this.post }
+      });
   }
 
   protected closeAllMenus(): void {

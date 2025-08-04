@@ -16,7 +16,7 @@ export interface Notification {
     profile_picture: string | null;
     handle: string;
   };
-  notification_type: 'like' | 'comment' | 'follow' | 'repost' | 'report_received' | 'post_removed' | 'appeal_approved' | 'appeal_rejected' | 'art_verified';
+  notification_type: 'like' | 'comment' | 'follow' | 'repost' | 'donation' | 'report_received' | 'post_removed' | 'appeal_approved' | 'appeal_rejected' | 'art_verified';
   post?: {
     id: number;
     content: string;
@@ -39,6 +39,7 @@ export interface Notification {
   comment?: {
     id: number;
     content: string;
+    amount?: number; // For donation notifications
   };
   is_read: boolean;
   created_at: string;
@@ -242,6 +243,10 @@ export class NotificationService {
         return `${username} followed you`;
       case 'repost':
         return `${username} reposted your post`;
+      case 'donation':
+        // Get donation amount from comment field (which contains the donation object)
+        const donationAmount = notification.comment ? `￥${Math.floor(notification.comment.amount || 0).toLocaleString()}` : '￥0';
+        return `${username} donated ${donationAmount} to your post`;
       case 'report_received':
         return `We received your report`;
       case 'post_removed':

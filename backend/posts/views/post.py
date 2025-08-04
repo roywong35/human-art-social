@@ -979,8 +979,9 @@ class PostViewSet(viewsets.ModelViewSet):
                 
                 donation = serializer.save()
                 
-                # TODO: Send notification to the artist
-                # create_donation_notification(request.user, post, donation)
+                # Send notification to the artist
+                from notifications.services import create_donation_notification
+                create_donation_notification(request.user, post, donation)
                 
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             

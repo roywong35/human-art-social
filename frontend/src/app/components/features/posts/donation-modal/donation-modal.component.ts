@@ -14,8 +14,8 @@ import { Donation, CreateDonationRequest } from '../../../../models/donation.mod
   styleUrls: ['./donation-modal.component.scss']
 })
 export class DonationModalComponent implements OnInit {
-  predefinedAmounts = [5, 10, 25, 50, 100, 200];
-  selectedAmount = 5;
+  predefinedAmounts = [100, 200, 500, 1000, 2000, 5000];
+  selectedAmount = 100;
   customAmount: number | null = null;
   message = '';
   isPublic = true;
@@ -65,8 +65,9 @@ export class DonationModalComponent implements OnInit {
     });
   }
 
-  calculateTotalRaised(): number {
-    return this.donations.reduce((total, donation) => total + donation.amount, 0);
+  calculateTotalRaised(): string {
+    const total = this.donations.reduce((total, donation) => total + donation.amount, 0);
+    return Math.floor(total).toLocaleString();
   }
 
   submitDonation() {
@@ -83,7 +84,7 @@ export class DonationModalComponent implements OnInit {
 
     this.donationService.createDonation(donationRequest).subscribe({
       next: (donation) => {
-        this.toastService.showSuccess(`Successfully donated $${donation.amount} to ${this.data.post.author.username}!`);
+        this.toastService.showSuccess(`Successfully donated ￥${donation.amount} to ${this.data.post.author.username}!`);
         this.dialogRef.close(donation);
       },
       error: (error) => {

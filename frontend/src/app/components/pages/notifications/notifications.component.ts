@@ -195,6 +195,12 @@ export class NotificationsComponent implements OnInit, OnDestroy {
           this.router.navigate(['/', notification.post.author.handle, 'post', notification.post.id]);
         }
         break;
+      case 'donation':
+        // Navigate to the post that received the donation
+        if (notification.post?.id && notification.post?.author?.handle) {
+          this.router.navigate(['/', notification.post.author.handle, 'post', notification.post.id]);
+        }
+        break;
     }
   }
 
