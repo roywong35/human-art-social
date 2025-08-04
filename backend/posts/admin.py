@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.timesince import timesince
 from django.urls import reverse
-from .models import Post, EvidenceFile, ContentReport, PostAppeal, AppealEvidenceFile
+from .models import Post, EvidenceFile, ContentReport, PostAppeal, AppealEvidenceFile, Donation
 from notifications.services import create_appeal_approved_notification, create_appeal_rejected_notification
 
 class EvidenceFileInline(admin.TabularInline):
@@ -525,4 +525,67 @@ class PostAppealAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'post', 'author', 'reviewed_by', 'post__author'
+        )
+
+
+@admin.register(Donation)
+class DonationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'donor_link', 'artist_link', 'post_link', 'amount', 'is_public', 'time_ago', 'has_message')
+    list_filter = ('is_public', 'created_at')
+    search_fields = ('donor__handle', 'donor__username', 'artist__handle', 'artist__username', 'post__content')
+    readonly_fields = ('created_at', 'donor', 'artist', 'post', 'amount', 'message', 'is_public', 'post_preview')
+    fieldsets = (
+        ('Donation Information', {
+            'fields': ('donor', 'artist', 'post', 'amount', 'message', 'is_public', 'created_at')
+        }),
+        ('Post Details', {
+            'fields': ('post_preview',),
+            'classes': ('wide',)
+        }),
+    )
+
+    def donor_link(self, obj):
+        url = reverse('admin:users_user_change', args=[obj.donor.id])
+        return format_html('<a href="{}">{}</a>', url, obj.donor.username)
+    donor_link.short_description = 'Donor'
+
+    def artist_link(self, obj):
+        url = reverse('admin:users_user_change', args=[obj.artist.id])
+        return format_html('<a href="{}">{}</a>', url, obj.artist.username)
+    artist_link.short_description = 'Artist'
+
+    def post_link(self, obj):
+        url = reverse('admin:posts_post_change', args=[obj.post.id])
+        return format_html('<a href="{}">Post #{}</a>', url, obj.post.id)
+    post_link.short_description = 'Post'
+
+    def time_ago(self, obj):
+        if not obj.created_at:
+            return '-'
+        return format_html('<span style="color: #666;">{}</span>', timesince(obj.created_at))
+    time_ago.short_description = 'Donated'
+    time_ago.admin_order_field = 'created_at'
+
+    def has_message(self, obj):
+        if obj.message:
+            return format_html('<span style="color: green;">✓</span>')
+        return format_html('<span style="color: #ccc;">-</span>')
+    has_message.short_description = 'Message'
+
+    def post_preview(self, obj):
+        if not obj.post:
+            return '-'
+        content = obj.post.content[:100] + '...' if len(obj.post.content) > 100 else obj.post.content
+        return format_html(
+            '<div style="margin: 10px 0; padding: 10px; background-color: #f9f9f9; border-radius: 4px;">'
+            '<strong>Post #{}</strong><br/>'
+            '<span style="color: #666;">{}</span>'
+            '</div>',
+            obj.post.id, content
+        )
+    post_preview.short_description = 'Post Preview'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'donor', 'artist', 'post', 'post__author'
         )

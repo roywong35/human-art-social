@@ -18,12 +18,14 @@ import { CommentDialogComponent } from '../../comments/comment-dialog/comment-di
 import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
 import { NewPostModalComponent } from '../new-post-modal/new-post-modal.component';
 import { ReportModalComponent } from '../report-modal/report-modal.component';
+
 import { ToastService } from '../../../../services/toast.service';
 import { take } from 'rxjs/operators';
 import { PhotoViewerComponent } from '../../photo-viewer/photo-viewer.component';
 import { LoginModalComponent } from '../../auth/login-modal/login-modal.component';
 import { UserPreviewModalComponent } from '../../../shared/user-preview-modal/user-preview-modal.component';
 import { HashtagDirective } from '../../../../directives/hashtag.directive';
+import { DonationModalComponent } from '../donation-modal/donation-modal.component';
 
 @Component({
   selector: 'app-post',
@@ -74,6 +76,9 @@ export class PostComponent implements OnInit, OnDestroy {
   protected repostMenuAbove = false;
   protected moreMenuAbove = false;
   
+  // Donation properties
+  protected hasDonated = false;
+
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   // Reply functionality
@@ -394,6 +399,26 @@ export class PostComponent implements OnInit, OnDestroy {
     window.open(twitterUrl, '_blank', 'width=600,height=400');
   }
 
+  onDonate(event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.checkAuth('donate')) {
+      const dialogRef = this.dialog.open(DonationModalComponent, {
+        width: '500px',
+        maxWidth: '90vw',
+        panelClass: ['donation-dialog'],
+        data: { post: this.post }
+      });
+
+      dialogRef.afterClosed().subscribe((result: any) => {
+        if (result) {
+          // Donation was successful, update the button state
+          this.hasDonated = true;
+          this.cd.detectChanges();
+        }
+      });
+    }
+  }
+
   protected closeAllMenus(): void {
     this.showShareMenu = false;
     this.showRepostMenu = false;
@@ -689,6 +714,9 @@ export class PostComponent implements OnInit, OnDestroy {
               break;
             case 'report':
               this.onReportPost(new MouseEvent('click'));
+              break;
+            case 'donate':
+              this.onDonate(new MouseEvent('click'));
               break;
           }
         }

@@ -918,4 +918,78 @@ class PostViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['GET'])
+    def donations(self, request, handle=None, pk=None):
+        """
+        Get donations for a specific post
+        """
+        try:
+            post = self.get_object()
+            
+            # Only show donations for verified human art posts
+            if not post.is_human_drawing or not post.is_verified:
+                return Response(
+                    {'error': 'Donations are only available for verified human art posts'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            donations = post.donations.all().order_by('-created_at')
+            
+            # Import DonationSerializer
+            from ..serializers import DonationSerializer
+            serializer = DonationSerializer(donations, many=True, context={'request': request})
+            return Response(serializer.data)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['POST'])
+    def donate(self, request, handle=None, pk=None):
+        """
+        Create a donation for a verified human art post
+        """
+        try:
+            post = self.get_object()
+            
+            # Validate that this is a verified human art post
+            if not post.is_human_drawing or not post.is_verified:
+                return Response(
+                    {'error': 'Donations can only be made to verified human art posts'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate that user is not donating to their own post
+            if post.author == request.user:
+                return Response(
+                    {'error': 'You cannot donate to your own post'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Import DonationSerializer
+            from ..serializers import DonationSerializer
+            serializer = DonationSerializer(data=request.data, context={'request': request})
+            
+            if serializer.is_valid():
+                # Add the post to the validated data
+                validated_data = serializer.validated_data
+                validated_data['post'] = post
+                
+                donation = serializer.save()
+                
+                # TODO: Send notification to the artist
+                # create_donation_notification(request.user, post, donation)
+                
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 

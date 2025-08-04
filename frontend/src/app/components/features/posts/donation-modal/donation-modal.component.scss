@@ -1,0 +1,49 @@
+.donation-modal {
+  @media (max-width: 687px) {
+    width: 100vw !important;
+    height: 100vh !important;
+    
+    > div {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      min-height: 100vh !important;
+      border-radius: 0 !important;
+      padding: 1rem !important;
+    }
+  }
+  
+  /* Custom scrollbar for recent donations */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+
+  /* Dark mode scrollbar */
+  .dark & {
+    ::-webkit-scrollbar-track {
+      background: #374151;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #6b7280;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #9ca3af;
+    }
+  }
+}

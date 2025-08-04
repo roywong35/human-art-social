@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Post, EvidenceFile, PostImage, Hashtag, ContentReport, PostAppeal, AppealEvidenceFile, Draft, DraftImage, ScheduledPost, ScheduledPostImage
+from .models import Post, EvidenceFile, PostImage, Hashtag, ContentReport, PostAppeal, AppealEvidenceFile, Draft, DraftImage, ScheduledPost, ScheduledPostImage, Donation
 
 User = get_user_model()
 
@@ -430,3 +430,48 @@ class UserPostSerializer(serializers.ModelSerializer):
             # Use UserPostSerializer for referenced posts too
             return UserPostSerializer(obj.referenced_post, context=self.context).data
         return None 
+
+class DonationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Donation model
+    """
+    donor = UserSerializer(read_only=True)
+    artist = UserSerializer(read_only=True)
+    post = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Donation
+        fields = ['id', 'donor', 'artist', 'post', 'amount', 'message', 'is_public', 'created_at']
+        read_only_fields = ['donor', 'artist', 'created_at']
+
+    def get_post(self, obj):
+        # Return minimal post data to avoid circular references
+        return {
+            'id': obj.post.id,
+            'content': obj.post.content[:100] + '...' if len(obj.post.content) > 100 else obj.post.content,
+            'author': {
+                'id': obj.post.author.id,
+                'username': obj.post.author.username,
+                'handle': obj.post.author.handle
+            }
+        }
+
+    def create(self, validated_data):
+        # Set the donor to the current user
+        validated_data['donor'] = self.context['request'].user
+        # Set the artist to the post author
+        post = validated_data['post']
+        validated_data['artist'] = post.author
+        return super().create(validated_data)
+
+    def validate(self, data):
+        # Ensure the post is a verified human art post
+        post = data['post']
+        if not post.is_human_drawing or not post.is_verified:
+            raise serializers.ValidationError("Donations can only be made to verified human art posts")
+        
+        # Ensure user is not donating to their own post
+        if post.author == self.context['request'].user:
+            raise serializers.ValidationError("You cannot donate to your own post")
+        
+        return data 

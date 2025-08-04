@@ -578,3 +578,34 @@ class ScheduledPostImage(models.Model):
 
     def __str__(self):
         return f"Image {self.order} for scheduled post {self.scheduled_post.id}"
+
+
+class Donation(models.Model):
+    """
+    Model for tracking donations to verified human art posts.
+    Only verified human art posts can receive donations.
+    """
+    donor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='donations_made')
+    artist = models.ForeignKey(User, on_delete=models.CASCADE, related_name='donations_received')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='donations')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    message = models.TextField(blank=True, help_text='Optional message from donor to artist')
+    is_public = models.BooleanField(default=True, help_text='Whether to show donor name publicly')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['post', '-created_at']),
+            models.Index(fields=['artist', '-created_at']),
+            models.Index(fields=['donor', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"${self.amount} donation from {self.donor.username} to {self.artist.username}"
+
+    def save(self, *args, **kwargs):
+        # Ensure only verified human art posts can receive donations
+        if not self.post.is_human_drawing or not self.post.is_verified:
+            raise ValueError("Donations can only be made to verified human art posts")
+        super().save(*args, **kwargs)

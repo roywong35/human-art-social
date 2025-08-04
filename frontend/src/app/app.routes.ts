@@ -14,6 +14,7 @@ import { MessagesComponent } from './components/pages/messages/messages.componen
 import { AppealSubmissionComponent } from './components/pages/appeal-submission/appeal-submission.component';
 import { AppealsComponent } from './components/pages/appeals/appeals.component';
 
+
 export const routes: Routes = [
   {
     path: '',
@@ -25,6 +26,7 @@ export const routes: Routes = [
     component: HomeComponent,
     canActivate: [AuthGuard]
   },
+
   {
     path: 'notifications',
     component: NotificationsComponent,

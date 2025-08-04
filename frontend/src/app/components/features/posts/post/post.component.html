@@ -36,44 +36,58 @@
       <div>
         <div class="flex items-center justify-between">
           <div class="flex items-center min-w-0 flex-1">
-            <div class="flex items-center space-x-1 min-w-0 flex-shrink overflow-hidden">
-              <p class="text-[16px] font-semibold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter'] truncate" 
-                 (click)="navigateToProfile($event)"
-                 (mouseenter)="onUserHover($event, getDisplayAuthor())"
-                 (mouseleave)="onUserHoverLeave()">
-                {{ getDisplayAuthor().username }}
-              </p>
-              <p class="text-[15px] text-gray-500 truncate hover:underline cursor-pointer" 
-                 (mouseenter)="onUserHover($event, getDisplayAuthor())"
-                 (mouseleave)="onUserHoverLeave()"
-                 (click)="navigateToProfile($event)">{{"@"}}{{ getDisplayAuthor().handle }}</p>
-              <span class="text-[15px] text-gray-500 flex-shrink-0">·</span>
-              <p class="text-[15px] text-gray-500 truncate" 
-                 [title]="getFormattedDate(getDisplayCreatedAt())">{{ getDisplayCreatedAt() | timeAgo }}</p>
+            <div class="grid grid-cols-[1fr_auto] gap-1 min-w-0 flex-1">
+              <div class="flex items-center space-x-1 min-w-0 overflow-hidden">
+                <p class="text-[16px] font-semibold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer font-['Inter'] truncate min-w-0" 
+                   (click)="navigateToProfile($event)"
+                   (mouseenter)="onUserHover($event, getDisplayAuthor())"
+                   (mouseleave)="onUserHoverLeave()">
+                  {{ getDisplayAuthor().username }}
+                </p>
+                <p class="text-[15px] text-gray-500 truncate hover:underline cursor-pointer min-w-0" 
+                   (mouseenter)="onUserHover($event, getDisplayAuthor())"
+                   (mouseleave)="onUserHoverLeave()"
+                   (click)="navigateToProfile($event)">{{"@"}}{{ getDisplayAuthor().handle }}</p>
+                <span class="text-[15px] text-gray-500 flex-shrink-0">·</span>
+                <p class="text-[15px] text-gray-500 truncate flex-shrink-0" 
+                   [title]="getFormattedDate(getDisplayCreatedAt())">{{ getDisplayCreatedAt() | timeAgo }}</p>
+                <!-- Add pending badge for unverified human art posts -->
+                <div *ngIf="getDisplayIsHumanDrawing() && !getDisplayIsVerified()" 
+                     class="ml-2 inline-flex items-center flex-shrink-0">
+                  <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 text-xs font-medium rounded-full">
+                    <i class="fas fa-clock mr-1"></i>
+                    <span class="max-[500px]:hidden">Pending</span>
+                  </span>
+                </div>
+                <!-- Add verified badge for verified human art posts -->
+                <div *ngIf="getDisplayIsHumanDrawing() && getDisplayIsVerified()" 
+                     class="ml-2 inline-flex items-center flex-shrink-0">
+                  <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 text-xs font-medium rounded-full">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    <span class="max-[500px]:hidden">Verified Art</span>
+                  </span>
+                </div>
+              </div>
             </div>
-            <!-- Add pending badge for unverified human art posts -->
-            <div *ngIf="getDisplayIsHumanDrawing() && !getDisplayIsVerified()" 
-                 class="ml-2 inline-flex items-center flex-shrink-0">
-              <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 text-xs font-medium rounded-full">
-                <i class="fas fa-clock mr-1"></i>
-                <span class="max-[500px]:hidden">Pending</span>
-              </span>
-            </div>
-            <!-- Add verified badge for verified human art posts -->
-            <div *ngIf="getDisplayIsHumanDrawing() && getDisplayIsVerified()" 
-                 class="ml-2 inline-flex items-center flex-shrink-0">
-              <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 text-xs font-medium rounded-full">
-                <i class="fas fa-check-circle mr-1"></i>
-                <span class="max-[500px]:hidden">Verified Art</span>
-              </span>
-            </div>
+          </div>
+          
+          <!-- Donation button (only for verified human art posts) -->
+          <div *ngIf="getDisplayIsHumanDrawing() && getDisplayIsVerified() && currentUser && post.author.id !== currentUser.id" 
+               title="Support this artist" 
+               class="relative mr-[-5px]" 
+               (click)="$event.stopPropagation()">
+            <button class="flex items-center justify-center w-9 h-9 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-full transition-colors"
+                    [class.text-green-500]="hasDonated"
+                    (click)="onDonate($event)">
+              <i class="fa-solid fa-money-bill-1-wave text-[16px]"></i>
+            </button>
           </div>
           
           <!-- More button -->
           <div title="More" *ngIf="currentUser || isPreview" class="relative" (click)="$event.stopPropagation()">
             <button class="flex items-center justify-center w-9 h-9 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors"
                     (click)="toggleMoreMenu($event)">
-              <i class="fas fa-ellipsis-h text-[14px]"></i>
+              <i class="fas fa-ellipsis-h text-[16px]"></i>
             </button>
             
             <!-- More Menu -->
@@ -111,7 +125,7 @@
           
 
           <!-- Post content -->
-          <p class="text-gray-800 dark:[color:var(--color-text)] pl-[1px] mt-[-5px] break-words whitespace-pre-wrap" 
+          <p class="text-gray-800 dark:[color:var(--color-text)] pl-[1px] mt-[-5px] [word-break:break-word] [overflow-wrap:anywhere] max-w-full" 
              appHashtag 
              [content]="getDisplayContent()"
              [preventClick]="isPreview"></p>
@@ -261,7 +275,7 @@
             <div title="Repost" class="relative" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="$event.stopPropagation()">
               <div class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.text-green-500]="isReposted" (click)="!isPreview ? toggleRepostMenu($event) : null; $event.stopPropagation()">
                 <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
-                  <i class="fas fa-retweet text-[16px]" [class.text-green-500]="isReposted"></i>
+                  <i class="fas fa-retweet text-[16px]" [class.text-green-500]="isReposted" [class.group-hover:text-green-500]="!isPreview"></i>
                 </div>
                 <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]" [class.text-green-500]="isReposted">{{ repostsCount ? repostsCount : '' }}</span>
               </div>

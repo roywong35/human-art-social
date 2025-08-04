@@ -67,6 +67,7 @@ export class AppComponent implements OnInit {
           title = 'Search / ' + this.title;
         } else if (currentRoute === '/bookmarks') {
           title = 'Bookmarks / ' + this.title;
+
         } else if (currentRoute === '/notifications') {
           title = 'Notifications / ' + this.title;
         } else if (currentRoute.startsWith('/messages')) {
