@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, HostListener, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA, HostListener, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -57,7 +57,8 @@ export class PostInputBoxComponent {
     private elementRef: ElementRef,
     private emojiPickerService: EmojiPickerService,
     private dialog: MatDialog,
-    private hashtagService: HashtagService
+    private hashtagService: HashtagService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -109,6 +110,7 @@ export class PostInputBoxComponent {
     event.stopPropagation();
     this.emojiPickerService.showPicker(event, event.target as HTMLElement, (emoji: any) => {
       this.content += emoji.emoji.native;
+      this.cdr.detectChanges(); // Trigger change detection to update the textarea
     });
   }
 

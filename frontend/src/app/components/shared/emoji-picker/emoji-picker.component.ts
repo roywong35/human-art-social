@@ -46,6 +46,7 @@ export class EmojiPickerComponent implements OnInit, OnDestroy {
     if (this.currentCallback) {
       this.currentCallback(emoji);
     }
-    this.emojiPickerService.hidePicker();
+    // Don't hide the picker - let user pick multiple emojis
+    // this.emojiPickerService.hidePicker();
   }
 } 
