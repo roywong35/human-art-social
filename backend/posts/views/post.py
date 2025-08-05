@@ -186,6 +186,16 @@ class PostViewSet(viewsets.ModelViewSet):
                 parent_post_author_username=parent_post.author.username
             )
             
+            # Handle multiple images for the reply
+            for key in request.FILES:
+                if key.startswith('image_'):
+                    image = request.FILES[key]
+                    PostImage.objects.create(
+                        post=reply,
+                        image=image,
+                        order=int(key.split('_')[1])
+                    )
+            
             # Add the new reply's ID to the conversation chain and save
             conversation_chain.append(reply.id)
             reply.conversation_chain = conversation_chain
