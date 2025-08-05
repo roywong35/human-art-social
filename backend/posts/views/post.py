@@ -642,6 +642,13 @@ class PostViewSet(viewsets.ModelViewSet):
         
         return Response({'results': results})
 
+    @action(detail=False, methods=['POST'])
+    def clear_trending_cache(self, request):
+        """Clear trending hashtags cache"""
+        cache_key = 'trending_hashtags:new_algorithm'
+        cache.delete(cache_key)
+        return Response({'message': 'Trending cache cleared'})
+
     def _calculate_trending(self, timeframe='hour'):
         """Calculate trending hashtags with burst detection and sustained popularity"""
         now = timezone.now()
@@ -650,8 +657,10 @@ class PostViewSet(viewsets.ModelViewSet):
         burst_window = now - timedelta(hours=2)      # Recent spikes
         rising_window = now - timedelta(hours=24)    # Growing trends  
         sustained_window = now - timedelta(days=7)   # Long-term popularity
+        extended_window = now - timedelta(days=30)   # Extended popularity for fallback
         
-        trending = Hashtag.objects.annotate(
+        # First, try to get recent trending topics
+        recent_trending = Hashtag.objects.annotate(
             # Burst activity (last 2 hours) - heavily weighted
             burst_posts=Count(
                 'posts',
@@ -720,8 +729,67 @@ class PostViewSet(viewsets.ModelViewSet):
             '-engagement_score'
         )[:10]
         
+        # If we have enough recent trending topics, return them
+        if recent_trending.count() >= 5:
+            serializer = HashtagSerializer(recent_trending, many=True)
+            return serializer.data
+        
+        # If not enough recent topics, get popular hashtags from extended period
+        fallback_trending = Hashtag.objects.annotate(
+            # Extended popularity (last 30 days)
+            extended_posts=Count(
+                'posts',
+                distinct=True,
+                filter=Q(
+                    posts__created_at__gte=extended_window,
+                    posts__post_type__in=['post', 'quote']
+                )
+            ),
+            
+            # Extended engagement score
+            extended_engagement=Count(
+                'posts__likes',
+                filter=Q(
+                    posts__created_at__gte=extended_window,
+                    posts__post_type__in=['post', 'quote']
+                )
+            ) + Count(
+                'posts__replies',
+                filter=Q(
+                    posts__created_at__gte=extended_window,
+                    posts__post_type__in=['post', 'quote']
+                )
+            ) + Count(
+                'posts__reposters',
+                filter=Q(
+                    posts__created_at__gte=extended_window,
+                    posts__post_type__in=['post', 'quote']
+                )
+            )
+        ).filter(
+            # Must have some activity in the extended period
+            extended_posts__gt=0
+        ).order_by(
+            # Order by extended popularity and engagement
+            '-extended_posts',
+            '-extended_engagement'
+        )[:10]
+        
+        # Combine recent and fallback trending topics
+        combined_trending = list(recent_trending) + list(fallback_trending)
+        
+        # Remove duplicates and limit to 10
+        seen_hashtags = set()
+        unique_trending = []
+        for hashtag in combined_trending:
+            if hashtag.id not in seen_hashtags:
+                seen_hashtags.add(hashtag.id)
+                unique_trending.append(hashtag)
+            if len(unique_trending) >= 10:
+                break
+        
         # Serialize results
-        serializer = HashtagSerializer(trending, many=True)
+        serializer = HashtagSerializer(unique_trending, many=True)
         return serializer.data
 
     def get_object(self):
