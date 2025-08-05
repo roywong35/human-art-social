@@ -8,6 +8,10 @@ export interface UserPreviewModalState {
   position: { x: number, y: number };
 }
 
+export interface ModalHoverCallback {
+  clearLeaveTimeout: () => void;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -19,6 +23,9 @@ export class GlobalModalService {
   });
 
   modalState$ = this.modalState.asObservable();
+  
+  // Store the callback to clear leave timeout when modal is hovered
+  private hoverCallback: ModalHoverCallback | null = null;
 
   showUserPreview(user: User, position: { x: number, y: number }): void {
     this.modalState.next({
@@ -32,7 +39,10 @@ export class GlobalModalService {
    * Show user preview with accurate positioning (no shifting)
    * Uses provided user data which now includes bio from public posts endpoint
    */
-  showUserPreviewAccurate(user: User, targetElement: Element): void {
+  showUserPreviewAccurate(user: User, targetElement: Element, hoverCallback?: ModalHoverCallback): void {
+    // Store the callback for modal hover
+    this.hoverCallback = hoverCallback || null;
+    
     // Use the provided user data directly (which now includes bio from public posts)
     this.modalState.next({
       isVisible: true,
@@ -80,10 +90,17 @@ export class GlobalModalService {
       user: null,
       position: { x: 0, y: 0 }
     });
+    // Clear the callback when hiding
+    this.hoverCallback = null;
   }
 
   onModalHover(): void {
     // Keep modal visible when hovering over it
+    // This method is called when the mouse enters the modal
+    // Clear the leave timeout in the component that opened the modal
+    if (this.hoverCallback) {
+      this.hoverCallback.clearLeaveTimeout();
+    }
   }
 
   getCurrentState(): UserPreviewModalState {

@@ -435,8 +435,8 @@ class DonationSerializer(serializers.ModelSerializer):
     """
     Serializer for Donation model
     """
-    donor = UserSerializer(read_only=True)
-    artist = UserSerializer(read_only=True)
+    donor = PublicUserSerializer(read_only=True)  # Use PublicUserSerializer to include bio
+    artist = PublicUserSerializer(read_only=True)  # Use PublicUserSerializer to include bio
     post = serializers.SerializerMethodField()
     
     class Meta:
