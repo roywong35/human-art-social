@@ -22,6 +22,7 @@ export class EmojiPickerService {
 
   pickerState$ = this.pickerSubject.asObservable();
 
+
   showPicker(event: MouseEvent, targetElement?: HTMLElement, callback?: (emoji: any) => void) {
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const viewportHeight = window.innerHeight;
@@ -83,7 +84,6 @@ export class EmojiPickerService {
   }
 
   hidePicker() {
-    console.log('Hiding picker');
     this.pickerSubject.next({
       show: false,
       position: { top: 0, left: 0 }

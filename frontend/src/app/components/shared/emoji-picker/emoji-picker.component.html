@@ -1,3 +1,15 @@
+<!-- Hidden preloader emoji picker -->
+<div class="emoji-picker-preloader"
+     style="position: absolute; left: -9999px; top: -9999px; visibility: hidden; z-index: -1;">
+  <emoji-mart
+    [darkMode]="false"
+    [enableSearch]="true"
+    [showPreview]="false"
+    [style]="{ border: 'none', width: '320px', height: '350px' }">
+  </emoji-mart>
+</div>
+
+<!-- Visible emoji picker -->
 <div *ngIf="showPicker" 
      class="emoji-picker-container"
      [style.top.px]="position.top"

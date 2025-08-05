@@ -19,11 +19,9 @@ export class EmojiPickerComponent implements OnInit, OnDestroy {
 
   constructor(private emojiPickerService: EmojiPickerService) {
     this.subscription = this.emojiPickerService.pickerState$.subscribe(state => {
-
       this.showPicker = state.show;
       this.position = state.position;
       this.currentCallback = state.callback || null;
-
     });
   }
 
