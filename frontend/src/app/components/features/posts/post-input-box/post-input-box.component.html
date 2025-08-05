@@ -63,7 +63,7 @@
           <!-- Special layout for 3 photos -->
           <div *ngIf="images.length === 3" class="flex w-full h-full">
             <!-- Left side -->
-            <div class="w-1/2 h-full p-0.5">
+            <div class="w-1/2 h-full p-0.5 relative">
               <img [src]="images[0].preview" 
                    class="w-full h-full object-cover rounded-lg"
                    [class.rounded-lg]="true">
@@ -77,7 +77,7 @@
             <!-- Right side (stacked) -->
             <div class="w-1/2 h-full flex flex-col">
               <!-- Top right -->
-              <div class="h-1/2 p-0.5">
+              <div class="h-1/2 p-0.5 relative">
                 <img [src]="images[1].preview" 
                      class="w-full h-full object-cover rounded-lg"
                      [class.rounded-lg]="true">
@@ -88,7 +88,7 @@
                 </button>
               </div>
               <!-- Bottom right -->
-              <div class="h-1/2 p-0.5">
+              <div class="h-1/2 p-0.5 relative">
                 <img [src]="images[2].preview" 
                      class="w-full h-full object-cover rounded-lg"
                      [class.rounded-lg]="true">

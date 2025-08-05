@@ -36,6 +36,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   private lastScrollY: number = 0;
   trendingTopics: HashtagResult[] = [];
   readonly maxTrendingTopics = 5;
+  isLoadingTrending = false;
   recommendedUsers: UserWithState[] = [];
   isLoadingUsers = false;
   readonly maxRecommendedUsers = 3;
@@ -134,6 +135,11 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     this.loadTrending();
     this.loadRecommendedUsers();
     this.setupScrollHandler();
+    
+    // Refresh trending topics every 5 minutes
+    setInterval(() => {
+      this.loadTrending();
+    }, 5 * 60 * 1000);
   }
 
   ngOnDestroy() {
@@ -179,12 +185,43 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   }
 
   private loadTrending() {
+    this.isLoadingTrending = true;
     this.hashtagService.getTrendingHashtags().subscribe({
       next: (response) => {
         this.trendingTopics = response.results;
+        
+        // If we still don't have enough trending topics, add some default popular hashtags
+        if (this.trendingTopics.length < 3) {
+          const defaultTrending = [
+            { name: 'art', post_count: 150 },
+            { name: 'drawing', post_count: 120 },
+            { name: 'creative', post_count: 95 },
+            { name: 'design', post_count: 80 },
+            { name: 'inspiration', post_count: 75 }
+          ];
+          
+          // Add default trending topics that aren't already in the list
+          const existingNames = new Set(this.trendingTopics.map(t => t.name));
+          for (const defaultTopic of defaultTrending) {
+            if (!existingNames.has(defaultTopic.name) && this.trendingTopics.length < this.maxTrendingTopics) {
+              this.trendingTopics.push(defaultTopic);
+            }
+          }
+        }
+        this.isLoadingTrending = false;
       },
       error: (error) => {
         console.error('Error loading trending:', error);
+        
+        // On error, show default trending topics
+        this.trendingTopics = [
+          { name: 'art', post_count: 150 },
+          { name: 'drawing', post_count: 120 },
+          { name: 'creative', post_count: 95 },
+          { name: 'design', post_count: 80 },
+          { name: 'inspiration', post_count: 75 }
+        ];
+        this.isLoadingTrending = false;
       }
     });
   }
