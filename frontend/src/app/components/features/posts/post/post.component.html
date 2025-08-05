@@ -54,16 +54,16 @@
                 <!-- Add pending badge for unverified human art posts -->
                 <div *ngIf="getDisplayIsHumanDrawing() && !getDisplayIsVerified()" 
                      class="ml-2 inline-flex items-center flex-shrink-0">
-                  <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 text-xs font-medium rounded-full">
-                    <i class="fas fa-clock mr-1"></i>
+                  <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 text-xs font-medium rounded-full flex items-center justify-center max-[500px]:w-6 max-[500px]:h-6 max-[500px]:p-0">
+                    <i class="fas fa-clock mr-1 max-[500px]:mr-0"></i>
                     <span class="max-[500px]:hidden">Pending</span>
                   </span>
                 </div>
                 <!-- Add verified badge for verified human art posts -->
                 <div *ngIf="getDisplayIsHumanDrawing() && getDisplayIsVerified()" 
                      class="ml-2 inline-flex items-center flex-shrink-0">
-                  <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 text-xs font-medium rounded-full">
-                    <i class="fas fa-check-circle mr-1"></i>
+                  <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 text-xs font-medium rounded-full flex items-center justify-center max-[500px]:w-6 max-[500px]:h-6 max-[500px]:p-0">
+                    <i class="fas fa-check-circle mr-1 max-[500px]:mr-0"></i>
                     <span class="max-[500px]:hidden">Verified Art</span>
                   </span>
                 </div>
@@ -78,9 +78,8 @@
                (click)="$event.stopPropagation()">
             <button class="flex items-center justify-center w-9 h-9 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-full transition-colors"
                     [class.text-green-500]="hasDonated"
-                    [class.opacity-50]="post.author.id === currentUser.id"
                     (click)="post.author.id !== currentUser.id ? onDonate($event) : onViewDonations($event)">
-              <i class="fa-solid fa-money-bill-1-wave text-[16px]"></i>
+              <i [class]="post.author.id === currentUser.id ? 'fa-solid fa-chart-line text-[16px]' : 'fa-solid fa-money-bill-1-wave text-[16px]'"></i>
             </button>
           </div>
           
