@@ -134,6 +134,39 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
     return window.location.origin.replace('https://', '').replace('http://', '');
   }
 
+  protected getQuotedPostImages(): any[] {
+    if (!this.quotePost) {
+      return [];
+    }
+    
+    // If this is a repost, get images from the referenced post
+    if (this.quotePost.post_type === 'repost' && this.quotePost.referenced_post) {
+      return this.quotePost.referenced_post.images || [];
+    }
+    
+    // Otherwise, use the quote post's own images
+    return this.quotePost.images || [];
+  }
+
+  protected getQuotedPostForUrl(): Post | undefined {
+    if (!this.quotePost) {
+      return undefined;
+    }
+    
+    // For quote posts, show URL to the referenced post
+    if (this.quotePost.post_type === 'quote' && this.quotePost.referenced_post) {
+      return this.quotePost.referenced_post;
+    }
+    
+    // For reposts of quote posts, show URL to the referenced post of the quote post that was reposted
+    if (this.quotePost.post_type === 'repost' && this.quotePost.referenced_post?.post_type === 'quote' && this.quotePost.referenced_post.referenced_post) {
+      return this.quotePost.referenced_post.referenced_post;
+    }
+    
+    // For regular posts, don't show URL
+    return undefined;
+  }
+
   protected async createPost() {
     if (this.isSubmitting) return;
     this.isSubmitting = true;

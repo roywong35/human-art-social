@@ -61,42 +61,42 @@
           <p class="mt-1 text-[15px] whitespace-pre-wrap dark:[color:var(--color-text)]">{{ quotePost.content }}</p>
           
           <!-- Show truncated URL if this quoted post is quoting another post -->
-          <div *ngIf="quotePost.post_type === 'quote' && quotePost.referenced_post" class="mt-2 text-sm text-gray-500">
-            <a [href]="getBaseUrl() + '/' + quotePost.referenced_post.author.handle + '/post/' + quotePost.referenced_post.id" 
+          <div *ngIf="getQuotedPostForUrl()" class="mt-2 text-sm text-gray-500">
+            <a [href]="getBaseUrl() + '/' + getQuotedPostForUrl()!.author.handle + '/post/' + getQuotedPostForUrl()!.id" 
                target="_blank" 
                class="hover:underline">
-              {{ getDisplayUrl() }}/{{ quotePost.referenced_post.author.handle }}/post...
+              {{ getDisplayUrl() }}/{{ getQuotedPostForUrl()!.author.handle }}/post...
             </a>
           </div>
           
           <!-- Quoted Post Image -->
-          <div *ngIf="quotePost.images && quotePost.images.length > 0" 
+          <div *ngIf="getQuotedPostImages().length > 0" 
                class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 h-60">
             <!-- Layout for 1 photo -->
-            <div *ngIf="quotePost.images.length === 1" class="flex h-full">
+            <div *ngIf="getQuotedPostImages().length === 1" class="flex h-full">
               <div class="w-full h-full relative p-0.5">
-                <img [src]="quotePost.images[0].image" 
+                <img [src]="getQuotedPostImages()[0].image" 
                      class="w-full h-full object-cover rounded-lg">
               </div>
             </div>
 
             <!-- Layout for 2 photos -->
-            <div *ngIf="quotePost.images.length === 2" class="flex w-full h-full">
+            <div *ngIf="getQuotedPostImages().length === 2" class="flex w-full h-full">
               <div class="w-1/2 h-full p-0.5 relative">
-                <img [src]="quotePost.images[0].image" 
+                <img [src]="getQuotedPostImages()[0].image" 
                      class="w-full h-full object-cover rounded-lg">
               </div>
               <div class="w-1/2 h-full p-0.5 relative">
-                <img [src]="quotePost.images[1].image" 
+                <img [src]="getQuotedPostImages()[1].image" 
                      class="w-full h-full object-cover rounded-lg">
               </div>
             </div>
 
             <!-- Layout for 3 photos -->
-            <div *ngIf="quotePost.images.length === 3" class="flex w-full h-full">
+            <div *ngIf="getQuotedPostImages().length === 3" class="flex w-full h-full">
               <!-- Left side -->
               <div class="w-1/2 h-full p-0.5 relative">
-                <img [src]="quotePost.images[0].image" 
+                <img [src]="getQuotedPostImages()[0].image" 
                      class="w-full h-full object-cover rounded-lg"
                      [class.rounded-lg]="true">
               </div>
@@ -105,13 +105,13 @@
               <div class="w-1/2 h-full flex flex-col">
                 <!-- Top right -->
                 <div class="h-1/2 p-0.5 relative">
-                  <img [src]="quotePost.images[1].image" 
+                  <img [src]="getQuotedPostImages()[1].image" 
                        class="w-full h-full object-cover rounded-lg"
                        [class.rounded-lg]="true">
                 </div>
                 <!-- Bottom right -->
                 <div class="h-1/2 p-0.5 relative">
-                  <img [src]="quotePost.images[2].image" 
+                  <img [src]="getQuotedPostImages()[2].image" 
                        class="w-full h-full object-cover rounded-lg"
                        [class.rounded-lg]="true">
                 </div>
@@ -119,24 +119,24 @@
             </div>
 
             <!-- Layout for 4 photos -->
-            <div *ngIf="quotePost.images.length === 4" class="flex w-full h-full">
+            <div *ngIf="getQuotedPostImages().length === 4" class="flex w-full h-full">
               <div class="w-1/2 h-full flex flex-col">
                 <div class="h-1/2 p-0.5 relative">
-                  <img [src]="quotePost.images[0].image" 
+                  <img [src]="getQuotedPostImages()[0].image" 
                        class="w-full h-full object-cover rounded-lg">
                 </div>
                 <div class="h-1/2 p-0.5 relative">
-                  <img [src]="quotePost.images[1].image" 
+                  <img [src]="getQuotedPostImages()[1].image" 
                        class="w-full h-full object-cover rounded-lg">
                 </div>
               </div>
               <div class="w-1/2 h-full flex flex-col">
                 <div class="h-1/2 p-0.5 relative">
-                  <img [src]="quotePost.images[2].image" 
+                  <img [src]="getQuotedPostImages()[2].image" 
                        class="w-full h-full object-cover rounded-lg">
                 </div>
                 <div class="h-1/2 p-0.5 relative">
-                  <img [src]="quotePost.images[3].image" 
+                  <img [src]="getQuotedPostImages()[3].image" 
                        class="w-full h-full object-cover rounded-lg">
                 </div>
               </div>

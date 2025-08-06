@@ -739,13 +739,15 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected getDisplayAuthor(): User {
     if (this.post.post_type === 'repost' && this.post.referenced_post?.author) {
+      // For reposts, always show the referenced post's author (preserve the structure)
       return this.post.referenced_post.author;
     }
     return this.post.author;
   }
 
   protected getDisplayImages(): any[] | undefined {
-    if (this.post.post_type === 'repost' && this.post.referenced_post?.images) {
+    if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      // For reposts, always show the referenced post's images (preserve the structure)
       return this.post.referenced_post.images;
     }
     return this.post.images;
@@ -753,6 +755,7 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected getDisplayIsHumanDrawing(): boolean {
     if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      // For reposts, always show the referenced post's human drawing status (preserve the structure)
       return this.post.referenced_post.is_human_drawing;
     }
     return this.post.is_human_drawing;
@@ -760,6 +763,7 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected getDisplayIsVerified(): boolean {
     if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      // For reposts, always show the referenced post's verification status (preserve the structure)
       return this.post.referenced_post.is_verified;
     }
     return this.post.is_verified;
@@ -767,6 +771,7 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected getDisplayCreatedAt(): string {
     if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      // For reposts, always show the referenced post's creation date (preserve the structure)
       return this.post.referenced_post.created_at;
     }
     return this.post.created_at;
@@ -774,13 +779,52 @@ export class PostComponent implements OnInit, OnDestroy {
 
   protected getDisplayContent(): string {
     if (this.post.post_type === 'repost' && this.post.referenced_post) {
+      // For reposts, always show the referenced post's content (preserve the structure)
       return this.post.referenced_post.content;
     }
     return this.post.content;
   }
 
   protected getReferencedPostContent(): string {
-    return this.post.referenced_post ? this.post.referenced_post.content : '';
+    const referencedPost = this.getReferencedPostForDisplay();
+    return referencedPost ? referencedPost.content : '';
+  }
+
+  protected getReferencedPostImages(): any[] | undefined {
+    const referencedPost = this.getReferencedPostForDisplay();
+    return referencedPost ? referencedPost.images : undefined;
+  }
+
+  protected getReferencedPostForDisplay(): Post | undefined {
+    console.log('🔍 getReferencedPostForDisplay called for post:', {
+      postType: this.post.post_type,
+      hasReferencedPost: !!this.post.referenced_post,
+      referencedPostType: this.post.referenced_post?.post_type,
+      hasNestedReferencedPost: !!this.post.referenced_post?.referenced_post
+    });
+
+    if (this.post.post_type === 'quote' && this.post.referenced_post) {
+      console.log('✅ Returning referenced post for quote');
+      return this.post.referenced_post;
+    }
+    
+    if (this.post.post_type === 'repost' && this.post.referenced_post?.post_type === 'quote' && this.post.referenced_post.referenced_post) {
+      console.log('✅ Returning nested referenced post for repost of quote');
+      return this.post.referenced_post.referenced_post;
+    }
+    
+    console.log('❌ No referenced post to display');
+    return undefined;
+  }
+
+  protected getReferencedPostForUrl(): Post | undefined {
+    // Only show URL when this is a quote post AND the referenced post is also a quote post (double quote scenario)
+    if (this.post.post_type === 'quote' && this.post.referenced_post?.post_type === 'quote' && this.post.referenced_post.referenced_post) {
+      return this.post.referenced_post.referenced_post;
+    }
+    
+    // For regular quote posts and reposts of quote posts, don't show URL
+    return undefined;
   }
 
   protected getBaseUrl(): string {

@@ -154,7 +154,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   }
 
   goBack(): void {
-    this.location.back();
+    this.router.navigate(['/']);
   }
 
   toggleLike(): void {
