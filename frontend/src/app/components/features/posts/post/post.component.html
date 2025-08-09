@@ -18,6 +18,10 @@
     </span>
   </div>
 
+
+
+
+
   <!-- User avatar and content -->
   <div class="flex space-x-2">
     <!-- Avatar container with fixed width for consistent line positioning -->
@@ -125,7 +129,20 @@
             <span class="text-sm">Replying to</span>
             <span class="text-sm text-blue-500 hover:underline cursor-pointer" (click)="navigateToParentAuthor($event)">&#64;{{ post.parent_post_author_handle }}</span>
           </div>
-          
+
+
+
+          <!-- Reply context header (for bookmarked replies and reposted replies) -->
+          <div *ngIf="showReplyContext && ((post.post_type === 'reply' && post.parent_post_author_handle) || (post.post_type === 'repost' && post.referenced_post?.post_type === 'reply' && post.referenced_post?.parent_post_author_handle))" 
+               class="flex items-center gap-1 mt-[-7px] mb-1.5 text-gray-500 dark:[color:var(--color-text-secondary)]">
+            <span class="text-[15px]">
+              Replying to 
+              <span class="text-blue-500 hover:underline cursor-pointer"
+                    (click)="navigateToUserByHandle($event, getParentAuthorHandle())">
+                {{'@'}}{{ getParentAuthorHandle() }}
+              </span>
+            </span>
+          </div>
 
           <!-- Post content -->
           <p class="text-gray-800 dark:[color:var(--color-text)] pl-[1px] mt-[-5px] [word-break:break-word] [overflow-wrap:anywhere] max-w-full" 

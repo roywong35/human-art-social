@@ -152,6 +152,7 @@
       <ng-container *ngIf="!isLoadingPosts">
         <app-post *ngFor="let post of posts"
           [post]="post"
+          [showReplyContext]="post.post_type === 'reply' || (post.post_type === 'repost' && post.referenced_post?.post_type === 'reply')"
           (likeClicked)="onLike(post)"
           (repostClicked)="onRepost(post)"
           (bookmarkClicked)="onBookmark(post)"
@@ -314,6 +315,7 @@
         <app-post *ngFor="let post of likedPosts"
           [post]="post"
           [showFullHeader]="true"
+          [showReplyContext]="post.post_type === 'reply' || (post.post_type === 'repost' && post.referenced_post?.post_type === 'reply')"
           (likeClicked)="onLike(post)"
           (repostClicked)="onRepost(post)"
           (bookmarkClicked)="onBookmark(post)"

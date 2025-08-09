@@ -28,6 +28,10 @@
         <!-- Post -->
         <app-post *ngIf="bookmarkedItem.type === 'post'"
           [post]="bookmarkedItem.item"
+          [showReplyContext]="bookmarkedItem.item.post_type === 'reply' || (bookmarkedItem.item.post_type === 'repost' && bookmarkedItem.item.referenced_post?.post_type === 'reply')"
+          (likeClicked)="onLike(bookmarkedItem.item)"
+          (repostClicked)="onRepost(bookmarkedItem.item)"
+          (bookmarkClicked)="onBookmark(bookmarkedItem.item)"
           (postUpdated)="refreshContent()"
           (postReported)="onPostReported($event)"
           (bookmarkUpdated)="onPostBookmarkUpdate($event)">

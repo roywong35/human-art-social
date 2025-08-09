@@ -37,7 +37,7 @@
         
         <!-- Notification Content -->
         <div class="flex-1 mx-3">
-          <p class="dark:text-[color:var(--color-text)] leading-none">
+          <p class="dark:text-[color:var(--color-text)] leading-normal">
             <!-- Username - Links to sender's profile if sender exists -->
             <ng-container *ngIf="notification.sender">
               <a [routerLink]="['/', notification.sender.handle]"

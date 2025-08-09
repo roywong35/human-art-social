@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, ChangeDetectorRef, HostListener, NgZone, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -31,6 +31,7 @@ import { UnfollowDialogComponent } from '../../dialogs/unfollow-dialogs/unfollow
   styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnInit, OnDestroy {
+  @ViewChildren(PostComponent) postComponents!: QueryList<PostComponent>;
   private routeSubscription: Subscription | undefined;
   private userPostsSubscription: Subscription | undefined;
   private subscriptions = new Subscription();
@@ -714,6 +715,28 @@ export class ProfileComponent implements OnInit, OnDestroy {
         }
       });
 
+      // Update parent posts in reply chains (for replies tab)
+      Object.values(this.replyParentChains).forEach(parentChain => {
+        parentChain.forEach(parentPost => {
+          if (parentPost.id === originalPost.id) {
+            parentPost.is_liked = newLikeState;
+            parentPost.likes_count = newCount;
+          }
+          if (parentPost.post_type === 'repost' && parentPost.referenced_post?.id === originalPost.id) {
+            parentPost.referenced_post!.is_liked = newLikeState;
+            parentPost.referenced_post!.likes_count = newCount;
+          }
+        });
+      });
+
+      // Force change detection on all post components to sync UI
+      this.postComponents.forEach(postComponent => {
+        if (postComponent.post.id === originalPost.id || 
+            (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+          postComponent.forceUpdate();
+        }
+      });
+
       this.cd.markForCheck();
     });
 
@@ -752,6 +775,28 @@ export class ProfileComponent implements OnInit, OnDestroy {
             if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
               p.referenced_post.is_liked = !newLikeState;
               p.referenced_post.likes_count = originalPost.likes_count;
+            }
+          });
+
+          // Revert parent posts in reply chains (for replies tab)
+          Object.values(this.replyParentChains).forEach(parentChain => {
+            parentChain.forEach(parentPost => {
+              if (parentPost.id === originalPost.id) {
+                parentPost.is_liked = !newLikeState;
+                parentPost.likes_count = originalPost.likes_count;
+              }
+              if (parentPost.post_type === 'repost' && parentPost.referenced_post?.id === originalPost.id) {
+                parentPost.referenced_post!.is_liked = !newLikeState;
+                parentPost.referenced_post!.likes_count = originalPost.likes_count;
+              }
+            });
+          });
+
+          // Force change detection on all post components to sync UI (revert)
+          this.postComponents.forEach(postComponent => {
+            if (postComponent.post.id === originalPost.id || 
+                (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+              postComponent.forceUpdate();
             }
           });
 
@@ -805,6 +850,28 @@ export class ProfileComponent implements OnInit, OnDestroy {
         }
       });
 
+      // Update parent posts in reply chains (for replies tab)
+      Object.values(this.replyParentChains).forEach(parentChain => {
+        parentChain.forEach(parentPost => {
+          if (parentPost.id === originalPost.id) {
+            parentPost.is_reposted = newRepostState;
+            parentPost.reposts_count = newCount;
+          }
+          if (parentPost.post_type === 'repost' && parentPost.referenced_post?.id === originalPost.id) {
+            parentPost.referenced_post!.is_reposted = newRepostState;
+            parentPost.referenced_post!.reposts_count = newCount;
+          }
+        });
+      });
+
+      // Force change detection on all post components to sync UI
+      this.postComponents.forEach(postComponent => {
+        if (postComponent.post.id === originalPost.id || 
+            (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+          postComponent.forceUpdate();
+        }
+      });
+
       this.cd.markForCheck();
     });
 
@@ -843,6 +910,28 @@ export class ProfileComponent implements OnInit, OnDestroy {
             if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
               p.referenced_post.is_reposted = !newRepostState;
               p.referenced_post.reposts_count = originalPost.reposts_count;
+            }
+          });
+
+          // Revert parent posts in reply chains (for replies tab)
+          Object.values(this.replyParentChains).forEach(parentChain => {
+            parentChain.forEach(parentPost => {
+              if (parentPost.id === originalPost.id) {
+                parentPost.is_reposted = !newRepostState;
+                parentPost.reposts_count = originalPost.reposts_count;
+              }
+              if (parentPost.post_type === 'repost' && parentPost.referenced_post?.id === originalPost.id) {
+                parentPost.referenced_post!.is_reposted = !newRepostState;
+                parentPost.referenced_post!.reposts_count = originalPost.reposts_count;
+              }
+            });
+          });
+
+          // Force change detection on all post components to sync UI (revert)
+          this.postComponents.forEach(postComponent => {
+            if (postComponent.post.id === originalPost.id || 
+                (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+              postComponent.forceUpdate();
             }
           });
 
@@ -889,6 +978,26 @@ export class ProfileComponent implements OnInit, OnDestroy {
         }
       });
 
+      // Update parent posts in reply chains (for replies tab)
+      Object.values(this.replyParentChains).forEach(parentChain => {
+        parentChain.forEach(parentPost => {
+          if (parentPost.id === originalPost.id) {
+            parentPost.is_bookmarked = newBookmarkState;
+          }
+          if (parentPost.post_type === 'repost' && parentPost.referenced_post?.id === originalPost.id) {
+            parentPost.referenced_post!.is_bookmarked = newBookmarkState;
+          }
+        });
+      });
+
+      // Force change detection on all post components to sync UI
+      this.postComponents.forEach(postComponent => {
+        if (postComponent.post.id === originalPost.id || 
+            (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+          postComponent.forceUpdate();
+        }
+      });
+
       this.cd.markForCheck();
     });
 
@@ -921,6 +1030,26 @@ export class ProfileComponent implements OnInit, OnDestroy {
             }
             if (p.post_type === 'repost' && p.referenced_post?.id === originalPost.id) {
               p.referenced_post.is_bookmarked = !newBookmarkState;
+            }
+          });
+
+          // Revert parent posts in reply chains (for replies tab)
+          Object.values(this.replyParentChains).forEach(parentChain => {
+            parentChain.forEach(parentPost => {
+              if (parentPost.id === originalPost.id) {
+                parentPost.is_bookmarked = !newBookmarkState;
+              }
+              if (parentPost.post_type === 'repost' && parentPost.referenced_post?.id === originalPost.id) {
+                parentPost.referenced_post!.is_bookmarked = !newBookmarkState;
+              }
+            });
+          });
+
+          // Force change detection on all post components to sync UI (revert)
+          this.postComponents.forEach(postComponent => {
+            if (postComponent.post.id === originalPost.id || 
+                (postComponent.post.post_type === 'repost' && postComponent.post.referenced_post?.id === originalPost.id)) {
+              postComponent.forceUpdate();
             }
           });
 

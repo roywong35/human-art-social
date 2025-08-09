@@ -134,8 +134,8 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_referenced_post(self, obj):
         if (obj.post_type == 'repost' or obj.post_type == 'quote') and obj.referenced_post:
-            # Return the original post data
-            return PostSerializer(obj.referenced_post, context=self.context).data
+            # Return the original post data using the same serializer to include all fields
+            return UserPostSerializer(obj.referenced_post, context=self.context).data
         return None
 
     def create(self, validated_data):
@@ -375,7 +375,8 @@ class UserPostSerializer(serializers.ModelSerializer):
                  'likes_count', 'reposts_count', 'replies_count',
                  'is_liked', 'is_reposted', 'is_bookmarked',
                  'post_type', 'referenced_post', 'images',
-                 'conversation_chain', 'is_human_drawing', 'is_verified']
+                 'conversation_chain', 'is_human_drawing', 'is_verified',
+                 'parent_post_author_handle', 'parent_post_author_username']
 
     def get_likes_count(self, obj):
         # For reposts, use the original post's likes count

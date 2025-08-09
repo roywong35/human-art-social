@@ -48,6 +48,7 @@ import { DonationsViewerComponent } from '../donations-viewer/donations-viewer.c
 })
 export class PostComponent implements OnInit, OnDestroy {
   @Input() post!: Post;
+  @Input() showReplyContext: boolean = false; // Show "Replying to @handle" for bookmarked replies
   @Input() showFullHeader: boolean = true;
   @Input() isDetailView: boolean = false;
   @Input() isReply: boolean = false;
@@ -290,6 +291,25 @@ export class PostComponent implements OnInit, OnDestroy {
     if (this.checkAuth('profile')) {
       this.router.navigate([`/${user.handle}`]);
     }
+  }
+
+  // Navigate to user profile by handle (used in reply context)
+  protected navigateToUserByHandle(event: Event, handle: string): void {
+    event.stopPropagation();
+    if (this.checkAuth('profile')) {
+      this.router.navigate([`/${handle}`]);
+    }
+  }
+
+  // Get parent author handle for reply context (handles both direct replies and reposted replies)
+  protected getParentAuthorHandle(): string {
+    if (this.post.post_type === 'reply' && this.post.parent_post_author_handle) {
+      return this.post.parent_post_author_handle;
+    }
+    if (this.post.post_type === 'repost' && this.post.referenced_post?.post_type === 'reply' && this.post.referenced_post.parent_post_author_handle) {
+      return this.post.referenced_post.parent_post_author_handle;
+    }
+    return '';
   }
 
   onReply(event: Event): void {
