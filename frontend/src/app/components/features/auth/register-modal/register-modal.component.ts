@@ -108,13 +108,52 @@ export class RegisterModalComponent {
     return result;
   }
 
+  private getRandomElement<T>(items: ReadonlyArray<T>): T {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  private generateRandomEnglishName(): string {
+    const englishFirstNames: ReadonlyArray<string> = [
+      'Emma', 'Liam', 'Olivia', 'Noah', 'Ava', 'Sophia', 'Isabella', 'Mia',
+      'Charlotte', 'Amelia', 'James', 'Benjamin', 'Lucas', 'Henry', 'Alexander',
+      'Ethan', 'Daniel', 'Matthew'
+    ];
+    const englishLastNames: ReadonlyArray<string> = [
+      'Johnson', 'Smith', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore',
+      'Taylor', 'Anderson', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin',
+      'Thompson', 'Garcia', 'Martinez', 'Robinson'
+    ];
+    const firstName = this.getRandomElement(englishFirstNames);
+    const lastName = this.getRandomElement(englishLastNames);
+    return `${firstName} ${lastName}`;
+  }
+
+  private generateRandomJapaneseNameKanji(): string {
+    const japaneseFamilyNamesKanji: ReadonlyArray<string> = [
+      '佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤',
+      '吉田', '山田', '佐々木', '山口', '斎藤'
+    ];
+    const japaneseGivenNamesKanji: ReadonlyArray<string> = [
+      '太郎', '花子', '一郎', '美咲', '健', '真由', '陽介', '愛', '優', '玲奈',
+      '翔', '美優', '直樹', '結衣', '彩乃'
+    ];
+    const familyName = this.getRandomElement(japaneseFamilyNamesKanji);
+    const givenName = this.getRandomElement(japaneseGivenNamesKanji);
+    return `${familyName} ${givenName}`;
+  }
+
+  private getRandomHumanName(): string {
+    const useJapanese = Math.random() < 0.5;
+    return useJapanese ? this.generateRandomJapaneseNameKanji() : this.generateRandomEnglishName();
+  }
+
   fillDemoAccount() {
     const timestamp = Date.now().toString(36); // Use timestamp to ensure uniqueness
     const randomId = this.generateRandomString(4);
     const uniqueId = `${timestamp}${randomId}`;
     
     this.registerData = {
-      username: `Demo${uniqueId}`,
+      username: this.getRandomHumanName(),
       email: `demo.${uniqueId}@example.com`,
       password: `Demo${uniqueId}!2024`, // Ensure strong password with special chars and numbers
       password2: `Demo${uniqueId}!2024`,

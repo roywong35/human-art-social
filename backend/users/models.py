@@ -13,6 +13,14 @@ class User(AbstractUser):
     first_name = None
     last_name = None
     
+    # Allow spaces and unicode characters in username by overriding AbstractUser's default validator
+    # Keep uniqueness constraint unchanged
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        help_text='Required. 150 characters or fewer. Spaces and unicode allowed.'
+    )
+
     email = models.EmailField(
         unique=True,
         error_messages={
