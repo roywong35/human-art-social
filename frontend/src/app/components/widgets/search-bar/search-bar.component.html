@@ -33,13 +33,13 @@
     <div *ngIf="!isLoading && noResults" class="divide-y divide-gray-100 dark:divide-gray-700">
       <div (click)="performFullSearch()"
            class="p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors">
-        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-none">
           <i class="fas fa-search text-blue-500"></i>
         </div>
-        <div>
-          <div class="font-semibold text-gray-900 dark:[color:var(--color-text)]">Search for "{{searchQuery}}"</div>
-          <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">See all results</div>
-        </div>
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-gray-900 dark:[color:var(--color-text)] truncate">Search for "{{searchQuery}}"</div>
+            <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] truncate">See all results</div>
+          </div>
       </div>
     </div>
 
@@ -49,12 +49,12 @@
       <div *ngIf="searchQuery.trim()"
            (click)="performFullSearch()"
            class="p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700">
-        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-none">
           <i class="fas fa-search text-blue-500"></i>
         </div>
-        <div>
-          <div class="font-semibold text-gray-900 dark:[color:var(--color-text)]">Search for "{{searchQuery}}"</div>
-          <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">See all results</div>
+        <div class="min-w-0 flex-1">
+          <div class="font-semibold text-gray-900 dark:[color:var(--color-text)] truncate">Search for "{{searchQuery}}"</div>
+          <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] truncate">See all results</div>
         </div>
       </div>
 
@@ -66,21 +66,21 @@
         <ng-container *ngIf="result.type === 'user'">
           <img [src]="getProfilePicture($any(result.data))" 
                [alt]="$any(result.data).username"
-               class="w-10 h-10 rounded-full object-cover">
-          <div>
-            <div class="font-semibold text-gray-900 dark:[color:var(--color-text)]">{{$any(result.data).username}}</div>
-            <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@' + $any(result.data).handle}}</div>
+               class="w-10 h-10 rounded-full object-cover flex-none">
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-gray-900 dark:[color:var(--color-text)] truncate">{{$any(result.data).username}}</div>
+            <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] truncate">{{'@' + $any(result.data).handle}}</div>
           </div>
         </ng-container>
 
         <!-- Hashtag Result -->
         <ng-container *ngIf="result.type === 'hashtag'">
-          <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+          <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-none">
             <i class="fas fa-hashtag text-blue-500"></i>
           </div>
-          <div>
-            <div class="font-semibold text-gray-900 dark:[color:var(--color-text)]">#{{$any(result.data).name}}</div>
-            <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">{{$any(result.data).post_count}} posts</div>
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-gray-900 dark:[color:var(--color-text)] truncate">#{{$any(result.data).name}}</div>
+            <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] truncate">{{$any(result.data).post_count}} posts</div>
           </div>
         </ng-container>
       </div>
