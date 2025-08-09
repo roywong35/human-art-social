@@ -11,7 +11,10 @@
     <i class="fas fa-retweet"></i>
     <span class="text-sm" *ngIf="post.author.id === currentUser?.id">You reposted</span>
     <span class="text-sm" *ngIf="post.author.id !== currentUser?.id">
-      <span class="hover:underline cursor-pointer" (click)="navigateToProfile($event)">{{ post.author.username }}</span> reposted
+      <span class="hover:underline cursor-pointer"
+            (mouseenter)="onUserHover($event, post.author)"
+            (mouseleave)="onUserHoverLeave()"
+            (click)="navigateToUser($event, post.author)">{{ post.author.username }}</span> reposted
     </span>
   </div>
 

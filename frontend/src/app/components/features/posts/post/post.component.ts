@@ -13,6 +13,7 @@ import { CommentService } from '../../../../services/comment.service';
 import { AuthService } from '../../../../services/auth.service';
 import { PostUpdateService } from '../../../../services/post-update.service';
 import { GlobalModalService } from '../../../../services/global-modal.service';
+import { UserService } from '../../../../services/user.service';
 import { Subscription } from 'rxjs';
 import { CommentDialogComponent } from '../../comments/comment-dialog/comment-dialog.component';
 import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
@@ -117,7 +118,8 @@ export class PostComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private postUpdateService: PostUpdateService,
-    private globalModalService: GlobalModalService
+    private globalModalService: GlobalModalService,
+    private userService: UserService
   ) {
     this.subscriptions.add(
       this.postUpdateService.postUpdate$.subscribe(
@@ -279,6 +281,14 @@ export class PostComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     if (this.checkAuth('profile')) {
       this.router.navigate([`/${this.getDisplayAuthor().handle}`]);
+    }
+  }
+
+  // Navigate to a specific user's profile (used in repost header username hover/click)
+  protected navigateToUser(event: Event, user: User): void {
+    event.stopPropagation();
+    if (this.checkAuth('profile')) {
+      this.router.navigate([`/${user.handle}`]);
     }
   }
 
@@ -870,14 +880,53 @@ export class PostComponent implements OnInit, OnDestroy {
       
       console.log('🎯 Post component: Preparing accurate modal for user', user.username);
       
-      // Use the new accurate positioning method (no shifting!)
-      this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
-        clearLeaveTimeout: () => {
-          if (this.leaveTimeout) {
-            clearTimeout(this.leaveTimeout);
+      // For reposts: fetch first and then show to avoid flash of 0 counts/bio
+      if (this.post.post_type === 'repost') {
+        this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
+          next: (fullUser) => {
+            this.globalModalService.showUserPreviewAccurate(fullUser, this.lastHoveredElement!, {
+              clearLeaveTimeout: () => {
+                if (this.leaveTimeout) {
+                  clearTimeout(this.leaveTimeout);
+                }
+              }
+            });
+          },
+          error: () => {
+            // Fallback: show lightweight preview if fetch fails
+            this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement!, {
+              clearLeaveTimeout: () => {
+                if (this.leaveTimeout) {
+                  clearTimeout(this.leaveTimeout);
+                }
+              }
+            });
           }
-        }
-      });
+        });
+      } else {
+        // Normal posts: show immediately, then enrich in place to keep responsiveness
+        this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
+          clearLeaveTimeout: () => {
+            if (this.leaveTimeout) {
+              clearTimeout(this.leaveTimeout);
+            }
+          }
+        });
+
+        // Fetch full profile (followers/following/bio) for accurate stats
+        this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
+          next: (fullUser) => {
+            // If modal is still visible, update content without repositioning to avoid flicker
+            const state = this.globalModalService.getCurrentState();
+            if (state.isVisible) {
+              this.globalModalService.showUserPreview(fullUser, state.position);
+            }
+          },
+          error: () => {
+            // Ignore errors; keep lightweight preview
+          }
+        });
+      }
     }, 300); // 300ms delay - faster than Twitter
   }
 
