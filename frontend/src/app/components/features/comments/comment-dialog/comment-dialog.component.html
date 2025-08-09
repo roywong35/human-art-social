@@ -35,6 +35,35 @@
            appHashtag 
            [content]="data.post.content"
            [preventClick]="false"></p>
+
+        <!-- If this is a quote post, show a compact reference block -->
+        <div *ngIf="data.post.post_type === 'quote' && data.post.referenced_post" class="mt-2 text-sm text-gray-500">
+          <div class="border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl p-3 bg-gray-50 dark:bg-gray-900/20">
+            <div class="flex items-center gap-2 mb-1">
+              <img [src]="data.post.referenced_post.author.profile_picture || defaultAvatar" class="h-5 w-5 rounded-full" />
+              <span class="font-semibold dark:[color:var(--color-text)]">{{ data.post.referenced_post.author.username }}</span>
+              <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ data.post.referenced_post.author.handle }}</span>
+              <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">·</span>
+              <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{ data.post.referenced_post.created_at | timeAgo }}</span>
+            </div>
+            <div class="text-[14px] text-gray-700 dark:[color:var(--color-text)] whitespace-pre-wrap">
+              {{ data.post.referenced_post.content || '\u00A0' }}
+            </div>
+            <!-- Media hint for normal quotes (no inner quote URL) -->
+            <div *ngIf="!getQuotedPostForUrl() && data.post.referenced_post.images && data.post.referenced_post.images.length > 0" class="mt-1 text-gray-500 dark:[color:var(--color-text-secondary)] flex items-center gap-1">
+              <i class="far fa-image"></i>
+              <span>
+                {{ data.post.referenced_post.images.length }} {{ data.post.referenced_post.images.length === 1 ? 'photo' : 'photos' }}
+              </span>
+            </div>
+            <!-- Show a truncated URL when quoting a quote (double quote) to the inner referenced post -->
+            <div *ngIf="getQuotedPostForUrl()" class="mt-1">
+              <a [href]="getBaseUrl() + '/' + getQuotedPostForUrl()!.author.handle + '/post/' + getQuotedPostForUrl()!.id" target="_blank" class="hover:underline">
+                {{ getDisplayUrl() }}/{{ getQuotedPostForUrl()!.author.handle }}/post...
+              </a>
+            </div>
+          </div>
+        </div>
         
         <!-- Post Image -->
         <div *ngIf="data.post.images && data.post.images.length > 0" 

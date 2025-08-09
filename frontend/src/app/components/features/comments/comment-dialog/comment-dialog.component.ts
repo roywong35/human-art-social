@@ -188,6 +188,36 @@ export class CommentDialogComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Helpers for showing referenced (quoted) post info
+  protected getBaseUrl(): string {
+    return window.location.origin;
+  }
+
+  protected getDisplayUrl(): string {
+    return window.location.origin.replace('https://', '').replace('http://', '');
+  }
+
+  protected getQuotedPostForUrl(): Post | undefined {
+    const post = this.data.post;
+    if (
+      post.post_type === 'quote' &&
+      post.referenced_post?.post_type === 'quote' &&
+      post.referenced_post.referenced_post
+    ) {
+      return post.referenced_post.referenced_post;
+    }
+    // Quoting a reposted quote post → show URL to the inner referenced post
+    if (
+      post.post_type === 'quote' &&
+      post.referenced_post?.post_type === 'repost' &&
+      post.referenced_post.referenced_post?.post_type === 'quote' &&
+      post.referenced_post.referenced_post.referenced_post
+    ) {
+      return post.referenced_post.referenced_post.referenced_post;
+    }
+    return undefined;
+  }
+
   // Schedule-related methods
   protected openScheduleModal(): void {
     this.showScheduleModal = true;

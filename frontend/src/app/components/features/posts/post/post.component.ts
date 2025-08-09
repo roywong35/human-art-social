@@ -818,12 +818,24 @@ export class PostComponent implements OnInit, OnDestroy {
   }
 
   protected getReferencedPostForUrl(): Post | undefined {
-    // Only show URL when this is a quote post AND the referenced post is also a quote post (double quote scenario)
-    if (this.post.post_type === 'quote' && this.post.referenced_post?.post_type === 'quote' && this.post.referenced_post.referenced_post) {
+    // Only show URL when this is a quote of a quote (double quote)
+    if (
+      this.post.post_type === 'quote' &&
+      this.post.referenced_post?.post_type === 'quote' &&
+      this.post.referenced_post.referenced_post
+    ) {
       return this.post.referenced_post.referenced_post;
     }
-    
-    // For regular quote posts and reposts of quote posts, don't show URL
+    // Also show URL when quoting a repost that itself is a quote post
+    if (
+      this.post.post_type === 'quote' &&
+      this.post.referenced_post?.post_type === 'repost' &&
+      this.post.referenced_post.referenced_post?.post_type === 'quote' &&
+      this.post.referenced_post.referenced_post.referenced_post
+    ) {
+      return this.post.referenced_post.referenced_post.referenced_post;
+    }
+    // Do not show URL for reposts or regular quotes
     return undefined;
   }
 

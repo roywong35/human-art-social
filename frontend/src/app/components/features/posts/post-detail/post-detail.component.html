@@ -38,6 +38,9 @@
             [post]="parentPost"
             [isDetailView]="true"
             [isConnectedToParent]="true"
+            (likeClicked)="onLikeFromChild(parentPost)"
+            (repostClicked)="onRepostFromChild(parentPost)"
+            (bookmarkClicked)="onBookmarkFromChild(parentPost)"
             (postReported)="onPostReported($event)"
             class="relative">
           </app-post>
@@ -56,6 +59,9 @@
         [post]="post" 
         [isDetailView]="true"
         [isConnectedToParent]="post.post_type === 'reply'"
+        (likeClicked)="onLikeFromChild(post)"
+        (repostClicked)="onRepostFromChild(post)"
+        (bookmarkClicked)="onBookmarkFromChild(post)"
         (postUpdated)="loadPost()"
         (postReported)="onPostReported($event)"
         class="relative">
@@ -200,6 +206,9 @@
           [showFullHeader]="true"
           [isReply]="true"
           [isConnectedToParent]="false"
+          (likeClicked)="onLikeFromChild(reply)"
+          (repostClicked)="onRepostFromChild(reply)"
+          (bookmarkClicked)="onBookmarkFromChild(reply)"
           (postUpdated)="loadPost()"
           (postReported)="onPostReported($event)"
           class="border-b border-gray-200 dark:[border-color:var(--color-border)]">

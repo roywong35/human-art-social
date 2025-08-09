@@ -12,6 +12,7 @@ import { EmojiPickerService } from '../../../../services/emoji-picker.service';
 import { HashtagService, HashtagResult } from '../../../../services/hashtag.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../../../../services/toast.service';
 
 
 @Component({
@@ -58,7 +59,8 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
     public authService: AuthService,
     private location: Location,
     private emojiPickerService: EmojiPickerService,
-    private hashtagService: HashtagService
+    private hashtagService: HashtagService,
+    private toastService: ToastService
   ) {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -185,6 +187,64 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
       },
       error: (error) => {
         console.error('Error toggling bookmark:', error);
+      }
+    });
+  }
+
+  // Wire child post actions to existing service methods
+  onLikeFromChild(target: Post): void {
+    const isRepost = target.post_type === 'repost' && !!target.referenced_post;
+    const objToUpdate = isRepost ? target.referenced_post! : target;
+    const prevLiked = !!objToUpdate.is_liked;
+    const prevCount = objToUpdate.likes_count || 0;
+
+    // Optimistic UI update
+    objToUpdate.is_liked = !prevLiked;
+    objToUpdate.likes_count = prevCount + (objToUpdate.is_liked ? 1 : -1);
+
+    this.postService.likePost(objToUpdate.author.handle, objToUpdate.id).subscribe({
+      error: () => {
+        // Revert on error
+        objToUpdate.is_liked = prevLiked;
+        objToUpdate.likes_count = prevCount;
+        this.toastService.showError('Failed to update like');
+      }
+    });
+  }
+
+  onRepostFromChild(target: Post): void {
+    const isRepost = target.post_type === 'repost' && !!target.referenced_post;
+    const objToUpdate = isRepost ? target.referenced_post! : target;
+    const prevReposted = !!objToUpdate.is_reposted;
+    const prevCount = objToUpdate.reposts_count || 0;
+
+    // Optimistic UI update
+    objToUpdate.is_reposted = !prevReposted;
+    objToUpdate.reposts_count = prevCount + (objToUpdate.is_reposted ? 1 : -1);
+
+    this.postService.repostPost(objToUpdate.author.handle, objToUpdate.id.toString()).subscribe({
+      error: () => {
+        // Revert on error
+        objToUpdate.is_reposted = prevReposted;
+        objToUpdate.reposts_count = prevCount;
+        this.toastService.showError('Failed to repost');
+      }
+    });
+  }
+
+  onBookmarkFromChild(target: Post): void {
+    const isRepost = target.post_type === 'repost' && !!target.referenced_post;
+    const objToUpdate = isRepost ? target.referenced_post! : target;
+    const prevBookmarked = !!objToUpdate.is_bookmarked;
+
+    // Optimistic UI update
+    objToUpdate.is_bookmarked = !prevBookmarked;
+
+    this.postService.bookmarkPost(objToUpdate.author.handle, objToUpdate.id).subscribe({
+      error: () => {
+        // Revert on error
+        objToUpdate.is_bookmarked = prevBookmarked;
+        this.toastService.showError('Failed to update bookmark');
       }
     });
   }
