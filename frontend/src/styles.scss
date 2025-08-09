@@ -667,7 +667,7 @@ textarea {
 }
 
 .cdk-overlay-backdrop {
-  background-color: transparent;
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
 .cdk-overlay-transparent-backdrop {
@@ -1014,4 +1014,28 @@ textarea {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
   }
 }
+
+/* Apply the same fix that works for right sidebar to left sidebar - DESKTOP ONLY */
+@media (min-width: 500px) {
+  body:has(.cdk-overlay-container) app-sidebar {
+    /* Use the same approach as right sidebar - ensure visibility behind backdrop */
+    z-index: 999998 !important;
+    /* Force the sidebar content to be visible */
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* Try making it stick to the center of viewport instead of top */
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+}
+
+/* The right sidebar stays visible with this z-index */
+body:has(.cdk-overlay-container) app-right-sidebar {
+  z-index: 999998 !important;
+}
+
+
+
+
 
