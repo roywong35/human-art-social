@@ -89,14 +89,14 @@
               <div class="flex items-center">
                 <img [src]="user.profile_picture || defaultAvatar" 
                      [alt]="user.username + ' avatar'" 
-                     class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 object-cover hover:opacity-80 transition-opacity cursor-pointer"
+                     class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 object-cover hover:opacity-80 transition-opacity cursor-pointer"
                      (mouseenter)="onUserHover($event, user)"
                      (mouseleave)="onUserHoverLeave()">
                 <div class="ml-3 min-w-0 flex-1"
                      (mouseenter)="onUserHover($event, user)"
                      (mouseleave)="onUserHoverLeave()">
-                  <div class="font-bold text-gray-900 dark:[color:var(--color-text)] transition-colors truncate hover:underline cursor-pointer">{{ user.username }}</div>
-                  <div class="text-gray-500 dark:[color:var(--color-text-secondary)] truncate hover:underline cursor-pointer">{{'@'}}{{ user.handle }}</div>
+                  <div class="font-bold text-gray-900 dark:[color:var(--color-text)] transition-colors truncate hover:underline cursor-pointer text-[15px]">{{ user.username }}</div>
+                  <div class="text-gray-500 dark:[color:var(--color-text-secondary)] truncate hover:underline cursor-pointer text-[15px]">{{'@'}}{{ user.handle }}</div>
                 </div>
               </div>
               <button (click)="followUser(user, $event)" 

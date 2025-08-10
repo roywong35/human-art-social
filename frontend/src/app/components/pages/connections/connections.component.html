@@ -23,7 +23,7 @@
           [class.border-blue-500]="activeTab === 'followers'"
           [class.text-blue-500]="activeTab === 'followers'"
           (click)="setTab('followers')"
-          class="flex-1 py-4 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
+          class="flex-1 py-4 text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
           Followers
         </button>
         <button 
@@ -31,7 +31,7 @@
           [class.border-blue-500]="activeTab === 'following'"
           [class.text-blue-500]="activeTab === 'following'"
           (click)="setTab('following')"
-          class="flex-1 py-4 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
+          class="flex-1 py-4 text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
           Following
         </button>
       </div>
@@ -53,41 +53,50 @@
     <!-- User List -->
     <div *ngIf="!isLoading && !error" class="w-full">
       <div *ngFor="let user of users" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center flex-grow cursor-pointer" (click)="navigateToProfile(user.handle)">
-            <img [src]="user.profile_picture || defaultAvatar" 
-                 [alt]="user.username + ' avatar'" 
-                 class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 hover:opacity-80 transition-opacity cursor-pointer"
-                 (mouseenter)="onUserHover($event, user)"
-                 (mouseleave)="onUserHoverLeave()">
-            <div class="ml-3 flex-grow">
-              <div class="font-bold text-gray-900 dark:[color:var(--color-text)] hover:underline cursor-pointer">
-                <span class="username-text"
-                      (mouseenter)="onUserHover($event, user)"
-                      (mouseleave)="onUserHoverLeave()">{{ user.username }}</span>
-              </div>
-              <div class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:underline cursor-pointer">
-                <span class="handle-text"
-                      (mouseenter)="onUserHover($event, user)"
-                      (mouseleave)="onUserHoverLeave()">{{'@'}}{{ user.handle }}</span>
-              </div>
-              <div class="text-gray-600 dark:[color:var(--color-text-secondary)] text-sm mt-1">{{ user.bio || 'No bio available' }}</div>
-            </div>
-          </div>
+        <div class="flex">
+          <img [src]="user.profile_picture || defaultAvatar" 
+               [alt]="user.username + ' avatar'" 
+               class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 hover:opacity-80 transition-opacity cursor-pointer "
+               (click)="navigateToProfile(user.handle)"
+               (mouseenter)="onUserHover($event, user)"
+               (mouseleave)="onUserHoverLeave()">
           
-          <!-- Follow Button -->
-          <button 
-            (click)="followUser(user, $event)"
-            (mouseenter)="onFollowButtonHover(user, true)"
-            (mouseleave)="onFollowButtonHover(user, false)"
-            [disabled]="user.isFollowLoading"
-            class="follow-button"
-            [class.following]="user.is_following">
-            <span>
-              <span *ngIf="user.is_following">Following</span>
-              <span *ngIf="!user.is_following">Follow</span>
-            </span>
-          </button>
+          <div class="ml-3 flex-grow">
+            <!-- Top row: Username, handle and follow button -->
+            <div class="flex items-start justify-between">
+              <div class="cursor-pointer" (click)="navigateToProfile(user.handle)">
+                <div class="font-bold text-gray-900 dark:[color:var(--color-text)] hover:underline text-[15px] mt-[-1px]">
+                  <span class="username-text"
+                        (mouseenter)="onUserHover($event, user)"
+                        (mouseleave)="onUserHoverLeave()">{{ user.username }}</span>
+                </div>
+                <div class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:underline text-[15px] mt-[-1px]">
+                  <span class="handle-text"
+                        (mouseenter)="onUserHover($event, user)"
+                        (mouseleave)="onUserHoverLeave()">{{'@'}}{{ user.handle }}</span>
+                </div>
+              </div>
+              
+              <!-- Follow Button -->
+              <button 
+                (click)="followUser(user, $event)"
+                (mouseenter)="onFollowButtonHover(user, true)"
+                (mouseleave)="onFollowButtonHover(user, false)"
+                [disabled]="user.isFollowLoading"
+                class="follow-button ml-4"
+                [class.following]="user.is_following">
+                <span>
+                  <span *ngIf="user.is_following">Following</span>
+                  <span *ngIf="!user.is_following">Follow</span>
+                </span>
+              </button>
+            </div>
+            
+            <!-- Bio row: Full width under everything -->
+            <div *ngIf="user.bio" 
+                 class="text-gray-900 dark:[color:var(--color-text-secondary)] cursor-pointer text-[15px]"
+                 (click)="navigateToProfile(user.handle)">{{ user.bio }}</div>
+          </div>
         </div>
       </div>
 

@@ -70,14 +70,14 @@ class UserViewSet(viewsets.ModelViewSet):
     def followers(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         followers = user.followers.all()
-        serializer = self.get_serializer(followers, many=True)
+        serializer = UserProfileSerializer(followers, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
     def following(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         following = user.following.all()
-        serializer = self.get_serializer(following, many=True)
+        serializer = UserProfileSerializer(following, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])

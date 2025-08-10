@@ -51,11 +51,15 @@ export class UserService {
   }
 
   getUserFollowers(handle: string): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/handle/${handle}/followers/`);
+    return this.http.get<User[]>(`${this.apiUrl}/handle/${handle}/followers/`).pipe(
+      map(users => users.map(user => this.addImageUrls(user)!))
+    );
   }
 
   getUserFollowing(handle: string): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/handle/${handle}/following/`);
+    return this.http.get<User[]>(`${this.apiUrl}/handle/${handle}/following/`).pipe(
+      map(users => users.map(user => this.addImageUrls(user)!))
+    );
   }
 
   getAllUsers(): Observable<User[]> {
