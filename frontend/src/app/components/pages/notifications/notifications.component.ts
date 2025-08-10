@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NotificationService, Notification } from '../../../services/notification.service';
+import { NotificationService, GroupedNotification } from '../../../services/notification.service';
 import { Router, RouterModule } from '@angular/router';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -11,6 +11,7 @@ import { Post } from '../../../models/post.model';
 import { GlobalModalService } from '../../../services/global-modal.service';
 import { Subscription } from 'rxjs';
 import { ReportStatusDialogComponent } from '../../dialogs/report-status-dialog/report-status-dialog.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-notifications',
@@ -20,7 +21,7 @@ import { ReportStatusDialogComponent } from '../../dialogs/report-status-dialog/
   styleUrls: ['./notifications.component.scss']
 })
 export class NotificationsComponent implements OnInit, OnDestroy {
-  notifications: Notification[] = [];
+  notifications: GroupedNotification[] = [];
   loading = true;
   loadingMore = false; // Added for infinite scroll
   currentPage = 1;
@@ -41,12 +42,12 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private globalModalService: GlobalModalService
   ) {
-
+    console.log('🔔 NotificationsComponent initialized');
     
     // Subscribe to global notifications list (similar to chat service)
     const notificationsSub = this.notificationService.notifications$.subscribe({
       next: (notifications) => {
-
+        console.log('🔔 Global notifications updated:', notifications);
         this.notifications = notifications;
       },
       error: (error) => {
@@ -54,11 +55,17 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       }
     });
     this.subscriptions.push(notificationsSub);
-
   }
 
   ngOnInit() {
-    this.loadNotifications();
+    console.log('🔔 NotificationsComponent ngOnInit');
+    // Only load notifications if user is authenticated
+    this.notificationService.unreadCount$.subscribe(count => {
+      if (count !== undefined) {
+        console.log('🔔 User authenticated, loading notifications');
+        this.loadNotifications();
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -73,13 +80,16 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   loadNotifications() {
-
     this.loading = true;
     this.notificationService.getNotifications(this.currentPage).subscribe({
       next: (response) => {
-
-        
-        // The global list is updated automatically by the service
+        console.log('🔔 Notifications loaded:', response.results);
+        // Update local notifications array as fallback
+        if (this.currentPage === 1) {
+          this.notifications = response.results;
+        } else {
+          this.notifications = [...this.notifications, ...response.results];
+        }
         this.hasMore = response.results.length === 20; // 20 notifications per page as requested
         this.loading = false;
       },
@@ -93,15 +103,14 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   loadMore() {
     if (this.loadingMore) return; // Prevent multiple simultaneous loads
     
-
     this.loadingMore = true;
     this.currentPage++;
     
     this.notificationService.getNotifications(this.currentPage).subscribe({
       next: (response) => {
-
-        
-        // The global list is updated automatically by the service
+        console.log('🔔 More notifications loaded:', response.results);
+        // Update local notifications array
+        this.notifications = [...this.notifications, ...response.results];
         this.hasMore = response.results.length === 20; // 20 notifications per page as requested
         this.loadingMore = false;
       },
@@ -127,32 +136,20 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     });
   }
 
-  markAsRead(notification: Notification) {
+  markGroupAsRead(notification: GroupedNotification) {
     if (!notification.is_read) {
-      // Decrement unread count immediately
-      this.notificationService.decrementUnreadCount();
-
-      // Make the backend call (service will update global list)
-      this.notificationService.markAsRead(notification.id).subscribe({
+      // Mark the entire group as read
+      this.notificationService.markGroupAsRead(notification.notification_ids).subscribe({
         error: () => {
-          // Revert unread count if the backend call fails
-          this.notificationService.incrementUnreadCount();
+          // Handle error if needed
         }
       });
     }
   }
 
-  getFormattedMessageWithoutUsername(notification: Notification): string {
-    const fullMessage = this.notificationService.getFormattedMessage(notification);
-    if (notification.sender?.username) {
-      return fullMessage.replace(notification.sender.username, '').trim();
-    }
-    return fullMessage;
-  }
+  onNotificationClick(notification: GroupedNotification) {
 
-  onNotificationClick(notification: Notification) {
-
-    this.markAsRead(notification);
+    this.markGroupAsRead(notification);
 
     // Navigate based on notification type
     switch (notification.notification_type) {
@@ -164,9 +161,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         }
         break;
       case 'follow':
-        if (notification.sender) {
-
-          this.router.navigate(['/', notification.sender.handle]);
+        if (notification.users.length > 0) {
+          this.router.navigate(['/', notification.users[0].handle]);
         }
         break;
       case 'report_received':
@@ -219,7 +215,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     });
   }
 
-  private showPostRemovalDialog(notification: Notification) {
+  private showPostRemovalDialog(notification: GroupedNotification) {
 
     
     if (!notification.post) {
@@ -320,6 +316,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     }, 300); // 300ms delay to allow moving to modal
   }
 
+  protected onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      target.src = this.defaultAvatar;
+    }
+  }
+
   protected getFormattedDate(dateString: string): string {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
@@ -340,6 +343,74 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       clearTimeout(this.leaveTimeout);
     }
     this.globalModalService.onModalHover();
+  }
+
+  protected getActionText(notificationType: string): string {
+    switch (notificationType) {
+      case 'like':
+        return 'liked your post';
+      case 'comment':
+        return 'commented on your post';
+      case 'follow':
+        return 'followed you';
+      case 'repost':
+        return 'reposted your post';
+      case 'donation':
+        return 'donated to your post';
+      default:
+        return '';
+    }
+  }
+
+  protected getSystemMessage(notificationType: string): string {
+    switch (notificationType) {
+      case 'report_received':
+        return 'We received your report';
+      case 'post_removed':
+        return 'Your post has been removed';
+      case 'appeal_approved':
+        return 'Your appeal has been approved and your post restored';
+      case 'appeal_rejected':
+        return 'Your appeal has been rejected';
+      case 'art_verified':
+        return 'Congrats! Your art has been verified';
+      default:
+        return '';
+    }
+  }
+
+  protected getNotificationIcon(notificationType: string): string {
+    switch (notificationType) {
+      case 'like':
+        return 'fas fa-heart';
+      case 'comment':
+        return 'fas fa-comment';
+      case 'follow':
+        return 'fas fa-user-plus';
+      case 'repost':
+        return 'fas fa-retweet';
+      case 'donation':
+        return 'fas fa-gift';
+      default:
+        return 'fas fa-bell';
+    }
+  }
+
+  protected getNotificationIconStyle(notificationType: string): string {
+    switch (notificationType) {
+      case 'like':
+        return 'bg-red-500 text-white';
+      case 'comment':
+        return 'bg-blue-500 text-white';
+      case 'follow':
+        return 'bg-green-500 text-white';
+      case 'repost':
+        return 'bg-green-500 text-white';
+      case 'donation':
+        return 'bg-yellow-500 text-white';
+      default:
+        return 'bg-gray-500 text-white';
+    }
   }
 
   @HostListener('window:scroll', ['$event'])

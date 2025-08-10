@@ -6,8 +6,6 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { AuthService } from './auth.service';
 import { map, tap } from 'rxjs/operators';
 
-
-
 export interface Notification {
   id: number;
   sender?: {
@@ -45,6 +43,43 @@ export interface Notification {
   created_at: string;
 }
 
+export interface GroupedNotification {
+  notification_type: 'like' | 'comment' | 'follow' | 'repost' | 'donation' | 'report_received' | 'post_removed' | 'appeal_approved' | 'appeal_rejected' | 'art_verified';
+  post?: {
+    id: number;
+    content: string;
+    author: {
+      id: number;
+      username: string;
+      handle: string;
+      profile_picture: string | null;
+    };
+    post_type?: string;
+    created_at?: string;
+    image?: string;
+    images?: Array<{
+      id: number;
+      image: string;
+      filename: string;
+    }>;
+    is_human_drawing?: boolean;
+  };
+  comment?: {
+    id: number;
+    content: string;
+    amount?: number; // For donation notifications
+  };
+  users: Array<{
+    id: number;
+    username: string;
+    profile_picture: string | null;
+    handle: string;
+  }>;
+  latest_time: string;
+  is_read: boolean;
+  notification_ids: number[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -59,19 +94,25 @@ export class NotificationService {
   notificationEvents$ = this.notificationEvents.asObservable();
 
   // Global notifications list (similar to chat service)
-  private notifications = new BehaviorSubject<Notification[]>([]);
+  private notifications = new BehaviorSubject<GroupedNotification[]>([]);
   notifications$ = this.notifications.asObservable();
 
   constructor(
     private http: HttpClient,
     private authService: AuthService
   ) {
-    this.connectWebSocket();
+    console.log('🔔 NotificationService initialized');
+    console.log('🔔 Access token exists:', !!localStorage.getItem('access_token'));
+    
+    // Don't call these immediately - wait for user to be authenticated
     this.authService.currentUser$.subscribe((user: any) => {
+      console.log('🔔 User auth state changed:', user ? 'authenticated' : 'not authenticated');
       if (user) {
+        console.log('🔔 User authenticated, connecting WebSocket and loading unread count');
         this.connectWebSocket();
         this.loadUnreadCount();
       } else {
+        console.log('🔔 User not authenticated, disconnecting WebSocket');
         this.disconnectWebSocket();
       }
     });
@@ -156,9 +197,10 @@ export class NotificationService {
           
                     this.notificationEvents.next(notification);
           
-          // Add notification to global list (similar to chat service)
-          const currentNotifications = this.notifications.getValue();
-          this.notifications.next([notification, ...currentNotifications]);
+          // Note: WebSocket notifications are individual, not grouped.
+          // The grouping logic is handled by the HTTP GET list endpoint.
+          // For real-time updates, we'll need to re-fetch the grouped notifications
+          // or implement client-side grouping. For now, we'll just emit the event.
         } else {
           // Unknown message type - ignore
         }
@@ -181,11 +223,18 @@ export class NotificationService {
     }
   }
 
-  getNotifications(page: number = 1): Observable<{ results: Notification[], count: number }> {
-    return this.http.get<{ results: Notification[], count: number }>(
-      `${this.apiUrl}/?page=${page}&page_size=20`
-    ).pipe(
+  getNotifications(page: number = 1): Observable<{ results: GroupedNotification[], count: number }> {
+    const url = `${this.apiUrl}/?page=${page}&page_size=20`;
+    console.log('🔔 Fetching notifications from:', url);
+    
+    return this.http.get<{ results: GroupedNotification[], count: number }>(url).pipe(
+      map(response => {
+        // Process image URLs for all notifications
+        const processedResults = response.results.map(notification => this.addImageUrls(notification));
+        return { ...response, results: processedResults };
+      }),
       tap(response => {
+        console.log('🔔 API response received:', response);
         if (page === 1) {
           // First page - replace notifications list
           this.notifications.next(response.results);
@@ -199,7 +248,11 @@ export class NotificationService {
   }
 
   getUnreadCount(): Observable<number> {
-    return this.http.get<{ count: number }>(`${this.apiUrl}/unread_count/`).pipe(
+    const url = `${this.apiUrl}/unread_count/`;
+    console.log('🔔 Fetching unread count from:', url);
+    
+    return this.http.get<{ count: number }>(url).pipe(
+      tap(response => console.log('🔔 Unread count response:', response)),
       map(response => response.count)
     );
   }
@@ -210,11 +263,36 @@ export class NotificationService {
         // Update the global list
         const currentNotifications = this.notifications.getValue();
         const updatedNotifications = currentNotifications.map(notification => 
-          notification.id === notificationId 
+          notification.notification_ids.includes(notificationId)
             ? { ...notification, is_read: true }
             : notification
         );
-        this.notifications.next(updatedNotifications);
+        // Ensure image URLs are processed
+        const processedNotifications = updatedNotifications.map(notification => this.addImageUrls(notification));
+        this.notifications.next(processedNotifications);
+        
+        // Update unread count
+        this.refreshUnreadCount();
+      })
+    );
+  }
+
+  markGroupAsRead(notificationIds: number[]): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/mark_group_as_read/`, { notification_ids: notificationIds }).pipe(
+      tap(() => {
+        // Update the global list
+        const currentNotifications = this.notifications.getValue();
+        const updatedNotifications = currentNotifications.map(notification => 
+          notification.notification_ids.some(id => notificationIds.includes(id))
+            ? { ...notification, is_read: true }
+            : notification
+        );
+        // Ensure image URLs are processed
+        const processedNotifications = updatedNotifications.map(notification => this.addImageUrls(notification));
+        this.notifications.next(processedNotifications);
+        
+        // Update unread count
+        this.refreshUnreadCount();
       })
     );
   }
@@ -227,14 +305,61 @@ export class NotificationService {
         const updatedNotifications = currentNotifications.map(notification => 
           ({ ...notification, is_read: true })
         );
-        this.notifications.next(updatedNotifications);
+        // Ensure image URLs are processed
+        const processedNotifications = updatedNotifications.map(notification => this.addImageUrls(notification));
+        this.notifications.next(processedNotifications);
+        
+        // Update unread count
+        this.refreshUnreadCount();
       })
     );
   }
 
-  getFormattedMessage(notification: Notification): string {
-    const username = notification.sender?.username;
-    switch (notification.notification_type) {
+  private refreshUnreadCount(): void {
+    this.getUnreadCount().subscribe({
+      next: (count) => {
+        this.unreadCount.next(count);
+      },
+      error: (error) => {
+        console.error('Error refreshing unread count:', error);
+      }
+    });
+  }
+
+  getFormattedMessage(notification: GroupedNotification): string {
+    const userCount = notification.users.length;
+    
+    if (userCount === 0) {
+      return this.getSystemMessage(notification.notification_type);
+    }
+    
+    // Donations should always be shown individually with amounts
+    // Even if somehow grouped, we'll show the first user's donation
+    if (notification.notification_type === 'donation') {
+      const username = notification.users[0].username;
+      return this.getDonationMessage(username, notification);
+    }
+    
+    if (userCount === 1) {
+      const username = notification.users[0].username;
+      return this.getUserMessage(notification.notification_type, username, notification);
+    }
+    
+    if (userCount === 2) {
+      const username1 = notification.users[0].username;
+      const username2 = notification.users[1].username;
+      return this.getTwoUserMessage(notification.notification_type, username1, username2, notification);
+    }
+    
+    // More than 2 users
+    const username1 = notification.users[0].username;
+    const username2 = notification.users[1].username;
+    const othersCount = userCount - 2;
+    return this.getMultipleUserMessage(notification.notification_type, username1, username2, othersCount, notification);
+  }
+
+  private getUserMessage(type: string, username: string, notification: GroupedNotification): string {
+    switch (type) {
       case 'like':
         return `${username} liked your post`;
       case 'comment':
@@ -243,10 +368,50 @@ export class NotificationService {
         return `${username} followed you`;
       case 'repost':
         return `${username} reposted your post`;
-      case 'donation':
-        // Get donation amount from comment field (which contains the donation object)
-        const donationAmount = notification.comment ? `￥${Math.floor(notification.comment.amount || 0).toLocaleString()}` : '￥0';
-        return `${username} donated ${donationAmount} to your post`;
+      default:
+        return '';
+    }
+  }
+
+  private getTwoUserMessage(type: string, username1: string, username2: string, notification: GroupedNotification): string {
+    switch (type) {
+      case 'like':
+        return `${username1} and ${username2} liked your post`;
+      case 'comment':
+        return `${username1} and ${username2} commented on your post`;
+      case 'follow':
+        return `${username1} and ${username2} followed you`;
+      case 'repost':
+        return `${username1} and ${username2} reposted your post`;
+      default:
+        return '';
+    }
+  }
+
+  private getMultipleUserMessage(type: string, username1: string, username2: string, othersCount: number, notification: GroupedNotification): string {
+    switch (type) {
+      case 'like':
+        return `${username1}, ${username2} and ${othersCount} others liked your post`;
+      case 'comment':
+        return `${username1}, ${username2} and ${othersCount} others commented on your post`;
+      case 'follow':
+        return `${username1}, ${username2} and ${othersCount} others followed you`;
+      case 'repost':
+        return `${username1}, ${username2} and ${othersCount} others reposted your post`;
+      default:
+        return '';
+    }
+  }
+
+  private getDonationMessage(username: string, notification: GroupedNotification): string {
+    // Get donation amount from comment field (which contains the donation object)
+    // Note: Donations should ideally be ungrouped on the backend to show individual amounts
+    const donationAmount = notification.comment ? `￥${Math.floor(notification.comment.amount || 0).toLocaleString()}` : '￥0';
+    return `${username} donated ${donationAmount} to your post`;
+  }
+
+  private getSystemMessage(type: string): string {
+    switch (type) {
       case 'report_received':
         return `We received your report`;
       case 'post_removed':
@@ -260,5 +425,58 @@ export class NotificationService {
       default:
         return '';
     }
+  }
+
+  private addImageUrls(notification: GroupedNotification): GroupedNotification {
+    // Create a new notification object to avoid mutations
+    const processedNotification = { ...notification };
+    
+    // Process post images if they exist
+    if (processedNotification.post) {
+      // Process post author profile picture
+      if (processedNotification.post.author?.profile_picture) {
+        if (!processedNotification.post.author.profile_picture.startsWith('http') && !processedNotification.post.author.profile_picture.startsWith('data:')) {
+          const profilePath = processedNotification.post.author.profile_picture.startsWith('/') ? processedNotification.post.author.profile_picture : `/${processedNotification.post.author.profile_picture}`;
+          processedNotification.post.author = {
+            ...processedNotification.post.author,
+            profile_picture: `${environment.apiUrl}${profilePath}`
+          };
+        }
+      }
+      
+      // Process post main image
+      if (processedNotification.post.image) {
+        if (!processedNotification.post.image.startsWith('http') && !processedNotification.post.image.startsWith('data:')) {
+          const imagePath = processedNotification.post.image.startsWith('/') ? processedNotification.post.image : `/${processedNotification.post.image}`;
+          processedNotification.post.image = `${environment.apiUrl}${imagePath}`;
+        }
+      }
+      
+      // Process post images array
+      if (processedNotification.post.images) {
+        processedNotification.post.images = processedNotification.post.images.map(image => {
+          return {
+            ...image,
+            image: !image.image.startsWith('http') ? `${environment.apiUrl}${image.image.startsWith('/') ? image.image : `/${image.image}`}` : image.image
+          };
+        });
+      }
+    }
+    
+    // Process user profile pictures
+    if (processedNotification.users) {
+      processedNotification.users = processedNotification.users.map(user => {
+        if (user.profile_picture && !user.profile_picture.startsWith('http') && !user.profile_picture.startsWith('data:')) {
+          const profilePath = user.profile_picture.startsWith('/') ? user.profile_picture : `/${user.profile_picture}`;
+          return {
+            ...user,
+            profile_picture: `${environment.apiUrl}${profilePath}`
+          };
+        }
+        return user;
+      });
+    }
+    
+    return processedNotification;
   }
 } 

@@ -1,4 +1,52 @@
 :host {
   display: block;
   min-height: 100vh;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notification-item {
+  transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dark .notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.post-preview {
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.post-preview:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.dark .post-preview:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.username-text {
+  transition: color 0.2s ease;
+}
+
+.username-text:hover {
+  color: var(--color-primary);
+}
+
+.avatar-hover {
+  transition: opacity 0.2s ease;
+}
+
+.avatar-hover:hover {
+  opacity: 0.8;
 } 

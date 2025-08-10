@@ -10,58 +10,122 @@
 
   <div class="divide-y dark:divide-[color:var(--color-border)]">
     <div *ngFor="let notification of notifications"
-         [class.bg-gray-50]="!notification.is_read"
-         class="p-4 hover:bg-gray-50 dark:hover:bg-[color:var(--color-surface-hover)] transition-colors cursor-pointer"
+         [class.bg-blue-50]="!notification.is_read"
+         [class.dark:bg-blue-950]="!notification.is_read"
+         class="p-4 hover:bg-gray-50 dark:hover:bg-[color:var(--color-surface-hover)] transition-colors cursor-pointer notification-item"
          (click)="onNotificationClick(notification)">
-      <div class="flex items-center">
-        <!-- Avatar - Links to sender's profile if sender exists, otherwise shows system avatar -->
-        <ng-container *ngIf="notification.sender; else systemAvatar">
-          <a [routerLink]="['/', notification.sender.handle]" 
-             class="flex-shrink-0"
-             (click)="$event.stopPropagation(); markAsRead(notification)">
-            <img [src]="notification.sender.profile_picture || defaultAvatar"
-                 [alt]="notification.sender.username"
-                 class="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
-                 (mouseenter)="onUserHover($event, notification.sender)"
-                 (mouseleave)="onUserHoverLeave()">
-          </a>
-        </ng-container>
-        <ng-template #systemAvatar>
-          <div class="flex-shrink-0">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center"
+      
+      <div class="flex items-start space-x-3">
+        <!-- Notification Icon (Heart for likes, etc.) -->
+        <div class="flex-shrink-0">
+          <ng-container *ngIf="notification.users.length > 0; else systemAvatar">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                 [ngClass]="getNotificationIconStyle(notification.notification_type)">
+              <i [class]="getNotificationIcon(notification.notification_type)" class="text-sm"></i>
+            </div>
+          </ng-container>
+          <ng-template #systemAvatar>
+            <div class="w-8 h-8 rounded-full flex items-center justify-center"
                  [ngClass]="getSystemNotificationStyle(notification.notification_type)">
-              <i [class]="getSystemNotificationIcon(notification.notification_type)"></i>
+              <i [class]="getSystemNotificationIcon(notification.notification_type)" class="text-sm"></i>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between">
+            <!-- Left side: User avatars and text -->
+            <div class="flex-1 min-w-0">
+              <!-- User Avatars Row -->
+              <div *ngIf="notification.users.length > 0" class="flex items-center space-x-1 mb-1">
+                <a *ngFor="let user of notification.users.slice(0, 3)" 
+                   [routerLink]="['/', user.handle]"
+                   class="flex-shrink-0"
+                   (click)="$event.stopPropagation(); markGroupAsRead(notification)">
+                  <img [src]="user.profile_picture || defaultAvatar"
+                       [alt]="user.username"
+                       (error)="onImageError($event)"
+                       class="w-8 h-8 rounded-full object-cover avatar-hover cursor-pointer"
+                       (mouseenter)="onUserHover($event, user)"
+                       (mouseleave)="onUserHoverLeave()">
+                </a>
+              </div>
+
+              <!-- Username and Action Text -->
+              <p class="dark:text-[color:var(--color-text)] leading-normal text-sm">
+                <ng-container *ngIf="notification.users.length > 0">
+                  <!-- First username - always clickable -->
+                  <a [routerLink]="['/', notification.users[0].handle]"
+                     class="font-bold hover:underline cursor-pointer"
+                     (click)="$event.stopPropagation(); markGroupAsRead(notification)">
+                    <span class="username-text"
+                          (mouseenter)="onUserHover($event, notification.users[0])"
+                          (mouseleave)="onUserHoverLeave()">
+                      {{ notification.users[0].username }}
+                    </span>
+                  </a>
+                  
+                  <!-- Second username if exists -->
+                  <ng-container *ngIf="notification.users.length > 1">
+                    <span class="text-gray-500 dark:text-[color:var(--color-text-secondary)]">, </span>
+                    <a [routerLink]="['/', notification.users[1].handle]"
+                       class="font-bold hover:underline cursor-pointer"
+                       (click)="$event.stopPropagation(); markGroupAsRead(notification)">
+                      <span class="username-text"
+                            (mouseenter)="onUserHover($event, notification.users[1])"
+                            (mouseleave)="onUserHoverLeave()">
+                        {{ notification.users[1].username }}
+                      </span>
+                    </a>
+                  </ng-container>
+                  
+                  <!-- "and X others" if more than 2 users -->
+                  <ng-container *ngIf="notification.users.length > 2">
+                    <span class="text-gray-500 dark:text-[color:var(--color-text-secondary)]"> and {{ notification.users.length - 2 }} others</span>
+                  </ng-container>
+                  
+                  <!-- Action text -->
+                  <span class="ml-1">{{ getActionText(notification.notification_type) }}</span>
+                </ng-container>
+                
+                <!-- For system notifications without users -->
+                <ng-container *ngIf="notification.users.length === 0">
+                  <span class="font-bold">{{ getSystemMessage(notification.notification_type) }}</span>
+                </ng-container>
+              </p>
+
+              <!-- Post Preview -->
+              <div *ngIf="notification.post" class="mt-2 p-2 bg-gray-50 dark:bg-[color:var(--color-surface)] rounded border dark:border-[color:var(--color-border)]">
+                <!-- Post text content in gray -->
+                <p class="text-sm text-gray-500 dark:text-[color:var(--color-text-secondary)] line-clamp-2 mb-1">
+                  {{ notification.post.content }}
+                </p>
+                
+                <!-- Photo count if images exist -->
+                <div *ngIf="notification.post.images && notification.post.images.length > 0" 
+                     class="text-xs text-gray-400 dark:text-gray-500">
+                  {{ notification.post.images.length === 1 ? '1 photo' : notification.post.images.length + ' photos' }}
+                </div>
+              </div>
+
+              <!-- Comment Preview -->
+              <div *ngIf="notification.comment && !notification.post" class="mt-2 p-2 bg-gray-50 dark:bg-[color:var(--color-surface)] rounded border dark:border-[color:var(--color-border)]">
+                <p class="text-sm dark:text-[color:var(--color-text)]">
+                  {{ notification.comment.content }}
+                </p>
+                <div *ngIf="notification.comment.amount" class="mt-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                  ￥{{ notification.comment.amount.toLocaleString() }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Right side: Time -->
+            <div class="text-xs text-gray-500 dark:text-[color:var(--color-text-secondary)] ml-4 flex-shrink-0"
+                 [title]="getFormattedDate(notification.latest_time)">
+              {{ notification.latest_time | timeAgo }}
             </div>
           </div>
-        </ng-template>
-        
-        <!-- Notification Content -->
-        <div class="flex-1 mx-3">
-          <p class="dark:text-[color:var(--color-text)] leading-normal">
-            <!-- Username - Links to sender's profile if sender exists -->
-            <ng-container *ngIf="notification.sender">
-              <a [routerLink]="['/', notification.sender.handle]"
-                 class="font-bold hover:underline cursor-pointer"
-                 (click)="$event.stopPropagation(); markAsRead(notification)">
-                <span class="username-text"
-                      (mouseenter)="onUserHover($event, notification.sender)"
-                      (mouseleave)="onUserHoverLeave()">
-                  {{ notification.sender.username }}
-                </span>
-              </a>
-              <!-- Rest of the notification message -->
-              <span class="ml-1">{{ getFormattedMessageWithoutUsername(notification) }}</span>
-            </ng-container>
-            <!-- For system notifications without sender -->
-            <ng-container *ngIf="!notification.sender">
-              <span class="font-bold">{{ getFormattedMessageWithoutUsername(notification) }}</span>
-            </ng-container>
-          </p>
-        </div>
-        
-        <div class="text-sm text-gray-500 dark:text-[color:var(--color-text-secondary)] whitespace-nowrap flex-shrink-0"
-             [title]="getFormattedDate(notification.created_at)">
-          {{ notification.created_at | timeAgo }}
         </div>
       </div>
     </div>

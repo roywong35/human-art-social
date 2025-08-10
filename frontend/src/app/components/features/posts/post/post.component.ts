@@ -433,11 +433,16 @@ export class PostComponent implements OnInit, OnDestroy {
   onDonate(event: MouseEvent): void {
     event.stopPropagation();
     if (this.checkAuth('donate')) {
+      // For reposts, donate to the original post author, not the reposter
+      const targetPost = this.post.post_type === 'repost' && this.post.referenced_post 
+        ? this.post.referenced_post 
+        : this.post;
+
       const dialogRef = this.dialog.open(DonationModalComponent, {
         width: '600px',
         maxWidth: '90vw',
         panelClass: ['donation-modal-fixed'],
-        data: { post: this.post }
+        data: { post: targetPost }
       });
 
       dialogRef.afterClosed().subscribe((result: any) => {
