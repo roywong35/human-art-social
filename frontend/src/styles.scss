@@ -1030,10 +1030,7 @@ textarea {
   }
 }
 
-/* The right sidebar stays visible with this z-index */
-body:has(.cdk-overlay-container) app-right-sidebar {
-  z-index: 999998 !important;
-}
+/* The right sidebar stays visible without z-index changes */
 
 
 
