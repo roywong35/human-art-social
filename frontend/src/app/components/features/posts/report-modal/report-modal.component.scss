@@ -30,33 +30,6 @@
   }
 }
 
-.close-button {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: none;
-  color: #6b7280;
-  cursor: pointer;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-  
-  &:hover {
-    background-color: #f3f4f6;
-    color: #374151;
-  }
-  
-  :global(.dark) & {
-    color: var(--color-text-secondary);
-    
-    &:hover {
-      background-color: var(--color-surface-hover);
-      color: var(--color-text);
-    }
-  }
-}
 
 .modal-content {
   max-height: calc(80vh - 180px);

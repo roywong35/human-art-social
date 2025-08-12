@@ -7,10 +7,10 @@
 <div class="bg-white dark:bg-black flex flex-col w-full h-full">
   <!-- Header with Close and Drafts buttons -->
   <div class="h-14 relative flex-shrink-0">
-    <button class="absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 dark:[color:var(--color-text)]" (click)="closeModal()">
+    <button class="absolute top-3 left-3 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-900 dark:[color:var(--color-text)]" (click)="closeModal()">
       <i class="fas fa-times text-lg"></i>
     </button>
-    <button class="absolute top-3 right-3 px-4 py-2 flex items-center justify-center rounded-full text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm font-medium" (click)="onDraftsClick()">
+    <button class="absolute top-3 right-3 px-4 py-2 flex items-center justify-center rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/20 text-sm font-medium" (click)="onDraftsClick()">
       Drafts
     </button>
   </div>
@@ -220,12 +220,12 @@
         class="hidden">
       <button
         (click)="fileInput.click()"
-        class="text-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
         <i class="far fa-image text-[18px]"></i>
       </button>
       <button
         (click)="toggleEmojiPicker($event)"
-        class="text-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
         <i class="far fa-smile text-[18px]"></i>
       </button>
       

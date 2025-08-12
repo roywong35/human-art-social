@@ -92,7 +92,7 @@
           
           <!-- More button -->
           <div title="More" *ngIf="currentUser || isPreview" class="relative" (click)="$event.stopPropagation()">
-            <button class="flex items-center justify-center w-9 h-9 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors"
+            <button class="flex items-center justify-center w-9 h-9 text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-full transition-colors"
                     (click)="toggleMoreMenu($event)">
               <i class="fas fa-ellipsis-h text-[16px]"></i>
             </button>
@@ -285,7 +285,7 @@
           <div class="flex items-center justify-between ml-[-8px] mt-0.5">
             <!-- Reply button -->
             <div title="Reply" class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onReply($event) : null; $event.stopPropagation()">
-              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-100 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
                 <i class="far fa-comment text-[16px]" [class.group-hover:text-blue-500]="!isPreview"></i>
               </div>
               <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]">{{ repliesCount ? repliesCount : '' }}</span>
@@ -294,7 +294,7 @@
             <!-- Repost button -->
             <div title="Repost" class="relative" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="$event.stopPropagation()">
               <div class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.text-green-500]="isReposted" (click)="!isPreview ? toggleRepostMenu($event) : null; $event.stopPropagation()">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-green-100 dark:hover:bg-green-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
                   <i class="fas fa-retweet text-[16px]" [class.text-green-500]="isReposted" [class.group-hover:text-green-500]="!isPreview"></i>
                 </div>
                 <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]" [class.text-green-500]="isReposted">{{ repostsCount ? repostsCount : '' }}</span>
@@ -311,7 +311,7 @@
 
             <!-- Like button -->
             <div title="Like" class="flex items-center text-gray-500 dark:[color:var(--color-text-secondary)] group" [class.text-red-500]="isLiked" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onLike($event) : null; $event.stopPropagation()">
-              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-red-100 dark:hover:bg-red-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
                 <i class="far fa-heart text-[16px]" [class.group-hover:text-red-500]="!isPreview" [class.fas]="isLiked" [class.text-red-500]="isLiked"></i>
               </div>
               <span class="text-sm w-[20px] h-[20px] inline-flex items-center justify-center ml-[-10px]" [class.text-red-500]="isLiked">{{ likesCount ? likesCount : '' }}</span>
@@ -320,7 +320,7 @@
             <!-- Share button with dropdown menu -->
             <div title="Share" class="relative" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="$event.stopPropagation()">
               <div class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group" (click)="!isPreview ? onShare($event) : null; $event.stopPropagation()">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-100 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
                   <i class="fa-solid fa-arrow-up-from-bracket text-[16px]" [class.group-hover:text-blue-500]="!isPreview" [class.text-blue-500]="showShareMenu"></i>
                 </div>
               </div>
@@ -368,7 +368,7 @@
 
             <!-- Bookmark button -->
             <div title="Bookmark" class="flex items-center gap-2 text-gray-500 dark:[color:var(--color-text-secondary)] group transform translate-x-3" [class.text-blue-500]="isBookmarked" [class.opacity-50]="isPreview" [class.cursor-not-allowed]="isPreview" (click)="!isPreview ? onBookmark($event) : null; $event.stopPropagation()">
-              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
+              <div class="flex items-center justify-center w-9 h-9 rounded-full transition-colors" [ngClass]="{'hover:bg-blue-100 dark:hover:bg-blue-900/20 cursor-pointer': !isPreview, 'cursor-not-allowed': isPreview}">
                 <i class="far fa-bookmark text-[16px]" [class.group-hover:text-blue-500]="!isPreview" [class.fas]="isBookmarked" [class.text-blue-500]="isBookmarked" [class.dark:text-blue-400]="isBookmarked"></i>
               </div>
             </div>
