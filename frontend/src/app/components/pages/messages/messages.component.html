@@ -102,10 +102,10 @@
     
       <!-- Back Button (Mobile Only) -->
       <div *ngIf="!isDesktop && selectedConversation" 
-           class="absolute top-4 left-4 z-10">
-        <button 
-          (click)="goBackToChatList()"
-          class="p-2 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all">
+           class="absolute top-4 left-4 z-10 mt-[-5px]">
+                  <button 
+            (click)="goBackToChatList()"
+            class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
@@ -196,13 +196,13 @@
           class="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md cursor-pointer">
           
           <img 
-            [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
+            [src]="user.profile_picture || defaultAvatar" 
             [alt]="user.username"
             class="w-10 h-10 rounded-full object-cover">
           
           <div>
             <p class="font-medium text-gray-900 dark:text-white">{{ user.username }}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{"@"}}{{ user.handle }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">&#64;{{ user.handle }}</p>
           </div>
         </div>
       </div>

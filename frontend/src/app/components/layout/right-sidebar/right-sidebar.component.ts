@@ -228,9 +228,9 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
   private loadRecommendedUsers() {
     this.isLoadingUsers = true;
-    this.userService.getRecommendedUsers().subscribe({
-      next: (users) => {
-        this.recommendedUsers = users.map(user => ({
+    this.userService.getRecommendedUsersPaginated(1).subscribe({
+      next: (response) => {
+        this.recommendedUsers = response.results.map(user => ({
           ...user,
           isFollowLoading: false,
           isHoveringFollowButton: false

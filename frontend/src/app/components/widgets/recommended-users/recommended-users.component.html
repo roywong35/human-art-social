@@ -5,58 +5,89 @@
     </div>
 
     <!-- Loading State -->
-    <div *ngIf="isLoading" class="divide-y divide-gray-100 dark:divide-gray-800">
-      <div *ngFor="let i of [1,2,3,4,5]" class="px-4 py-4">
-        <div class="animate-pulse flex items-center justify-between">
-          <div class="flex items-center">
-            <div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800"></div>
-            <div class="ml-3">
-              <div class="h-4 bg-gray-200 dark:bg-gray-800 rounded w-24"></div>
-              <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-20 mt-2"></div>
-              <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-32 mt-2"></div>
+    <div *ngIf="isLoading" class="divide-y divide-gray-200 dark:divide-gray-800">
+      <div *ngFor="let i of [1,2,3,4,5]" class="p-4">
+        <div class="animate-pulse flex">
+          <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800"></div>
+          <div class="ml-3 flex-grow">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-800 rounded w-24"></div>
+                <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-20 mt-1"></div>
+              </div>
+              <div class="w-20 h-7 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
             </div>
+            <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-32 mt-2"></div>
           </div>
-          <div class="w-24 h-8 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
         </div>
       </div>
     </div>
 
     <!-- User List -->
-    <div *ngIf="!isLoading" class="divide-y divide-gray-100 dark:divide-gray-800">
-      <div *ngFor="let user of users" 
-           class="user-item px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer group"
-           (click)="navigateToProfile(user.handle)">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center">
-            <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
-                 [alt]="user.username + ' avatar'" 
-                 class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 object-cover">
-            <div class="ml-3">
-              <div class="font-bold text-gray-900 dark:[color:var(--color-text)] group-hover:text-blue-500 transition-colors">{{ user.username }}</div>
-              <div class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ user.handle }}</div>
-              <div class="text-sm text-gray-600 dark:[color:var(--color-text-secondary)] mt-1">{{ user.bio || 'No bio available' }}</div>
+    <div *ngIf="!isLoading" class="divide-y divide-gray-200 dark:divide-gray-800">
+      <div *ngFor="let user of users" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+        <div class="flex">
+          <img [src]="user.profile_picture || defaultAvatar" 
+               [alt]="user.username + ' avatar'" 
+               class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 hover:opacity-80 transition-opacity cursor-pointer"
+               (click)="navigateToProfile(user.handle)"
+               (mouseenter)="onUserHover($event, user)"
+               (mouseleave)="onUserHoverLeave()">
+          
+          <div class="ml-3 flex-grow">
+            <!-- Top row: Username, handle and follow button -->
+            <div class="flex items-start justify-between">
+              <div class="cursor-pointer" (click)="navigateToProfile(user.handle)">
+                <div class="font-bold text-gray-900 dark:[color:var(--color-text)] hover:underline text-[15px] mt-[-1px]">
+                  <span class="username-text"
+                        (mouseenter)="onUserHover($event, user)"
+                        (mouseleave)="onUserHoverLeave()">{{ user.username }}</span>
+                </div>
+                <div class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:underline text-[15px] mt-[-1px]">
+                  <span class="handle-text"
+                        (mouseenter)="onUserHover($event, user)"
+                        (mouseleave)="onUserHoverLeave()">{{'@'}}{{ user.handle }}</span>
+                </div>
+              </div>
+              
+              <!-- Follow Button -->
+              <button 
+                (click)="followUser(user, $event)"
+                (mouseenter)="onFollowButtonHover(user, true)"
+                (mouseleave)="onFollowButtonHover(user, false)"
+                [disabled]="user.isFollowLoading"
+                class="follow-button ml-4"
+                [class.following]="user.is_following">
+                <span>
+                  <span *ngIf="user.is_following">Following</span>
+                  <span *ngIf="!user.is_following">Follow</span>
+                </span>
+              </button>
             </div>
+            
+            <!-- Bio row: Full width under everything -->
+            <div *ngIf="user.bio" 
+                 class="text-gray-900 dark:[color:var(--color-text-secondary)] cursor-pointer text-[15px]"
+                 (click)="navigateToProfile(user.handle)">{{ user.bio }}</div>
           </div>
-          <button 
-            (click)="followUser(user, $event)"
-            (mouseenter)="onFollowButtonHover(user, true)"
-            (mouseleave)="onFollowButtonHover(user, false)"
-            [class.following]="user.is_following"
-            [class.loading]="user.isFollowLoading"
-            class="follow-button">
-            <i *ngIf="user.isFollowLoading" class="fas fa-spinner fa-spin"></i>
-            <span>
-              <span *ngIf="user.is_following">Following</span>
-              <span *ngIf="!user.is_following">Follow</span>
-            </span>
-          </button>
         </div>
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="users.length === 0" class="empty-state px-4 py-8 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
-        <p>No users found</p>
+      <div *ngIf="users.length === 0" class="p-8 text-center text-gray-500 dark:[color:var(--color-text-secondary)]">
+        No users found
       </div>
+    </div>
+
+    <!-- Load More Indicator -->
+    <div *ngIf="isLoadingMore" class="p-4 text-center">
+      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-gray-100 mx-auto"></div>
+      <p class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] mt-2">Loading more users...</p>
+    </div>
+
+    <!-- End of Results Indicator -->
+    <div *ngIf="!hasMore && users.length > 0" class="p-4 text-center">
+      <p class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">You've reached the end of recommendations</p>
     </div>
   </div>
 </div> 

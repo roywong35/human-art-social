@@ -4,6 +4,13 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { User } from '../models/user.model';
 
+interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -33,6 +40,15 @@ export class UserService {
   getRecommendedUsers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/suggested/`).pipe(
       map(users => users.map(user => this.addImageUrls(user)!))
+    );
+  }
+
+  getRecommendedUsersPaginated(page: number = 1): Observable<PaginatedResponse<User>> {
+    return this.http.get<PaginatedResponse<User>>(`${this.apiUrl}/suggested/?page=${page}&page_size=20`).pipe(
+      map(response => ({
+        ...response,
+        results: response.results.map(user => this.addImageUrls(user)!)
+      }))
     );
   }
 

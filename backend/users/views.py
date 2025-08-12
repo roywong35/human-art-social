@@ -3,6 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
@@ -13,6 +14,12 @@ from posts.models import Post
 from notifications.services import create_follow_notification
 
 User = get_user_model()
+
+# Custom pagination for users
+class UserPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -199,7 +206,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def suggested(self, request):
         """
-        Get recommended users based on follower count
+        Get recommended users based on follower count with pagination
         """
         # Exclude the current user, users they already follow, and staff/admin users
         current_user = request.user
@@ -212,8 +219,16 @@ class UserViewSet(viewsets.ModelViewSet):
             Q(is_superuser=True)
         ).annotate(
             follower_count=Count('followers')
-        ).order_by('-follower_count')[:5]  # Get top 5 users by follower count
+        ).order_by('-follower_count')  # Order by follower count for pagination
         
+        # Apply pagination
+        paginator = UserPagination()
+        page = paginator.paginate_queryset(users, request)
+        if page is not None:
+            serializer = UserProfileSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+        
+        # Fallback for when pagination is not applied
         serializer = UserProfileSerializer(users, many=True, context={'request': request})
         return Response(serializer.data)
 

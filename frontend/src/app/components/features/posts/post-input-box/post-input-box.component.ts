@@ -205,10 +205,11 @@ export class PostInputBoxComponent {
   protected onViewScheduledPosts(): void {
     this.showScheduleModal = false;
     this.dialog.open(DraftModalComponent, {
-      width: '90vw',
-      maxWidth: '600px',
-      height: '80vh',
-      panelClass: ['draft-modal-dialog'],
+      width: '600px',
+      height: '600px',
+      panelClass: 'clean-draft-modal',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
       data: { selectedTab: 'scheduled' }
     });
   }

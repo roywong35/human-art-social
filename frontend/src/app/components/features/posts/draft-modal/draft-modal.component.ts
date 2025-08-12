@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DraftService, DraftPost, ScheduledPost } from '../../../../services/draft.service';
 import { ScheduledPostService } from '../../../../services/scheduled-post.service';
-import { TimeAgoPipe } from '../../../../pipes/time-ago.pipe';
 import { Subscription } from 'rxjs';
 
 interface DraftModalData {
@@ -19,8 +18,7 @@ interface DraftModalData {
     CommonModule,
     MatDialogModule,
     MatButtonModule,
-    MatIconModule,
-    TimeAgoPipe
+    MatIconModule
   ],
   templateUrl: './draft-modal.component.html',
   styleUrls: ['./draft-modal.component.scss']

@@ -1,16 +1,16 @@
 <div class="flex flex-col h-full bg-white dark:bg-black"
      [class.floating-chat-mode]="isFloatingChat">
   <!-- Chat Header (hidden when in floating chat) -->
-  <div *ngIf="!isFloatingChat" class="px-4 py-3 dark:border-gray-800 flex items-center"
+  <div *ngIf="!isFloatingChat" class="px-4 py-2 dark:border-gray-800 flex items-center"
        [class.pl-16]="isMobileView">
     <div class="flex items-center space-x-3">
       <img 
-        [src]="getOtherParticipant()?.profile_picture || 'assets/placeholder-image.svg'" 
+        [src]="getOtherParticipant()?.profile_picture || defaultAvatar" 
         [alt]="getOtherParticipant()?.username"
         class="w-9 h-9 rounded-full object-cover">
-      <div>
-        <h2 class="font-bold text-gray-900 dark:text-white">{{ getOtherParticipant()?.username }}</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{"@"}}{{ getOtherParticipant()?.handle }}</p>
+      <div class="min-w-0 flex-1">
+        <h2 class="font-bold text-gray-900 dark:text-white truncate">{{ getOtherParticipant()?.username }}</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-[-2px] truncate">{{"@"}}{{ getOtherParticipant()?.handle }}</p>
       </div>
     </div>
   </div>
@@ -19,7 +19,7 @@
   <div #messagesContainer class="flex-1 overflow-y-auto px-2 py-2 space-y-4">
     <!-- No messages state -->
     <div *ngIf="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center">
-      <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+      <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 flex-shrink-0" style="min-width: 64px; min-height: 64px; max-width: 64px; max-height: 64px; aspect-ratio: 1/1;">
         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
         </svg>
@@ -36,7 +36,7 @@
       <div class="flex items-end space-x-2 max-w-[75%]">
         <!-- Other user avatar (hidden when in floating chat) -->
         <img *ngIf="!isMessageFromCurrentUser(message) && !isFloatingChat"
-             [src]="getOtherParticipant()?.profile_picture || 'assets/placeholder-image.svg'"
+             [src]="getOtherParticipant()?.profile_picture || defaultAvatar"
              [alt]="getOtherParticipant()?.username"
              class="w-6 h-6 rounded-full object-cover flex-shrink-0">
 
@@ -70,7 +70,7 @@
 
         <!-- Current user avatar (hidden when in floating chat) -->
         <img *ngIf="isMessageFromCurrentUser(message) && !isFloatingChat"
-             [src]="currentUser?.profile_picture || 'assets/placeholder-image.svg'"
+             [src]="currentUser?.profile_picture || defaultAvatar"
              [alt]="currentUser?.username"
              class="w-6 h-6 rounded-full object-cover flex-shrink-0">
       </div>
@@ -79,7 +79,7 @@
     <!-- Typing indicator -->
     <div *ngIf="typingUsers.length > 0" class="flex justify-start">
       <div class="flex items-end space-x-2">
-        <img *ngIf="!isFloatingChat" [src]="getOtherParticipant()?.profile_picture || 'assets/placeholder-image.svg'"
+        <img *ngIf="!isFloatingChat" [src]="getOtherParticipant()?.profile_picture || defaultAvatar"
              [alt]="getOtherParticipant()?.username"
              class="w-6 h-6 rounded-full object-cover">
         <div class="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">
