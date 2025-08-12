@@ -10,7 +10,7 @@
 
   <div class="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
     <div *ngFor="let user of data.users" 
-         class="py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+         class="py-4 hover:bg-gray-100 transition-colors cursor-pointer"
          (click)="navigateToProfile(user.handle)">
       <div class="flex items-center px-4">
         <img [src]="user.profile_picture || defaultAvatar" 

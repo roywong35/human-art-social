@@ -247,14 +247,13 @@
           <button 
             (click)="openContextModal()"
             [title]="isHumanArtTab ? 'Create a Human Art post' : 'Create a new post'"
-            [class]="getDesktopLinkClasses()"
+            [class]="(isHumanArtTab ? 'flex items-center justify-center w-14 h-14 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-600 cursor-pointer text-lg dark:[color:var(--color-text)] xl:justify-start xl:w-full xl:h-auto' : getDesktopLinkClasses()) + ' transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-105 active:scale-95'"
             [ngStyle]="{
               'background': isHumanArtTab ? (isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'white') : 'linear-gradient(45deg, var(--color-primary), var(--color-primary-hover))',
               'border': isHumanArtTab ? '2px solid #3b82f6' : 'none',
               'color': isHumanArtTab ? '#3b82f6' : 'white',
               'padding': isHumanArtTab ? '10px' : ''
-            }"
-            [class]="isHumanArtTab ? 'flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer text-lg dark:[color:var(--color-text)] xl:justify-start xl:w-full xl:h-auto' : getDesktopLinkClasses()">
+            }">
             <i class="fas h-7 w-7 text-lg flex items-center justify-center" [class.fa-plus]="!isHumanArtTab" [class.fa-paint-brush]="isHumanArtTab"></i>
             <span [class]="getDesktopTextClasses()" style="font-weight: bold;">{{ isHumanArtTab ? 'Add Human Art' : 'Create Post' }}</span>
           </button>

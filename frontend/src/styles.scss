@@ -98,7 +98,7 @@ body {
   }
 
   .secondary-button {
-    @apply w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm;
+    @apply w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm;
   }
 
   .error-text {
@@ -636,6 +636,11 @@ textarea {
   background: rgba(0, 0, 0, 0.5);
 }
 
+// Dark mode backdrop - white backdrop
+:root.dark .change-password-backdrop {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+
 // User menu overlay styles
 .user-menu-overlay {
   z-index: 1000000 !important;
@@ -673,6 +678,13 @@ textarea {
 .cdk-overlay-transparent-backdrop {
   &.cdk-overlay-backdrop-showing {
     opacity: 0;
+  }
+}
+
+// Dark mode: Make user menu backdrop white instead of transparent
+:root.dark .cdk-overlay-transparent-backdrop {
+  &.cdk-overlay-backdrop-showing {
+    background: rgba(255, 255, 255, 0.5) !important;
   }
 }
 

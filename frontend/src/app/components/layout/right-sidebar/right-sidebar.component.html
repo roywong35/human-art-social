@@ -21,7 +21,7 @@
         <!-- Real trending topics -->
         <div *ngIf="!isLoadingTrending">
           <div *ngFor="let topic of trendingTopics.slice(0, maxTrendingTopics); let i = index" 
-               class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer"
+               class="px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer"
                (click)="navigateToHashtag(topic.name)">
             <div class="flex items-center justify-between">
               <div class="flex-1 min-w-0">
@@ -83,7 +83,7 @@
         <div *ngIf="!isLoadingUsers">
           <!-- Actual users -->
           <div *ngFor="let user of displayedUsers" 
-               class="pl-4 pr-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer group"
+               class="pl-4 pr-3 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer group"
                (click)="navigateToProfile(user.handle)">
             <div class="flex items-center justify-between">
               <div class="flex items-center">
@@ -127,7 +127,7 @@
           </div>
         </div>
       </div>
-      <a routerLink="/recommended-users" class="block px-4 py-3 text-blue-500 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors border-t border-gray-200 dark:[border-color:var(--color-border)]">
+      <a routerLink="/recommended-users" class="block px-4 py-3 text-blue-500 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors border-t border-gray-200 dark:[border-color:var(--color-border)]">
         Show more
       </a>
     </div>

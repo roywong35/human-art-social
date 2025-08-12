@@ -1,5 +1,5 @@
 <div class="max-w-2xl mx-auto pt-4">
-  <div class="bg-white dark:bg-black shadow rounded-lg border border-gray-200 dark:[border-color:var(--color-border)]">
+  <div class="bg-white dark:bg-black border-gray-200 dark:[border-color:var(--color-border)]">
     <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
       <h1 class="text-xl font-bold dark:[color:var(--color-text)]">Recommended Users</h1>
     </div>
@@ -25,19 +25,19 @@
 
     <!-- User List -->
     <div *ngIf="!isLoading" class="divide-y divide-gray-200 dark:divide-gray-800">
-      <div *ngFor="let user of users" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+      <div *ngFor="let user of users" class="p-4 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer"
+           (click)="navigateToProfile(user.handle)">
         <div class="flex">
           <img [src]="user.profile_picture || defaultAvatar" 
                [alt]="user.username + ' avatar'" 
-               class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 hover:opacity-80 transition-opacity cursor-pointer"
-               (click)="navigateToProfile(user.handle)"
+               class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 hover:opacity-80 transition-opacity"
                (mouseenter)="onUserHover($event, user)"
                (mouseleave)="onUserHoverLeave()">
           
           <div class="ml-3 flex-grow">
             <!-- Top row: Username, handle and follow button -->
             <div class="flex items-start justify-between">
-              <div class="cursor-pointer" (click)="navigateToProfile(user.handle)">
+              <div>
                 <div class="font-bold text-gray-900 dark:[color:var(--color-text)] hover:underline text-[15px] mt-[-1px]">
                   <span class="username-text"
                         (mouseenter)="onUserHover($event, user)"
@@ -67,8 +67,7 @@
             
             <!-- Bio row: Full width under everything -->
             <div *ngIf="user.bio" 
-                 class="text-gray-900 dark:[color:var(--color-text-secondary)] cursor-pointer text-[15px]"
-                 (click)="navigateToProfile(user.handle)">{{ user.bio }}</div>
+                 class="text-gray-900 dark:[color:var(--color-text-secondary)] text-[15px]">{{ user.bio }}</div>
           </div>
         </div>
       </div>

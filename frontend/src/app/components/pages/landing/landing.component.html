@@ -21,7 +21,7 @@
         </button>
         <button 
           (click)="openLoginModal()"
-          class="py-2 px-3 min-[380px]:px-4 border border-blue-500 text-blue-500 rounded-full font-semibold hover:bg-blue-50 dark:hover:bg-gray-900 transition-colors text-sm whitespace-nowrap">
+          class="py-2 px-3 min-[380px]:px-4 border border-blue-500 text-blue-500 rounded-full font-semibold hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] transition-colors text-sm whitespace-nowrap">
           Sign in
         </button>
       </div>
@@ -59,7 +59,7 @@
               </button>
               <button 
                 (click)="openLoginModal()"
-                class="flex-1 py-2.5 px-4 border border-blue-500 text-blue-500 rounded-full font-semibold hover:bg-blue-50 dark:hover:bg-gray-900 transition-colors text-sm">
+                class="flex-1 py-2.5 px-4 border border-blue-500 text-blue-500 rounded-full font-semibold hover:bg-blue-50 dark:hover:[background-color:var(--color-surface-hover)] transition-colors text-sm">
                 Sign in
               </button>
             </div>
@@ -79,7 +79,7 @@
                   [class.border-b-2]="activeTab === 'for-you'"
                   [class.border-blue-500]="activeTab === 'for-you'"
                   [class.text-blue-500]="activeTab === 'for-you'"
-                  class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:text-white"
+                  class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white"
                   (click)="setActiveTab('for-you')"
                 >
                   For You
@@ -88,7 +88,7 @@
                   [class.border-b-2]="activeTab === 'human-drawing'"
                   [class.border-blue-500]="activeTab === 'human-drawing'"
                   [class.text-blue-500]="activeTab === 'human-drawing'"
-                  class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:text-white"
+                  class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white"
                   (click)="setActiveTab('human-drawing')"
                 >
                   Human Art

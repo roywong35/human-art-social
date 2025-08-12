@@ -2,7 +2,7 @@
   <!-- Header with Edit Button -->
   <div class="header-section flex items-center p-4 pb-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
     <!-- Left side: Back button -->
-    <button (click)="onBack()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
+    <button (click)="onBack()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]">
       <i class="fas fa-arrow-left text-lg"></i>
     </button>
 
@@ -10,7 +10,7 @@
     <h2 class="flex-1 text-xl font-bold text-gray-900 dark:text-white text-center">Drafts</h2>
 
     <!-- Right side: Edit button (fixed width) -->
-    <button (click)="toggleEditMode()" class="w-12 h-8 flex items-center justify-center text-sm font-medium rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
+    <button (click)="toggleEditMode()" class="w-12 h-8 flex items-center justify-center text-sm font-medium rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]">
       {{ isEditMode ? 'Done' : 'Edit' }}
     </button>
   </div>
@@ -46,7 +46,7 @@
 
       <!-- Draft Items -->
       <div *ngFor="let draft of drafts" 
-           class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-200 dark:border-gray-700" 
+           class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border-b border-gray-200 dark:border-gray-700" 
            [class.cursor-pointer]="!isEditMode"
            (click)="!isEditMode && onDraftEdit(draft)">
         <!-- Main Content Area -->
@@ -107,7 +107,7 @@
 
       <!-- Scheduled Post Items -->
       <div *ngFor="let post of scheduledPosts" 
-           class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-200 dark:border-gray-700">
+           class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border-b border-gray-200 dark:border-gray-700">
         <!-- Main Content Area -->
         <div class="flex gap-3 items-start">
           <!-- Checkbox (Edit Mode) - Always reserve space -->

@@ -23,7 +23,7 @@
           [class.border-blue-500]="activeTab === 'followers'"
           [class.text-blue-500]="activeTab === 'followers'"
           (click)="setTab('followers')"
-          class="flex-1 py-4 text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
+          class="flex-1 py-4 text-base font-medium hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]">
           Followers
         </button>
         <button 
@@ -31,7 +31,7 @@
           [class.border-blue-500]="activeTab === 'following'"
           [class.text-blue-500]="activeTab === 'following'"
           (click)="setTab('following')"
-          class="flex-1 py-4 text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-900 dark:[color:var(--color-text)]">
+          class="flex-1 py-4 text-base font-medium hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]">
           Following
         </button>
       </div>
@@ -52,7 +52,7 @@
 
     <!-- User List -->
     <div *ngIf="!isLoading && !error" class="w-full">
-      <div *ngFor="let user of users" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+      <div *ngFor="let user of users" class="p-4 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors">
         <div class="flex">
           <img [src]="user.profile_picture || defaultAvatar" 
                [alt]="user.username + ' avatar'" 

@@ -2,7 +2,7 @@
   <!-- Search Header -->
   <div class="sticky top-0 bg-white dark:[background-color:var(--color-background)] z-10">
     <div class="flex items-center gap-4 px-6">
-      <button (click)="goBack()" class="text-gray-600 dark:[color:var(--color-text-secondary)] hover:text-gray-900 dark:hover:[color:var(--color-text)] hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full transition-all w-10 h-10 flex items-center justify-center">
+      <button (click)="goBack()" class="text-gray-600 dark:[color:var(--color-text-secondary)] hover:text-gray-900 dark:hover:[color:var(--color-text)] hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded-full transition-all w-10 h-10 flex items-center justify-center">
         <i class="fas fa-arrow-left text-xl"></i>
       </button>
       <div class="flex-1">
@@ -17,14 +17,14 @@
               [class.border-b-2]="activeTab === 'top'"
               [class.border-blue-500]="activeTab === 'top'"
               [class.text-blue-500]="activeTab === 'top'"
-              class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:[color:var(--color-text)]">
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]">
         Top
       </button>
       <button (click)="switchTab('people')"
               [class.border-b-2]="activeTab === 'people'"
               [class.border-blue-500]="activeTab === 'people'"
               [class.text-blue-500]="activeTab === 'people'"
-              class="flex-1 py-4 text-center font-bold hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors dark:[color:var(--color-text)]">
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]">
         People
       </button>
     </div>
@@ -84,7 +84,7 @@
         
         <div class="border-b border-gray-200 dark:[border-color:var(--color-border)]">
           <div *ngFor="let user of limitedUsers; trackBy: trackByUserId"
-               class="flex items-center px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
+               class="flex items-center px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
             
             <div class="flex space-x-2 flex-1" (click)="navigateToProfile(user)">
               <!-- Avatar container with fixed width for consistent alignment -->
@@ -148,7 +148,7 @@
     <div *ngIf="!isLoading && hasSearched && activeTab === 'people' && users.length > 0">
       <div>
         <div *ngFor="let user of users; trackBy: trackByUserId"
-             class="flex items-center px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
+             class="flex items-center px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
           
           <div class="flex space-x-2 flex-1" (click)="navigateToProfile(user)">
             <!-- Avatar container with fixed width for consistent alignment -->

@@ -32,7 +32,7 @@
     <!-- No Results -->
     <div *ngIf="!isLoading && noResults" class="divide-y divide-gray-100 dark:divide-gray-700">
       <div (click)="performFullSearch()"
-           class="p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors">
+           class="p-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors">
         <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-none">
           <i class="fas fa-search text-blue-500"></i>
         </div>
@@ -48,7 +48,7 @@
       <!-- See All Results Option -->
       <div *ngIf="searchQuery.trim()"
            (click)="performFullSearch()"
-           class="p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700">
+           class="p-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700">
         <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-none">
           <i class="fas fa-search text-blue-500"></i>
         </div>
@@ -60,7 +60,7 @@
 
       <div *ngFor="let result of results"
            (click)="navigateToResult(result)"
-           class="p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors">
+           class="p-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer transition-colors">
         
         <!-- User Result -->
         <ng-container *ngIf="result.type === 'user'">

@@ -265,17 +265,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     this.overlayRef = this.overlay.create({
       positionStrategy,
-      hasBackdrop: true,
-      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: false,
       panelClass: 'user-menu-overlay'
     });
 
     // Create and attach the portal
     const portal = new TemplatePortal(this.userMenuTpl, this.viewContainerRef);
     this.overlayRef.attach(portal);
-
-    // Handle backdrop clicks
-    this.overlayRef.backdropClick().subscribe(() => this.closeUserMenu());
 
     this.showUserMenu = true;
   }

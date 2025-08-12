@@ -9,10 +9,10 @@
   </div>
 
   <div class="divide-y dark:divide-[color:var(--color-border)]">
-    <div *ngFor="let notification of notifications"
+    <div *ngFor="let notification of notifications; let i = index"
          [class.bg-blue-50]="!notification.is_read"
          [class.dark:bg-blue-950]="!notification.is_read"
-         class="p-4 hover:bg-gray-50 dark:hover:bg-[color:var(--color-surface-hover)] transition-colors cursor-pointer notification-item"
+         class="p-4 hover:bg-gray-100 dark:hover:bg-[color:var(--color-surface-hover)] transition-colors cursor-pointer notification-item"
          (click)="onNotificationClick(notification)">
       
       <div class="flex items-start space-x-3">
