@@ -360,11 +360,6 @@ export class PostComponent implements OnInit, OnDestroy {
   onRepost(event: Event): void {
     event.stopPropagation();
     if (this.checkAuth('repost')) {
-      console.log('Post component: Emitting repost event for post:', { 
-        id: this.post.id, 
-        type: this.post.post_type,
-        referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
-      });
       this.ngZone.run(() => {
         this.repostClicked.emit(this.post);
         this.cd.detectChanges();
@@ -831,24 +826,14 @@ export class PostComponent implements OnInit, OnDestroy {
   }
 
   protected getReferencedPostForDisplay(): Post | undefined {
-    console.log('🔍 getReferencedPostForDisplay called for post:', {
-      postType: this.post.post_type,
-      hasReferencedPost: !!this.post.referenced_post,
-      referencedPostType: this.post.referenced_post?.post_type,
-      hasNestedReferencedPost: !!this.post.referenced_post?.referenced_post
-    });
-
     if (this.post.post_type === 'quote' && this.post.referenced_post) {
-      console.log('✅ Returning referenced post for quote');
       return this.post.referenced_post;
     }
     
     if (this.post.post_type === 'repost' && this.post.referenced_post?.post_type === 'quote' && this.post.referenced_post.referenced_post) {
-      console.log('✅ Returning nested referenced post for repost of quote');
       return this.post.referenced_post.referenced_post;
     }
     
-    console.log('❌ No referenced post to display');
     return undefined;
   }
 
@@ -903,7 +888,6 @@ export class PostComponent implements OnInit, OnDestroy {
       // Store the hovered element for accurate positioning
       this.lastHoveredElement = event.target as Element;
       
-      console.log('🎯 Post component: Preparing accurate modal for user', user.username);
       
       // For reposts: fetch first and then show to avoid flash of 0 counts/bio
       if (this.post.post_type === 'repost') {

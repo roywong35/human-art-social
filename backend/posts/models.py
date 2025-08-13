@@ -6,6 +6,22 @@ import uuid
 from django.utils import timezone
 import re
 
+def get_storage():
+    """
+    Dynamically get the correct storage backend.
+    This ensures S3 is used when configured, regardless of Django's storage caching.
+    """
+    USE_S3 = os.getenv('USE_S3', 'False').lower() == 'true'
+    
+    if USE_S3:
+        # Force S3 storage directly, bypass Django cache
+        from storages.backends.s3boto3 import S3Boto3Storage
+        return S3Boto3Storage()
+    
+    # Fallback to default storage for local development
+    from django.core.files.storage import default_storage
+    return default_storage
+
 User = get_user_model()
 
 def post_image_path(instance, filename):
@@ -41,7 +57,7 @@ class PostImage(models.Model):
     Model for storing multiple images per post
     """
     post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to=post_image_path)
+    image = models.ImageField(upload_to=post_image_path, storage=get_storage)
     order = models.IntegerField(default=0)  # To maintain image order
     created_at = models.DateTimeField(auto_now_add=True)
 

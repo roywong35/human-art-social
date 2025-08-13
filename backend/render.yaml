@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: ai-drawing-social-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py migrate && python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p $PORT core.asgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: core.settings_prod
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: ai-drawing-social-backend.onrender.com
+      - key: FRONTEND_URL
+        value: https://your-frontend.vercel.app
+      - key: USE_S3
+        value: True
+      - key: ENVIRONMENT
+        value: production
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ai-drawing-social-redis
+          property: connectionString
+      # Database will be auto-configured by Render
+      # AWS S3 keys to be added manually in Render dashboard
+    
+  - type: redis
+    name: ai-drawing-social-redis
+    ipAllowList: []
+    
+  - type: pserv
+    name: ai-drawing-social-db
+    env: postgres
+    ipAllowList: []
+    
+databases:
+  - name: ai-drawing-social-db
+    databaseName: adfree_db
+    user: postgres

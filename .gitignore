@@ -25,9 +25,17 @@ venv/
 ENV/
 env/
 .env
+.env.*
+!.env.example
 .venv
 env.bak/
 venv.bak/
+
+# Environment files (keep these secure!)
+backend/.env
+frontend/.env
+*.env
+!*.env.example
 
 # Django
 *.log

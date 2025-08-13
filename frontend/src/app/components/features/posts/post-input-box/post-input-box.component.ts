@@ -127,8 +127,6 @@ export class PostInputBoxComponent {
       return;
     }
     
-    console.log('PostInputBox: Document click - target:', target);
-    
     // Check if click is inside emoji picker or trigger
     const isEmojiPicker = target.closest('.emoji-picker-wrapper') || 
                          target.closest('.emoji-mart') ||

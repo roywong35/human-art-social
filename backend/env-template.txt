@@ -1,0 +1,39 @@
+# Environment Configuration Template
+# Copy this file to .env and update with your actual values
+
+# Django Settings
+DEBUG=True
+# Generate a new SECRET_KEY for local development (safe for .env files):
+# python -c "import secrets; import string; chars = string.ascii_letters + string.digits + '_-'; print(''.join(secrets.choice(chars) for _ in range(50)))"
+SECRET_KEY=REPLACE_WITH_GENERATED_KEY_FROM_COMMAND_ABOVE
+ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+
+# Storage Configuration (Industry Best Practice)
+USE_S3=False
+ENVIRONMENT=development
+
+# Database Configuration (for local development)
+# IMPORTANT: Set these to match your local PostgreSQL setup
+DB_NAME=adfree_db
+DB_USER=postgres
+DB_PASSWORD=YOUR_ACTUAL_POSTGRES_PASSWORD_HERE
+DB_HOST=localhost
+DB_PORT=5432
+
+# For production, use DATABASE_URL instead:
+# DATABASE_URL=postgresql://username:password@hostname:port/database_name
+
+# AWS S3 Configuration 
+# You can put your real AWS credentials here - USE_S3=False will ignore them for local development
+# For production: Set USE_S3=True or deploy to Render (auto-detects production)
+AWS_ACCESS_KEY_ID=your-real-aws-access-key-here
+AWS_SECRET_ACCESS_KEY=your-real-aws-secret-key-here
+AWS_STORAGE_BUCKET_NAME=your-real-bucket-name-here
+AWS_S3_REGION_NAME=us-east-1
+AWS_S3_CUSTOM_DOMAIN=your-bucket-name.s3.amazonaws.com
+
+# CORS Configuration
+FRONTEND_URL=http://localhost:4200
+
+# Channels (Redis for production, optional for local dev)
+REDIS_URL=redis://localhost:6379

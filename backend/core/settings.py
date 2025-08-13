@@ -13,21 +13,22 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-your-secret-key-here'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+# Parse ALLOWED_HOSTS from environment variable
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
 
 
 # Application definition
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'channels',
+    'storages',  # Required for S3 support
     # Local apps
     'users',
     'posts',
@@ -95,15 +97,16 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import dj_database_url
+
+# Database Configuration
+# Production: Uses DATABASE_URL environment variable (set by Render)
+# Development: Uses individual DB_* environment variables from .env file
+# Note: 'changeme' is just a fallback - real password should be in .env file
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'adfree_db',
-        'USER': 'postgres',
-        'PASSWORD': '1122aaBB',  
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default=f"postgresql://{os.getenv('DB_USER', 'postgres')}:{os.getenv('DB_PASSWORD', 'placeholder')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'adfree_db')}"
+    )
 }
 
 
@@ -145,8 +148,69 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files (Uploaded files)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# AWS S3 Configuration (only use in production)
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
+AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN')
+
+# Smart Environment Detection - Industry Best Practice
+# Method 1: Explicit USE_S3 flag (recommended)
+USE_S3 = os.getenv('USE_S3', 'False').lower() == 'true'
+
+# Method 2: Environment-based detection (backup)
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')  # development, staging, production
+
+# Method 3: URL-based detection (for deployed environments)
+def is_production_environment():
+    """Detect if we're running in a production environment"""
+    # Check if we're on Render (production)
+    if os.getenv('RENDER'):
+        return True
+    # Check if we're on other cloud platforms
+    if os.getenv('RAILWAY') or os.getenv('HEROKU'):
+        return True
+    # Check hostname patterns
+    hostname = os.getenv('ALLOWED_HOSTS', '')
+    if 'onrender.com' in hostname or 'railway.app' in hostname:
+        return True
+    return False
+
+# S3 settings for django-storages (must be set before storage decision)
+AWS_DEFAULT_ACL = None  # Bucket has ACLs disabled, rely on bucket policy for public access
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_S3_FILE_OVERWRITE = False
+AWS_QUERYSTRING_AUTH = False
+
+# Storage Decision Logic (Industry Standard)
+if USE_S3 or (not DEBUG and is_production_environment()):
+    # Use S3 for production or when explicitly enabled
+    if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
+        # Configure S3 storage - MUST be set at module level
+        DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+        
+        # Media URL for S3
+        MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/' if AWS_S3_CUSTOM_DOMAIN else f'https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/'
+        
+        print("📦 Using AWS S3 for media storage")
+        
+        # FORCE default storage to reload by clearing cache
+        import django.core.files.storage
+        if hasattr(django.core.files.storage, '_default_storage'):
+            delattr(django.core.files.storage, '_default_storage')
+        
+    else:
+        print("⚠️  S3 requested but credentials missing, falling back to local storage")
+        MEDIA_URL = '/media/'
+        MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    # Use local storage for development
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    print(f"📁 Using local media storage: {MEDIA_ROOT}")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -185,7 +249,19 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:4200')
+CORS_ALLOWED_ORIGINS = [
+    FRONTEND_URL,
+    "http://localhost:4200",  # Local development
+    "http://127.0.0.1:4200",  # Local development
+]
+
+# Allow all origins only in development
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',

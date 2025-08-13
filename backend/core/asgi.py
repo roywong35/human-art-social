@@ -17,6 +17,28 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 # Initialize Django BEFORE importing anything that uses models
 django.setup()
 
+# FORCE storage reload for Daphne/ASGI
+from django.conf import settings
+import django.core.files.storage
+
+# Clear ALL cached storage instances
+cache_attrs = ['_default_storage', '_storages', 'default_storage']
+for attr in cache_attrs:
+    if hasattr(django.core.files.storage, attr):
+        delattr(django.core.files.storage, attr)
+        print(f"🔄 ASGI: Cleared storage cache: {attr}")
+
+# Force reload default_storage
+if hasattr(settings, 'DEFAULT_FILE_STORAGE'):
+    print(f"🔄 ASGI: DEFAULT_FILE_STORAGE = {settings.DEFAULT_FILE_STORAGE}")
+    
+    # Import and set the correct storage
+    from django.utils.module_loading import import_string
+    storage_class = import_string(settings.DEFAULT_FILE_STORAGE)
+    new_storage = storage_class()
+    django.core.files.storage._default_storage = new_storage
+    print(f"🔄 ASGI: Forced storage to {new_storage.__class__.__name__}")
+
 # Now we can safely import consumers and other Django components
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
