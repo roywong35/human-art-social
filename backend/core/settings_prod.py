@@ -213,6 +213,10 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
 ]
 
+# Also add this for better CSRF handling
+CSRF_COOKIE_DOMAIN = None
+CSRF_USE_SESSIONS = False
+
 # Security settings for production
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
