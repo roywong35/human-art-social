@@ -40,6 +40,7 @@ import { GlobalModalService } from './services/global-modal.service';
 export class AppComponent implements OnInit {
   title = 'Human Art Social';
   isLoading = false;
+  isInitialLoad = true; // New property to handle initial FOUC
 
   // Static routes that should not be treated as user handles
   private staticRoutes = ['home', 'notifications', 'bookmarks', 'search', 'recommended-users', 'appeals', 'appeal', 'messages', 'landing'];
@@ -146,6 +147,12 @@ export class AppComponent implements OnInit {
     // Initialize scheduled post service (constructor starts the background checking)
     // The service is injected and started automatically, no additional action needed
     console.log('App initialized with scheduled post service');
+    
+    // Hide initial loading after Angular has fully initialized
+    // This prevents FOUC (Flash of Unstyled Content)
+    setTimeout(() => {
+      this.isInitialLoad = false;
+    }, 100); // Small delay to ensure all styles are loaded
   }
 
   isMessagesPage(): boolean {
