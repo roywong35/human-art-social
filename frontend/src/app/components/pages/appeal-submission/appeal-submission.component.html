@@ -10,7 +10,7 @@
 
     <!-- Loading State -->
     <div *ngIf="loading" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12 text-center">
-      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <div class="animate-spin rounded-full h-10 w-10 border-2 border-blue-500 border-t-transparent mx-auto mb-4"></div>
       <p class="text-gray-600 dark:text-gray-400">Loading appeal information...</p>
     </div>
 
@@ -34,7 +34,7 @@
         <div class="mb-6">
           <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Removed Post:</h4>
           <div *ngIf="loadingPost" class="flex justify-center py-4">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
           </div>
           <app-post [post]="postPreview!" [isPreview]="true" [showRemovalBadge]="true"></app-post>
         </div>
@@ -128,7 +128,7 @@
             type="submit"
             [disabled]="!canSubmit()"
             class="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center">
-            <div *ngIf="submitting" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+            <div *ngIf="submitting" class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
             {{ submitting ? 'Submitting...' : 'Submit Appeal' }}
           </button>
         </div>

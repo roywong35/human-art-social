@@ -131,18 +131,19 @@
     </div>
   </div>
 
-  <div *ngIf="notifications.length === 0" class="p-4 text-center text-gray-500 dark:text-[color:var(--color-text-secondary)]">
+  <!-- No notifications message (only show when not loading) -->
+  <div *ngIf="notifications.length === 0 && !loading" class="p-4 text-center text-gray-500 dark:text-[color:var(--color-text-secondary)]">
     No notifications yet
   </div>
 
-  <div *ngIf="loading" class="p-4 text-center">
-    <span class="text-gray-500 dark:text-[color:var(--color-text-secondary)]">Loading...</span>
+  <!-- Loading state -->
+  <div *ngIf="loading" class="flex items-center justify-center min-h-[300px]">
+    <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
   </div>
 
   <!-- Loading more indicator for infinite scroll -->
-  <div *ngIf="loadingMore" class="p-4 text-center">
-    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
-    <span class="text-gray-500 dark:text-[color:var(--color-text-secondary)] text-sm">Loading more notifications...</span>
+  <div *ngIf="loadingMore" class="flex items-center justify-center py-8">
+    <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
   </div>
 
   <!-- End of notifications indicator -->

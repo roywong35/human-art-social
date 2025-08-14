@@ -79,9 +79,8 @@
     </div>
 
     <!-- Load More Indicator -->
-    <div *ngIf="isLoadingMore" class="p-4 text-center">
-      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-gray-100 mx-auto"></div>
-      <p class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] mt-2">Loading more users...</p>
+    <div *ngIf="isLoadingMore" class="flex items-center justify-center py-8">
+      <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
     </div>
 
     <!-- End of Results Indicator -->

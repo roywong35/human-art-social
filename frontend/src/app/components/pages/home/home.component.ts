@@ -43,6 +43,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   private subscriptions = new Subscription();
   private scrollThrottleTimeout: any;
+  private loadingTimeout: any;
 
   constructor(
     private postService: PostService,
@@ -66,16 +67,32 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.posts = [...posts];
           }
           
-          this.isInitialLoading = false;
-          this.isLoadingMore = false;
-          this.cd.markForCheck();
+          // Clear any previous loading timeout
+          if (this.loadingTimeout) {
+            clearTimeout(this.loadingTimeout);
+          }
+          
+          // Ensure loading spinner shows for at least 500ms for better UX
+          this.loadingTimeout = setTimeout(() => {
+            this.isInitialLoading = false;
+            this.isLoadingMore = false;
+            this.cd.markForCheck();
+          }, 500);
         },
         error: (error: Error) => {
           this.error = 'Failed to load posts. Please try again.';
           this.posts = [];
-          this.isInitialLoading = false;
-          this.isLoadingMore = false;
-          this.cd.markForCheck();
+          // Clear any previous loading timeout
+          if (this.loadingTimeout) {
+            clearTimeout(this.loadingTimeout);
+          }
+          
+          // Ensure loading spinner shows for at least 500ms even on error
+          this.loadingTimeout = setTimeout(() => {
+            this.isInitialLoading = false;
+            this.isLoadingMore = false;
+            this.cd.markForCheck();
+          }, 500);
         }
       })
     );

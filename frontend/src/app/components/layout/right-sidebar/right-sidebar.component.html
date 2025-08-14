@@ -10,12 +10,8 @@
       </div>
       <div class="divide-y divide-gray-100 dark:divide-gray-700">
         <!-- Loading state -->
-        <div *ngIf="isLoadingTrending">
-          <div *ngFor="let i of [1,2,3,4,5]" class="px-4 py-3 animate-pulse">
-            <div class="text-sm text-gray-300 dark:text-gray-600">Trending</div>
-            <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 mt-1"></div>
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mt-2"></div>
-          </div>
+        <div *ngIf="isLoadingTrending" class="flex items-center justify-center py-8">
+          <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
         </div>
 
         <!-- Real trending topics -->
@@ -64,19 +60,8 @@
       <h2 class="text-xl font-bold px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)] dark:[color:var(--color-text)]">Who to follow</h2>
       <div class="divide-y divide-gray-100 dark:divide-gray-700">
         <!-- Loading state -->
-        <div *ngIf="isLoadingUsers">
-          <div *ngFor="let i of [1,2,3]" class="px-4 py-3">
-            <div class="animate-pulse flex items-center justify-between">
-              <div class="flex items-center">
-                <div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                <div class="ml-3">
-                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                  <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 mt-2"></div>
-                </div>
-              </div>
-              <div class="w-20 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-            </div>
-          </div>
+        <div *ngIf="isLoadingUsers" class="flex items-center justify-center py-8">
+          <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
         </div>
 
         <!-- User list with placeholders -->

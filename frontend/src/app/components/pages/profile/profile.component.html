@@ -1,5 +1,5 @@
 <div *ngIf="isLoading" class="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-black">
-  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+  <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
 </div>
 
 <div *ngIf="error" class="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-black w-screen min-[500px]:w-full">
@@ -145,7 +145,7 @@
     <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
       <!-- Initial loading for posts -->
       <div *ngIf="isLoadingPosts" class="p-8 flex justify-center w-full">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Posts list -->
@@ -163,7 +163,7 @@
         
         <!-- Loading more posts indicator -->
         <div *ngIf="isLoadingMorePosts" class="p-4 flex justify-center w-full">
-          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+          <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
         </div>
         
         <!-- No more posts indicator -->
@@ -183,7 +183,7 @@
     <div *ngSwitchCase="'replies'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
       <!-- Loading spinner for replies -->
       <div *ngIf="isLoadingReplies" class="p-8 flex justify-center w-full">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Replies list -->
@@ -235,7 +235,7 @@
       
       <!-- Loading more replies indicator -->
       <div *ngIf="isLoadingMoreReplies" class="p-4 flex justify-center w-full">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- No more replies indicator -->
@@ -255,7 +255,7 @@
     <div *ngSwitchCase="'media'" class="p-1 w-full">
       <!-- Loading spinner for media -->
       <div *ngIf="isLoadingMedia" class="p-8 flex justify-center w-full">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Media grid -->
@@ -281,7 +281,7 @@
     <div *ngSwitchCase="'human-art'" class="p-1 w-full">
       <!-- Loading spinner for human art -->
       <div *ngIf="isLoadingHumanArt" class="p-8 flex justify-center w-full">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Human art grid -->
@@ -307,7 +307,7 @@
     <div *ngSwitchCase="'likes'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
       <!-- Loading spinner for likes -->
       <div *ngIf="isLoadingLikes" class="p-8 flex justify-center w-full">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Liked posts list -->

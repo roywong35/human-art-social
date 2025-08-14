@@ -39,7 +39,7 @@ import { GlobalModalService } from './services/global-modal.service';
 })
 export class AppComponent implements OnInit {
   title = 'Human Art Social';
-  isLoading = false;
+
   isInitialLoad = true; // New property to handle initial FOUC
 
   // Static routes that should not be treated as user handles
@@ -96,11 +96,9 @@ export class AppComponent implements OnInit {
           this.userService.getUserByHandle(handle).subscribe({
             next: (user: User) => {
               this.titleService.setTitle(`${user.username} / ${this.title}`);
-              this.isLoading = false;
             },
             error: () => {
               this.titleService.setTitle(this.title);
-              this.isLoading = false;
             }
           });
           return; // Skip the default title setting below
@@ -109,21 +107,7 @@ export class AppComponent implements OnInit {
         this.titleService.setTitle(title);
       }
 
-      switch (true) {
-        case event instanceof NavigationStart: {
-          this.isLoading = true;
-          break;
-        }
-        case event instanceof NavigationEnd:
-        case event instanceof NavigationCancel:
-        case event instanceof NavigationError: {
-          this.isLoading = false;
-          break;
-        }
-        default: {
-          break;
-        }
-      }
+
     });
   }
 

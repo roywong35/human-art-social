@@ -25,18 +25,8 @@
   
   <!-- Loading State -->
   <div *ngIf="isInitialLoading" class="flex items-center justify-center min-h-[500px] bg-white dark:bg-black">
-    <div class="flex flex-col items-center gap-6">
-      <!-- Enhanced loading spinner -->
-      <div class="relative">
-        <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 dark:border-blue-800"></div>
-        <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent absolute top-0 left-0"></div>
-      </div>
-      <!-- Loading text with subtle animation -->
-      <div class="text-center">
-        <p class="text-lg font-medium text-gray-700 dark:text-gray-300 animate-pulse">Loading posts...</p>
-        <p class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)] mt-1">Getting the latest content for you</p>
-      </div>
-    </div>
+    <!-- Clean spinner like X (Twitter) -->
+    <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
   </div>
   
   <!-- Content (only show when not loading) -->
@@ -79,10 +69,7 @@
       
       <!-- Load More Loading Indicator -->
       <div *ngIf="isLoadingMore" class="flex items-center justify-center py-8 bg-white dark:bg-black">
-        <div class="flex items-center gap-3">
-          <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
-          <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">Loading more posts...</span>
-        </div>
+        <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- End of Posts Message -->

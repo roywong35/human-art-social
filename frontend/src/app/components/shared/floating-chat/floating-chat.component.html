@@ -128,7 +128,7 @@
     <!-- Loading View for Chat -->
     <div *ngIf="currentView === 'chat' && isLoadingConversation" class="flex flex-col h-full">
       <div class="flex-1 flex items-center justify-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
     </div>
 
@@ -172,7 +172,7 @@
     <!-- Search Results -->
     <div class="max-h-60 overflow-y-auto">
       <div *ngIf="isSearching" class="text-center py-4">
-        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <div *ngIf="!isSearching && searchQuery.length >= 2 && searchResults.length === 0" 
