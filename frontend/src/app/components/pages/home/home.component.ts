@@ -427,6 +427,10 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.activeTab = tab;
       localStorage.setItem('activeTab', tab);
       
+      // Show loading state during tab switch
+      this.isInitialLoading = true;
+      this.cd.markForCheck();
+      
       // Update URL without triggering the router subscription
       this.router.navigate([], {
         relativeTo: this.route,
