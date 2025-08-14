@@ -3,6 +3,24 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+import os
+
+
+def get_storage():
+    """
+    Dynamically get the correct storage backend.
+    This ensures S3 is used when configured, regardless of Django's storage caching.
+    """
+    USE_S3 = os.getenv('USE_S3', 'False').lower() == 'true'
+    
+    if USE_S3:
+        # Force S3 storage directly, bypass Django cache
+        from storages.backends.s3boto3 import S3Boto3Storage
+        return S3Boto3Storage()
+    
+    # Fallback to default storage for local development
+    from django.core.files.storage import default_storage
+    return default_storage
 
 class User(AbstractUser):
     """
@@ -42,8 +60,8 @@ class User(AbstractUser):
         help_text='Unique identifier for mentions (e.g. @handle)'
     )
     bio = models.TextField(max_length=500, blank=True)
-    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
-    banner_image = models.ImageField(upload_to='banner_images/', null=True, blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True, storage=get_storage)
+    banner_image = models.ImageField(upload_to='banner_images/', null=True, blank=True, storage=get_storage)
     location = models.CharField(max_length=100, blank=True)
     website = models.URLField(max_length=200, blank=True)
     is_artist = models.BooleanField(default=False)

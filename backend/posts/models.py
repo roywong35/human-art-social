@@ -45,7 +45,7 @@ class EvidenceFile(models.Model):
     Model for evidence files that prove a post is human-created art.
     """
     post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='evidence_files')
-    file = models.FileField(upload_to=evidence_file_path)
+    file = models.FileField(upload_to=evidence_file_path, storage=get_storage)
     file_type = models.CharField(max_length=20)  # e.g., 'image', 'video', 'psd'
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -117,7 +117,7 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(blank=True)
     # Deprecating single image field in favor of PostImage relation
-    image = models.ImageField(upload_to='posts/', blank=True, null=True)
+    image = models.ImageField(upload_to='posts/', blank=True, null=True, storage=get_storage)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     post_type = models.CharField(max_length=15, choices=POST_TYPES, default='post')
@@ -459,7 +459,7 @@ class AppealEvidenceFile(models.Model):
     Model for storing evidence files submitted with appeals
     """
     appeal = models.ForeignKey(PostAppeal, on_delete=models.CASCADE, related_name='evidence_files_rel')
-    file = models.FileField(upload_to=appeal_evidence_path)
+    file = models.FileField(upload_to=appeal_evidence_path, storage=get_storage)
     original_filename = models.CharField(max_length=255)
     file_type = models.CharField(max_length=50)  # image, document, etc.
     file_size = models.PositiveIntegerField()  # in bytes
@@ -524,7 +524,7 @@ class DraftImage(models.Model):
     Model for storing multiple images per draft
     """
     draft = models.ForeignKey(Draft, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to=draft_image_path)
+    image = models.ImageField(upload_to=draft_image_path, storage=get_storage)
     order = models.IntegerField(default=0)  # To maintain image order
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -585,7 +585,7 @@ class ScheduledPostImage(models.Model):
     Model for storing multiple images per scheduled post
     """
     scheduled_post = models.ForeignKey(ScheduledPost, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to=scheduled_post_image_path)
+    image = models.ImageField(upload_to=scheduled_post_image_path, storage=get_storage)
     order = models.IntegerField(default=0)  # To maintain image order
     created_at = models.DateTimeField(auto_now_add=True)
 

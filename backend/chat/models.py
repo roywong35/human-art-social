@@ -5,6 +5,23 @@ from django.utils import timezone
 import os
 import uuid
 
+
+def get_storage():
+    """
+    Dynamically get the correct storage backend.
+    This ensures S3 is used when configured, regardless of Django's storage caching.
+    """
+    USE_S3 = os.getenv('USE_S3', 'False').lower() == 'true'
+    
+    if USE_S3:
+        # Force S3 storage directly, bypass Django cache
+        from storages.backends.s3boto3 import S3Boto3Storage
+        return S3Boto3Storage()
+    
+    # Fallback to default storage for local development
+    from django.core.files.storage import default_storage
+    return default_storage
+
 User = get_user_model()
 
 def message_image_path(instance, filename):
@@ -80,7 +97,7 @@ class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     content = models.TextField(blank=True)
-    image = models.ImageField(upload_to=message_image_path, null=True, blank=True)
+    image = models.ImageField(upload_to=message_image_path, null=True, blank=True, storage=get_storage)
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     
