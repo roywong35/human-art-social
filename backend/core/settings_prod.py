@@ -207,10 +207,10 @@ CORS_ALLOW_HEADERS = [
 
 # CSRF settings for production
 CSRF_TRUSTED_ORIGINS = [
-    "https://human-art-social-backend.onrender.com",
-    "https://*.onrender.com",
-    "https://human-art-social.vercel.app",
-    "https://*.vercel.app",
+    "human-art-social-backend.onrender.com",
+    ".onrender.com",
+    "human-art-social.vercel.app",
+    ".vercel.app",
 ]
 
 # Also add this for better CSRF handling
