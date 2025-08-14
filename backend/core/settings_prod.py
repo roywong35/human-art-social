@@ -205,6 +205,14 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+# CSRF settings for production
+CSRF_TRUSTED_ORIGINS = [
+    "https://human-art-social-backend.onrender.com",
+    "https://*.onrender.com",
+    "https://human-art-social.vercel.app",
+    "https://*.vercel.app",
+]
+
 # Security settings for production
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
