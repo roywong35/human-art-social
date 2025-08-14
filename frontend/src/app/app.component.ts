@@ -148,11 +148,40 @@ export class AppComponent implements OnInit {
     // The service is injected and started automatically, no additional action needed
     console.log('App initialized with scheduled post service');
     
-    // Hide initial loading after Angular has fully initialized
+    // Hide initial loading after Angular has fully initialized and CSS is loaded
     // This prevents FOUC (Flash of Unstyled Content)
-    setTimeout(() => {
+    
+    // Wait for both Angular initialization AND stylesheet loading
+    Promise.all([
+      // Wait for Angular to be fully ready
+      new Promise(resolve => setTimeout(resolve, 200)),
+      // Wait for stylesheets to load
+      this.waitForStylesLoaded()
+    ]).then(() => {
       this.isInitialLoad = false;
-    }, 100); // Small delay to ensure all styles are loaded
+      // Mark app as loaded for CSS
+      document.querySelector('app-root')?.classList.add('loaded');
+    });
+  }
+
+  private waitForStylesLoaded(): Promise<void> {
+    return new Promise((resolve) => {
+      // Check if stylesheets are loaded
+      const styleSheets = Array.from(document.styleSheets);
+      
+      if (styleSheets.length === 0) {
+        // No stylesheets yet, wait a bit more
+        setTimeout(() => resolve(), 300);
+        return;
+      }
+
+      // Wait for document to be ready
+      if (document.readyState === 'complete') {
+        resolve();
+      } else {
+        window.addEventListener('load', () => resolve());
+      }
+    });
   }
 
   isMessagesPage(): boolean {

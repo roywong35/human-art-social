@@ -8,8 +8,12 @@
   <!-- Initial Loading Screen (prevents FOUC) -->
   <div *ngIf="isInitialLoad" class="fixed inset-0 bg-white dark:bg-black z-[100] flex items-center justify-center">
     <div class="flex flex-col items-center space-y-4">
-      <img src="assets/Site_icon.png" alt="Site Icon" class="h-12 w-12 object-contain animate-pulse">
-      <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      <!-- Simple geometric loader instead of site icon to avoid duplication -->
+      <div class="w-12 h-12 relative">
+        <div class="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+        <div class="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <div class="text-blue-500 font-semibold text-lg animate-pulse">Human Art Social</div>
     </div>
   </div>
 
