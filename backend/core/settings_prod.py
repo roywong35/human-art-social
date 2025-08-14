@@ -46,7 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Keep here
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -207,10 +207,10 @@ CORS_ALLOW_HEADERS = [
 
 # CSRF settings for production
 CSRF_TRUSTED_ORIGINS = [
-    "human-art-social-backend.onrender.com",
-    ".onrender.com",
-    "human-art-social.vercel.app",
-    ".vercel.app",
+    "https://human-art-social-backend.onrender.com",
+    "https://*.onrender.com",
+    "https://human-art-social.vercel.app",
+    "https://*.vercel.app",
 ]
 
 # Also add this for better CSRF handling
@@ -255,3 +255,7 @@ LOGGING = {
     },
 }
 
+# Add these WhiteNoise settings
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_MAX_AGE = 31536000  # 1 year
