@@ -16,26 +16,24 @@ services:
       - key: ALLOWED_HOSTS
         value: ai-drawing-social-backend.onrender.com
       - key: FRONTEND_URL
-        value: https://your-frontend.vercel.app
+        value: https://human-art-social.vercel.app
       - key: USE_S3
         value: True
       - key: ENVIRONMENT
         value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-drawing-social-db
+          property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
           name: ai-drawing-social-redis
           property: connectionString
-      # Database will be auto-configured by Render
       # AWS S3 keys to be added manually in Render dashboard
     
   - type: redis
     name: ai-drawing-social-redis
-    ipAllowList: []
-    
-  - type: pserv
-    name: ai-drawing-social-db
-    env: postgres
     ipAllowList: []
     
 databases:
