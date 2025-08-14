@@ -2,12 +2,8 @@ services:
   - type: web
     name: ai-drawing-social-backend
     env: python
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: |
-      echo "🔄 Running migrations..." && python manage.py migrate --run-syncdb --verbosity=2
-      echo "✅ Migration complete!"
-      echo "🚀 Starting server..."
-      daphne -b 0.0.0.0 -p $PORT core.asgi:application
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py migrate --run-syncdb && python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p $PORT core.asgi:application
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
