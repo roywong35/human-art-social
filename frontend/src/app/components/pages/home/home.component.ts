@@ -42,7 +42,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   // New posts check properties
   hasNewPosts = false;
   newPostsCount = 0;
-  isLoadingNewPosts = false;
   private newPostsCheckInterval: any;
   private latestPostId: number | null = null;
 
@@ -558,11 +557,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   showNewPosts(): void {
-    this.isLoadingNewPosts = true;
+    // Hide the button immediately
     this.hasNewPosts = false;
     this.cd.markForCheck();
 
-    // Refresh the home component to show new posts
+    // Refresh only the posts, not the entire component
     this.loadPosts(true);
     
     // Reset the timer after showing new posts

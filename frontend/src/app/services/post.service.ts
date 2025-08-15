@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, map, catchError, take, of, forkJoin } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map, catchError, take, of, forkJoin, timeout, retry } from 'rxjs';
 import { Post, PostImage } from '../models/post.model';
 import { User } from '../models/user.model';
 import { environment } from '../../environments/environment';
@@ -121,6 +121,10 @@ export class PostService {
     const source = this.authService.isAuthenticated() ? this.getFeed(activeTab) : this.getExplore(activeTab);
     source.pipe(
       take(1),
+      // Add timeout to prevent infinite loading
+      timeout(15000), // 15 second timeout
+      // Retry failed requests up to 2 times
+      retry({ count: 2, delay: 1000 }),
       map((response: PaginatedResponse) => {
         if (!response || !response.results) {
           this.posts.next([]);
@@ -141,7 +145,22 @@ export class PostService {
       catchError((error) => {
         this.loading = false;
         this.hasMore = false;
-        this.posts.next([]);
+        
+        // Handle different types of errors
+        if (error.name === 'TimeoutError') {
+          console.error('Request timed out after 15 seconds');
+          // Keep existing posts if available, don't clear them
+          if (this.posts.getValue().length === 0) {
+            this.posts.next([]);
+          }
+        } else {
+          console.error('Error loading posts:', error);
+          // Keep existing posts if available, don't clear them
+          if (this.posts.getValue().length === 0) {
+            this.posts.next([]);
+          }
+        }
+        
         return of(undefined);
       }),
       tap({

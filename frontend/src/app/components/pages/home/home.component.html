@@ -32,26 +32,26 @@
     <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
   </div>
   
+  <!-- Post Input Box (Always visible, never refreshes) -->
+  <div *ngIf="activeTab === 'for-you'" 
+       class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)]"
+       [ngClass]="{
+         'mt-16': !isMobile
+       }">
+    <div>
+      <app-post-input-box
+        [userAvatar]="(authService.currentUser$ | async)?.profile_picture || ''"
+        [userHandle]="(authService.currentUser$ | async)?.handle || ''"
+        [defaultAvatar]="defaultAvatar"
+        [showCard]="false"
+        (submit)="onPostSubmit($event)"
+        (imageSelected)="onImageSelected($event)">
+      </app-post-input-box>
+    </div>
+  </div>
+
   <!-- Content (only show when not loading) -->
   <ng-container *ngIf="!isInitialLoading">
-    <!-- Inline Create Post Box (For You tab only) -->
-    <div *ngIf="activeTab === 'for-you'" 
-         class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)]"
-         [ngClass]="{
-           'mt-16': !isMobile
-         }">
-      <div>
-        <app-post-input-box
-          [userAvatar]="(authService.currentUser$ | async)?.profile_picture || ''"
-          [userHandle]="(authService.currentUser$ | async)?.handle || ''"
-          [defaultAvatar]="defaultAvatar"
-          [showCard]="false"
-          (submit)="onPostSubmit($event)"
-          (imageSelected)="onImageSelected($event)">
-        </app-post-input-box>
-      </div>
-    </div>
-
     <!-- Error State -->
     <div *ngIf="error">
       <div class="bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 p-4 rounded-lg text-center my-3">
@@ -65,18 +65,13 @@
          (click)="showNewPosts()">
       <div class="text-center">
         <span class="text-blue-500 text-base">
-          <span *ngIf="!isLoadingNewPosts">
-            Show {{ newPostsCount }} new posts
-          </span>
-          <span *ngIf="isLoadingNewPosts" class="text-gray-500">
-            Loading...
-          </span>
+          Show {{ newPostsCount }} new posts
         </span>
       </div>
     </div>
 
     <!-- Posts List -->
-    <div class="posts-container ">
+    <div class="posts-container">
       <ng-container *ngFor="let post of posts">
         <app-post [post]="post"
                   [showFullHeader]="true"
