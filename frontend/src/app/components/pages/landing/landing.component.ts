@@ -36,6 +36,11 @@ export class LandingComponent implements OnInit, OnDestroy {
   private lastScrollTop = 0;
   private scrollThreshold = 50; // Minimum scroll distance to trigger hide/show
   
+  // Mobile detection - make it a getter for real-time detection
+  get isMobile(): boolean {
+    return window.innerWidth < 500;
+  }
+  
   // Infinite scroll properties
   loading = false;
   loadingMore = false;

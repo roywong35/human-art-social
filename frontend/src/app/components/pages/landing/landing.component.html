@@ -79,15 +79,16 @@
       <div class="flex-1 min-[1265px]:flex-none flex justify-center">
         <div class="flex gap-0 min-[1050px]:gap-8 w-full min-[600px]:w-auto">
           <!-- Main Content -->
-          <main class="w-full min-[600px]:w-[600px] border-x border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+          <main class="w-full min-[600px]:w-[600px] border-x border-gray-200 dark:border-gray-800 bg-white dark:bg-black relative z-10">
             <!-- Tab Navigation -->
-            <div #tabNavigation class="bg-white/90 dark:bg-black/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 min-[500px]:fixed min-[500px]:top-0 w-full max-w-[600px] mx-auto transition-all duration-300 ease-out" [class.-translate-y-full]="isTabHidden">
+            <div #tabNavigation class="bg-white/90 dark:bg-black/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-40 w-full max-w-[598px] mx-auto transition-all duration-300 ease-out min-[500px]:fixed min-[500px]:top-0" 
+                 [class.-translate-y-full]="isTabHidden && isMobile">
               <div class="flex">
                 <button 
                   [ngClass]="{
                     'text-blue-500': activeTab === 'for-you'
                   }"
-                  class="flex-1 py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white relative"
+                  class="w-[299px] py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white relative"
                   (click)="setActiveTab('for-you')"
                 >
                   For You
@@ -97,7 +98,7 @@
                   [ngClass]="{
                     'text-blue-500': activeTab === 'human-drawing'
                   }"
-                  class="flex-1 py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white relative"
+                  class="w-[299px] py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white relative"
                   (click)="setActiveTab('human-drawing')"
                 >
                   Human Art
@@ -106,7 +107,10 @@
               </div>
             </div>
 
-            <div class="divide-y divide-gray-200 dark:divide-gray-800">
+            <div class="divide-y divide-gray-200 dark:divide-gray-800"
+                 [ngClass]="{
+                   'pt-16': !isMobile
+                 }">
               <!-- Initial loading state -->
               <div *ngIf="loading && currentPage === 1" class="p-8 flex justify-center">
                 <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
