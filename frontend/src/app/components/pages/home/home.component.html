@@ -1,6 +1,7 @@
 <div class="flex flex-col min-h-screen bg-gray-50 dark:bg-black w-screen min-[500px]:w-full">
   <!-- Tab Navigation -->
-  <div class="bg-white/90 dark:bg-black/90 backdrop-blur-sm border-b border-gray-200 dark:dark:[border-color:var(--color-border)] sticky top-0 z-50 min-[500px]:fixed min-[500px]:top-0 w-full max-w-[600px] mx-auto transition-all duration-300 ease-out" [class.-translate-y-full]="isTabHidden">
+  <div class="bg-white/90 dark:bg-black/90 backdrop-blur-sm border-b border-gray-200 dark:dark:[border-color:var(--color-border)] z-50 w-full max-w-[600px] mx-auto transition-all duration-300 ease-out min-[500px]:fixed min-[500px]:top-0" 
+       [class.-translate-y-full]="isTabHidden && isMobile">
     <div class="flex">
       <button 
         [ngClass]="{
@@ -34,7 +35,11 @@
   <!-- Content (only show when not loading) -->
   <ng-container *ngIf="!isInitialLoading">
     <!-- Inline Create Post Box (For You tab only) -->
-    <div *ngIf="activeTab === 'for-you'" class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)]">
+    <div *ngIf="activeTab === 'for-you'" 
+         class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)]"
+         [ngClass]="{
+           'mt-16': !isMobile
+         }">
       <div>
         <app-post-input-box
           [userAvatar]="(authService.currentUser$ | async)?.profile_picture || ''"
@@ -51,6 +56,22 @@
     <div *ngIf="error">
       <div class="bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 p-4 rounded-lg text-center my-3">
         {{ error }}
+      </div>
+    </div>
+
+    <!-- New Posts Button -->
+    <div *ngIf="hasNewPosts" 
+         class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)] py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors duration-200 cursor-pointer"
+         (click)="showNewPosts()">
+      <div class="text-center">
+        <span class="text-blue-500 text-base">
+          <span *ngIf="!isLoadingNewPosts">
+            Show {{ newPostsCount }} new posts
+          </span>
+          <span *ngIf="isLoadingNewPosts" class="text-gray-500">
+            Loading...
+          </span>
+        </span>
       </div>
     </div>
 

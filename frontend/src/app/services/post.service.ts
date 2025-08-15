@@ -757,4 +757,9 @@ export class PostService {
   getReportedPosts(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/moderation/posts/reported/`);
   }
+
+  checkNewPosts(latestPostId: number): Observable<any> {
+    const params = new HttpParams().set('latest_post_id', latestPostId.toString());
+    return this.http.get<any>(`${this.baseUrl}/posts/check_new_posts/`, { params });
+  }
 } 

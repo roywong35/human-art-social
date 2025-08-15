@@ -39,10 +39,22 @@ export class HomeComponent implements OnInit, OnDestroy {
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
+  // New posts check properties
+  hasNewPosts = false;
+  newPostsCount = 0;
+  isLoadingNewPosts = false;
+  private newPostsCheckInterval: any;
+  private latestPostId: number | null = null;
+
   // Scroll-based hiding properties
   isTabHidden = false;
   private lastScrollTop = 0;
   private scrollThreshold = 50; // Minimum scroll distance to trigger hide/show
+  
+  // Mobile detection - make it a getter for real-time detection
+  get isMobile(): boolean {
+    return window.innerWidth < 500;
+  }
 
   // Properties for post creation
   isSubmitting = false;
@@ -71,6 +83,9 @@ export class HomeComponent implements OnInit, OnDestroy {
             // Always replace posts array to ensure change detection
             this.posts = [...posts];
           }
+          
+          // Update latest post ID for new posts check
+          this.updateLatestPostId();
           
           // Show posts immediately when they arrive - no artificial delays!
           this.isInitialLoading = false;
@@ -193,6 +208,13 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       })
     );
+
+    // Start checking for new posts after initial load
+    setTimeout(() => {
+      this.startNewPostsCheck();
+    }, 5000); // Start after 5 seconds to avoid immediate check
+
+
   }
 
   onPostUpdated(updatedPost: Post): void {
@@ -478,6 +500,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.scrollThrottleTimeout) {
       clearTimeout(this.scrollThrottleTimeout);
     }
+    
+    // Clean up new posts check timer
+    if (this.newPostsCheckInterval) {
+      clearInterval(this.newPostsCheckInterval);
+    }
   }
 
   // Add a method to log posts for debugging
@@ -488,5 +515,58 @@ export class HomeComponent implements OnInit, OnDestroy {
       content: p.content,
       refId: p.referenced_post?.id
     })));
+  }
+
+  // New posts check methods
+  private startNewPostsCheck(): void {
+    // Clear any existing interval
+    if (this.newPostsCheckInterval) {
+      clearInterval(this.newPostsCheckInterval);
+    }
+    
+    // Start checking every 20 seconds
+    this.newPostsCheckInterval = setInterval(() => {
+      this.checkForNewPosts();
+    }, 20000); // 20 seconds
+  }
+
+  private checkForNewPosts(): void {
+    if (!this.latestPostId || this.posts.length === 0) {
+      return;
+    }
+
+    // Call backend to check for new posts
+    this.postService.checkNewPosts(this.latestPostId).subscribe({
+      next: (response: any) => {
+        if (response.has_new_posts) {
+          this.hasNewPosts = true;
+          this.newPostsCount = response.new_posts_count;
+          this.cd.markForCheck();
+        }
+      },
+      error: (error) => {
+        console.error('Error checking for new posts:', error);
+      }
+    });
+  }
+
+  showNewPosts(): void {
+    this.isLoadingNewPosts = true;
+    this.hasNewPosts = false;
+    this.cd.markForCheck();
+
+    // Refresh the home component to show new posts
+    this.loadPosts(true);
+    
+    // Reset the timer after showing new posts
+    setTimeout(() => {
+      this.startNewPostsCheck();
+    }, 1000); // Wait 1 second then restart timer
+  }
+
+  private updateLatestPostId(): void {
+    if (this.posts.length > 0) {
+      this.latestPostId = this.posts[0].id; // First post is the latest
+    }
   }
 } 
