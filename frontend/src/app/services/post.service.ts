@@ -111,9 +111,11 @@ export class PostService {
     this.loading = true;
     const followingOnly = localStorage.getItem('following_only_preference') === 'true';
 
-    // Clear current posts if refreshing
+    // Clear current posts if refreshing, but only after a small delay
+    // to ensure the loading state is properly shown
     if (refresh) {
-      this.posts.next([]);
+      // Don't clear posts immediately - let the loading state show first
+      // Posts will be replaced when the new data arrives
     }
 
     const source = this.authService.isAuthenticated() ? this.getFeed(activeTab) : this.getExplore(activeTab);

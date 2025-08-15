@@ -87,8 +87,11 @@ export class HomeComponent implements OnInit, OnDestroy {
           // Update latest post ID for new posts check
           this.updateLatestPostId();
           
-          // Show posts immediately when they arrive - no artificial delays!
-          this.isInitialLoading = false;
+          // Only stop loading if we're not in initial loading state
+          // This prevents the subscription from immediately hiding the loading state
+          if (this.isInitialLoading) {
+            this.isInitialLoading = false;
+          }
           this.isLoadingMore = false;
           this.cd.markForCheck();
         },
@@ -180,8 +183,12 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   loadPosts(refresh: boolean = false): void {
     this.error = null;
-    this.isInitialLoading = refresh;
-    this.cd.markForCheck();
+    
+    // Always show loading state when loading posts
+    if (refresh) {
+      this.isInitialLoading = true;
+      this.cd.markForCheck();
+    }
     
     // Just trigger the load - we're already subscribed to posts$ for updates
     this.postService.loadPosts(true, this.activeTab);
