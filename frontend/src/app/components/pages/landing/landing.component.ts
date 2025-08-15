@@ -30,6 +30,12 @@ export class LandingComponent implements OnInit, OnDestroy {
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
   isDarkMode = false;
   
+  // Scroll-based hiding properties
+  isHeaderHidden = false;
+  isTabHidden = false;
+  private lastScrollTop = 0;
+  private scrollThreshold = 50; // Minimum scroll distance to trigger hide/show
+  
   // Infinite scroll properties
   loading = false;
   loadingMore = false;
@@ -60,9 +66,25 @@ export class LandingComponent implements OnInit, OnDestroy {
     }
     
     this.scrollThrottleTimeout = setTimeout(() => {
+      const scrollTop = document.documentElement.scrollTop;
+      const scrollDelta = scrollTop - this.lastScrollTop;
+      
+      // Handle header and tab hiding/showing - synchronized timing
+      if (Math.abs(scrollDelta) > this.scrollThreshold) {
+        if (scrollDelta > 0 && scrollTop > 50) {
+          // Scrolling down - hide headers (same threshold)
+          this.isHeaderHidden = true;
+          this.isTabHidden = true;
+        } else if (scrollDelta < 0) {
+          // Scrolling up - show headers
+          this.isHeaderHidden = false;
+          this.isTabHidden = false;
+        }
+        this.lastScrollTop = scrollTop;
+      }
+      
       // Check if user scrolled near bottom of page
       const scrollHeight = document.documentElement.scrollHeight;
-      const scrollTop = document.documentElement.scrollTop;
       const clientHeight = document.documentElement.clientHeight;
       
       // Trigger load more when user is 200px from bottom

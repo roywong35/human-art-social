@@ -573,15 +573,15 @@ textarea {
 
   /* Not Following State */
   &:not(.following) {
-    @apply border-gray-200 bg-white text-gray-900;
+    @apply border-black bg-black text-white;  /* Changed to black */
     &:hover {
-      @apply bg-gray-100;
+      @apply bg-gray-800;  /* Darker on hover */
     }
   }
 
   /* Following State */
   &.following {
-    @apply border-transparent bg-black text-white;
+    @apply border-black bg-black text-white;
     
     /* Dark mode: add thin white border for visibility */
     .dark & {

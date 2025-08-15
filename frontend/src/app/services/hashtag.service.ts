@@ -28,8 +28,8 @@ export class HashtagService {
     });
   }
 
-  getTrendingHashtags(timeframe?: TimeFrame): Observable<TrendingResponse> {
-    return this.http.get<TrendingResponse>(`${this.apiUrl}/trending_hashtags/`);
+  getTrendingHashtags(timeframe?: TimeFrame, params?: any): Observable<TrendingResponse> {
+    return this.http.get<TrendingResponse>(`${this.apiUrl}/trending_hashtags/`, { params });
   }
 
   calculateTrending(timeframe?: TimeFrame): Observable<TrendingResponse> {

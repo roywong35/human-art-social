@@ -19,6 +19,9 @@
 
 
 
+  <!-- Toast Component - Rendered at top to ensure it's above all other components -->
+  <app-toast></app-toast>
+  
   <!-- Global User Preview Modal - Rendered at app root to avoid stacking context issues -->
   <app-user-preview-modal
     [user]="(globalModalService.modalState$ | async)?.user ?? null"
@@ -51,7 +54,7 @@
         <div [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'flex-1 min-[500px]:ml-[80px] xl:ml-[275px]' : 'flex-1 min-[500px]:ml-[80px] xl:ml-[275px]') : 'w-full'">
           <div class="flex">
             <!-- Main Content -->
-            <main [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'w-full pt-14 min-[500px]:pt-0' : 'w-full max-w-[600px] border-x border-gray-200 dark:dark:[border-color:var(--color-border)] pt-14 min-[500px]:pt-0 min-h-screen') : 'w-full '">
+            <main [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'w-full pt-14 min-[500px]:pt-0' : 'w-full max-w-[600px] border-x border-gray-200 dark:dark:[border-color:var(--color-border)] pt-14 min-[500px]:pt-0 pb-20 min-h-screen') : 'w-full '">
               <router-outlet></router-outlet>
               <app-emoji-picker></app-emoji-picker>
             </main>
@@ -68,7 +71,7 @@
 
     <!-- Mobile Bottom Navigation -->
     <div *ngIf="authService.isAuthenticated()" 
-         class="min-[500px]:hidden fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:[background-color:var(--color-background)] z-50">
+         class="min-[500px]:hidden fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 z-50">
       <app-sidebar [isMobile]="true"></app-sidebar>
     </div>
   </div>
@@ -76,7 +79,5 @@
   <!-- Floating Chat (only show when authenticated, not on messages page, and on larger screens like right sidebar) -->
   <app-floating-chat *ngIf="authService.isAuthenticated() && !isMessagesPage()" 
                      class="hidden min-[1060px]:block"></app-floating-chat>
-  
-  <app-toast></app-toast>
 </div>
   

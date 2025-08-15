@@ -1,24 +1,26 @@
 <div class="flex flex-col min-h-screen bg-gray-50 dark:bg-black w-screen min-[500px]:w-full">
   <!-- Tab Navigation -->
-  <div class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)] sticky top-0 z-20">
+  <div class="bg-white/90 dark:bg-black/90 backdrop-blur-sm border-b border-gray-200 dark:dark:[border-color:var(--color-border)] sticky top-0 z-50 min-[500px]:fixed min-[500px]:top-0 w-full max-w-[600px] mx-auto transition-all duration-300 ease-out" [class.-translate-y-full]="isTabHidden">
     <div class="flex">
       <button 
-        [class.border-b-2]="activeTab === 'for-you'"
-        [class.border-blue-500]="activeTab === 'for-you'"
-        [class.text-blue-500]="activeTab === 'for-you'"
-        class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]"
+        [ngClass]="{
+          'text-blue-500': activeTab === 'for-you'
+        }"
+        class="flex-1 py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)] relative"
         (click)="setActiveTab('for-you')"
       >
         For You
+        <div *ngIf="activeTab === 'for-you'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-14 h-1 bg-blue-500"></div>
       </button>
       <button 
-        [class.border-b-2]="activeTab === 'human-drawing'"
-        [class.border-blue-500]="activeTab === 'human-drawing'"
-        [class.text-blue-500]="activeTab === 'human-drawing'"
-        class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]"
+        [ngClass]="{
+          'text-blue-500': activeTab === 'human-drawing'
+        }"
+        class="flex-1 py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)] relative"
         (click)="setActiveTab('human-drawing')"
       >
         Human Art
+        <div *ngIf="activeTab === 'human-drawing'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-20 h-1 bg-blue-500"></div>
       </button>
     </div>
   </div>

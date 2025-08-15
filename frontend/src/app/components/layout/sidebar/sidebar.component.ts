@@ -41,6 +41,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
   unreadMessages = 0;
   private notificationSubscription?: Subscription;
   private conversationsSubscription?: Subscription;
+  
+  // Scroll-based transparency for mobile bottom nav
+  isScrolled = false;
+  private scrollThreshold = 50;
 
   @ViewChild('userMenuTpl') userMenuTpl!: TemplateRef<any>;
   @ViewChild('userMenuButton', { read: ElementRef }) userMenuButton!: ElementRef;
@@ -50,6 +54,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private moreOverlayRef: OverlayRef | null = null;
   @ViewChild('moreMenuTpl') moreMenuTpl!: TemplateRef<any>;
   @ViewChild('moreMenuButton', { read: ElementRef }) moreMenuButton!: ElementRef;
+  
+  // Scroll listener for mobile bottom nav transparency
+  @HostListener('window:scroll', ['$event'])
+  onScroll() {
+    if (this.isMobile) {
+      this.isScrolled = window.scrollY > this.scrollThreshold;
+    }
+  }
+  
+  private addScrollListener() {
+    // Initial check
+    this.isScrolled = window.scrollY > this.scrollThreshold;
+  }
 
   constructor(
     public authService: AuthService,
@@ -84,6 +101,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const darkMode = localStorage.getItem('darkMode');
     this.isDarkMode = darkMode === 'true';
     this.updateDarkMode(this.isDarkMode);
+    
+    // Add scroll listener for mobile bottom nav transparency
+    if (this.isMobile) {
+      this.addScrollListener();
+    }
     
     // Subscribe to auth state changes (reactive to login/logout)
     this.authService.currentUser$.subscribe(user => {

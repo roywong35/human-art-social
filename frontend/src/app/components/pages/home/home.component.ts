@@ -39,11 +39,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
+  // Scroll-based hiding properties
+  isTabHidden = false;
+  private lastScrollTop = 0;
+  private scrollThreshold = 50; // Minimum scroll distance to trigger hide/show
+
   // Properties for post creation
   isSubmitting = false;
   private subscriptions = new Subscription();
   private scrollThrottleTimeout: any;
-  private loadingTimeout: any;
+
 
   constructor(
     private postService: PostService,
@@ -67,32 +72,19 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.posts = [...posts];
           }
           
-          // Clear any previous loading timeout
-          if (this.loadingTimeout) {
-            clearTimeout(this.loadingTimeout);
-          }
-          
-          // Ensure loading spinner shows for at least 500ms for better UX
-          this.loadingTimeout = setTimeout(() => {
-            this.isInitialLoading = false;
-            this.isLoadingMore = false;
-            this.cd.markForCheck();
-          }, 500);
+          // Show posts immediately when they arrive - no artificial delays!
+          this.isInitialLoading = false;
+          this.isLoadingMore = false;
+          this.cd.markForCheck();
         },
         error: (error: Error) => {
           this.error = 'Failed to load posts. Please try again.';
           this.posts = [];
-          // Clear any previous loading timeout
-          if (this.loadingTimeout) {
-            clearTimeout(this.loadingTimeout);
-          }
           
-          // Ensure loading spinner shows for at least 500ms even on error
-          this.loadingTimeout = setTimeout(() => {
-            this.isInitialLoading = false;
-            this.isLoadingMore = false;
-            this.cd.markForCheck();
-          }, 500);
+          // Stop loading immediately on error
+          this.isInitialLoading = false;
+          this.isLoadingMore = false;
+          this.cd.markForCheck();
         }
       })
     );
@@ -129,6 +121,26 @@ export class HomeComponent implements OnInit, OnDestroy {
       }
 
       this.scrollThrottleTimeout = setTimeout(() => {
+        const scrollTop = document.documentElement.scrollTop;
+        const scrollDelta = scrollTop - this.lastScrollTop;
+        
+        // Handle tab hiding/showing - synchronized with mobile header
+        if (Math.abs(scrollDelta) > this.scrollThreshold) {
+          if (scrollDelta > 0 && scrollTop > 50) {
+            // Scrolling down - hide tab (same threshold as header)
+            this.isTabHidden = true;
+          } else if (scrollDelta < 0) {
+            // Scrolling up - show tab
+            this.isTabHidden = false;
+          }
+          this.lastScrollTop = scrollTop;
+          
+          // Run change detection inside Angular zone
+          this.ngZone.run(() => {
+            this.cd.markForCheck();
+          });
+        }
+        
         const scrollPosition = window.innerHeight + window.scrollY;
         const scrollThreshold = document.documentElement.scrollHeight * 0.8;
 

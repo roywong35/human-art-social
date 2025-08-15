@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -25,6 +25,11 @@ export class MobileHeaderComponent implements OnInit {
   protected isFollowingOnly = false;
   protected isTogglingFollowingOnly = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
+  
+  // Scroll-based hiding properties
+  protected isHeaderHidden = false;
+  private lastScrollTop = 0;
+  private scrollThreshold = 50; // Minimum scroll distance to trigger hide/show
 
   constructor(
     protected authService: AuthService,
@@ -70,6 +75,24 @@ export class MobileHeaderComponent implements OnInit {
     this.route.queryParams.pipe(take(1)).subscribe(params => {
       this.isHumanArtTab = this.router.url.includes('human-art') || params['tab'] === 'human-drawing';
     });
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  onScroll(): void {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollDelta = scrollTop - this.lastScrollTop;
+    
+    // Handle header hiding/showing - synchronized with tabs
+    if (Math.abs(scrollDelta) > this.scrollThreshold) {
+      if (scrollDelta > 0 && scrollTop > 50) {
+        // Scrolling down - hide header (same threshold as tabs)
+        this.isHeaderHidden = true;
+      } else if (scrollDelta < 0) {
+        // Scrolling up - show header
+        this.isHeaderHidden = false;
+      }
+      this.lastScrollTop = scrollTop;
+    }
   }
 
   toggleSidebarDrawer(event: MouseEvent) {

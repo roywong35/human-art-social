@@ -132,13 +132,13 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.loadTrending();
+    this.loadTrending(true);  // Force fresh data on page load
     this.loadRecommendedUsers();
     this.setupScrollHandler();
     
     // Refresh trending topics every 5 minutes
     setInterval(() => {
-      this.loadTrending();
+      this.loadTrending();  // Regular refresh every 5 minutes
     }, 5 * 60 * 1000);
   }
 
@@ -184,9 +184,13 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     window.addEventListener('scroll', this.scrollHandler, { passive: true });
   }
 
-  private loadTrending() {
+  private loadTrending(forceRefresh: boolean = false) {
     this.isLoadingTrending = true;
-    this.hashtagService.getTrendingHashtags().subscribe({
+    
+    // Add cache-busting parameter if forcing refresh
+    const params = forceRefresh ? { _t: Date.now() } : {};
+    
+    this.hashtagService.getTrendingHashtags(undefined, params).subscribe({
       next: (response) => {
         this.trendingTopics = response.results;
         
