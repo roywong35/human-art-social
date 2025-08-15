@@ -1071,4 +1071,56 @@ class PostViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
+    @action(detail=False, methods=['GET'])
+    def check_new_posts(self, request):
+        """
+        Check if there are new posts available for the user.
+        Compares the latest post in DB with the latest post the frontend has.
+        Returns count of new posts (capped at 35).
+        """
+        try:
+            # Get the latest post ID that frontend has
+            latest_frontend_post_id = request.query_params.get('latest_post_id')
+            
+            if not latest_frontend_post_id:
+                return Response(
+                    {'error': 'latest_post_id parameter is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                latest_frontend_post_id = int(latest_frontend_post_id)
+            except ValueError:
+                return Response(
+                    {'error': 'latest_post_id must be a valid integer'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get the user's queryset (respecting following preferences)
+            user_queryset = self.get_queryset()
+            
+            # Count posts newer than the frontend's latest post
+            new_posts_count = user_queryset.filter(
+                id__gt=latest_frontend_post_id
+            ).count()
+            
+            # Cap at 35 posts maximum
+            new_posts_count = min(new_posts_count, 35)
+            
+            # Get the actual latest post ID from DB for comparison
+            latest_db_post = user_queryset.first()
+            latest_db_post_id = latest_db_post.id if latest_db_post else None
+            
+            return Response({
+                'has_new_posts': new_posts_count > 0,
+                'new_posts_count': new_posts_count,
+                'latest_db_post_id': latest_db_post_id,
+                'latest_frontend_post_id': latest_frontend_post_id
+            })
+            
+        except Exception as e:
+            print(f"❌ Error in check_new_posts: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while checking for new posts'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
