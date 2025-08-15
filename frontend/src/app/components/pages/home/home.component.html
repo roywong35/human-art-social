@@ -26,13 +26,7 @@
     </div>
   </div>
   
-  <!-- Loading State -->
-  <div *ngIf="isInitialLoading" class="flex items-center justify-center min-h-[500px] bg-white dark:bg-black">
-    <!-- Clean spinner like X (Twitter) -->
-    <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
-  </div>
-  
-  <!-- Post Input Box (Always visible, never refreshes) -->
+    <!-- Post Input Box (Always visible, never refreshes) -->
   <div *ngIf="activeTab === 'for-you'" 
        class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)]"
        [ngClass]="{
@@ -48,6 +42,12 @@
         (imageSelected)="onImageSelected($event)">
       </app-post-input-box>
     </div>
+  </div>
+
+  <!-- Loading State (Below post input box) -->
+  <div *ngIf="isInitialLoading" class="flex items-center justify-center min-h-[500px] bg-white dark:bg-black">
+    <!-- Clean spinner like X (Twitter) -->
+    <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
   </div>
 
   <!-- Content (only show when not loading) -->
