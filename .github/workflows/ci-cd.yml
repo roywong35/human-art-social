@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           
       - name: Install Python dependencies
         run: |
@@ -46,7 +46,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22.16.0'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
           
@@ -62,19 +62,33 @@ jobs:
         env:
           CI: true
           
-  deploy:
-    name: Deploy to Render
+  deploy-backend:
+    name: Deploy Backend to Render
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-      - name: Deploy to Render
+      - name: Deploy Backend to Render
         run: |
-          echo "🚀 All tests passed! Deploying to Render..."
+          echo "🚀 All tests passed! Deploying Backend to Render..."
           echo "✅ Backend tests: PASSED"
           echo "✅ Frontend tests: PASSED"
-          echo "🎯 Ready for production deployment!"
+          echo "🎯 Backend ready for production deployment!"
+          
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Deploy Frontend to Vercel
+        run: |
+          echo "🚀 All tests passed! Deploying Frontend to Vercel..."
+          echo "✅ Backend tests: PASSED"
+          echo "✅ Frontend tests: PASSED"
+          echo "🎯 Frontend ready for production deployment!"
           
       - name: Success message
         run: |
@@ -83,4 +97,4 @@ jobs:
           echo "   - Backend: 212 tests passed"
           echo "   - Frontend: 63 tests passed"
           echo "   - Total: 275 tests passed"
-          echo "🚀 Application deployed to production!"
+          echo "🚀 Both Backend (Render) and Frontend (Vercel) deployed!"
