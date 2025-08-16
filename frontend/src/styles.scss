@@ -573,9 +573,9 @@ textarea {
 
   /* Not Following State */
   &:not(.following) {
-    @apply border-black bg-black text-white;  /* Changed to black */
+    @apply border-blue-500 bg-blue-500 text-white;  /* Changed to black */
     &:hover {
-      @apply bg-gray-800;  /* Darker on hover */
+      @apply bg-blue-600;  /* Darker on hover */
     }
   }
 
@@ -589,7 +589,7 @@ textarea {
     }
     
     &:hover {
-      @apply bg-red-600;
+      @apply border-red-600 bg-red-600;
       span:last-child::after {
         content: 'Unfollow';
       }
