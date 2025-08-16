@@ -13,7 +13,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if self.scope["user"].is_anonymous:
             print("❌ Rejecting anonymous user connection")
             await self.close()
-        else:
+            return
+        
+        try:
             self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
             self.room_group_name = f"chat_{self.conversation_id}"
             
@@ -32,6 +34,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             else:
                 print(f"❌ User {self.scope['user'].username} is not a participant in conversation {self.conversation_id}")
                 await self.close()
+        except Exception as e:
+            print(f"❌ Error during WebSocket connection: {e}")
+            await self.close()
 
     async def disconnect(self, close_code):
         print(f"🔌 WebSocket disconnection: {close_code}")

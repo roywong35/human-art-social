@@ -82,16 +82,50 @@ ASGI_APPLICATION = 'core.asgi.application'
 
 # Redis for production (Render provides free Redis)
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [REDIS_URL],
+
+# Parse Redis URL to get individual components
+import urllib.parse
+if REDIS_URL != 'redis://localhost:6379':
+    parsed = urllib.parse.urlparse(REDIS_URL)
+    REDIS_HOST = parsed.hostname
+    REDIS_PORT = parsed.port or 6379
+    REDIS_PASSWORD = parsed.password
+    REDIS_USERNAME = parsed.username
+    
+    print(f"🔗 Redis Configuration:")
+    print(f"   Host: {REDIS_HOST}")
+    print(f"   Port: {REDIS_PORT}")
+    print(f"   Username: {REDIS_USERNAME}")
+    print(f"   Password: {'*' * len(REDIS_PASSWORD) if REDIS_PASSWORD else 'None'}")
+    
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [{
+                    "host": REDIS_HOST,
+                    "port": REDIS_PORT,
+                    "password": REDIS_PASSWORD,
+                    "username": REDIS_USERNAME,
+                }],
+            },
         },
-    },
-}
+    }
+else:
+    # Fallback for local development
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer'
+        }
+    }
 
 WSGI_APPLICATION = 'core.wsgi.application'
+
+# Debug Redis connection
+print(f"🔍 Environment Check:")
+print(f"   RENDER: {os.getenv('RENDER', 'Not set')}")
+print(f"   REDIS_URL: {REDIS_URL}")
+print(f"   CHANNEL_LAYERS: {CHANNEL_LAYERS}")
 
 # Database
 # Use DATABASE_URL from environment (Render PostgreSQL)
@@ -167,9 +201,9 @@ REST_FRAMEWORK = {
 
 # JWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),  # Increased to 24 hours for WebSocket stability
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ROTATE_REFRESH_TOKENS': True,  # Enable token rotation for better security
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,

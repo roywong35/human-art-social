@@ -16,10 +16,29 @@ def get_user_from_jwt(token_string):
         # Decode the JWT token
         token = AccessToken(token_string)
         user_id = token.get('user_id')
+        
+        if not user_id:
+            print(f"❌ JWT token missing user_id")
+            return AnonymousUser()
+        
         user = User.objects.get(id=user_id)
+        print(f"✅ JWT authentication successful for user: {user.username}")
         return user
-    except (InvalidToken, TokenError, User.DoesNotExist, KeyError) as e:
-        print(f"JWT authentication failed: {e}")
+        
+    except InvalidToken as e:
+        print(f"❌ JWT token invalid: {e}")
+        return AnonymousUser()
+    except TokenError as e:
+        print(f"❌ JWT token error: {e}")
+        return AnonymousUser()
+    except User.DoesNotExist as e:
+        print(f"❌ User not found: {e}")
+        return AnonymousUser()
+    except KeyError as e:
+        print(f"❌ JWT token missing key: {e}")
+        return AnonymousUser()
+    except Exception as e:
+        print(f"❌ Unexpected JWT authentication error: {e}")
         return AnonymousUser()
 
 class TokenAuthMiddleware(BaseMiddleware):
@@ -33,13 +52,18 @@ class TokenAuthMiddleware(BaseMiddleware):
             token_string = query_params.get("token", [None])[0]
             
             if token_string:
+                print(f"🔐 Attempting to authenticate WebSocket with token: {token_string[:20]}...")
                 scope["user"] = await get_user_from_jwt(token_string)
-                print(f"WebSocket authenticated user: {scope['user']}")
+                
+                if scope["user"].is_anonymous:
+                    print(f"❌ WebSocket authentication failed - user is anonymous")
+                else:
+                    print(f"✅ WebSocket authenticated user: {scope['user'].username} (ID: {scope['user'].id})")
             else:
                 scope["user"] = AnonymousUser()
-                print("No token provided for WebSocket connection")
+                print("❌ No token provided for WebSocket connection")
         except Exception as e:
-            print(f"WebSocket authentication error: {e}")
+            print(f"❌ WebSocket authentication error: {e}")
             scope["user"] = AnonymousUser()
         
         return await super().__call__(scope, receive, send)
