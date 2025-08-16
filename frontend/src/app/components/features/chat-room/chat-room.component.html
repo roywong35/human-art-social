@@ -17,55 +17,64 @@
 
   <!-- Messages Area -->
   <div #messagesContainer class="flex-1 overflow-y-auto px-2 py-2 space-y-4">
-    <!-- No messages state -->
-    <div *ngIf="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center">
-      <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 flex-shrink-0" style="min-width: 64px; min-height: 64px; max-width: 64px; max-height: 64px; aspect-ratio: 1/1;">
-        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-        </svg>
-      </div>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No messages yet</h3>
-      <p class="text-gray-500 dark:text-gray-400">Start the conversation with {{ getOtherParticipant()?.username }}!</p>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoadingMessages" class="flex items-center justify-center min-h-[500px]">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
     </div>
 
-    <!-- Messages -->
-    <div *ngFor="let message of messages" class="flex" 
-         [class.justify-end]="isMessageFromCurrentUser(message)"
-         [class.justify-start]="!isMessageFromCurrentUser(message)">
-      
-      <div class="flex items-end space-x-2 max-w-[75%]">
-        <!-- Other user avatar (hidden when in floating chat) -->
-        <img *ngIf="!isMessageFromCurrentUser(message) && !isFloatingChat"
-             [src]="getOtherParticipant()?.profile_picture || defaultAvatar"
-             [alt]="getOtherParticipant()?.username"
-             class="w-6 h-6 rounded-full object-cover flex-shrink-0">
+    <!-- Content (only show when not loading) -->
+    <ng-container *ngIf="!isLoadingMessages">
+      <!-- No messages state -->
+      <div *ngIf="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center">
+        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 flex-shrink-0" style="min-width: 64px; min-height: 64px; max-width: 64px; max-height: 64px; aspect-ratio: 1/1;">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No messages yet</h3>
+        <p class="text-gray-500 dark:text-gray-400">Start the conversation with {{ getOtherParticipant()?.username }}!</p>
+      </div>
 
-        <!-- Message bubble -->
-        <div class="relative">
-          <div class="px-4 py-2 rounded-2xl"
-               [class.bg-blue-500]="isMessageFromCurrentUser(message)"
-               [class.text-white]="isMessageFromCurrentUser(message)"
-               [class.bg-gray-100]="!isMessageFromCurrentUser(message)"
-               [class.dark:bg-gray-800]="!isMessageFromCurrentUser(message)"
-               [class.text-gray-900]="!isMessageFromCurrentUser(message)"
-               [class.dark:text-white]="!isMessageFromCurrentUser(message)">
-            
-            <!-- Message image -->
-            <div *ngIf="message.image_url" class="mb-2">
-              <img [src]="message.image_url" 
-                   alt="Shared image"
-                   class="max-w-full h-auto rounded-lg">
+      <!-- Messages -->
+      <div *ngFor="let message of messages" class="flex" 
+           [class.justify-end]="isMessageFromCurrentUser(message)"
+           [class.justify-start]="!isMessageFromCurrentUser(message)">
+        
+        <div class="flex items-end space-x-2 max-w-[75%]">
+          <!-- Other user avatar (hidden when in floating chat) -->
+          <img *ngIf="!isMessageFromCurrentUser(message) && !isFloatingChat"
+               [src]="getOtherParticipant()?.profile_picture || defaultAvatar"
+               [alt]="getOtherParticipant()?.username"
+               class="w-6 h-6 rounded-full object-cover flex-shrink-0">
+
+          <!-- Message bubble -->
+          <div class="relative">
+            <div class="px-4 py-2 rounded-2xl"
+                 [class.bg-blue-500]="isMessageFromCurrentUser(message)"
+                 [class.text-white]="isMessageFromCurrentUser(message)"
+                 [class.bg-gray-100]="!isMessageFromCurrentUser(message)"
+                 [class.dark:bg-gray-800]="!isMessageFromCurrentUser(message)"
+                 [class.text-gray-900]="!isMessageFromCurrentUser(message)"
+                 [class.dark:text-white]="!isMessageFromCurrentUser(message)">
+              
+              <!-- Message image -->
+              <div *ngIf="message.image_url" class="mb-2">
+                <img [src]="message.image_url" 
+                     alt="Shared image"
+                     class="max-w-full h-auto rounded-lg">
+              </div>
+              
+              <!-- Message text -->
+              <p *ngIf="message.content" class="text-base whitespace-pre-wrap">{{ message.content }}</p>
             </div>
             
-            <!-- Message text -->
-            <p *ngIf="message.content" class="text-base whitespace-pre-wrap">{{ message.content }}</p>
+            <!-- Message time -->
+            <p class="text-xs text-gray-400 mt-1"
+               [class.text-right]="isMessageFromCurrentUser(message)">
+              {{ getMessageTimeDisplay(message) }}
+            </p>
           </div>
-          
-          <!-- Message time -->
-          <p class="text-xs text-gray-400 mt-1"
-             [class.text-right]="isMessageFromCurrentUser(message)">
-            {{ getMessageTimeDisplay(message) }}
-          </p>
         </div>
 
         <!-- Current user avatar (hidden when in floating chat) -->
@@ -74,23 +83,23 @@
              [alt]="currentUser?.username"
              class="w-6 h-6 rounded-full object-cover flex-shrink-0">
       </div>
-    </div>
 
-    <!-- Typing indicator -->
-    <div *ngIf="typingUsers.length > 0" class="flex justify-start">
-      <div class="flex items-end space-x-2">
-        <img *ngIf="!isFloatingChat" [src]="getOtherParticipant()?.profile_picture || defaultAvatar"
-             [alt]="getOtherParticipant()?.username"
-             class="w-6 h-6 rounded-full object-cover">
-        <div class="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">
-          <div class="flex space-x-1">
-            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+      <!-- Typing indicator -->
+      <div *ngIf="typingUsers.length > 0" class="flex justify-start">
+        <div class="flex items-end space-x-2">
+          <img *ngIf="!isFloatingChat" [src]="getOtherParticipant()?.profile_picture || defaultAvatar"
+               [alt]="getOtherParticipant()?.username"
+               class="w-6 h-6 rounded-full object-cover">
+          <div class="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">
+            <div class="flex space-x-1">
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ng-container>
   </div>
 
   <!-- Image Preview -->

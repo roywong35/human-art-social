@@ -35,6 +35,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
   isSending = false;
   selectedImages: File[] = [];
   imagePreviews: string[] = [];
+  isLoadingMessages = false;
   
   private readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   private readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -55,9 +56,21 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
   ) {}
 
   ngOnInit() {
+    // Set loading state first
+    this.isLoadingMessages = true;
+    console.log('🔄 ChatRoom: Loading state set to TRUE in ngOnInit');
+
     // Subscribe to messages
     this.messagesSub = this.chatService.messages$.subscribe(messages => {
+      console.log('🔍 ChatRoom: messages$ emitted:', messages.length);
       this.messages = messages;
+      
+      // Hide loading when we get actual data (not cached empty data)
+      if (messages.length > 0) {
+        this.isLoadingMessages = false;
+        console.log('🔄 ChatRoom: Loading state set to FALSE - got messages');
+      }
+      
       this.shouldScrollToBottom = true;
       this.cd.detectChanges();
     });
@@ -80,6 +93,10 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
       if (this.conversation) {
         console.log('🔄 Chat room conversation changed:', this.conversation.id);
         
+        // Set loading state for new conversation
+        this.isLoadingMessages = true;
+        console.log('🔄 ChatRoom: Loading state set to TRUE for new conversation');
+        
         // Debug WebSocket connection
         this.chatService.testWebSocketConnection(this.conversation.id);
         
@@ -91,6 +108,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
         this.messageContent = '';
         this.typingUsers = [];
         this.isTyping = false;
+        this.isLoadingMessages = false;
         this.clearSelectedImages();
         this.cd.detectChanges();
       }
