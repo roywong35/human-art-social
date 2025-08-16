@@ -93,11 +93,7 @@ if REDIS_URL != 'redis://localhost:6379':
     REDIS_PASSWORD = parsed.password
     REDIS_USERNAME = parsed.username
     
-    print(f"🔗 Redis Configuration:")
-    print(f"   Host: {REDIS_HOST}")
-    print(f"   Port: {REDIS_PORT}")
-    print(f"   Username: {REDIS_USERNAME}")
-    print(f"   Password: {'*' * len(REDIS_PASSWORD) if REDIS_PASSWORD else 'None'}")
+    
     
     CHANNEL_LAYERS = {
         'default': {
@@ -122,11 +118,7 @@ else:
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Debug Redis connection
-print(f"🔍 Environment Check:")
-print(f"   RENDER: {os.getenv('RENDER', 'Not set')}")
-print(f"   REDIS_URL: {REDIS_URL}")
-print(f"   CHANNEL_LAYERS: {CHANNEL_LAYERS}")
+
 
 # Database
 # Use DATABASE_URL from environment (Render PostgreSQL)
