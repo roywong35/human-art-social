@@ -58,7 +58,7 @@ jobs:
       - name: Run Angular tests
         run: |
           cd frontend
-          npm run test -- --watch=false --browsers=ChromeHeadless --single-run
+          npm run test -- --watch=false --browsers=ChromeHeadless
         env:
           CI: true
           

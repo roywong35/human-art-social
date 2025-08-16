@@ -184,15 +184,22 @@ export class ChatService {
 
   // State management methods
   loadConversations() {
+    console.log('🔍 ChatService.loadConversations() called');
+    console.log('🔍 API URL:', `${this.apiUrl}/conversations/`);
+    
     this.getConversations().subscribe({
       next: (conversations) => {
+        console.log('🔍 API Response - conversations:', conversations);
+        console.log('🔍 API Response - conversations.length:', conversations?.length || 0);
+        console.log('🔍 Emitting to conversationsSubject');
+        
         this.conversationsSubject.next(conversations);
         
         // X-style preloading: Start loading conversation details for all conversations
         this.preloadConversationsData(conversations);
       },
       error: (error) => {
-        console.error('Error loading conversations:', error);
+        console.error('❌ Error loading conversations:', error);
       }
     });
   }

@@ -6,7 +6,7 @@ import { ChatService } from '../../../services/chat.service';
 import { AuthService } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
 import { Conversation, ConversationDetail, User } from '../../../models';
-import { Subscription } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 import { ChatRoomComponent } from '../../features/chat-room/chat-room.component';
 
@@ -23,6 +23,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   isLoadingConversation = false;
   loadingConversationId: number | null = null;
+  isLoadingConversations = false;
   
   // Create chat modal
   showCreateChatModal = false;
@@ -50,12 +51,39 @@ export class MessagesComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    console.log('🚀 MessagesComponent ngOnInit() called');
+    console.log('🚀 Initial isLoadingConversations:', this.isLoadingConversations);
+    console.log('🚀 Initial conversations.length:', this.conversations.length);
+    
     // Initialize responsive state
     this.checkScreenSize();
 
     // Get current user
     this.currentUserSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      console.log('👤 Current user set:', user?.username);
+    });
+
+    // Set loading state FIRST before subscribing
+    this.isLoadingConversations = true;
+    console.log('🔄 Loading state set to TRUE in ngOnInit');
+
+    // Subscribe to ChatService conversations directly
+    this.chatService.conversations$.subscribe({
+      next: (conversations) => {
+        console.log('🔍 ChatService conversations$ emitted:', conversations.length);
+        this.conversations = conversations;
+        
+        // Hide loading when we get actual data (not cached empty data)
+        if (conversations.length > 0) {
+          this.isLoadingConversations = false;
+          console.log('🔄 Loading state set to FALSE - got conversations');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error in ChatService conversations$:', error);
+        this.isLoadingConversations = false;
+      }
     });
 
     // Load conversations
@@ -128,18 +156,12 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   loadConversations() {
+    console.log('🔍 loadConversations() called');
+    console.log('🔍 Current state - isLoadingConversations:', this.isLoadingConversations);
+    console.log('🔍 Current state - conversations.length:', this.conversations.length);
+    
     // Use ChatService's state management instead of local array
     this.chatService.loadConversations();
-    
-    // Subscribe to the service's conversations observable
-    this.chatService.conversations$.subscribe({
-      next: (conversations) => {
-        this.conversations = conversations;
-      },
-      error: (error) => {
-        console.error('Error loading conversations:', error);
-      }
-    });
   }
 
   loadConversation(conversationId: string) {
