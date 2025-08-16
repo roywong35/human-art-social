@@ -225,6 +225,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return this.getDesktopLinkClasses();
   }
 
+  // Check if bookmark should be visible in sidebar (690px-768px height)
+  isBookmarkVisibleInSidebar(): boolean {
+    if (this.isMobile) {
+      return false; // On mobile, bookmark is always in More menu
+    }
+    
+    // Check if we're in the height range where bookmark is visible in sidebar
+    // This corresponds to the CSS media query: @media (min-height: 690px) and (max-height: 767px)
+    const viewportHeight = window.innerHeight;
+    return viewportHeight >= 690 && viewportHeight <= 767;
+  }
+
   // === EXISTING FUNCTIONALITY (UNCHANGED) ===
 
   toggleFollowingOnly(): void {

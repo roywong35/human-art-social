@@ -357,8 +357,9 @@
   <div class="w-[280px] bg-white dark:[background-color:var(--color-background)] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_20px_rgba(255,255,255,0.15)] cursor-pointer overflow-visible">
     <div class="rounded-xl overflow-hidden py-2">
       
-      <!-- Bookmarks in More Menu -->
-      <a routerLink="/bookmarks" 
+      <!-- Bookmarks in More Menu - Hidden when visible in sidebar (690px-768px) -->
+      <a *ngIf="!isBookmarkVisibleInSidebar()"
+         routerLink="/bookmarks" 
          (click)="closeMoreMenu()"
          routerLinkActive="text-blue-500"
          [routerLinkActiveOptions]="{exact: true}"

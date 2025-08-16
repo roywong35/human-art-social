@@ -22,8 +22,8 @@
   }
 }
 
-/* Case 2: 656px-768px - Show core + bookmarks + More (with following, dark mode inside) */
-@media (min-height: 656px) and (max-height: 767px) {
+/* Case 2: 690px-768px - Show core + bookmarks + More (with following, dark mode inside) */
+@media (min-height: 690px) and (max-height: 767px) {
   .secondary-item-high {
     display: block !important; /* Show bookmarks */
   }
@@ -38,8 +38,8 @@
   }
 }
 
-/* Case 3: 601px-655px - Show core + More (with bookmarks, following, dark mode inside) */
-@media (min-height: 601px) and (max-height: 655px) {
+/* Case 3: 620px-689px - Show core + More (with bookmarks, following, dark mode inside) */
+@media (min-height: 620px) and (max-height: 689px) {
   .secondary-item {
     display: none !important; /* Hide all secondary items */
   }
@@ -49,8 +49,8 @@
   }
 }
 
-/* Case 4: <=600px - Enable scrollbar, keep More button with all secondary items inside */
-@media (max-height: 600px) {
+/* Case 4: <=619px - Enable scrollbar, keep More button with all secondary items inside */
+@media (max-height: 619px) {
   .navigation-container {
     overflow-y: auto !important;
   }
