@@ -34,7 +34,10 @@ export class AuthService {
     const token = this.getToken();
     if (token) {
       this.loadUser().subscribe();
-      this.setupProactiveRefresh(); // Start Twitter/X style token management
+      // Only setup proactive refresh if we have a valid token
+      if (this.accessToken) {
+        this.setupProactiveRefresh(); // Start Twitter/X style token management
+      }
     }
   }
 
@@ -225,6 +228,11 @@ export class AuthService {
    * Decode JWT token to extract expiry time
    */
   private decodeToken(token: string): any {
+    if (!token) {
+      console.warn('decodeToken called with null/undefined token');
+      return null;
+    }
+    
     try {
       const payload = token.split('.')[1];
       const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));

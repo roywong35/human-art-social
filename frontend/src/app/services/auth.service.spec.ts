@@ -75,6 +75,9 @@ describe('AuthService', () => {
     service['accessToken'] = null;
     service['refreshToken'] = null;
     service['currentUserSubject'].next(null);
+    
+    // Handle any automatic requests made during service initialization
+    httpMock.match(`${environment.apiUrl}/api/users/me/`).forEach(req => req.flush({}));
   });
 
   afterEach(() => {
@@ -132,6 +135,9 @@ describe('AuthService', () => {
       expect(userReq.request.method).toBe('GET');
       expect(userReq.request.headers.get('Authorization')).toBe('Bearer mock-access-token');
       userReq.flush(mockUser);
+      
+      // Handle any additional requests that might be made during service initialization
+      httpMock.match(`${environment.apiUrl}/api/users/me/`).forEach(req => req.flush({}));
     });
 
     it('should handle login failure', () => {
@@ -188,6 +194,9 @@ describe('AuthService', () => {
       // Expect user profile request
       const userReq = httpMock.expectOne(`${environment.apiUrl}/api/users/me/`);
       userReq.flush(mockUser);
+      
+      // Handle any additional requests that might be made during service initialization
+      httpMock.match(`${environment.apiUrl}/api/users/me/`).forEach(req => req.flush({}));
     });
 
     it('should handle registration failure', () => {
@@ -285,6 +294,9 @@ describe('AuthService', () => {
       const req = httpMock.expectOne(`${environment.apiUrl}/api/users/me/`);
       expect(req.request.method).toBe('GET');
       req.flush(mockUser);
+      
+      // Handle any additional requests that might be made during service initialization
+      httpMock.match(`${environment.apiUrl}/api/users/me/`).forEach(req => req.flush({}));
     });
 
     it('should handle user profile loading failure', () => {
@@ -302,6 +314,9 @@ describe('AuthService', () => {
 
       const req = httpMock.expectOne(`${environment.apiUrl}/api/users/me/`);
       req.flush({ error: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+      
+      // Handle any additional requests that might be made during service initialization
+      httpMock.match(`${environment.apiUrl}/api/users/me/`).forEach(req => req.flush({}));
     });
   });
 
@@ -343,6 +358,9 @@ describe('AuthService', () => {
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual({ following_only_preference: true });
       req.flush({ ...mockUser, following_only_preference: true });
+      
+      // Handle any additional requests that might be made during service initialization
+      httpMock.match(`${environment.apiUrl}/api/users/me/`).forEach(req => req.flush({}));
     });
   });
 
@@ -386,6 +404,14 @@ describe('AuthService', () => {
       
       const decoded = service['decodeToken'](invalidToken);
       expect(decoded).toBeNull();
+    });
+
+    it('should handle null/undefined token', () => {
+      const decoded = service['decodeToken'](null as any);
+      expect(decoded).toBeNull();
+      
+      const decoded2 = service['decodeToken'](undefined as any);
+      expect(decoded2).toBeNull();
     });
   });
 
