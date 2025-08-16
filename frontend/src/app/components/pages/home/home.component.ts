@@ -43,7 +43,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   hasNewPosts = false;
   newPostsCount = 0;
   private newPostsCheckInterval: any;
-  private latestPostId: number | null = null;
+  private latestPostIds: { [key: string]: number | null } = {
+    'for-you': null,
+    'human-drawing': null
+  };
 
   // Scroll-based hiding properties
   isTabHidden = false;
@@ -484,6 +487,10 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.activeTab = tab;
       localStorage.setItem('activeTab', tab);
       
+      // Clear new posts state when switching tabs
+      this.hasNewPosts = false;
+      this.newPostsCount = 0;
+      
       // Show loading state during tab switch
       this.isInitialLoading = true;
       this.cd.markForCheck();
@@ -537,12 +544,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private checkForNewPosts(): void {
-    if (!this.latestPostId || this.posts.length === 0) {
+    const currentLatestPostId = this.latestPostIds[this.activeTab];
+    if (!currentLatestPostId || this.posts.length === 0) {
+      return;
+    }
+
+    // Don't check for new posts if we just refreshed
+    if (this.isInitialLoading) {
       return;
     }
 
     // Call backend to check for new posts
-    this.postService.checkNewPosts(this.latestPostId).subscribe({
+    this.postService.checkNewPosts(currentLatestPostId, this.activeTab).subscribe({
       next: (response: any) => {
         if (response.has_new_posts) {
           this.hasNewPosts = true;
@@ -564,15 +577,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Refresh only the posts, not the entire component
     this.loadPosts(true);
     
-    // Reset the timer after showing new posts
+    // Wait for posts to load, then reset latest post ID and restart timer
     setTimeout(() => {
+      // Reset latest post ID to current posts after refresh
+      this.updateLatestPostId();
+      // Restart the timer
       this.startNewPostsCheck();
-    }, 1000); // Wait 1 second then restart timer
+    }, 2000); // Wait 2 seconds for posts to fully load
   }
 
   private updateLatestPostId(): void {
     if (this.posts.length > 0) {
-      this.latestPostId = this.posts[0].id; // First post is the latest
+      this.latestPostIds[this.activeTab] = this.posts[0].id; // First post is the latest for current tab
     }
   }
 } 

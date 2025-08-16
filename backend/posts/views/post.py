@@ -1099,6 +1099,23 @@ class PostViewSet(viewsets.ModelViewSet):
             # Get the user's queryset (respecting following preferences)
             user_queryset = self.get_queryset()
             
+            # Apply the same filters as feed/explore endpoints
+            post_type = request.query_params.get('tab', 'for-you')
+            
+            if post_type == 'human-drawing':
+                # Only show verified human drawings in Human Art tab
+                user_queryset = user_queryset.filter(
+                    is_human_drawing=True,
+                    is_verified=True
+                )
+            elif post_type == 'for-you':
+                # Show all non-human drawings AND verified human drawings
+                # Exclude replies from the For You tab
+                user_queryset = user_queryset.filter(
+                    Q(is_human_drawing=False) |  # Regular posts
+                    Q(is_human_drawing=True, is_verified=True)  # Verified human drawings
+                ).exclude(post_type='reply')  # Exclude replies
+            
             # Count posts newer than the frontend's latest post
             new_posts_count = user_queryset.filter(
                 id__gt=latest_frontend_post_id

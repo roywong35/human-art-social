@@ -30,7 +30,7 @@
   <div *ngIf="activeTab === 'for-you'" 
        class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)]"
        [ngClass]="{
-         'mt-16': !isMobile
+         'mt-[52px]': !isMobile
        }">
     <div>
       <app-post-input-box
@@ -52,6 +52,11 @@
 
   <!-- Content (only show when not loading) -->
   <ng-container *ngIf="!isInitialLoading">
+    <!-- Transparent Spacer for Human Art Tab (Desktop Only) -->
+    <div *ngIf="!isMobile && activeTab === 'human-drawing'" 
+         class="h-[52px] bg-transparent">
+    </div>
+
     <!-- Error State -->
     <div *ngIf="error">
       <div class="bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 p-4 rounded-lg text-center my-3">
