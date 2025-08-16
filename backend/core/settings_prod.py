@@ -23,7 +23,8 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 # Parse ALLOWED_HOSTS from environment variable
 ALLOWED_HOSTS = [
     'human-art-social-backend.onrender.com',
-    '*.onrender.com'
+    '*.onrender.com',
+    'human-art-social.vercel.app'
 ]
 
 # Application definition
