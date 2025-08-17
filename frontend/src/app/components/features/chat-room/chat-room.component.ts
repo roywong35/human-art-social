@@ -5,6 +5,7 @@ import { ChatService } from '../../../services/chat.service';
 import { AuthService } from '../../../services/auth.service';
 import { ImageUploadService } from '../../../services/image-upload.service';
 import { EmojiPickerService } from '../../../services/emoji-picker.service';
+import { AvatarCacheService } from '../../../services/avatar-cache.service';
 import { ConversationDetail, Message, User } from '../../../models';
 import { Subscription } from 'rxjs';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
@@ -54,6 +55,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     private authService: AuthService,
     private imageUploadService: ImageUploadService,
     private emojiPickerService: EmojiPickerService,
+    public avatarCacheService: AvatarCacheService,
     private cd: ChangeDetectorRef
   ) {}
 
@@ -72,18 +74,20 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
       this.isLoadingMessages = false;
       console.log('🔄 ChatRoom: Loading state set to FALSE - messages loaded');
       
+      // Preload avatars for all users in messages to prevent individual requests
+      if (messages.length > 0) {
+        const users = messages.map(msg => ({
+          id: msg.sender.id,
+          profile_picture: msg.sender.profile_picture
+        }));
+        this.avatarCacheService.preloadAvatars(users);
+      }
+      
       this.shouldScrollToBottom = true;
       this.cd.detectChanges();
     });
 
-    // Safety timeout: if loading takes too long, show "No messages yet"
-    this.loadingTimeout = setTimeout(() => {
-      if (this.isLoadingMessages) {
-        console.log('⏰ ChatRoom: Loading timeout reached, showing "No messages yet"');
-        this.isLoadingMessages = false;
-        this.cd.detectChanges();
-      }
-    }, 10000); // 10 second timeout
+    // No more stupid timeout - let the actual API response control the loading state
 
     // Subscribe to typing indicators
     this.typingSub = this.chatService.typingUsers$.subscribe(users => {
@@ -110,10 +114,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
         
         console.log('🔄 Chat room conversation changed:', this.conversation.id);
         
-        // Clear any existing loading timeout
-        if (this.loadingTimeout) {
-          clearTimeout(this.loadingTimeout);
-        }
+        // No more timeout logic needed
         
         // Set loading state for new conversation
         this.isLoadingMessages = true;
@@ -127,14 +128,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
         
         this.chatService.loadMessages(this.conversation.id);
         
-        // Set new loading timeout for this conversation
-        this.loadingTimeout = setTimeout(() => {
-          if (this.isLoadingMessages) {
-            console.log('⏰ ChatRoom: Loading timeout reached for new conversation, showing "No messages yet"');
-            this.isLoadingMessages = false;
-            this.cd.detectChanges();
-          }
-        }, 10000); // 10 second timeout
+        // No more stupid timeout - let the actual API response control the loading state
       } else {
         // Clear ALL chat state when conversation becomes null (back button clicked)
         console.log('🧹 Chat room clearing all state - conversation is null');
@@ -163,9 +157,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     if (this.typingTimeout) {
       clearTimeout(this.typingTimeout);
     }
-    if (this.loadingTimeout) {
-      clearTimeout(this.loadingTimeout);
-    }
+    // No more timeout logic needed
     // Clean up image previews
     this.imagePreviews.forEach(preview => {
       if (preview.startsWith('blob:')) {
