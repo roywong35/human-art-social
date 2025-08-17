@@ -275,12 +275,15 @@ export class ChatService {
   }
 
   loadMessages(conversationId: number) {
+    console.log('🚀 ChatService: Loading messages for conversation:', conversationId);
+    
     this.getMessages(conversationId).subscribe({
       next: (response) => {
+        console.log('✅ ChatService: Got', response.results.length, 'messages');
         this.messagesSubject.next(response.results.reverse()); // Reverse for chat display
       },
       error: (error) => {
-        console.error('Error loading messages:', error);
+        console.error('❌ ChatService: Error loading messages:', error);
         // Emit empty array on error so chat room component can show appropriate state
         this.messagesSubject.next([]);
       }

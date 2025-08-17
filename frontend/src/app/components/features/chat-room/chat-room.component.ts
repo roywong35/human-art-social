@@ -5,10 +5,11 @@ import { ChatService } from '../../../services/chat.service';
 import { AuthService } from '../../../services/auth.service';
 import { ImageUploadService } from '../../../services/image-upload.service';
 import { EmojiPickerService } from '../../../services/emoji-picker.service';
-import { AvatarCacheService } from '../../../services/avatar-cache.service';
+// Avatar cache service removed since we're not using message avatars anymore
 import { ConversationDetail, Message, User } from '../../../models';
 import { Subscription } from 'rxjs';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
+import { skip } from 'rxjs/operators';
 
 @Component({
   selector: 'app-chat-room',
@@ -55,50 +56,19 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     private authService: AuthService,
     private imageUploadService: ImageUploadService,
     private emojiPickerService: EmojiPickerService,
-    public avatarCacheService: AvatarCacheService,
     private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    // Set loading state first
-    this.isLoadingMessages = true;
-    console.log('🔄 ChatRoom: Loading state set to TRUE in ngOnInit');
-
-    // Subscribe to messages
-    this.messagesSub = this.chatService.messages$.subscribe(messages => {
-      console.log('🔍 ChatRoom: messages$ emitted:', messages.length);
-      this.messages = messages;
-      
-      // Hide loading when we get data (regardless of whether there are messages or not)
-      // This ensures we show "No messages yet" when there are truly no messages
-      this.isLoadingMessages = false;
-      console.log('🔄 ChatRoom: Loading state set to FALSE - messages loaded');
-      
-      // Preload avatars for all users in messages to prevent individual requests
-      if (messages.length > 0) {
-        const users = messages.map(msg => ({
-          id: msg.sender.id,
-          profile_picture: msg.sender.profile_picture
-        }));
-        this.avatarCacheService.preloadAvatars(users);
-      }
-      
-      this.shouldScrollToBottom = true;
-      this.cd.detectChanges();
-    });
-
-    // No more stupid timeout - let the actual API response control the loading state
-
     // Subscribe to typing indicators
     this.typingSub = this.chatService.typingUsers$.subscribe(users => {
       this.typingUsers = users;
       this.cd.detectChanges();
     });
 
-    // Load messages for the current conversation
+    // Don't load messages here - let ngOnChanges handle it
     if (this.conversation) {
       this.currentConversationId = this.conversation.id;
-      this.chatService.loadMessages(this.conversation.id);
     }
   }
 
@@ -112,16 +82,31 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
           return; // Don't reload the same conversation
         }
         
-        console.log('🔄 Chat room conversation changed:', this.conversation.id);
-        
-        // No more timeout logic needed
+        console.log('🔄 ChatRoom: Loading conversation:', this.conversation.id);
         
         // Set loading state for new conversation
         this.isLoadingMessages = true;
-        console.log('🔄 ChatRoom: Loading state set to TRUE for new conversation');
         
         // Update current conversation ID
         this.currentConversationId = this.conversation.id;
+        
+                 // Subscribe to messages for this conversation (only once)
+         if (!this.messagesSub) {
+           this.messagesSub = this.chatService.messages$.pipe(
+             skip(1) // Skip the first emission (initial empty value) from BehaviorSubject
+           ).subscribe(messages => {
+             console.log('🔍 ChatRoom: messages$ emitted:', messages.length, 'messages');
+             
+             this.messages = messages;
+             
+             // Hide loading when we get data
+             this.isLoadingMessages = false;
+             console.log('🔄 ChatRoom: Loading complete, messages:', messages.length);
+             
+             this.shouldScrollToBottom = true;
+             this.cd.detectChanges();
+           });
+         }
         
         // Debug WebSocket connection
         this.chatService.testWebSocketConnection(this.conversation.id);

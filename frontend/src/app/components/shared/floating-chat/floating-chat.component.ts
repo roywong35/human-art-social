@@ -185,8 +185,8 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
           this.currentView = 'chat';
           this.isLoadingConversation = false;
           
-          // Load messages
-          this.chatService.loadMessages(conversation.id);
+          // Don't load messages here - let the chat room component handle it
+          // this.chatService.loadMessages(conversation.id); // ❌ REMOVED!
           
           // Connect to WebSocket
           this.chatService.connectToConversation(conversation.id);
@@ -307,8 +307,8 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
           this.currentView = 'chat';
           this.isLoadingConversation = false;
           
-          // Load messages for new conversation
-          this.chatService.loadMessages(conversation.id);
+          // Don't load messages here - let the chat room component handle it
+          // this.chatService.loadMessages(conversation.id); // ❌ REMOVED!
           
           // Connect to WebSocket
           this.chatService.connectToConversation(conversation.id);

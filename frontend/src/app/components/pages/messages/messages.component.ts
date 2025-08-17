@@ -215,8 +215,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
           this.isLoadingConversation = false;
           this.loadingConversationId = null;
           
-          // Load messages
-          this.chatService.loadMessages(numericId);
+          // Don't load messages here - let the chat room component handle it
+          // this.chatService.loadMessages(numericId); // ❌ REMOVED!
           
           // Connect to WebSocket for this conversation
           this.chatService.connectToConversation(numericId);
