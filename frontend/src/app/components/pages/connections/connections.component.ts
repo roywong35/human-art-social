@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { User } from '../../../models';
 import { UserService } from '../../../services/user.service';
+import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { GlobalModalService } from '../../../services/global-modal.service';
 
 
@@ -36,6 +37,7 @@ export class ConnectionsComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     private userService: UserService,
+    private optimisticUpdateService: OptimisticUpdateService,
     private globalModalService: GlobalModalService
   ) {}
 
@@ -118,18 +120,44 @@ export class ConnectionsComponent implements OnInit {
     if (user.isFollowLoading) return;
 
     user.isFollowLoading = true;
+    
+    // Apply optimistic update immediately
+    const optimisticUser = this.optimisticUpdateService.getOptimisticUser(user);
+    const index = this.users.findIndex(u => u.handle === user.handle);
+    if (index !== -1) {
+      this.users[index] = {
+        ...optimisticUser,
+        isFollowLoading: true,
+        isHoveringFollowButton: false
+      };
+    }
+    
+    // Make the API call
     const request = user.is_following
-      ? this.userService.followUser(user.handle)
-      : this.userService.followUser(user.handle);
+      ? this.optimisticUpdateService.unfollowUserOptimistic(user)
+      : this.optimisticUpdateService.followUserOptimistic(user);
 
     request.subscribe({
-      next: () => {
-        user.is_following = !user.is_following;
-        user.isFollowLoading = false;
+      next: (updatedUser) => {
+        // Update with real response
+        if (index !== -1) {
+          this.users[index] = {
+            ...updatedUser,
+            isFollowLoading: false,
+            isHoveringFollowButton: false
+          };
+        }
       },
       error: (error: unknown) => {
         console.error('Error following/unfollowing user:', error);
-        user.isFollowLoading = false;
+        // Rollback to original state on error
+        if (index !== -1) {
+          this.users[index] = {
+            ...user,
+            isFollowLoading: false,
+            isHoveringFollowButton: false
+          };
+        }
       }
     });
   }

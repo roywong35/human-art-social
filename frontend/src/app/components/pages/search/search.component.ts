@@ -6,6 +6,7 @@ import { Post } from '../../../models/post.model';
 import { User } from '../../../models/user.model';
 import { PostService } from '../../../services/post.service';
 import { UserService } from '../../../services/user.service';
+import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { PostComponent } from '../../features/posts/post/post.component';
 import { SearchBarComponent } from '../../widgets/search-bar/search-bar.component';
 import { forkJoin } from 'rxjs';
@@ -36,7 +37,8 @@ export class SearchComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private postService: PostService,
-    private userService: UserService
+    private userService: UserService,
+    private optimisticUpdateService: OptimisticUpdateService
   ) {}
 
   ngOnInit() {
@@ -75,16 +77,28 @@ export class SearchComponent implements OnInit {
 
   followUser(user: User, event: Event) {
     event.stopPropagation(); // Prevent navigation to profile
-    this.userService.followUser(user.handle).subscribe({
+    
+    // Apply optimistic update immediately
+    const optimisticUser = this.optimisticUpdateService.getOptimisticUser(user);
+    const index = this.users.findIndex(u => u.id === user.id);
+    if (index !== -1) {
+      this.users[index] = optimisticUser;
+    }
+    
+    // Make the API call
+    this.optimisticUpdateService.followUserOptimistic(user).subscribe({
       next: (updatedUser) => {
-        // Update the user in the list
-        const index = this.users.findIndex(u => u.id === user.id);
+        // Update with real response
         if (index !== -1) {
           this.users[index] = updatedUser;
         }
       },
       error: (error) => {
         console.error('Error following user:', error);
+        // Rollback to original state on error
+        if (index !== -1) {
+          this.users[index] = user;
+        }
       }
     });
   }

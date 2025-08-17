@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { User } from '../../../models';
 import { UserService } from '../../../services/user.service';
+import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { GlobalModalService } from '../../../services/global-modal.service';
 
 // Extend the User type to include our UI states
@@ -33,6 +34,7 @@ export class RecommendedUsersComponent implements OnInit {
 
   constructor(
     private userService: UserService,
+    private optimisticUpdateService: OptimisticUpdateService,
     private router: Router,
     private globalModalService: GlobalModalService,
     private elementRef: ElementRef
@@ -96,9 +98,22 @@ export class RecommendedUsersComponent implements OnInit {
     if (user.isFollowLoading) return;
 
     user.isFollowLoading = true;
-    this.userService.followUser(user.handle).subscribe({
+    
+    // Apply optimistic update immediately
+    const optimisticUser = this.optimisticUpdateService.getOptimisticUser(user);
+    const index = this.users.findIndex(u => u.handle === user.handle);
+    if (index !== -1) {
+      this.users[index] = {
+        ...optimisticUser,
+        isFollowLoading: true,
+        isHoveringFollowButton: false
+      };
+    }
+    
+    // Make the API call
+    this.optimisticUpdateService.followUserOptimistic(user).subscribe({
       next: (updatedUser) => {
-        const index = this.users.findIndex(u => u.handle === user.handle);
+        // Update with real response
         if (index !== -1) {
           this.users[index] = {
             ...updatedUser,
@@ -109,7 +124,14 @@ export class RecommendedUsersComponent implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Error following user:', error);
-        user.isFollowLoading = false;
+        // Rollback to original state on error
+        if (index !== -1) {
+          this.users[index] = {
+            ...user,
+            isFollowLoading: false,
+            isHoveringFollowButton: false
+          };
+        }
       }
     });
   }

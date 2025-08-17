@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { User } from '../models/user.model';
 
@@ -34,6 +35,36 @@ export class UserService {
   followUser(handle: string): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/handle/${handle}/follow/`, {}).pipe(
       map(user => this.addImageUrls(user)!)
+    );
+  }
+
+  // Optimistic follow with rollback on error
+  followUserOptimistic(handle: string, user: User): Observable<User> {
+    // Optimistically update the user object
+    const optimisticUser = { ...user, is_following: true, followers_count: (user.followers_count || 0) + 1 };
+    
+    return this.http.post<User>(`${this.apiUrl}/handle/${handle}/follow/`, {}).pipe(
+      map(response => this.addImageUrls(response)!),
+      catchError(error => {
+        // Rollback optimistic update on error
+        console.error('Follow failed, rolling back optimistic update:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Optimistic unfollow with rollback on error
+  unfollowUserOptimistic(handle: string, user: User): Observable<User> {
+    // Optimistically update the user object
+    const optimisticUser = { ...user, is_following: false, followers_count: Math.max((user.followers_count || 0) - 1, 0) };
+    
+    return this.http.post<User>(`${this.apiUrl}/handle/${handle}/follow/`, {}).pipe(
+      map(response => this.addImageUrls(response)!),
+      catchError(error => {
+        // Rollback optimistic update on error
+        console.error('Unfollow failed, rolling back optimistic update:', error);
+        return throwError(() => error);
+      })
     );
   }
 

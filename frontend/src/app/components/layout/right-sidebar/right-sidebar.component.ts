@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { SearchBarComponent } from '../../widgets/search-bar/search-bar.component';
 import { HashtagResult, HashtagService } from '../../../services/hashtag.service';
 import { UserService } from '../../../services/user.service';
+import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { User } from '../../../models';
 import { GlobalModalService } from '../../../services/global-modal.service';
 
@@ -74,6 +75,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     private renderer: Renderer2,
     private hashtagService: HashtagService,
     private userService: UserService,
+    private optimisticUpdateService: OptimisticUpdateService,
     private router: Router,
     private cd: ChangeDetectorRef,
     private globalModalService: GlobalModalService
@@ -257,10 +259,25 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     if (user.isFollowLoading) return;
 
     user.isFollowLoading = true;
-    this.userService.followUser(user.handle).subscribe({
+    
+    // Apply optimistic update immediately
+    const optimisticUser = this.optimisticUpdateService.getOptimisticUser(user);
+    const index = this.recommendedUsers.findIndex(u => u.handle === user.handle);
+    if (index !== -1) {
+      this.recommendedUsers[index] = {
+        ...optimisticUser,
+        isFollowLoading: true,
+        isHoveringFollowButton: false
+      };
+    }
+    
+    // Trigger change detection to show optimistic update
+    this.cd.detectChanges();
+    
+    // Make the API call
+    this.optimisticUpdateService.followUserOptimistic(user).subscribe({
       next: (updatedUser) => {
-        // Update the user in the list
-        const index = this.recommendedUsers.findIndex(u => u.handle === user.handle);
+        // Update with real response
         if (index !== -1) {
           this.recommendedUsers[index] = {
             ...updatedUser,
@@ -268,10 +285,19 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
             isHoveringFollowButton: false
           };
         }
+        this.cd.detectChanges();
       },
       error: (error) => {
         console.error('Error following user:', error);
-        user.isFollowLoading = false;
+        // Rollback to original state on error
+        if (index !== -1) {
+          this.recommendedUsers[index] = {
+            ...user,
+            isFollowLoading: false,
+            isHoveringFollowButton: false
+          };
+        }
+        this.cd.detectChanges();
       }
     });
   }

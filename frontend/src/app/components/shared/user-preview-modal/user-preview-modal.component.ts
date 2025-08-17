@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { User } from '../../../models/user.model';
 import { AuthService } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
+import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { MatDialog } from '@angular/material/dialog';
 import { UnfollowDialogComponent } from '../../dialogs/unfollow-dialogs/unfollow-dialog.component';
 
@@ -29,6 +30,7 @@ export class UserPreviewModalComponent implements OnInit, OnChanges {
   constructor(
     private authService: AuthService,
     private userService: UserService,
+    private optimisticUpdateService: OptimisticUpdateService,
     private dialog: MatDialog
   ) {}
 
@@ -68,17 +70,25 @@ export class UserPreviewModalComponent implements OnInit, OnChanges {
         }
       });
     } else {
-      // Follow the user
-      this.userService.followUser(this.user.handle).subscribe({
+      // Follow the user with optimistic update
+      if (this.user) {
+        // Apply optimistic update immediately
+        const optimisticUser = this.optimisticUpdateService.getOptimisticUser(this.user);
+        this.user.is_following = optimisticUser.is_following;
+        this.user.followers_count = optimisticUser.followers_count;
+      }
+      
+      this.optimisticUpdateService.followUserOptimistic(this.user!).subscribe({
         next: () => {
-          if (this.user) {
-            this.user.is_following = true;
-            this.user.followers_count = (this.user.followers_count || 0) + 1;
-          }
           this.isFollowLoading = false;
         },
         error: (error: any) => {
           console.error('Error following user:', error);
+          // Rollback optimistic update on error
+          if (this.user) {
+            this.user.is_following = false;
+            this.user.followers_count = Math.max((this.user.followers_count || 0) - 1, 0);
+          }
           this.isFollowLoading = false;
         }
       });
@@ -88,16 +98,24 @@ export class UserPreviewModalComponent implements OnInit, OnChanges {
   private performUnfollow(): void {
     if (!this.user) return;
 
-    this.userService.followUser(this.user.handle).subscribe({
+    // Apply optimistic update immediately
+    if (this.user) {
+      const optimisticUser = this.optimisticUpdateService.getOptimisticUser(this.user);
+      this.user.is_following = optimisticUser.is_following;
+      this.user.followers_count = optimisticUser.followers_count;
+    }
+
+    this.optimisticUpdateService.unfollowUserOptimistic(this.user!).subscribe({
       next: () => {
-        if (this.user) {
-          this.user.is_following = false;
-          this.user.followers_count = Math.max((this.user.followers_count || 0) - 1, 0);
-        }
         this.isFollowLoading = false;
       },
       error: (error: any) => {
         console.error('Error unfollowing user:', error);
+        // Rollback optimistic update on error
+        if (this.user) {
+          this.user.is_following = true;
+          this.user.followers_count = (this.user.followers_count || 0) + 1;
+        }
         this.isFollowLoading = false;
       }
     });

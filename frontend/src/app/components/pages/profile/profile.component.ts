@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { User } from '../../../models/user.model';
 import { Post } from '../../../models/post.model';
 import { UserService } from '../../../services/user.service';
+import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { PostService } from '../../../services/post.service';
 import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
@@ -72,6 +73,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     public router: Router,
     private userService: UserService,
+    private optimisticUpdateService: OptimisticUpdateService,
     public postService: PostService,
     private toastService: ToastService,
     private authService: AuthService,
@@ -559,15 +561,30 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
 
     this.isFollowLoading = true;
-    this.userService.followUser(this.user.handle).subscribe({
+    
+    // Apply optimistic update immediately
+    if (this.user) {
+      const optimisticUser = this.optimisticUpdateService.getOptimisticUser(this.user);
+      this.user = optimisticUser;
+      this.cd.markForCheck(); // Trigger change detection to show optimistic update
+    }
+    
+    // Make the API call
+    this.optimisticUpdateService.followUserOptimistic(this.user!).subscribe({
       next: (updatedUser) => {
         this.user = updatedUser;
         this.isFollowLoading = false;
+        this.cd.markForCheck();
       },
       error: (error) => {
         console.error('Error following user:', error);
+        // Rollback to original state on error
+        if (this.user) {
+          this.user = { ...this.user, is_following: !this.user.is_following };
+        }
         this.isFollowLoading = false;
         this.toastService.showError('Failed to update follow status');
+        this.cd.markForCheck();
       }
     });
   }
