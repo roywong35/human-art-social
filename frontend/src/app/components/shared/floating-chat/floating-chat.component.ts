@@ -63,10 +63,9 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       // Debug authentication state
       this.debugAuthState();
       
-      // Don't load conversations here - let the messages page handle it
-      // The floating chat just needs to display existing data
+      // Load conversations if user is authenticated
       if (user && this.authService.isAuthenticated()) {
-        // Conversations will be loaded by the messages page
+        this.chatService.loadConversations();
       } else {
 
         // Clear conversations if user logs out
@@ -83,10 +82,9 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
 
 
 
-    // Don't load conversations here - let the messages page handle it
-    // The floating chat just needs to display existing data
+    // Load conversations initially if user is authenticated
     if (this.currentUser && this.authService.isAuthenticated()) {
-      // Conversations will be loaded by the messages page
+      this.chatService.loadConversations();
     }
   }
 
@@ -243,6 +241,21 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
     }
     this.isLoadingConversation = false;
     this.currentView = 'list';
+  }
+
+  // New method specifically for back button - changes view and ensures conversations are loaded
+  goBackToList() {
+    this.currentView = 'list';
+    
+    // Ensure floating chat is expanded when going back to list
+    if (!this.isOpen) {
+      this.isOpen = true;
+    }
+    
+    // Ensure conversations are loaded when going back to list
+    if (this.currentUser && this.authService.isAuthenticated() && this.conversations.length === 0) {
+      this.chatService.loadConversations();
+    }
   }
 
   private markConversationAsRead(conversationId: number) {

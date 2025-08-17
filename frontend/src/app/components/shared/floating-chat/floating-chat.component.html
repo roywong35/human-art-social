@@ -19,11 +19,11 @@
     
     <!-- Chat View Header -->
     <div *ngIf="currentView === 'chat' && selectedConversation" class="flex items-center gap-2 flex-1 min-w-0">
-      <!-- Back button -->
-      <button (click)="closeChatRoom()"
-              class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800 p-1 rounded-full transition-colors flex-shrink-0 w-8 h-8 flex items-center justify-center">
-        <i class="fas fa-arrow-left text-base"></i>
-      </button>
+             <!-- Back button -->
+       <button (click)="goBackToList(); $event.stopPropagation()"
+               class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800 p-1 rounded-full transition-colors flex-shrink-0 w-8 h-8 flex items-center justify-center">
+         <i class="fas fa-arrow-left text-base"></i>
+       </button>
       
       <!-- User avatar -->
       <img [src]="selectedConversation.other_participant.profile_picture || defaultAvatar" 
@@ -77,9 +77,9 @@
    <div *ngIf="isOpen" 
         class="chat-content bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 overflow-hidden"
         [style.height.px]="400">
-    <!-- Chat List View -->
-    <div *ngIf="currentView === 'list'" class="flex flex-col h-full">
-             <!-- Conversations List -->
+         <!-- Chat List View -->
+     <div *ngIf="currentView === 'list'" class="flex flex-col h-full">
+              <!-- Conversations List -->
        <div class="overflow-y-auto flex-1">
         <div *ngIf="conversations.length === 0" class="p-4 text-center text-gray-500 dark:text-gray-400">
           <p>No conversations yet</p>

@@ -132,8 +132,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.unreadMessages = conversations.reduce((total, conversation) => total + conversation.unread_count, 0);
     });
 
-    // Don't load conversations here - let the messages page handle it
-    // The sidebar just needs to display unread counts from existing data
+    // Load conversations to get initial unread counts
+    this.chatService.loadConversations();
 
   }
 
