@@ -63,10 +63,10 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
       // Debug authentication state
       this.debugAuthState();
       
-      // Only load conversations if user is authenticated
+      // Don't load conversations here - let the messages page handle it
+      // The floating chat just needs to display existing data
       if (user && this.authService.isAuthenticated()) {
-
-        this.chatService.loadConversations();
+        // Conversations will be loaded by the messages page
       } else {
 
         // Clear conversations if user logs out
@@ -83,9 +83,10 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
 
 
 
-    // Only load conversations initially if user is authenticated
+    // Don't load conversations here - let the messages page handle it
+    // The floating chat just needs to display existing data
     if (this.currentUser && this.authService.isAuthenticated()) {
-      this.chatService.loadConversations();
+      // Conversations will be loaded by the messages page
     }
   }
 
@@ -313,8 +314,8 @@ export class FloatingChatComponent implements OnInit, OnDestroy {
           // Connect to WebSocket
           this.chatService.connectToConversation(conversation.id);
           
-          // Refresh conversations list
-          this.chatService.loadConversations();
+          // Don't refresh conversations list here - let the messages page handle it
+          // The new conversation will be added via WebSocket updates
         }, 100);
       }
     } catch (error) {

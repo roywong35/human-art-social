@@ -74,11 +74,10 @@ export class MessagesComponent implements OnInit, OnDestroy {
         console.log('🔍 ChatService conversations$ emitted:', conversations.length);
         this.conversations = conversations;
         
-        // Hide loading when we get actual data (not cached empty data)
-        if (conversations.length > 0) {
-          this.isLoadingConversations = false;
-          console.log('🔄 Loading state set to FALSE - got conversations');
-        }
+        // Hide loading when we get data (regardless of whether there are conversations or not)
+        // This ensures we show "No conversations" when there are truly no conversations
+        this.isLoadingConversations = false;
+        console.log('🔄 Loading state set to FALSE - got conversations data');
       },
       error: (error) => {
         console.error('❌ Error in ChatService conversations$:', error);
