@@ -7,6 +7,7 @@ import { AuthService } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
 import { Conversation, ConversationDetail, User } from '../../../models';
 import { Subscription, take } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 import { ChatRoomComponent } from '../../features/chat-room/chat-room.component';
 
@@ -69,7 +70,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
     console.log('🔄 Loading state set to TRUE in ngOnInit');
 
     // Subscribe to ChatService conversations directly
-    this.chatService.conversations$.subscribe({
+    // Use skip(1) to ignore the initial empty emission from BehaviorSubject
+    this.chatService.conversations$.pipe(skip(1)).subscribe({
       next: (conversations) => {
         console.log('🔍 ChatService conversations$ emitted:', conversations.length);
         this.conversations = conversations;
