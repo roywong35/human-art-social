@@ -234,7 +234,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   selectConversation(conversation: Conversation) {
-
+    // Prevent selecting the same conversation that's already active
+    if (this.selectedConversation?.id === conversation.id) {
+      console.log('🔄 Same conversation selected, skipping navigation');
+      return;
+    }
     
     // Show immediate loading feedback in the UI
     this.isLoadingConversation = true;

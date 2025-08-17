@@ -281,6 +281,8 @@ export class ChatService {
       },
       error: (error) => {
         console.error('Error loading messages:', error);
+        // Emit empty array on error so chat room component can show appropriate state
+        this.messagesSubject.next([]);
       }
     });
   }

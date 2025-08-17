@@ -36,6 +36,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
   selectedImages: File[] = [];
   imagePreviews: string[] = [];
   isLoadingMessages = false;
+  private currentConversationId: number | null = null;
   
   private readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   private readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -43,6 +44,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
   private messagesSub?: Subscription;
   private typingSub?: Subscription;
   private typingTimeout?: any;
+  private loadingTimeout?: any;
   private shouldScrollToBottom = true;
   
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
@@ -65,15 +67,23 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
       console.log('🔍 ChatRoom: messages$ emitted:', messages.length);
       this.messages = messages;
       
-      // Hide loading when we get actual data (not cached empty data)
-      if (messages.length > 0) {
-        this.isLoadingMessages = false;
-        console.log('🔄 ChatRoom: Loading state set to FALSE - got messages');
-      }
+      // Hide loading when we get data (regardless of whether there are messages or not)
+      // This ensures we show "No messages yet" when there are truly no messages
+      this.isLoadingMessages = false;
+      console.log('🔄 ChatRoom: Loading state set to FALSE - messages loaded');
       
       this.shouldScrollToBottom = true;
       this.cd.detectChanges();
     });
+
+    // Safety timeout: if loading takes too long, show "No messages yet"
+    this.loadingTimeout = setTimeout(() => {
+      if (this.isLoadingMessages) {
+        console.log('⏰ ChatRoom: Loading timeout reached, showing "No messages yet"');
+        this.isLoadingMessages = false;
+        this.cd.detectChanges();
+      }
+    }, 10000); // 10 second timeout
 
     // Subscribe to typing indicators
     this.typingSub = this.chatService.typingUsers$.subscribe(users => {
@@ -83,6 +93,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
 
     // Load messages for the current conversation
     if (this.conversation) {
+      this.currentConversationId = this.conversation.id;
       this.chatService.loadMessages(this.conversation.id);
     }
   }
@@ -91,16 +102,39 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     // Handle conversation changes
     if (changes.conversation) {
       if (this.conversation) {
+        // Check if this is the same conversation we're already viewing
+        if (this.currentConversationId === this.conversation.id) {
+          console.log('🔄 ChatRoom: Same conversation clicked, skipping reload');
+          return; // Don't reload the same conversation
+        }
+        
         console.log('🔄 Chat room conversation changed:', this.conversation.id);
+        
+        // Clear any existing loading timeout
+        if (this.loadingTimeout) {
+          clearTimeout(this.loadingTimeout);
+        }
         
         // Set loading state for new conversation
         this.isLoadingMessages = true;
         console.log('🔄 ChatRoom: Loading state set to TRUE for new conversation');
         
+        // Update current conversation ID
+        this.currentConversationId = this.conversation.id;
+        
         // Debug WebSocket connection
         this.chatService.testWebSocketConnection(this.conversation.id);
         
         this.chatService.loadMessages(this.conversation.id);
+        
+        // Set new loading timeout for this conversation
+        this.loadingTimeout = setTimeout(() => {
+          if (this.isLoadingMessages) {
+            console.log('⏰ ChatRoom: Loading timeout reached for new conversation, showing "No messages yet"');
+            this.isLoadingMessages = false;
+            this.cd.detectChanges();
+          }
+        }, 10000); // 10 second timeout
       } else {
         // Clear ALL chat state when conversation becomes null (back button clicked)
         console.log('🧹 Chat room clearing all state - conversation is null');
@@ -109,6 +143,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
         this.typingUsers = [];
         this.isTyping = false;
         this.isLoadingMessages = false;
+        this.currentConversationId = null;
         this.clearSelectedImages();
         this.cd.detectChanges();
       }
@@ -127,6 +162,9 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     this.typingSub?.unsubscribe();
     if (this.typingTimeout) {
       clearTimeout(this.typingTimeout);
+    }
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
     }
     // Clean up image previews
     this.imagePreviews.forEach(preview => {

@@ -260,8 +260,16 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
     user.isFollowLoading = true;
     
-    // Apply optimistic update immediately
-    const optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
+    // Apply optimistic update immediately based on current state
+    let optimisticUser: User;
+    if (user.is_following) {
+      // User is currently following, so unfollow
+      optimisticUser = this.optimisticUpdateService.getOptimisticUserForUnfollow(user);
+    } else {
+      // User is not following, so follow
+      optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
+    }
+    
     const index = this.recommendedUsers.findIndex(u => u.handle === user.handle);
     if (index !== -1) {
       this.recommendedUsers[index] = {
@@ -274,8 +282,12 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     // Trigger change detection to show optimistic update
     this.cd.detectChanges();
     
-    // Make the API call
-    this.optimisticUpdateService.followUserOptimistic(user).subscribe({
+    // Make the API call based on current state
+    const request = user.is_following
+      ? this.optimisticUpdateService.unfollowUserOptimistic(user)
+      : this.optimisticUpdateService.followUserOptimistic(user);
+
+    request.subscribe({
       next: (updatedUser) => {
         // Update with real response
         if (index !== -1) {
@@ -288,7 +300,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       },
       error: (error) => {
-        console.error('Error following user:', error);
+        console.error('Error following/unfollowing user:', error);
         // Rollback to original state on error
         if (index !== -1) {
           this.recommendedUsers[index] = {

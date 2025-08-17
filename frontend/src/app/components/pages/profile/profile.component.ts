@@ -558,18 +558,45 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
       const result = await dialogRef.afterClosed().pipe(take(1)).toPromise();
       if (!result) return; // User cancelled
+      
+      // User confirmed unfollow - apply optimistic update immediately
+      this.isFollowLoading = true;
+      if (this.user) {
+        const optimisticUser = this.optimisticUpdateService.getOptimisticUserForUnfollow(this.user);
+        this.user = optimisticUser;
+        this.cd.markForCheck(); // Trigger change detection to show optimistic update
+      }
+      
+      // Make the unfollow API call
+      this.optimisticUpdateService.unfollowUserOptimistic(this.user!).subscribe({
+        next: (updatedUser) => {
+          this.user = updatedUser;
+          this.isFollowLoading = false;
+          this.cd.markForCheck();
+        },
+        error: (error) => {
+          console.error('Error unfollowing user:', error);
+          // Rollback to original state on error
+          if (this.user) {
+            this.user = { ...this.user, is_following: true };
+          }
+          this.isFollowLoading = false;
+          this.toastService.showError('Failed to update follow status');
+          this.cd.markForCheck();
+        }
+      });
+      return; // Exit early since we handled unfollow
     }
 
+    // User is not following - apply follow optimistic update
     this.isFollowLoading = true;
-    
-    // Apply optimistic update immediately
     if (this.user) {
       const optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(this.user);
       this.user = optimisticUser;
       this.cd.markForCheck(); // Trigger change detection to show optimistic update
     }
     
-    // Make the API call
+    // Make the follow API call
     this.optimisticUpdateService.followUserOptimistic(this.user!).subscribe({
       next: (updatedUser) => {
         this.user = updatedUser;
@@ -580,7 +607,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         console.error('Error following user:', error);
         // Rollback to original state on error
         if (this.user) {
-          this.user = { ...this.user, is_following: !this.user.is_following };
+          this.user = { ...this.user, is_following: false };
         }
         this.isFollowLoading = false;
         this.toastService.showError('Failed to update follow status');
