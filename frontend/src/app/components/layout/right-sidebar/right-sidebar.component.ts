@@ -261,7 +261,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     user.isFollowLoading = true;
     
     // Apply optimistic update immediately
-    const optimisticUser = this.optimisticUpdateService.getOptimisticUser(user);
+    const optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
     const index = this.recommendedUsers.findIndex(u => u.handle === user.handle);
     if (index !== -1) {
       this.recommendedUsers[index] = {

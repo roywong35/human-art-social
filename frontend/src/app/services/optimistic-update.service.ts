@@ -29,7 +29,7 @@ export class OptimisticUpdateService {
       followers_count: user.followers_count || 0
     };
 
-    // Apply optimistic update immediately
+    // Create optimistic user state
     const optimisticUser = {
       ...user,
       is_following: true,
@@ -91,6 +91,24 @@ export class OptimisticUpdateService {
         return throwError(() => error);
       })
     );
+  }
+
+  // Get optimistic user state for follow action
+  getOptimisticUserForFollow(user: User): User {
+    return {
+      ...user,
+      is_following: true,
+      followers_count: (user.followers_count || 0) + 1
+    };
+  }
+
+  // Get optimistic user state for unfollow action
+  getOptimisticUserForUnfollow(user: User): User {
+    return {
+      ...user,
+      is_following: false,
+      followers_count: Math.max((user.followers_count || 0) - 1, 0)
+    };
   }
 
   // Get optimistic user state (returns optimistic state if pending, original state otherwise)

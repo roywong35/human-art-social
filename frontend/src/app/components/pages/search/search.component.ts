@@ -79,7 +79,7 @@ export class SearchComponent implements OnInit {
     event.stopPropagation(); // Prevent navigation to profile
     
     // Apply optimistic update immediately
-    const optimisticUser = this.optimisticUpdateService.getOptimisticUser(user);
+    const optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
     const index = this.users.findIndex(u => u.id === user.id);
     if (index !== -1) {
       this.users[index] = optimisticUser;

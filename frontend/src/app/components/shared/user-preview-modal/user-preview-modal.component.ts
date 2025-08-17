@@ -58,7 +58,7 @@ export class UserPreviewModalComponent implements OnInit, OnChanges {
     // If already following, show confirmation dialog
     if (this.user.is_following) {
       const dialogRef = this.dialog.open(UnfollowDialogComponent, {
-        data: { username: this.user.username },
+        data: { handle: this.user.handle },
         panelClass: 'unfollow-dialog-fixed'
       });
 
@@ -73,7 +73,7 @@ export class UserPreviewModalComponent implements OnInit, OnChanges {
       // Follow the user with optimistic update
       if (this.user) {
         // Apply optimistic update immediately
-        const optimisticUser = this.optimisticUpdateService.getOptimisticUser(this.user);
+        const optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(this.user);
         this.user.is_following = optimisticUser.is_following;
         this.user.followers_count = optimisticUser.followers_count;
       }
@@ -100,7 +100,7 @@ export class UserPreviewModalComponent implements OnInit, OnChanges {
 
     // Apply optimistic update immediately
     if (this.user) {
-      const optimisticUser = this.optimisticUpdateService.getOptimisticUser(this.user);
+      const optimisticUser = this.optimisticUpdateService.getOptimisticUserForUnfollow(this.user);
       this.user.is_following = optimisticUser.is_following;
       this.user.followers_count = optimisticUser.followers_count;
     }

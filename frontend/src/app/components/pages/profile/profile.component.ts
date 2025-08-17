@@ -564,7 +564,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     
     // Apply optimistic update immediately
     if (this.user) {
-      const optimisticUser = this.optimisticUpdateService.getOptimisticUser(this.user);
+      const optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(this.user);
       this.user = optimisticUser;
       this.cd.markForCheck(); // Trigger change detection to show optimistic update
     }

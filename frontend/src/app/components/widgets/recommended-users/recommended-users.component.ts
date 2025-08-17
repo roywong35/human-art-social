@@ -100,7 +100,7 @@ export class RecommendedUsersComponent implements OnInit {
     user.isFollowLoading = true;
     
     // Apply optimistic update immediately
-    const optimisticUser = this.optimisticUpdateService.getOptimisticUser(user);
+    const optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
     const index = this.users.findIndex(u => u.handle === user.handle);
     if (index !== -1) {
       this.users[index] = {

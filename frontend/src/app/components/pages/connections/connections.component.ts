@@ -122,7 +122,13 @@ export class ConnectionsComponent implements OnInit {
     user.isFollowLoading = true;
     
     // Apply optimistic update immediately
-    const optimisticUser = this.optimisticUpdateService.getOptimisticUser(user);
+    let optimisticUser: User;
+    if (user.is_following) {
+      optimisticUser = this.optimisticUpdateService.getOptimisticUserForUnfollow(user);
+    } else {
+      optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
+    }
+    
     const index = this.users.findIndex(u => u.handle === user.handle);
     if (index !== -1) {
       this.users[index] = {
