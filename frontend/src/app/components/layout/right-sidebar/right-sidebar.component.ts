@@ -300,7 +300,13 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
       
       
       // Use the new accurate positioning method (no shifting!)
-      this.globalModalService.showUserPreviewAccurate(user, targetElement);
+      this.globalModalService.showUserPreviewAccurate(user, targetElement, {
+        clearLeaveTimeout: () => {
+          if (this.leaveTimeout) {
+            clearTimeout(this.leaveTimeout);
+          }
+        }
+      });
     }, 300);
   }
 

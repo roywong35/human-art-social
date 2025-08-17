@@ -153,7 +153,13 @@ export class RecommendedUsersComponent implements OnInit {
       console.log('🎯 RecommendedUsers: Preparing accurate modal for user', user.username);
       
       // Use the new accurate positioning method (no shifting!)
-      this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement);
+      this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
+        clearLeaveTimeout: () => {
+          if (this.leaveTimeout) {
+            clearTimeout(this.leaveTimeout);
+          }
+        }
+      });
     }, 300); // 300ms delay - faster than Twitter
   }
 

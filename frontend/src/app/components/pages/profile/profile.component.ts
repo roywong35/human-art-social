@@ -551,7 +551,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       const dialogRef = this.dialog.open(UnfollowDialogComponent, {
         width: '400px',
         data: { handle: this.user.handle },
-        panelClass: 'rounded-lg'
+        panelClass: 'unfollow-dialog-fixed'
       });
 
       const result = await dialogRef.afterClosed().pipe(take(1)).toPromise();

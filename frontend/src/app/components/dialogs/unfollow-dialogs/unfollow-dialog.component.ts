@@ -5,6 +5,7 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 @Component({
   selector: 'app-unfollow-dialog',
   templateUrl: './unfollow-dialog.component.html',
+  styleUrls: ['./unfollow-dialog.component.scss'],
   standalone: true,
   imports: [CommonModule, MatDialogModule]
 })

@@ -56,7 +56,8 @@ export class UserPreviewModalComponent implements OnInit, OnChanges {
     // If already following, show confirmation dialog
     if (this.user.is_following) {
       const dialogRef = this.dialog.open(UnfollowDialogComponent, {
-        data: { username: this.user.username }
+        data: { username: this.user.username },
+        panelClass: 'unfollow-dialog-fixed'
       });
 
       dialogRef.afterClosed().subscribe(result => {

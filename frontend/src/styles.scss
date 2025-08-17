@@ -569,19 +569,22 @@ textarea {
 
 /* Follow Button Styles */
 .follow-button {
-  @apply px-4 py-1 font-bold rounded-full border-2 transition-all duration-200 flex items-center gap-2;
+  @apply px-4 py-1 font-bold rounded-full border transition-all duration-200 flex items-center gap-2;
 
   /* Not Following State */
   &:not(.following) {
-    @apply border-blue-500 bg-blue-500 text-white;  /* Changed to black */
+    @apply border-black bg-black text-white;  /* Changed to black */
     &:hover {
-      @apply bg-blue-600;  /* Darker on hover */
+      @apply bg-gray-700;  /* Darker on hover */
+    }
+    .dark & {
+      @apply border border-white;
     }
   }
 
   /* Following State */
   &.following {
-    @apply border-black bg-black text-white;
+    @apply border-gray-400 bg-white text-black;
     
     /* Dark mode: add thin white border for visibility */
     .dark & {
@@ -589,7 +592,7 @@ textarea {
     }
     
     &:hover {
-      @apply border-red-600 bg-red-600;
+      @apply border-red-600 bg-red-200 text-red-600;
       span:last-child::after {
         content: 'Unfollow';
       }
@@ -1086,7 +1089,45 @@ textarea {
 
 /* The right sidebar stays visible without z-index changes */
 
+/* Unfollow Dialog Styles - Fixed corner roundness and dark mode */
+.unfollow-dialog-fixed {
+  .mat-mdc-dialog-container {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 16px !important;
+    padding: 0 !important;
+    width: 300px !important;
+    height: fit-content !important;
+    max-width: 90vw !important;
+    margin: 0 auto !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    
+    @media (max-width: 687px) {
+      width: 90vw !important;
+      max-width: 90vw !important;
+      border-radius: 16px !important;
+    }
+    
+    .mdc-dialog__surface {
+      background: white !important;
+      box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04) !important;
+      border-radius: 16px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
+  }
+}
 
-
-
-
+/* Dark mode support for unfollow dialog */
+.dark .unfollow-dialog-fixed {
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    background: black !important;
+    box-shadow: 0 20px 25px rgba(255, 255, 255, 0.1), 0 10px 10px rgba(255, 255, 255, 0.04) !important;
+  }
+}
