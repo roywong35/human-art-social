@@ -270,6 +270,8 @@ export class PostComponent implements OnInit, OnDestroy {
 
   navigateToProfile(event: Event): void {
     event.stopPropagation();
+    // Cancel any pending modal operations before navigation
+    this.cancelPendingModal();
     if (this.checkAuth('profile')) {
       this.router.navigate([`/${this.getDisplayAuthor().handle}`]);
     }
@@ -278,6 +280,8 @@ export class PostComponent implements OnInit, OnDestroy {
   // Navigate to a specific user's profile (used in repost header username hover/click)
   protected navigateToUser(event: Event, user: User): void {
     event.stopPropagation();
+    // Cancel any pending modal operations before navigation
+    this.cancelPendingModal();
     if (this.checkAuth('profile')) {
       this.router.navigate([`/${user.handle}`]);
     }
@@ -286,9 +290,27 @@ export class PostComponent implements OnInit, OnDestroy {
   // Navigate to user profile by handle (used in reply context)
   protected navigateToUserByHandle(event: Event, handle: string): void {
     event.stopPropagation();
+    // Cancel any pending modal operations before navigation
+    this.cancelPendingModal();
     if (this.checkAuth('profile')) {
       this.router.navigate([`/${handle}`]);
     }
+  }
+
+  // Cancel any pending modal operations to prevent modal from appearing during navigation
+  private cancelPendingModal(): void {
+    // Clear any pending timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = null;
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+      this.leaveTimeout = null;
+    }
+    
+    // Hide any currently visible modal
+    this.globalModalService.hideUserPreview();
   }
 
   // Get parent author handle for reply context (handles both direct replies and reposted replies)

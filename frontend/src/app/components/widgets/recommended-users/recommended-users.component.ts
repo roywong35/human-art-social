@@ -140,7 +140,25 @@ export class RecommendedUsersComponent implements OnInit {
   }
 
   navigateToProfile(handle: string) {
+    // Cancel any pending modal operations before navigation
+    this.cancelPendingModal();
     this.router.navigate(['/', handle]);
+  }
+
+  // Cancel any pending modal operations to prevent modal from appearing during navigation
+  private cancelPendingModal(): void {
+    // Clear any pending timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = null;
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+      this.leaveTimeout = null;
+    }
+    
+    // Hide any currently visible modal
+    this.globalModalService.hideUserPreview();
   }
 
   @HostListener('window:scroll', ['$event'])
