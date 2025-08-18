@@ -41,6 +41,7 @@ def create_notification(sender, recipient, notification_type, post=None, comment
         'post_id': post.id if post else None,
         'comment_id': comment.id if comment else None,
         'created_at': notification.created_at.isoformat(),
+        'action_count': notification.action_count,  # Add action count for deduplication info
     }
     
     # Add comment data if comment exists (for comments and donations)
@@ -105,7 +106,7 @@ def create_notification(sender, recipient, notification_type, post=None, comment
 
 def create_like_notification(sender, post):
     if sender != post.author:
-        create_notification(sender, post.author, 'like', post=post)
+        create_deduplicated_notification(sender, post.author, 'like', post=post)
 
 def create_comment_notification(sender, post, comment):
     if sender != post.author:
@@ -113,11 +114,11 @@ def create_comment_notification(sender, post, comment):
 
 def create_follow_notification(sender, recipient):
     if sender != recipient:
-        create_notification(sender, recipient, 'follow')
+        create_deduplicated_notification(sender, recipient, 'follow')
 
 def create_repost_notification(sender, post):
     if sender != post.author:
-        create_notification(sender, post.author, 'repost', post=post)
+        create_deduplicated_notification(sender, post.author, 'repost', post=post)
 
 def create_donation_notification(sender, post, donation):
     """
@@ -199,16 +200,123 @@ def create_donation_notification(sender, post, donation):
 
 def create_report_received_notification(reporter, post):
     """
-    Create a notification to the reporter when their report is received
+    Create a notification to the post author when their post receives a report
     """
     try:
-        result = create_notification(sender=None, recipient=reporter, notification_type='report_received', post=post)
-        return result
+        notification = Notification.objects.create(
+            sender=reporter,
+            recipient=post.author,
+            notification_type='report_received',
+            post=post
+        )
+        print(f"🔔 Report received notification created: {notification.id}")
+        
+        # Prepare notification data for WebSocket
+        notification_data = {
+            'type': 'notification',
+            'id': notification.id,
+            'notification_type': 'report_received',
+            'sender': {
+                'id': reporter.id,
+                'username': reporter.username,
+                'avatar': reporter.profile_picture.url if reporter.profile_picture else None,
+            },
+            'post_id': post.id,
+            'created_at': notification.created_at.isoformat(),
+        }
+        
+        # Add full post data
+        notification_data['post'] = {
+            'id': post.id,
+            'content': post.content,
+            'author': {
+                'id': post.author.id,
+                'username': post.author.username,
+                'handle': post.author.handle,
+                'profile_picture': post.author.profile_picture.url if post.author.profile_picture else None,
+            },
+            'post_type': post.post_type,
+            'created_at': post.created_at.isoformat(),
+            'image': post.image.url if post.image else None,
+            'images': [
+                {
+                    'id': img.id,
+                    'image': img.image.url,
+                    'filename': img.image.name.split('/')[-1]
+                } for img in post.images.all()
+            ],
+            'is_human_drawing': post.is_human_drawing,
+        }
+        
+        # Send notification through WebSocket
+        try:
+            channel_layer = get_channel_layer()
+            group_name = f"notifications_{post.author.id}"
+            websocket_data = {
+                'type': 'notification_message',
+                'message': notification_data
+            }
+            async_to_sync(channel_layer.group_send)(group_name, websocket_data)
+        except Exception as e:
+            print(f"❌ Error sending WebSocket notification: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        
+        return notification
     except Exception as e:
         print(f"❌ Error in create_report_received_notification: {str(e)}")
         import traceback
         traceback.print_exc()
-        raise 
+        raise
+
+# ============================================================================
+# NEW: Notification Deduplication Service (24-hour window)
+# ============================================================================
+
+def find_recent_notification(sender, recipient, notification_type, hours=24):
+    """
+    Find a recent notification within the specified hours window
+    """
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    cutoff_time = timezone.now() - timedelta(hours=hours)
+    
+    return Notification.objects.filter(
+        sender=sender,
+        recipient=recipient,
+        notification_type=notification_type,
+        action_timestamp__gte=cutoff_time
+    ).first()
+
+def update_existing_notification(notification):
+    """
+    Update an existing notification's timestamp and count
+    """
+    from django.utils import timezone
+    
+    notification.action_timestamp = timezone.now()
+    notification.action_count += 1
+    notification.save(update_fields=['action_timestamp', 'action_count'])
+    
+    print(f"🔔 Updated existing notification: {notification.id} (count: {notification.action_count})")
+    return notification
+
+def create_deduplicated_notification(sender, recipient, notification_type, post=None, comment=None):
+    """
+    Create a notification with 24-hour deduplication for follow, like, and repost
+    """
+    # Only apply deduplication to specific notification types
+    if notification_type in ['follow', 'like', 'repost']:
+        # Check for recent notification
+        recent_notification = find_recent_notification(sender, recipient, notification_type, hours=24)
+        
+        if recent_notification:
+            # Update existing notification instead of creating new one
+            return update_existing_notification(recent_notification)
+    
+    # For other notification types or if no recent notification exists, create new one
+    return create_notification(sender, recipient, notification_type, post, comment)
 
 def create_post_removed_notification(post):
     """

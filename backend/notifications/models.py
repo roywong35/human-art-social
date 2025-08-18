@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+import django.utils.timezone
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
@@ -52,6 +53,16 @@ class Notification(models.Model):
     )
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # New fields for notification deduplication (24-hour window)
+    action_timestamp = models.DateTimeField(
+        default=django.utils.timezone.now,
+        help_text='Timestamp of the last action (follow, like, repost) for deduplication'
+    )
+    action_count = models.PositiveIntegerField(
+        default=1,
+        help_text='Number of times this action was performed within the deduplication window'
+    )
 
     class Meta:
         ordering = ['-created_at']
@@ -59,6 +70,7 @@ class Notification(models.Model):
             models.Index(fields=['-created_at']),
             models.Index(fields=['recipient', '-created_at']),
             models.Index(fields=['is_read', '-created_at']),
+            models.Index(fields=['recipient', 'sender', 'notification_type', 'action_timestamp'], name='notifications_dedup_idx'),
         ]
 
     def __str__(self):
