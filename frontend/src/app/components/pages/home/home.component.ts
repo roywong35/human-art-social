@@ -517,6 +517,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Clean up new posts check timer
     if (this.newPostsCheckInterval) {
       clearInterval(this.newPostsCheckInterval);
+      this.newPostsCheckInterval = null;
     }
   }
 
@@ -525,6 +526,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Clear any existing interval
     if (this.newPostsCheckInterval) {
       clearInterval(this.newPostsCheckInterval);
+      this.newPostsCheckInterval = null; // Add this line
     }
     
     // Start checking every 20 seconds
