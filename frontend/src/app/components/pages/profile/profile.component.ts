@@ -141,7 +141,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     );
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
     // Subscribe to route parameter changes
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const handle = params.get('handle');
@@ -167,83 +167,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
 
     // Subscribe to query params for tab
-    this.route.queryParams.subscribe(params => {
-      const tab = params['tab'];
+    this.route.queryParamMap.subscribe(params => {
+      const tab = params.get('tab');
       if (tab && ['posts', 'replies', 'media', 'human-art', 'likes'].includes(tab)) {
-        this.activeTab = tab as 'posts' | 'replies' | 'media' | 'human-art' | 'likes';
-        
-        // Set appropriate loading state for the tab
-        switch (this.activeTab) {
-          case 'posts':
-            this.isLoadingPosts = true;
-            break;
-          case 'replies':
-            this.isLoadingReplies = true;
-            break;
-          case 'media':
-            this.isLoadingMedia = true;
-            break;
-          case 'human-art':
-            this.isLoadingHumanArt = true;
-            break;
-          case 'likes':
-            this.isLoadingLikes = true;
-            break;
+        this.activeTab = tab as any;
+        if (this.user?.handle) {
+          this.loadTabContent(this.user.handle);
         }
-        
-        this.loadTabContent(this.user?.handle || '');
       }
     });
-  }
 
-  @HostListener('window:scroll', ['$event'])
-  onWindowScroll(): void {
-    // Only trigger pagination for posts and replies tabs
-    if (this.activeTab !== 'posts' && this.activeTab !== 'replies') return;
-
-    // Throttle scroll events
-    if (this.scrollThrottleTimeout) return;
-
-    this.scrollThrottleTimeout = setTimeout(() => {
-      const scrollPosition = window.innerHeight + window.scrollY;
-      const scrollThreshold = document.documentElement.scrollHeight * 0.8;
-
-      if (this.activeTab === 'posts') {
-        if (scrollPosition >= scrollThreshold && !this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
-
-          this.ngZone.run(() => {
-            this.loadMorePosts();
-          });
-        }
-      } else if (this.activeTab === 'replies') {
-        if (scrollPosition >= scrollThreshold && !this.isLoadingMoreReplies && this.postService.hasMoreUserReplies) {
-
-          this.ngZone.run(() => {
-            this.loadMoreReplies();
-          });
-        }
-      }
-
-      this.scrollThrottleTimeout = null;
-    }, 200);
-  }
-
-  loadMorePosts(): void {
-    if (!this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
-
-      this.isLoadingMorePosts = true;
-      this.cd.markForCheck();
-      this.postService.loadMoreUserPosts();
-    }
-  }
-
-  loadMoreReplies(): void {
-    if (!this.isLoadingMoreReplies && this.postService.hasMoreUserReplies) {
-
-      this.isLoadingMoreReplies = true;
-      this.cd.markForCheck();
-      this.postService.loadMoreUserReplies();
-    }
+    // Subscribe to follow status changes from other components
+    this.setupFollowStatusSync();
   }
 
   ngOnDestroy(): void {
@@ -269,6 +204,33 @@ export class ProfileComponent implements OnInit, OnDestroy {
     // Clear user posts and replies when leaving profile
     this.postService.clearUserPosts();
     this.postService.clearUserReplies();
+  }
+
+  private setupFollowStatusSync(): void {
+    // Subscribe to follow status changes from other components (like user preview modal)
+    // This is for when viewing someone else's profile - their follow status changes
+    this.subscriptions.add(this.optimisticUpdateService.followStatusChanges.subscribe(change => {
+      if (change && this.user && change.userHandle === this.user.handle) {
+        // Update the user's follow status and followers count
+        this.user.is_following = change.isFollowing;
+        this.user.followers_count = change.followersCount;
+        
+        // Trigger change detection to update the UI
+        this.cd.markForCheck();
+      }
+    }));
+
+    // Subscribe to following count changes ONLY when viewing your own profile
+    // This is for when viewing your own profile - your following count changes
+    this.subscriptions.add(this.optimisticUpdateService.followingCountChanges.subscribe(change => {
+      if (change && this.user && this.isCurrentUser && change.currentUserHandle === this.user.handle) {
+        // Update the current user's following count
+        this.user.following_count = change.followingCount;
+        
+        // Trigger change detection to update the UI
+        this.cd.markForCheck();
+      }
+    }));
   }
 
   private loadUserProfile(handle: string): void {
@@ -551,13 +513,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       const result = await dialogRef.afterClosed().pipe(take(1)).toPromise();
       if (!result) return; // User cancelled
       
-      // User confirmed unfollow - apply optimistic update immediately
+      // User confirmed unfollow - let the service handle optimistic updates
       this.isFollowLoading = true;
-      if (this.user) {
-        const optimisticUser = this.optimisticUpdateService.getOptimisticUserForUnfollow(this.user);
-        this.user = optimisticUser;
-        this.cd.markForCheck(); // Trigger change detection to show optimistic update
-      }
       
       // Make the unfollow API call
       this.optimisticUpdateService.unfollowUserOptimistic(this.user!).subscribe({
@@ -568,10 +525,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error unfollowing user:', error);
-          // Rollback to original state on error
-          if (this.user) {
-            this.user = { ...this.user, is_following: true };
-          }
           this.isFollowLoading = false;
           this.toastService.showError('Failed to update follow status');
           this.cd.markForCheck();
@@ -580,13 +533,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return; // Exit early since we handled unfollow
     }
 
-    // User is not following - apply follow optimistic update
+    // User is not following - let the service handle optimistic updates
     this.isFollowLoading = true;
-    if (this.user) {
-      const optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(this.user);
-      this.user = optimisticUser;
-      this.cd.markForCheck(); // Trigger change detection to show optimistic update
-    }
     
     // Make the follow API call
     this.optimisticUpdateService.followUserOptimistic(this.user!).subscribe({
@@ -597,10 +545,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error following user:', error);
-        // Rollback to original state on error
-        if (this.user) {
-          this.user = { ...this.user, is_following: false };
-        }
         this.isFollowLoading = false;
         this.toastService.showError('Failed to update follow status');
         this.cd.markForCheck();
@@ -1095,5 +1039,51 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.toastService.showError('Failed to update bookmark');
       }
     });
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll(): void {
+    // Only trigger pagination for posts and replies tabs
+    if (this.activeTab !== 'posts' && this.activeTab !== 'replies') return;
+
+    // Throttle scroll events
+    if (this.scrollThrottleTimeout) return;
+
+    this.scrollThrottleTimeout = setTimeout(() => {
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const scrollThreshold = document.documentElement.scrollHeight * 0.8;
+
+      if (this.activeTab === 'posts') {
+        if (scrollPosition >= scrollThreshold && !this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
+          this.ngZone.run(() => {
+            this.loadMorePosts();
+          });
+        }
+      } else if (this.activeTab === 'replies') {
+        if (scrollPosition >= scrollThreshold && !this.isLoadingMoreReplies && this.postService.hasMoreUserReplies) {
+          this.ngZone.run(() => {
+            this.loadMoreReplies();
+          });
+        }
+      }
+
+      this.scrollThrottleTimeout = null;
+    }, 200);
+  }
+
+  loadMorePosts(): void {
+    if (!this.isLoadingMorePosts && this.postService.hasMoreUserPosts) {
+      this.isLoadingMorePosts = true;
+      this.cd.markForCheck();
+      this.postService.loadMoreUserPosts();
+    }
+  }
+
+  loadMoreReplies(): void {
+    if (!this.isLoadingMoreReplies && this.postService.hasMoreUserReplies) {
+      this.isLoadingMoreReplies = true;
+      this.cd.markForCheck();
+      this.postService.loadMoreUserReplies();
+    }
   }
 } 

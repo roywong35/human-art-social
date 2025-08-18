@@ -11,6 +11,7 @@ import { OptimisticUpdateService } from '../../../services/optimistic-update.ser
 import { User } from '../../../models';
 import { GlobalModalService } from '../../../services/global-modal.service';
 import { AuthService } from '../../../services/auth.service';
+import { take } from 'rxjs/operators';
 
 interface TrendingTopic {
   name: string;
@@ -146,10 +147,29 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     this.loadRecommendedUsers();
     this.setupScrollHandler();
     
+    // Subscribe to follow status changes for real-time sync
+    this.setupFollowStatusSync();
+    
     // Refresh trending topics every 5 minutes
     setInterval(() => {
       this.loadTrending();  // Regular refresh every 5 minutes
     }, 5 * 60 * 1000);
+  }
+
+  private setupFollowStatusSync(): void {
+    // Subscribe to follow status changes to update user lists in real-time
+    this.optimisticUpdateService.followStatusChanges.subscribe(change => {
+      if (change && this.recommendedUsers.length > 0) {
+        // Find and update the user in the list
+        const userIndex = this.recommendedUsers.findIndex(user => user.handle === change.userHandle);
+        if (userIndex !== -1) {
+          this.recommendedUsers[userIndex].is_following = change.isFollowing;
+          this.recommendedUsers[userIndex].followers_count = change.followersCount;
+          // Trigger change detection to update the UI
+          this.cd.markForCheck();
+        }
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -268,56 +288,19 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
     user.isFollowLoading = true;
     
-    // Apply optimistic update immediately based on current state
-    let optimisticUser: User;
-    if (user.is_following) {
-      // User is currently following, so unfollow
-      optimisticUser = this.optimisticUpdateService.getOptimisticUserForUnfollow(user);
-    } else {
-      // User is not following, so follow
-      optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
-    }
-    
-    const index = this.recommendedUsers.findIndex(u => u.handle === user.handle);
-    if (index !== -1) {
-      this.recommendedUsers[index] = {
-        ...optimisticUser,
-        isFollowLoading: true,
-        isHoveringFollowButton: false
-      };
-    }
-    
-    // Trigger change detection to show optimistic update
-    this.cd.detectChanges();
-    
-    // Make the API call based on current state
+    // Let the service handle optimistic updates - the subscription will update the UI
     const request = user.is_following
       ? this.optimisticUpdateService.unfollowUserOptimistic(user)
       : this.optimisticUpdateService.followUserOptimistic(user);
 
     request.subscribe({
       next: (updatedUser) => {
-        // Update with real response
-        if (index !== -1) {
-          this.recommendedUsers[index] = {
-            ...updatedUser,
-            isFollowLoading: false,
-            isHoveringFollowButton: false
-          };
-        }
-        this.cd.detectChanges();
+        // The service will handle optimistic updates and notifications
+        user.isFollowLoading = false;
       },
       error: (error) => {
         console.error('Error following/unfollowing user:', error);
-        // Rollback to original state on error
-        if (index !== -1) {
-          this.recommendedUsers[index] = {
-            ...user,
-            isFollowLoading: false,
-            isHoveringFollowButton: false
-          };
-        }
-        this.cd.detectChanges();
+        user.isFollowLoading = false;
       }
     });
   }
@@ -336,8 +319,6 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
   // User preview modal methods
   protected onUserHover(event: MouseEvent, user: User): void {
-
-    
     // Clear any pending timeouts
     if (this.hoverTimeout) {
       clearTimeout(this.hoverTimeout);
@@ -347,21 +328,33 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     }
 
     this.hoverTimeout = setTimeout(() => {
-
-      
       const targetElement = event.target as Element;
       
-      
-      
-      // Use the new accurate positioning method (no shifting!)
-      this.globalModalService.showUserPreviewAccurate(user, targetElement, {
-        clearLeaveTimeout: () => {
-          if (this.leaveTimeout) {
-            clearTimeout(this.leaveTimeout);
-          }
+      // X approach: Pre-fetch full user data before showing modal
+      // This ensures counts and follow button state are ready immediately
+      this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
+        next: (fullUser) => {
+          // Show modal with complete data - no more delayed counts!
+          this.globalModalService.showUserPreviewAccurate(fullUser, targetElement, {
+            clearLeaveTimeout: () => {
+              if (this.leaveTimeout) {
+                clearTimeout(this.leaveTimeout);
+              }
+            }
+          });
+        },
+        error: () => {
+          // Fallback: show lightweight preview if fetch fails
+          this.globalModalService.showUserPreviewAccurate(user, targetElement, {
+            clearLeaveTimeout: () => {
+              if (this.leaveTimeout) {
+                clearTimeout(this.leaveTimeout);
+              }
+            }
+          });
         }
       });
-    }, 300);
+    }, 200); // Reduced to 200ms for X-like responsiveness
   }
 
   protected onUserHoverLeave(): void {

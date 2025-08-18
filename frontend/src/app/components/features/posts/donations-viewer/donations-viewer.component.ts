@@ -7,6 +7,8 @@ import { Donation } from '../../../../models/donation.model';
 import { ToastService } from '../../../../services/toast.service';
 import { TimeAgoPipe } from '../../../../pipes/time-ago.pipe';
 import { GlobalModalService } from '../../../../services/global-modal.service';
+import { UserService } from '../../../../services/user.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-donations-viewer',
@@ -32,7 +34,8 @@ export class DonationsViewerComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private router: Router,
     private dialog: MatDialog,
-    private globalModalService: GlobalModalService
+    private globalModalService: GlobalModalService,
+    private userService: UserService
   ) {}
 
   ngOnInit() {
@@ -105,15 +108,35 @@ export class DonationsViewerComponent implements OnInit, OnDestroy {
       // Store the hovered element for accurate positioning
       this.lastHoveredElement = event.target as Element;
       
-      // Use the new accurate positioning method (no shifting!)
-      this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
-        clearLeaveTimeout: () => {
-          if (this.leaveTimeout) {
-            clearTimeout(this.leaveTimeout);
+      // X approach: Pre-fetch full user data before showing modal
+      // This ensures counts and follow button state are ready immediately
+      this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
+        next: (fullUser) => {
+          // Show modal with complete data - no more delayed counts!
+          if (this.lastHoveredElement) {
+            this.globalModalService.showUserPreviewAccurate(fullUser, this.lastHoveredElement, {
+              clearLeaveTimeout: () => {
+                if (this.leaveTimeout) {
+                  clearTimeout(this.leaveTimeout);
+                }
+              }
+            });
+          }
+        },
+        error: () => {
+          // Fallback: show lightweight preview if fetch fails
+          if (this.lastHoveredElement) {
+            this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
+              clearLeaveTimeout: () => {
+                if (this.leaveTimeout) {
+                  clearTimeout(this.leaveTimeout);
+                }
+              }
+            });
           }
         }
       });
-    }, 300); // 300ms delay - faster than Twitter
+    }, 200); // Reduced to 200ms for X-like responsiveness
   }
 
   onUserHoverLeave(): void {

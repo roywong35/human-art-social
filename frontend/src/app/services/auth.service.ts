@@ -14,6 +14,12 @@ export class AuthService {
   private baseApiUrl = `${environment.apiUrl}/api`;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  
+  // Public method to get current user value
+  public getCurrentUser(): User | null {
+    return this.currentUserSubject.value;
+  }
+  
   private tokenKey = 'token';
 
   private accessToken: string | null = null;

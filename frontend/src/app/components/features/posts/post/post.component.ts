@@ -878,55 +878,31 @@ export class PostComponent implements OnInit, OnDestroy {
       // Store the hovered element for accurate positioning
       this.lastHoveredElement = event.target as Element;
       
-      
-      // For reposts: fetch first and then show to avoid flash of 0 counts/bio
-      if (this.post.post_type === 'repost') {
-        this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
-          next: (fullUser) => {
-            this.globalModalService.showUserPreviewAccurate(fullUser, this.lastHoveredElement!, {
-              clearLeaveTimeout: () => {
-                if (this.leaveTimeout) {
-                  clearTimeout(this.leaveTimeout);
-                }
+      // X approach: Pre-fetch full user data before showing modal
+      // This ensures counts and follow button state are ready immediately
+      this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
+        next: (fullUser) => {
+          // Show modal with complete data - no more delayed counts!
+          this.globalModalService.showUserPreviewAccurate(fullUser, this.lastHoveredElement!, {
+            clearLeaveTimeout: () => {
+              if (this.leaveTimeout) {
+                clearTimeout(this.leaveTimeout);
               }
-            });
-          },
-          error: () => {
-            // Fallback: show lightweight preview if fetch fails
-            this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement!, {
-              clearLeaveTimeout: () => {
-                if (this.leaveTimeout) {
-                  clearTimeout(this.leaveTimeout);
-                }
+            }
+          });
+        },
+        error: () => {
+          // Fallback: show lightweight preview if fetch fails
+          this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement!, {
+            clearLeaveTimeout: () => {
+              if (this.leaveTimeout) {
+                clearTimeout(this.leaveTimeout);
               }
-            });
-          }
-        });
-      } else {
-        // Normal posts: show immediately, then enrich in place to keep responsiveness
-        this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
-          clearLeaveTimeout: () => {
-            if (this.leaveTimeout) {
-              clearTimeout(this.leaveTimeout);
             }
-          }
-        });
-
-        // Fetch full profile (followers/following/bio) for accurate stats
-        this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
-          next: (fullUser) => {
-            // If modal is still visible, update content without repositioning to avoid flicker
-            const state = this.globalModalService.getCurrentState();
-            if (state.isVisible) {
-              this.globalModalService.showUserPreview(fullUser, state.position);
-            }
-          },
-          error: () => {
-            // Ignore errors; keep lightweight preview
-          }
-        });
-      }
-    }, 300); // 300ms delay - faster than Twitter
+          });
+        }
+      });
+    }, 200); // Reduced to 200ms for X-like responsiveness
   }
 
   protected onUserHoverLeave(): void {

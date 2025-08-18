@@ -6,6 +6,7 @@ import { UserService } from '../../../services/user.service';
 import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { GlobalModalService } from '../../../services/global-modal.service';
 import { AuthService } from '../../../services/auth.service';
+import { take } from 'rxjs';
 
 
 interface UserWithState extends User {
@@ -76,6 +77,23 @@ export class ConnectionsComponent implements OnInit {
         this.isLoading = false;
       }
     });
+
+    // Subscribe to follow status changes for real-time sync
+    this.setupFollowStatusSync();
+  }
+
+  private setupFollowStatusSync(): void {
+    // Subscribe to follow status changes to update user lists in real-time
+    this.optimisticUpdateService.followStatusChanges.subscribe(change => {
+      if (change && this.users.length > 0) {
+        // Find and update the user in the list
+        const userIndex = this.users.findIndex(user => user.handle === change.userHandle);
+        if (userIndex !== -1) {
+          this.users[userIndex].is_following = change.isFollowing;
+          this.users[userIndex].followers_count = change.followersCount;
+        }
+      }
+    });
   }
 
   setTab(tab: 'followers' | 'following'): void {
@@ -129,49 +147,19 @@ export class ConnectionsComponent implements OnInit {
 
     user.isFollowLoading = true;
     
-    // Apply optimistic update immediately
-    let optimisticUser: User;
-    if (user.is_following) {
-      optimisticUser = this.optimisticUpdateService.getOptimisticUserForUnfollow(user);
-    } else {
-      optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
-    }
-    
-    const index = this.users.findIndex(u => u.handle === user.handle);
-    if (index !== -1) {
-      this.users[index] = {
-        ...optimisticUser,
-        isFollowLoading: true,
-        isHoveringFollowButton: false
-      };
-    }
-    
-    // Make the API call
+    // Let the service handle optimistic updates - the subscription will update the UI
     const request = user.is_following
       ? this.optimisticUpdateService.unfollowUserOptimistic(user)
       : this.optimisticUpdateService.followUserOptimistic(user);
 
     request.subscribe({
       next: (updatedUser) => {
-        // Update with real response
-        if (index !== -1) {
-          this.users[index] = {
-            ...updatedUser,
-            isFollowLoading: false,
-            isHoveringFollowButton: false
-          };
-        }
+        // The subscription in setupFollowStatusSync will handle UI updates
+        user.isFollowLoading = false;
       },
       error: (error: unknown) => {
         console.error('Error following/unfollowing user:', error);
-        // Rollback to original state on error
-        if (index !== -1) {
-          this.users[index] = {
-            ...user,
-            isFollowLoading: false,
-            isHoveringFollowButton: false
-          };
-        }
+        user.isFollowLoading = false;
       }
     });
   }
@@ -196,15 +184,35 @@ export class ConnectionsComponent implements OnInit {
       // Store the hovered element for accurate positioning
       this.lastHoveredElement = event.target as Element;
       
-      // Use the new accurate positioning method (no shifting!)
-      this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
-        clearLeaveTimeout: () => {
-          if (this.leaveTimeout) {
-            clearTimeout(this.leaveTimeout);
+      // X approach: Pre-fetch full user data before showing modal
+      // This ensures counts and follow button state are ready immediately
+      this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
+        next: (fullUser) => {
+          // Show modal with complete data - no more delayed counts!
+          if (this.lastHoveredElement) {
+            this.globalModalService.showUserPreviewAccurate(fullUser, this.lastHoveredElement, {
+              clearLeaveTimeout: () => {
+                if (this.leaveTimeout) {
+                  clearTimeout(this.leaveTimeout);
+                }
+              }
+            });
+          }
+        },
+        error: () => {
+          // Fallback: show lightweight preview if fetch fails
+          if (this.lastHoveredElement) {
+            this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
+              clearLeaveTimeout: () => {
+                if (this.leaveTimeout) {
+                  clearTimeout(this.leaveTimeout);
+                }
+              }
+            });
           }
         }
       });
-    }, 300); // 300ms delay - faster than Twitter
+    }, 200); // Reduced to 200ms for X-like responsiveness
   }
 
   protected onUserHoverLeave(): void {

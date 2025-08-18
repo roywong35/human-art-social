@@ -52,19 +52,33 @@ export class SearchComponent implements OnInit {
       this.currentUser = user;
     });
 
-    // Subscribe to query parameter changes
-    this.route.queryParams.subscribe(params => {
-      const query = params['q'] || '';
-      this.searchQuery = query.trim();
-      this.isHashtagSearch = this.searchQuery.startsWith('#');
-      
-      if (this.searchQuery) {
-        this.hasSearched = true;
-        this.performSearch(this.searchQuery);
-      } else {
-        this.posts = [];
-        this.users = [];
-        this.hasSearched = false;
+    // Subscribe to follow status changes for real-time sync
+    this.setupFollowStatusSync();
+
+    // Get the initial tab from the URL if present
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab && ['top', 'latest', 'people', 'posts'].includes(tab)) {
+      this.activeTab = tab as any;
+    }
+
+    // Get the initial search query from the URL if present
+    const query = this.route.snapshot.queryParamMap.get('q');
+    if (query) {
+      this.searchQuery = query;
+      this.performSearch(query);
+    }
+  }
+
+  private setupFollowStatusSync(): void {
+    // Subscribe to follow status changes to update user lists in real-time
+    this.optimisticUpdateService.followStatusChanges.subscribe(change => {
+      if (change && this.users.length > 0) {
+        // Find and update the user in the list
+        const userIndex = this.users.findIndex(user => user.handle === change.userHandle);
+        if (userIndex !== -1) {
+          this.users[userIndex].is_following = change.isFollowing;
+          this.users[userIndex].followers_count = change.followersCount;
+        }
       }
     });
   }
@@ -88,39 +102,17 @@ export class SearchComponent implements OnInit {
   followUser(user: User, event: Event) {
     event.stopPropagation(); // Prevent navigation to profile
     
-    // Apply optimistic update immediately based on current state
-    let optimisticUser: User;
-    if (user.is_following) {
-      // User is currently following, so unfollow
-      optimisticUser = this.optimisticUpdateService.getOptimisticUserForUnfollow(user);
-    } else {
-      // User is not following, so follow
-      optimisticUser = this.optimisticUpdateService.getOptimisticUserForFollow(user);
-    }
-    
-    const index = this.users.findIndex(u => u.id === user.id);
-    if (index !== -1) {
-      this.users[index] = optimisticUser;
-    }
-    
-    // Make the API call based on current state
+    // Let the service handle optimistic updates
     const request = user.is_following
       ? this.optimisticUpdateService.unfollowUserOptimistic(user)
       : this.optimisticUpdateService.followUserOptimistic(user);
 
     request.subscribe({
       next: (updatedUser) => {
-        // Update with real response
-        if (index !== -1) {
-          this.users[index] = updatedUser;
-        }
+        // The service will handle optimistic updates and notifications
       },
       error: (error) => {
         console.error('Error following/unfollowing user:', error);
-        // Rollback to original state on error
-        if (index !== -1) {
-          this.users[index] = user;
-        }
       }
     });
   }
