@@ -43,7 +43,6 @@ export class ChatNotificationService {
 
     const token = this.authService.getToken();
     if (!token) {
-      console.log('No token available for chat notifications WebSocket');
       return;
     }
 

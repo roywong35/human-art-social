@@ -79,6 +79,7 @@
               
               <!-- Follow Button -->
               <button 
+                *ngIf="shouldShowFollowButton(user)"
                 (click)="followUser(user, $event)"
                 (mouseenter)="onFollowButtonHover(user, true)"
                 (mouseleave)="onFollowButtonHover(user, false)"

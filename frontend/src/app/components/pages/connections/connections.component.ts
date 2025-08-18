@@ -5,6 +5,7 @@ import { User } from '../../../models';
 import { UserService } from '../../../services/user.service';
 import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { GlobalModalService } from '../../../services/global-modal.service';
+import { AuthService } from '../../../services/auth.service';
 
 
 interface UserWithState extends User {
@@ -26,6 +27,7 @@ export class ConnectionsComponent implements OnInit {
   error: string | null = null;
   username = '';
   handle = '';
+  currentUser: User | null = null;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   // User preview modal
@@ -38,10 +40,16 @@ export class ConnectionsComponent implements OnInit {
     public router: Router,
     private userService: UserService,
     private optimisticUpdateService: OptimisticUpdateService,
-    private globalModalService: GlobalModalService
+    private globalModalService: GlobalModalService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    // Get current user first
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+
     const handle = this.route.snapshot.paramMap.get('handle');
     if (!handle) {
       this.error = 'Invalid profile URL';
@@ -216,5 +224,13 @@ export class ConnectionsComponent implements OnInit {
       clearTimeout(this.leaveTimeout);
     }
     this.globalModalService.onModalHover();
+  }
+
+  /**
+   * Check if the follow button should be shown for a user
+   * Hide the follow button if the current user is viewing their own connections
+   */
+  shouldShowFollowButton(user: UserWithState): boolean {
+    return !!(this.currentUser && user.handle !== this.currentUser.handle);
   }
 } 

@@ -84,7 +84,8 @@
                   <div class="text-gray-500 dark:[color:var(--color-text-secondary)] truncate hover:underline cursor-pointer text-[15px]">{{'@'}}{{ user.handle }}</div>
                 </div>
               </div>
-              <button (click)="followUser(user, $event)" 
+              <button *ngIf="shouldShowFollowButton(user)"
+                      (click)="followUser(user, $event)" 
                       class="follow-button flex-shrink-0"
                       [class.following]="user.is_following"
                       (mouseenter)="onFollowButtonHover(user, true)"

@@ -10,6 +10,7 @@ import { UserService } from '../../../services/user.service';
 import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
 import { User } from '../../../models';
 import { GlobalModalService } from '../../../services/global-modal.service';
+import { AuthService } from '../../../services/auth.service';
 
 interface TrendingTopic {
   name: string;
@@ -41,6 +42,7 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   recommendedUsers: UserWithState[] = [];
   isLoadingUsers = false;
   readonly maxRecommendedUsers = 3;
+  currentUser: User | null = null;
   defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM3MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
   // User preview modal - now handled by GlobalModalService
@@ -78,7 +80,8 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     private optimisticUpdateService: OptimisticUpdateService,
     private router: Router,
     private cd: ChangeDetectorRef,
-    private globalModalService: GlobalModalService
+    private globalModalService: GlobalModalService,
+    private authService: AuthService
   ) {
     this.scrollHandler = () => {
       const rect = this.elementRef.nativeElement.getBoundingClientRect();
@@ -134,6 +137,11 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Get current user first
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+
     this.loadTrending(true);  // Force fresh data on page load
     this.loadRecommendedUsers();
     this.setupScrollHandler();
@@ -316,6 +324,14 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
 
   onFollowButtonHover(user: UserWithState, isHovering: boolean) {
     user.isHoveringFollowButton = isHovering;
+  }
+
+  /**
+   * Check if the follow button should be shown for a user
+   * Hide the follow button if the current user is viewing their own profile
+   */
+  shouldShowFollowButton(user: UserWithState): boolean {
+    return !!(this.currentUser && user.handle !== this.currentUser.handle);
   }
 
   // User preview modal methods

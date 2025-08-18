@@ -7,6 +7,7 @@ import { User } from '../../../models/user.model';
 import { PostService } from '../../../services/post.service';
 import { UserService } from '../../../services/user.service';
 import { OptimisticUpdateService } from '../../../services/optimistic-update.service';
+import { AuthService } from '../../../services/auth.service';
 import { PostComponent } from '../../features/posts/post/post.component';
 import { SearchBarComponent } from '../../widgets/search-bar/search-bar.component';
 import { forkJoin } from 'rxjs';
@@ -33,15 +34,24 @@ export class SearchComponent implements OnInit {
   isLoadingPosts: boolean = false;
   isLoadingUsers: boolean = false;
 
+  // Current user tracking
+  currentUser: User | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private postService: PostService,
     private userService: UserService,
-    private optimisticUpdateService: OptimisticUpdateService
+    private optimisticUpdateService: OptimisticUpdateService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
+    // Get current user first
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+
     // Subscribe to query parameter changes
     this.route.queryParams.subscribe(params => {
       const query = params['q'] || '';
@@ -122,6 +132,14 @@ export class SearchComponent implements OnInit {
   onFollowButtonHover(user: User, isHovering: boolean) {
     // Handle follow button hover effects if needed
     // This method is called from the template to match right-sidebar behavior
+  }
+
+  /**
+   * Check if the follow button should be shown for a user
+   * Hide the follow button if the current user is viewing their own profile
+   */
+  shouldShowFollowButton(user: User): boolean {
+    return !!(this.currentUser && user.handle !== this.currentUser.handle);
   }
 
   // Get limited users for Top tab (max 3)
