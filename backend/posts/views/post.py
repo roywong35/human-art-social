@@ -1078,6 +1078,9 @@ class PostViewSet(viewsets.ModelViewSet):
         Compares the latest post in DB with the latest post the frontend has.
         Returns count of new posts (capped at 35).
         """
+        import time
+        overall_start = time.time()
+        
         try:
             # Get the latest post ID that frontend has
             latest_frontend_post_id = request.query_params.get('latest_post_id')
@@ -1097,9 +1100,13 @@ class PostViewSet(viewsets.ModelViewSet):
                 )
             
             # Get the user's queryset (respecting following preferences)
+            queryset_start = time.time()
             user_queryset = self.get_queryset()
+            queryset_time = time.time() - queryset_start
+            print(f"⏱️ get_queryset() took: {queryset_time * 1000:.2f}ms")
             
             # Apply the same filters as feed/explore endpoints
+            filter_start = time.time()
             post_type = request.query_params.get('tab', 'for-you')
             
             if post_type == 'human-drawing':
@@ -1116,17 +1123,29 @@ class PostViewSet(viewsets.ModelViewSet):
                     Q(is_human_drawing=True, is_verified=True)  # Verified human drawings
                 ).exclude(post_type='reply')  # Exclude replies
             
+            filter_time = time.time() - filter_start
+            print(f"⏱️ Filtering took: {filter_time * 1000:.2f}ms")
+            
             # Count posts newer than the frontend's latest post
+            count_start = time.time()
             new_posts_count = user_queryset.filter(
                 id__gt=latest_frontend_post_id
             ).count()
+            count_time = time.time() - count_start
+            print(f"⏱️ Count query took: {count_time * 1000:.2f}ms")
             
             # Cap at 35 posts maximum
             new_posts_count = min(new_posts_count, 35)
             
             # Get the actual latest post ID from DB for comparison
+            latest_start = time.time()
             latest_db_post = user_queryset.first()
             latest_db_post_id = latest_db_post.id if latest_db_post else None
+            latest_time = time.time() - latest_start
+            print(f"⏱️ Latest post query took: {latest_time * 1000:.2f}ms")
+            
+            overall_time = time.time() - overall_start
+            print(f"⏱️ Total check_new_posts took: {overall_time * 1000:.2f}ms")
             
             return Response({
                 'has_new_posts': new_posts_count > 0,
@@ -1139,5 +1158,56 @@ class PostViewSet(viewsets.ModelViewSet):
             print(f"❌ Error in check_new_posts: {str(e)}")
             return Response(
                 {'error': 'An error occurred while checking for new posts'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['GET'])
+    def test_db_speed(self, request):
+        """
+        Simple performance test endpoint to measure database query speed.
+        Returns basic timing information for debugging.
+        """
+        import time
+        
+        try:
+            start_time = time.time()
+            
+            # Test 1: Simple count query
+            total_posts = Post.objects.count()
+            count_time = time.time() - start_time
+            
+            # Test 2: Simple ID check (similar to check_new_posts but minimal)
+            start_time_2 = time.time()
+            latest_post = Post.objects.order_by('-id').first()
+            latest_id_time = time.time() - start_time_2
+            
+            # Test 3: Simple filter (like check_new_posts but without complex logic)
+            start_time_3 = time.time()
+            new_posts_count = Post.objects.filter(id__gt=86).count()
+            filter_time = time.time() - start_time_3
+            
+            return Response({
+                'test_results': {
+                    'total_posts_count': {
+                        'time_ms': round(count_time * 1000, 2),
+                        'result': total_posts
+                    },
+                    'latest_post_id': {
+                        'time_ms': round(latest_id_time * 1000, 2),
+                        'result': latest_post.id if latest_post else None
+                    },
+                    'simple_filter': {
+                        'time_ms': round(filter_time * 1000, 2),
+                        'result': new_posts_count
+                    }
+                },
+                'total_time_ms': round((count_time + latest_id_time + filter_time) * 1000, 2),
+                'timestamp': time.time()
+            })
+            
+        except Exception as e:
+            print(f"❌ Error in test_db_speed: {str(e)}")
+            return Response(
+                {'error': f'Test failed: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
