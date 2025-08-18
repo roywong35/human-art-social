@@ -43,12 +43,10 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private globalModalService: GlobalModalService
   ) {
-    console.log('🔔 NotificationsComponent initialized');
     
     // Subscribe to global notifications list (similar to chat service)
     const notificationsSub = this.notificationService.notifications$.subscribe({
       next: (notifications) => {
-        console.log('🔔 Global notifications updated:', notifications);
         this.notifications = notifications;
       },
       error: (error) => {
@@ -59,11 +57,9 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log('🔔 NotificationsComponent ngOnInit');
     // Only load notifications if user is authenticated
     this.notificationService.unreadCount$.subscribe(count => {
       if (count !== undefined) {
-        console.log('🔔 User authenticated, loading notifications');
         this.loadNotifications();
       }
     });
@@ -84,7 +80,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.notificationService.getNotifications(this.currentPage).subscribe({
       next: (response) => {
-        console.log('🔔 Notifications loaded:', response.results);
         // Update local notifications array as fallback
         if (this.currentPage === 1) {
           this.notifications = response.results;
@@ -109,7 +104,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     
     this.notificationService.getNotifications(this.currentPage).subscribe({
       next: (response) => {
-        console.log('🔔 More notifications loaded:', response.results);
         // Update local notifications array
         this.notifications = [...this.notifications, ...response.results];
         this.hasMore = response.results.length === 20; // 20 notifications per page as requested

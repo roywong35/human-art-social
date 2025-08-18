@@ -52,12 +52,10 @@ export class ScheduledPostService implements OnDestroy {
 
   private async publishScheduledPost(scheduledPost: ScheduledPost): Promise<void> {
     try {
-      console.log('Publishing scheduled post:', scheduledPost.id);
       
       // Use the DraftService's publishScheduledPost method which calls the backend API
       await this.draftService.publishScheduledPost(scheduledPost.id).toPromise();
       
-      console.log('Scheduled post published successfully:', scheduledPost.id);
       this.toastService.showSuccess('Your scheduled post has been published!');
       
     } catch (error) {

@@ -42,14 +42,12 @@ export class UserPreviewModalService {
 
     this.modalRef = componentRef;
 
-    console.log('🎯 Modal created at app root level');
   }
 
   hideModal(): void {
     if (this.modalRef) {
       this.modalRef.destroy();
       this.modalRef = null;
-      console.log('🎯 Modal destroyed');
     }
   }
 

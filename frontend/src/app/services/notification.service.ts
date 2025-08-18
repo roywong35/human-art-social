@@ -101,18 +101,12 @@ export class NotificationService {
     private http: HttpClient,
     private authService: AuthService
   ) {
-    console.log('🔔 NotificationService initialized');
-    console.log('🔔 Access token exists:', !!localStorage.getItem('access_token'));
-    
     // Don't call these immediately - wait for user to be authenticated
     this.authService.currentUser$.subscribe((user: any) => {
-      console.log('🔔 User auth state changed:', user ? 'authenticated' : 'not authenticated');
       if (user) {
-        console.log('🔔 User authenticated, connecting WebSocket and loading unread count');
         this.connectWebSocket();
         this.loadUnreadCount();
       } else {
-        console.log('🔔 User not authenticated, disconnecting WebSocket');
         this.disconnectWebSocket();
       }
     });
@@ -158,12 +152,10 @@ export class NotificationService {
         url: wsUrl,
         openObserver: {
           next: () => {
-            console.log('✅ Notifications WebSocket connected');
           }
         },
         closeObserver: {
           next: (event) => {
-            console.log('❌ Notifications WebSocket disconnected');
             this.socket$ = undefined;
             // Attempt to reconnect after 5 seconds
             setTimeout(() => {
@@ -195,7 +187,7 @@ export class NotificationService {
             created_at: message.created_at
           };
           
-                    this.notificationEvents.next(notification);
+          this.notificationEvents.next(notification);
           
           // Note: WebSocket notifications are individual, not grouped.
           // The grouping logic is handled by the HTTP GET list endpoint.
@@ -225,7 +217,6 @@ export class NotificationService {
 
   getNotifications(page: number = 1): Observable<{ results: GroupedNotification[], count: number }> {
     const url = `${this.apiUrl}/?page=${page}&page_size=20`;
-    console.log('🔔 Fetching notifications from:', url);
     
     return this.http.get<{ results: GroupedNotification[], count: number }>(url).pipe(
       map(response => {
@@ -234,7 +225,6 @@ export class NotificationService {
         return { ...response, results: processedResults };
       }),
       tap(response => {
-        console.log('🔔 API response received:', response);
         if (page === 1) {
           // First page - replace notifications list
           this.notifications.next(response.results);
@@ -249,10 +239,8 @@ export class NotificationService {
 
   getUnreadCount(): Observable<number> {
     const url = `${this.apiUrl}/unread_count/`;
-    console.log('🔔 Fetching unread count from:', url);
     
     return this.http.get<{ count: number }>(url).pipe(
-      tap(response => console.log('🔔 Unread count response:', response)),
       map(response => response.count)
     );
   }

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -7,11 +7,21 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Count
-from .serializers import UserCreateSerializer, UserProfileSerializer, UserUpdateSerializer, UserSerializer, ChangePasswordSerializer
+from django.db.models import Q, Count, F
+from .serializers import (
+    UserCreateSerializer, 
+    UserProfileSerializer, 
+    UserUpdateSerializer,
+    UserSerializer,
+    ChangePasswordSerializer
+)
 from posts.serializers import PostSerializer
 from posts.models import Post
 from notifications.services import create_follow_notification
+from notifications.models import Notification
+from notifications.serializers import NotificationSerializer
+from django.utils import timezone
+from datetime import timedelta
 
 User = get_user_model()
 
@@ -50,7 +60,6 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(user)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'])
     def follow(self, request, handle=None):
         """
         Follow or unfollow a user
@@ -73,21 +82,18 @@ class UserViewSet(viewsets.ModelViewSet):
             'is_following': not was_following  # Return the new follow state
         })
 
-    @action(detail=True, methods=['get'])
     def followers(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         followers = user.followers.all()
         serializer = UserProfileSerializer(followers, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'])
     def following(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         following = user.following.all()
         serializer = UserProfileSerializer(following, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'])
     def posts(self, request, handle=None):
         try:
             # Get the user and handle 404 if not found
@@ -117,14 +123,12 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    @action(detail=True, methods=['get'])
     def liked_posts(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         posts = Post.objects.filter(likes=user).order_by('-created_at')
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'])
     def bookmarked_posts(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         posts = Post.objects.filter(bookmarks=user).order_by('-created_at')

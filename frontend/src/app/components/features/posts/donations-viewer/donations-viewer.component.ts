@@ -58,8 +58,6 @@ export class DonationsViewerComponent implements OnInit, OnDestroy {
 
     this.donationService.getPostDonations(this.data.post.id).subscribe({
       next: (donations) => {
-        console.log('🎯 Donations received:', donations);
-        console.log('🎯 First donation amount:', donations[0]?.amount, typeof donations[0]?.amount);
         this.donations = donations;
         this.loading = false;
       },
@@ -78,7 +76,6 @@ export class DonationsViewerComponent implements OnInit, OnDestroy {
 
   getTotalDonations(): number {
     const total = this.donations.reduce((total, donation) => total + donation.amount, 0);
-    console.log('🎯 Total donations calculated:', total, typeof total);
     return total;
   }
 
@@ -107,8 +104,6 @@ export class DonationsViewerComponent implements OnInit, OnDestroy {
     this.hoverTimeout = setTimeout(() => {
       // Store the hovered element for accurate positioning
       this.lastHoveredElement = event.target as Element;
-      
-      console.log('🎯 Donations viewer: Preparing accurate modal for user', user.username);
       
       // Use the new accurate positioning method (no shifting!)
       this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {

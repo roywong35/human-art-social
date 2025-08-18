@@ -128,13 +128,7 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Initialize scheduled post service (constructor starts the background checking)
-    // The service is injected and started automatically, no additional action needed
-    console.log('App initialized with scheduled post service');
-    
-    // Hide initial loading after Angular has fully initialized and CSS is loaded
-    // This prevents FOUC (Flash of Unstyled Content)
-    
+
     // Wait for both Angular initialization AND stylesheet loading
     Promise.all([
       // Wait for Angular to be fully ready

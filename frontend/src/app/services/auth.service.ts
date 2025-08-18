@@ -28,7 +28,6 @@ export class AuthService {
     private router: Router
   ) {
     this.loadStoredAuth();
-    console.log('Auth Service initialized with API URL:', this.baseApiUrl);
 
     // Try to load user from local storage
     const token = this.getToken();
@@ -129,7 +128,6 @@ export class AuthService {
         
         // Start Twitter/X style token management
         this.setupProactiveRefresh();
-        console.log('✅ Login successful - proactive token refresh enabled');
       }),
       catchError((error: HttpErrorResponse) => {
         console.error('Login error:', error);
@@ -168,7 +166,6 @@ export class AuthService {
       refresh: this.refreshToken
     }).pipe(
       tap(response => {
-        console.log('Token refresh successful');
         this.accessToken = response.access;
         localStorage.setItem('access_token', response.access);
         
@@ -282,7 +279,6 @@ export class AuthService {
    */
   private scheduleRefresh(delay: number): void {
     this.refreshTimer = setTimeout(() => {
-      console.log('🔄 Proactive token refresh triggered');
       this.refreshAccessToken().subscribe({
         next: () => {
           this.setupProactiveRefresh(); // Schedule next refresh
@@ -301,7 +297,6 @@ export class AuthService {
    * Enhanced logout that clears all timers
    */
   logout(): void {
-    console.log('Logging out, clearing auth data and timers');
     
     // Clear proactive refresh timers
     if (this.refreshTimer) {

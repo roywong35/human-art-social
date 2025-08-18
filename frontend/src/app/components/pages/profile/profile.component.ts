@@ -85,7 +85,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.postService.userPosts$.subscribe({
         next: (posts: Post[]) => {
-
           if (!posts) {
             this.posts = [];
           } else {
@@ -112,7 +111,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.postService.userReplies$.subscribe({
         next: async (replies: Post[]) => {
-
           if (!replies) {
             this.replies = [];
           } else {
@@ -381,8 +379,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private async buildParentChain(reply: Post) {
-
-    
     // Initialize empty chain for this reply
     this.replyParentChains[reply.id] = [];
 
@@ -391,13 +387,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
       // Get all posts except the last one (which is the current reply)
       const chainIds = reply.conversation_chain.slice(0, -1);
 
-      
       for (const postId of chainIds) {
         try {
           // Use getPostById since parent posts can be from different users
           const chainPost = await this.postService.getPostById(postId).toPromise();
           if (chainPost) {
-
             this.replyParentChains[reply.id].push(chainPost);
           }
         } catch (error) {
@@ -405,8 +399,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
         }
       }
     }
-
-
   }
 
   private loadUserMedia(handle: string): void {

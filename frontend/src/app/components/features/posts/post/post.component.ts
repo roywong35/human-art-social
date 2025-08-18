@@ -173,17 +173,7 @@ export class PostComponent implements OnInit, OnDestroy {
   }
 
   ngDoCheck() {
-    // Log any changes to the post
-    // console.log('Post component: Checking post state:', { 
-    //   id: this.post.id, 
-    //   type: this.post.post_type,
-    //   isLiked: this.post.is_liked,
-    //   likesCount: this.post.likes_count,
-    //   isReposted: this.post.is_reposted,
-    //   repostsCount: this.post.reposts_count,
-    //   isBookmarked: this.post.is_bookmarked,
-    //   referencedPostId: this.post.post_type === 'repost' ? this.post.referenced_post?.id : undefined
-    // });
+
   }
 
   protected get canReply(): boolean {

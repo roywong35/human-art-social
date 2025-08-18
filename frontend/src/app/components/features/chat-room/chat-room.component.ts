@@ -78,11 +78,8 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
       if (this.conversation) {
         // Check if this is the same conversation we're already viewing
         if (this.currentConversationId === this.conversation.id) {
-          console.log('🔄 ChatRoom: Same conversation clicked, skipping reload');
           return; // Don't reload the same conversation
         }
-        
-        console.log('🔄 ChatRoom: Loading conversation:', this.conversation.id);
         
         // Set loading state for new conversation
         this.isLoadingMessages = true;
@@ -95,13 +92,11 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
            this.messagesSub = this.chatService.messages$.pipe(
              skip(1) // Skip the first emission (initial empty value) from BehaviorSubject
            ).subscribe(messages => {
-             console.log('🔍 ChatRoom: messages$ emitted:', messages.length, 'messages');
              
              this.messages = messages;
              
              // Hide loading when we get data
              this.isLoadingMessages = false;
-             console.log('🔄 ChatRoom: Loading complete, messages:', messages.length);
              
              this.shouldScrollToBottom = true;
              this.cd.detectChanges();
@@ -116,7 +111,6 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
         // No more stupid timeout - let the actual API response control the loading state
       } else {
         // Clear ALL chat state when conversation becomes null (back button clicked)
-        console.log('🧹 Chat room clearing all state - conversation is null');
         this.messages = [];
         this.messageContent = '';
         this.typingUsers = [];

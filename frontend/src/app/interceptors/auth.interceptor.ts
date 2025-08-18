@@ -27,9 +27,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Handle ALL 401 errors with token refresh (not just 'token_not_valid')
-      if (error.status === 401) {
-
+      // Handle 401 errors with token refresh, but NOT for login attempts
+      if (error.status === 401 && !req.url.includes('/token/')) {
         return handleTokenRefresh(router, req, next);
       }
       return throwError(() => error);

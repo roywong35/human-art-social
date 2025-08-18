@@ -520,16 +520,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Add a method to log posts for debugging
-  private logPosts(message: string) {
-    console.log(message, this.posts.map(p => ({
-      id: p.id,
-      type: p.post_type,
-      content: p.content,
-      refId: p.referenced_post?.id
-    })));
-  }
-
   // New posts check methods
   private startNewPostsCheck(): void {
     // Clear any existing interval

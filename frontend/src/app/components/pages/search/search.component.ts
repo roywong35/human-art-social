@@ -168,7 +168,6 @@ export class SearchComponent implements OnInit {
         posts: this.postService.searchPosts(postSearchTerm)
       }).subscribe({
         next: (results) => {
-          console.log('Search results received:', results);
           this.users = results.users;
           // Filter out reposted posts from search results
           this.posts = results.posts.filter(post => post.post_type !== 'repost');
@@ -196,7 +195,6 @@ export class SearchComponent implements OnInit {
     
     this.postService.searchPosts(query).subscribe({
       next: (posts) => {
-        console.log('Post search results received:', posts);
         // Filter out reposted posts from search results
         this.posts = posts.filter(post => post.post_type !== 'repost');
         this.isLoading = false;

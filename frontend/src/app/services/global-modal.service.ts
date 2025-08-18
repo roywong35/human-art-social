@@ -163,13 +163,6 @@ export class GlobalModalService {
       // Show above - modal bottom edge touches element top edge (preferred)
       y = rect.top - modalHeight;
       chosenPosition = 'above (preferred)';
-      console.log('🔧 DEBUG: Positioning ABOVE:', {
-        elementTop: rect.top,
-        modalHeight: modalHeight,
-        calculatedY: y,
-        modalBottom: y + modalHeight,
-        gapBetweenModalAndElement: rect.top - (y + modalHeight)
-      });
     } else if (spaceBelow >= modalHeight + 16) {
       // Show below - modal top edge touches element bottom edge (fallback)
       y = rect.bottom;

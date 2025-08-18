@@ -115,12 +115,11 @@ export class ChatService {
       url: wsUrl,
       openObserver: {
         next: () => {
-          console.log(`✅ WebSocket connected to conversation ${conversationId}`);
+          // WebSocket connected successfully
         }
       },
       closeObserver: {
         next: (event) => {
-          console.log(`❌ WebSocket disconnected from conversation ${conversationId}`);
           // Auto-reconnect after 3 seconds if the connection was not closed intentionally
           if (event.code !== 1000) { // 1000 is normal closure
             setTimeout(() => {
@@ -184,15 +183,8 @@ export class ChatService {
 
   // State management methods
   loadConversations() {
-    console.log('🔍 ChatService.loadConversations() called');
-    console.log('🔍 API URL:', `${this.apiUrl}/conversations/`);
-    
     this.getConversations().subscribe({
       next: (conversations) => {
-        console.log('🔍 API Response - conversations:', conversations);
-        console.log('🔍 API Response - conversations.length:', conversations?.length || 0);
-        console.log('🔍 Emitting to conversationsSubject');
-        
         this.conversationsSubject.next(conversations);
         
         // X-style preloading: Start loading conversation details for all conversations
@@ -275,11 +267,8 @@ export class ChatService {
   }
 
   loadMessages(conversationId: number) {
-    console.log('🚀 ChatService: Loading messages for conversation:', conversationId);
-    
     this.getMessages(conversationId).subscribe({
       next: (response) => {
-        console.log('✅ ChatService: Got', response.results.length, 'messages');
         this.messagesSubject.next(response.results.reverse()); // Reverse for chat display
       },
       error: (error) => {
@@ -442,10 +431,6 @@ export class ChatService {
   testWebSocketConnection(conversationId: number) {
     const token = this.authService.getToken();
     const isAuthenticated = this.authService.isAuthenticated();
-    
-    if (token) {
-      console.log('- Token preview:', token.substring(0, 20) + '...');
-    }
     
     return { isAuthenticated, hasToken: !!token };
   }

@@ -52,34 +52,26 @@ export class MessagesComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log('🚀 MessagesComponent ngOnInit() called');
-    console.log('🚀 Initial isLoadingConversations:', this.isLoadingConversations);
-    console.log('🚀 Initial conversations.length:', this.conversations.length);
-    
     // Initialize responsive state
     this.checkScreenSize();
 
     // Get current user
     this.currentUserSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      console.log('👤 Current user set:', user?.username);
     });
 
     // Set loading state FIRST before subscribing
     this.isLoadingConversations = true;
-    console.log('🔄 Loading state set to TRUE in ngOnInit');
 
     // Subscribe to ChatService conversations directly
     // Use skip(1) to ignore the initial empty emission from BehaviorSubject
     this.chatService.conversations$.pipe(skip(1)).subscribe({
       next: (conversations) => {
-        console.log('🔍 ChatService conversations$ emitted:', conversations.length);
         this.conversations = conversations;
         
         // Hide loading when we get data (regardless of whether there are conversations or not)
         // This ensures we show "No conversations" when there are truly no conversations
         this.isLoadingConversations = false;
-        console.log('🔄 Loading state set to FALSE - got conversations data');
       },
       error: (error) => {
         console.error('❌ Error in ChatService conversations$:', error);
@@ -113,8 +105,6 @@ export class MessagesComponent implements OnInit, OnDestroy {
         }
       }
     });
-
-
   }
 
   ngOnDestroy() {
@@ -157,10 +147,6 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   loadConversations() {
-    console.log('🔍 loadConversations() called');
-    console.log('🔍 Current state - isLoadingConversations:', this.isLoadingConversations);
-    console.log('🔍 Current state - conversations.length:', this.conversations.length);
-    
     // Use ChatService's state management instead of local array
     this.chatService.loadConversations();
   }
@@ -237,7 +223,6 @@ export class MessagesComponent implements OnInit, OnDestroy {
   selectConversation(conversation: Conversation) {
     // Prevent selecting the same conversation that's already active
     if (this.selectedConversation?.id === conversation.id) {
-      console.log('🔄 Same conversation selected, skipping navigation');
       return;
     }
     

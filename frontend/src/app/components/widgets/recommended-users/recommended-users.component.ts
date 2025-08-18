@@ -41,12 +41,10 @@ export class RecommendedUsersComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log('RecommendedUsersComponent initialized');
     this.loadUsers();
   }
 
   loadUsers() {
-    console.log('RecommendedUsersComponent: Loading users...');
     this.isLoading = true;
     this.currentPage = 1;
     this.hasMore = true;
@@ -70,7 +68,6 @@ export class RecommendedUsersComponent implements OnInit {
   loadMoreUsers() {
     if (this.isLoadingMore || !this.hasMore) return;
 
-    console.log('RecommendedUsersComponent: Loading more users...');
     this.isLoadingMore = true;
     this.currentPage++;
     
@@ -183,8 +180,6 @@ export class RecommendedUsersComponent implements OnInit {
     this.hoverTimeout = setTimeout(() => {
       // Store the hovered element for accurate positioning
       this.lastHoveredElement = event.target as Element;
-      
-      console.log('🎯 RecommendedUsers: Preparing accurate modal for user', user.username);
       
       // Use the new accurate positioning method (no shifting!)
       this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {

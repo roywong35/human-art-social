@@ -99,7 +99,6 @@ export class LandingComponent implements OnInit, OnDestroy {
           this.hasMore && 
           !this.loading && 
           !this.loadingMore) {
-        console.log('🌍 Loading more public posts due to scroll');
         this.loadMore();
       }
     }, 100); // 100ms throttle

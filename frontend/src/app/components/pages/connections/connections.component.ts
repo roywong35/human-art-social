@@ -188,8 +188,6 @@ export class ConnectionsComponent implements OnInit {
       // Store the hovered element for accurate positioning
       this.lastHoveredElement = event.target as Element;
       
-      console.log('🎯 Connections: Preparing accurate modal for user', user.username);
-      
       // Use the new accurate positioning method (no shifting!)
       this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
         clearLeaveTimeout: () => {

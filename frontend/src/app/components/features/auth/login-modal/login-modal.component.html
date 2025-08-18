@@ -30,13 +30,18 @@
           <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
           <input
             [(ngModel)]="email"
+            (ngModelChange)="onEmailChange()"
             id="email"
             name="email"
             type="email"
             required
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            [class.error]="emailError"
+            class="form-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             placeholder="Enter your email"
           />
+          <div *ngIf="emailError" class="email-error">
+            {{ emailError }}
+          </div>
         </div>
 
         <!-- Password input -->
@@ -44,17 +49,18 @@
           <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
           <input
             [(ngModel)]="password"
+            (ngModelChange)="onPasswordChange()"
             id="password"
             name="password"
             type="password"
             required
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            class="form-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             placeholder="Enter your password"
           />
         </div>
 
         <!-- Error message -->
-        <div *ngIf="loginError" class="text-red-500 text-sm text-center">
+        <div *ngIf="loginError" class="error-message text-red-500 text-sm text-center bg-red-50 border border-red-200 rounded-md p-3">
           {{ loginError }}
         </div>
 

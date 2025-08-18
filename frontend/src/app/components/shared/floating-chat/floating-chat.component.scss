@@ -21,10 +21,6 @@
     }
   }
   
-  // Message box header - no competing shadows
-  .message-box-header {
-    // Removed shadow to let main container shadow be prominent
-  }
 }
 
 .chat-content {
@@ -441,10 +437,6 @@
     }
   }
   
-  // Message box header - no competing shadows in dark mode
-  .message-box-header {
-    // Removed shadow to let main container shadow be prominent
-  }
   
   // Dark scrollbar
   .overflow-y-auto {

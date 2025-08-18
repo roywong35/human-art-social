@@ -16,11 +16,9 @@ export class ReportStatusDialogComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log('🔔 ReportStatusDialogComponent initialized');
   }
 
   close() {
-    console.log('🔔 ReportStatusDialogComponent closing');
     this.dialogRef.close();
   }
 } 

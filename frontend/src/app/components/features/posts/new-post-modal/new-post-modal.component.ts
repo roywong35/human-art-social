@@ -184,10 +184,8 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
 
         const imageFiles = this.images.map(img => img.file).filter(file => file instanceof File) as File[];
 
-        console.log('Creating scheduled post with data:', scheduledPostData);
         try {
           const savedScheduledPost = await this.draftService.addScheduledPost(scheduledPostData, imageFiles).toPromise();
-          console.log('Post scheduled with ID:', savedScheduledPost?.id);
           
           this.toastService.showSuccess('Post scheduled successfully');
           this.dialogRef.close({ scheduled: true });
@@ -459,7 +457,6 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
 
     this.draftService.saveDraft(draftData, imageFiles).subscribe({
       next: (savedDraft) => {
-        console.log('Draft saved with ID:', savedDraft.id);
         this.toastService.showSuccess('Your post is saved');
       },
       error: (error) => {
