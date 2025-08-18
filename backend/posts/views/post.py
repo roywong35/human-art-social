@@ -1147,6 +1147,15 @@ class PostViewSet(viewsets.ModelViewSet):
             overall_time = time.time() - overall_start
             print(f"⏱️ Total check_new_posts took: {overall_time * 1000:.2f}ms")
             
+            # Server location debugging
+            import datetime
+            import os
+            server_time = datetime.datetime.now()
+            server_timezone = server_time.astimezone()
+            print(f"🌍 Server timezone: {server_timezone.tzinfo}")
+            print(f"🌍 Server time: {server_time.isoformat()}")
+            print(f"🌍 Render region: {os.getenv('RENDER_REGION', 'Unknown')}")
+            
             return Response({
                 'has_new_posts': new_posts_count > 0,
                 'new_posts_count': new_posts_count,
@@ -1168,6 +1177,8 @@ class PostViewSet(viewsets.ModelViewSet):
         Returns basic timing information for debugging.
         """
         import time
+        import datetime
+        import os
         
         try:
             start_time = time.time()
@@ -1186,6 +1197,10 @@ class PostViewSet(viewsets.ModelViewSet):
             new_posts_count = Post.objects.filter(id__gt=86).count()
             filter_time = time.time() - start_time_3
             
+            # Server location debugging
+            server_time = datetime.datetime.now()
+            server_timezone = server_time.astimezone()
+            
             return Response({
                 'test_results': {
                     'total_posts_count': {
@@ -1200,6 +1215,14 @@ class PostViewSet(viewsets.ModelViewSet):
                         'time_ms': round(filter_time * 1000, 2),
                         'result': new_posts_count
                     }
+                },
+                'server_info': {
+                    'server_time': server_time.isoformat(),
+                    'server_timezone': str(server_timezone.tzinfo),
+                    'server_timezone_offset': server_timezone.strftime('%z'),
+                    'render_region': os.getenv('RENDER_REGION', 'Unknown'),
+                    'render_service_id': os.getenv('RENDER_SERVICE_ID', 'Unknown'),
+                    'render_instance_id': os.getenv('RENDER_INSTANCE_ID', 'Unknown')
                 },
                 'total_time_ms': round((count_time + latest_id_time + filter_time) * 1000, 2),
                 'timestamp': time.time()
