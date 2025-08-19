@@ -22,8 +22,8 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # Parse ALLOWED_HOSTS from environment variable
 ALLOWED_HOSTS = [
-    'human-art-social-production.up.railway.app',
-    '*.railway.app',
+    'human-art-social-backend.onrender.com',
+    '*.onrender.com',
     'human-art-social.vercel.app'
 ]
 
@@ -237,8 +237,8 @@ CORS_ALLOW_HEADERS = [
 
 # CSRF settings for production
 CSRF_TRUSTED_ORIGINS = [
-    "https://human-art-social-production.up.railway.app",
-    "https://*.railway.app",
+    "https://human-art-social-backend.onrender.com",
+    "https://*.onrender.com",
     "https://human-art-social.vercel.app",
     "https://*.vercel.app",
 ]
