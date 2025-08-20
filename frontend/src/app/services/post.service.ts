@@ -786,8 +786,5 @@ export class PostService {
     return this.http.get<any>(`${this.baseUrl}/posts/check_new_posts/`, { params });
   }
 
-  // Performance test method (DEBUG ONLY)
-  testDbSpeed(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/posts/test_db_speed/`);
-  }
+
 } 

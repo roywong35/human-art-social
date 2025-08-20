@@ -584,62 +584,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Performance Test Methods (DEBUG ONLY)
-  runPerformanceTests(): void {
-    console.log('🧪 Starting performance tests...');
-    
-    // Test 1: Simple check_new_posts call
-    this.testCheckNewPosts();
-    
-    // Test 2: Simple database test (if we add the endpoint)
-    setTimeout(() => {
-      this.testSimpleDbQuery();
-    }, 1000);
-  }
 
-  private testCheckNewPosts(): void {
-    const start = performance.now();
-    console.log('⏱️ Testing check_new_posts endpoint...');
-    
-    this.postService.checkNewPosts(86, this.activeTab).subscribe({
-      next: (response: any) => {
-        const end = performance.now();
-        const duration = end - start;
-        console.log(`✅ check_new_posts took: ${duration.toFixed(2)}ms`);
-        console.log('Response:', response);
-        
-        if (duration > 500) {
-          console.warn(`⚠️ SLOW: check_new_posts took ${duration.toFixed(2)}ms (should be < 100ms)`);
-        }
-      },
-      error: (error) => {
-        const end = performance.now();
-        const duration = end - start;
-        console.error(`❌ check_new_posts failed after ${duration.toFixed(2)}ms:`, error);
-      }
-    });
-  }
 
-  private testSimpleDbQuery(): void {
-    const start = performance.now();
-    console.log('⏱️ Testing simple database query endpoint...');
-    
-    this.postService.testDbSpeed().subscribe({
-      next: (response: any) => {
-        const end = performance.now();
-        const duration = end - start;
-        console.log(`✅ Simple DB test took: ${duration.toFixed(2)}ms`);
-        console.log('Response:', response);
-        
-        if (duration > 200) {
-          console.warn(`⚠️ SLOW: Simple DB test took ${duration.toFixed(2)}ms (should be < 100ms)`);
-        }
-      },
-      error: (error) => {
-        const end = performance.now();
-        const duration = end - start;
-        console.error(`❌ Simple DB test failed after ${duration.toFixed(2)}ms:`, error);
-      }
-    });
-  }
+
 } 
