@@ -33,7 +33,7 @@
   </div>
 
   <!-- Main Container -->
-  <div class="max-w-[1275px] mx-auto min-h-screen pb-14 min-[1265px]:pb-0 min-[500px]:pt-0">
+  <div class="max-w-[1275px] mx-auto min-h-screen pb-14 min-[1265px]:pb-0 min-[500px]:pt-0 px-0 min-[600px]:px-0">
     <!-- Flex Container for Content -->
     <div class="flex min-h-screen">
       <!-- Left Sidebar - Hidden below 1265px -->
@@ -77,18 +77,18 @@
 
       <!-- Centered Content Container (when left sidebar is hidden) -->
       <div class="flex-1 min-[1265px]:flex-none flex justify-center">
-        <div class="flex gap-0 min-[1050px]:gap-8 w-full min-[600px]:w-auto">
+        <div class="flex gap-0 min-[1050px]:gap-8 w-full justify-center">
           <!-- Main Content -->
-          <main class="w-full min-[600px]:w-[600px] border-x border-gray-200 dark:border-gray-800 bg-white dark:bg-black relative z-10">
+          <main class="w-full min-[600px]:w-[600px] min-[600px]:border-x border-gray-200 dark:border-gray-800 bg-white dark:bg-black relative z-10">
             <!-- Tab Navigation -->
             <div #tabNavigation class="bg-white/90 dark:bg-black/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-40 w-full max-w-[598px] mx-auto transition-all duration-300 ease-out min-[500px]:fixed min-[500px]:top-0" 
                  [class.-translate-y-full]="isTabHidden && isMobile">
-              <div class="flex">
+              <div class="flex w-full">
                 <button 
                   [ngClass]="{
                     'text-blue-500': activeTab === 'for-you'
                   }"
-                  class="w-[299px] py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white relative"
+                  class="flex-1 py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white relative"
                   (click)="setActiveTab('for-you')"
                 >
                   For You
@@ -98,7 +98,7 @@
                   [ngClass]="{
                     'text-blue-500': activeTab === 'human-drawing'
                   }"
-                  class="w-[299px] py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white relative"
+                  class="flex-1 py-3.5 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:text-white relative"
                   (click)="setActiveTab('human-drawing')"
                 >
                   Human Art
@@ -109,7 +109,8 @@
 
             <div class="divide-y divide-gray-200 dark:divide-gray-800"
                  [ngClass]="{
-                   'pt-16': !isMobile
+                   'pt-16': !isMobile,
+                   'pt-0': isMobile
                  }">
               <!-- Initial loading state -->
               <div *ngIf="loading && currentPage === 1" class="p-8 flex justify-center">
