@@ -142,7 +142,7 @@
         <div class="divide-y divide-gray-200 dark:divide-gray-700">
           <div *ngFor="let post of posts; trackBy: trackByPostId" class="post-container">
             <app-post [post]="post" 
-                      [isInSearchResults]="true"
+                      [isInSearchResults]="false"
                       [showReplyContext]="post.post_type === 'reply' || (post.post_type === 'repost' && post.referenced_post?.post_type === 'reply')"
                       (postReported)="onPostReported($event)"
                       class="block"></app-post>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { User } from '../models/user.model';
-import { Router, NavigationStart } from '@angular/router';
+import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 
 export interface UserPreviewModalState {
@@ -18,19 +18,45 @@ export interface ModalHoverCallback {
   providedIn: 'root'
 })
 export class GlobalModalService {
+  // Navigation guard flag to prevent modals from showing during navigation
+  private isNavigating = false;
+  private lastNavigationTime = 0;
+
   constructor(
     private router: Router
   ) {
     // Listen for navigation events to hide modal when user navigates away
     this.router.events.pipe(
-      filter(event => event instanceof NavigationStart)
-    ).subscribe(() => {
-      // Clear all pending modal operations when navigation starts
-      this.clearAllPendingOperations();
+      filter(event => event instanceof NavigationStart || event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError)
+    ).subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        // Set navigation flag and clear all pending modal operations
+        this.isNavigating = true;
+        this.lastNavigationTime = Date.now();
+        this.clearAllPendingOperations();
+      } else {
+        // Reset navigation flag when navigation completes (success, cancel, or error)
+        this.resetNavigationFlag();
+      }
     });
 
     // Listen for clicks on navigation elements to clear modal immediately
     document.addEventListener('click', (event) => {
+      const target = event.target as Element;
+      if (target && (
+        target.closest('a[href]') || 
+        target.closest('.username-text') ||
+        target.closest('.handle-text')
+      )) {
+        // Set navigation flag and clear modal when clicking on navigation elements
+        this.isNavigating = true;
+        this.lastNavigationTime = Date.now();
+        this.clearAllPendingOperations();
+      }
+    });
+
+    // Also listen for mousedown events to catch navigation earlier
+    document.addEventListener('mousedown', (event) => {
       const target = event.target as Element;
       if (target && (
         target.closest('a[href]') || 
@@ -39,7 +65,9 @@ export class GlobalModalService {
         target.closest('.username-text') ||
         target.closest('.handle-text')
       )) {
-        // Clear modal when clicking on navigation elements
+        // Set navigation flag on mousedown to prevent modal loading during click
+        this.isNavigating = true;
+        this.lastNavigationTime = Date.now();
         this.clearAllPendingOperations();
       }
     });
@@ -69,6 +97,17 @@ export class GlobalModalService {
    * Uses provided user data which now includes bio from public posts endpoint
    */
   showUserPreviewAccurate(user: User, targetElement: Element, hoverCallback?: ModalHoverCallback): void {
+    // Navigation guard: prevent modal from showing if navigation is in progress
+    if (this.isNavigating) {
+      return;
+    }
+    
+    // Additional check: prevent modal if navigation happened recently (within 500ms)
+    const timeSinceLastNavigation = Date.now() - this.lastNavigationTime;
+    if (timeSinceLastNavigation < 500) {
+      return;
+    }
+    
     // Store the callback for modal hover
     this.hoverCallback = hoverCallback || null;
     
@@ -142,6 +181,26 @@ export class GlobalModalService {
     
     // Clear the hover callback
     this.hoverCallback = null;
+  }
+
+  /**
+   * Reset navigation flag after navigation completes
+   * This allows modals to work again on the new page
+   */
+  resetNavigationFlag(): void {
+    // Add a delay to prevent modals from showing immediately after navigation
+    // This covers the modal hover delay (200ms) plus some buffer
+    setTimeout(() => {
+      this.isNavigating = false;
+    }, 300); // 300ms delay to cover modal hover delay + buffer
+  }
+
+  /**
+   * Check if navigation is currently in progress
+   * This can be used by components to prevent modal loading
+   */
+  isNavigationInProgress(): boolean {
+    return this.isNavigating;
   }
 
   /**

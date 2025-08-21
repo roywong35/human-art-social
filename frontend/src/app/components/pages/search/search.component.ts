@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,7 +11,7 @@ import { AuthService } from '../../../services/auth.service';
 import { PostComponent } from '../../features/posts/post/post.component';
 import { SearchBarComponent } from '../../widgets/search-bar/search-bar.component';
 import { GlobalModalService } from '../../../services/global-modal.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 @Component({
@@ -21,7 +21,7 @@ import { take } from 'rxjs/operators';
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss']
 })
-export class SearchComponent implements OnInit {
+export class SearchComponent implements OnInit, OnDestroy {
   searchQuery: string = '';
   posts: Post[] = [];
   users: User[] = [];
@@ -44,6 +44,9 @@ export class SearchComponent implements OnInit {
   private leaveTimeout: any;
   private lastHoveredElement: Element | null = null;
 
+  // Subscriptions for cleanup
+  private subscriptions: Subscription[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -56,30 +59,44 @@ export class SearchComponent implements OnInit {
 
   ngOnInit() {
     // Get current user first
-    this.authService.currentUser$.subscribe(user => {
+    const userSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
+    this.subscriptions.push(userSub);
 
     // Subscribe to follow status changes for real-time sync
     this.setupFollowStatusSync();
 
-    // Get the initial tab from the URL if present
-    const tab = this.route.snapshot.queryParamMap.get('tab');
-    if (tab && ['top', 'latest', 'people', 'posts'].includes(tab)) {
-      this.activeTab = tab as any;
-    }
-
-    // Get the initial search query from the URL if present
-    const query = this.route.snapshot.queryParamMap.get('q');
-    if (query) {
-      this.searchQuery = query;
-      this.performSearch(query);
-    }
+    // Subscribe to route parameter changes to handle navigation to search page
+    const routeSub = this.route.queryParams.subscribe(params => {
+      const query = params['q'];
+      const tab = params['tab'];
+      
+      // Update search query if it changed
+      if (query !== this.searchQuery) {
+        this.searchQuery = query || '';
+        if (query) {
+          this.performSearch(query);
+        } else {
+          // Clear results if no query
+          this.posts = [];
+          this.users = [];
+          this.hasSearched = false;
+          this.isLoading = false;
+        }
+      }
+      
+      // Update active tab if it changed
+      if (tab && ['top', 'latest', 'people', 'posts'].includes(tab)) {
+        this.activeTab = tab as any;
+      }
+    });
+    this.subscriptions.push(routeSub);
   }
 
   private setupFollowStatusSync(): void {
     // Subscribe to follow status changes to update user lists in real-time
-    this.optimisticUpdateService.followStatusChanges.subscribe(change => {
+    const followSub = this.optimisticUpdateService.followStatusChanges.subscribe(change => {
       if (change && this.users.length > 0) {
         // Find and update the user in the list
         const userIndex = this.users.findIndex(user => user.handle === change.userHandle);
@@ -89,6 +106,7 @@ export class SearchComponent implements OnInit {
         }
       }
     });
+    this.subscriptions.push(followSub);
   }
 
   goBack() {
@@ -304,5 +322,19 @@ export class SearchComponent implements OnInit {
       clearTimeout(this.leaveTimeout);
     }
     this.globalModalService.onModalHover();
+  }
+
+  ngOnDestroy(): void {
+    // Clear all timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+    
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
   }
 } 
