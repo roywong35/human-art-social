@@ -1,6 +1,6 @@
 <!-- Floating Create Post Button - Only visible on mobile homepage when scrolling down -->
 <div *ngIf="isVisible" 
-     class="floating-create-post-button fixed bottom-20 right-6 z-50 md:hidden">
+     class="floating-create-post-button fixed bottom-20 right-5 z-50 md:hidden">
   
   <button (click)="openCreatePostModal()"
           [title]="isHumanArtTab ? 'Create a Human Art post' : 'Create a new post'"

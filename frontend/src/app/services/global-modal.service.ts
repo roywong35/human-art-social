@@ -85,6 +85,11 @@ export class GlobalModalService {
   private hoverCallback: ModalHoverCallback | null = null;
 
   showUserPreview(user: User, position: { x: number, y: number }): void {
+    // Mobile check: prevent modal from showing on devices smaller than 500px
+    if (window.innerWidth < 500) {
+      return;
+    }
+    
     this.modalState.next({
       isVisible: true,
       user,
@@ -97,6 +102,11 @@ export class GlobalModalService {
    * Uses provided user data which now includes bio from public posts endpoint
    */
   showUserPreviewAccurate(user: User, targetElement: Element, hoverCallback?: ModalHoverCallback): void {
+    // Mobile check: prevent modal from showing on devices smaller than 500px
+    if (window.innerWidth < 500) {
+      return;
+    }
+    
     // Navigation guard: prevent modal from showing if navigation is in progress
     if (this.isNavigating) {
       return;
