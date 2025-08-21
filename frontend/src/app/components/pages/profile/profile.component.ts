@@ -513,18 +513,36 @@ export class ProfileComponent implements OnInit, OnDestroy {
       const result = await dialogRef.afterClosed().pipe(take(1)).toPromise();
       if (!result) return; // User cancelled
       
-      // User confirmed unfollow - let the service handle optimistic updates
+      // User confirmed unfollow - apply optimistic update immediately
       this.isFollowLoading = true;
+      
+      // Apply optimistic update immediately for instant UI feedback
+      if (this.user) {
+        this.user = {
+          ...this.user,
+          is_following: false,
+          followers_count: Math.max((this.user.followers_count || 0) - 1, 0)
+        };
+        this.cd.markForCheck();
+      }
       
       // Make the unfollow API call
       this.optimisticUpdateService.unfollowUserOptimistic(this.user!).subscribe({
         next: (updatedUser) => {
-          this.user = updatedUser;
+          // API call successful - no need to update UI again
           this.isFollowLoading = false;
           this.cd.markForCheck();
         },
         error: (error) => {
           console.error('Error unfollowing user:', error);
+          // Revert optimistic update on error
+          if (this.user) {
+            this.user = {
+              ...this.user,
+              is_following: true,
+              followers_count: (this.user.followers_count || 0) + 1
+            } as User;
+          }
           this.isFollowLoading = false;
           this.toastService.showError('Failed to update follow status');
           this.cd.markForCheck();
@@ -533,18 +551,36 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return; // Exit early since we handled unfollow
     }
 
-    // User is not following - let the service handle optimistic updates
+    // User is not following - apply optimistic update immediately
     this.isFollowLoading = true;
+    
+    // Apply optimistic update immediately for instant UI feedback
+    if (this.user) {
+      this.user = {
+        ...this.user,
+        is_following: true,
+        followers_count: (this.user.followers_count || 0) + 1
+      };
+      this.cd.markForCheck();
+    }
     
     // Make the follow API call
     this.optimisticUpdateService.followUserOptimistic(this.user!).subscribe({
       next: (updatedUser) => {
-        this.user = updatedUser;
+        // API call successful - no need to update UI again
         this.isFollowLoading = false;
         this.cd.markForCheck();
       },
-      error: (error) => {
+              error: (error) => {
         console.error('Error following user:', error);
+        // Revert optimistic update on error
+        if (this.user) {
+          this.user = {
+            ...this.user,
+            is_following: false,
+            followers_count: Math.max((this.user.followers_count || 0) - 1, 0)
+          } as User;
+        }
         this.isFollowLoading = false;
         this.toastService.showError('Failed to update follow status');
         this.cd.markForCheck();
