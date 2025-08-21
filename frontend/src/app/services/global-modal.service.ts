@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { User } from '../models/user.model';
+import { Router, NavigationStart } from '@angular/router';
+import { filter, takeUntil } from 'rxjs/operators';
 
 export interface UserPreviewModalState {
   isVisible: boolean;
@@ -16,6 +18,33 @@ export interface ModalHoverCallback {
   providedIn: 'root'
 })
 export class GlobalModalService {
+  constructor(
+    private router: Router
+  ) {
+    // Listen for navigation events to hide modal when user navigates away
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationStart)
+    ).subscribe(() => {
+      // Clear all pending modal operations when navigation starts
+      this.clearAllPendingOperations();
+    });
+
+    // Listen for clicks on navigation elements to clear modal immediately
+    document.addEventListener('click', (event) => {
+      const target = event.target as Element;
+      if (target && (
+        target.closest('a[href]') || 
+        target.closest('[routerLink]') || 
+        target.closest('button[type="button"]') ||
+        target.closest('.username-text') ||
+        target.closest('.handle-text')
+      )) {
+        // Clear modal when clicking on navigation elements
+        this.clearAllPendingOperations();
+      }
+    });
+  }
+
   private modalState = new BehaviorSubject<UserPreviewModalState>({
     isVisible: false,
     user: null,
@@ -101,6 +130,26 @@ export class GlobalModalService {
     if (this.hoverCallback) {
       this.hoverCallback.clearLeaveTimeout();
     }
+  }
+
+  /**
+   * Clear all pending modal operations when navigation occurs
+   * This prevents modals from showing on wrong pages
+   */
+  clearAllPendingOperations(): void {
+    // Hide any visible modal
+    this.hideUserPreview();
+    
+    // Clear the hover callback
+    this.hoverCallback = null;
+  }
+
+  /**
+   * Notify service that a component is about to navigate
+   * Components can call this to clear their timeouts before navigation
+   */
+  notifyComponentNavigation(): void {
+    this.clearAllPendingOperations();
   }
 
   getCurrentState(): UserPreviewModalState {

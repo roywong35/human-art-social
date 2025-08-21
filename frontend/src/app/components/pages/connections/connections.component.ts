@@ -138,6 +138,9 @@ export class ConnectionsComponent implements OnInit {
   }
 
   navigateToProfile(handle: string): void {
+    // Clear any pending modal operations before navigation
+    this.globalModalService.notifyComponentNavigation();
+    
     this.router.navigate(['/', handle]);
   }
 

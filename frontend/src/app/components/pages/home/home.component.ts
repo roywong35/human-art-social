@@ -13,6 +13,7 @@ import { PostUpdateService } from '../../../services/post-update.service';
 import { Subscription } from 'rxjs';
 import { CommentDialogComponent } from '../../features/comments/comment-dialog/comment-dialog.component';
 import { ToastService } from '../../../services/toast.service';
+import { GlobalModalService } from '../../../services/global-modal.service';
 
 @Component({
   selector: 'app-home',
@@ -73,7 +74,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private cd: ChangeDetectorRef,
     private postUpdateService: PostUpdateService,
     private toastService: ToastService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private globalModalService: GlobalModalService
   ) {
     // Subscribe to posts$ stream for initial load and pagination
     this.subscriptions.add(
@@ -445,6 +447,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   openPost(post: Post): void {
+    // Clear any pending modal operations before navigation
+    this.globalModalService.notifyComponentNavigation();
+    
     // Navigate to the post detail view
     const handle = post.author.handle;
     this.router.navigate([`/${handle}/post`, post.id]);
@@ -484,6 +489,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   setActiveTab(tab: 'for-you' | 'human-drawing'): void {
     if (this.activeTab !== tab) {
+      // Clear any pending modal operations before tab switch
+      this.globalModalService.notifyComponentNavigation();
+      
       this.activeTab = tab;
       localStorage.setItem('activeTab', tab);
       
@@ -509,6 +517,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Clear any pending modal operations when component is destroyed
+    this.globalModalService.notifyComponentNavigation();
+    
     this.subscriptions.unsubscribe();
     if (this.scrollThrottleTimeout) {
       clearTimeout(this.scrollThrottleTimeout);

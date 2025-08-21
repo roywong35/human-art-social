@@ -159,6 +159,9 @@ export class RecommendedUsersComponent implements OnInit {
     
     // Hide any currently visible modal
     this.globalModalService.hideUserPreview();
+    
+    // Notify global modal service about navigation to clear all pending operations
+    this.globalModalService.notifyComponentNavigation();
   }
 
   @HostListener('window:scroll', ['$event'])

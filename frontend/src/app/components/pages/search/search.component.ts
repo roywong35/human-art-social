@@ -10,7 +10,9 @@ import { OptimisticUpdateService } from '../../../services/optimistic-update.ser
 import { AuthService } from '../../../services/auth.service';
 import { PostComponent } from '../../features/posts/post/post.component';
 import { SearchBarComponent } from '../../widgets/search-bar/search-bar.component';
+import { GlobalModalService } from '../../../services/global-modal.service';
 import { forkJoin } from 'rxjs';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-search',
@@ -37,13 +39,19 @@ export class SearchComponent implements OnInit {
   // Current user tracking
   currentUser: User | null = null;
 
+  // User preview modal properties
+  private hoverTimeout: any;
+  private leaveTimeout: any;
+  private lastHoveredElement: Element | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private postService: PostService,
     private userService: UserService,
     private optimisticUpdateService: OptimisticUpdateService,
-    private authService: AuthService
+    private authService: AuthService,
+    private globalModalService: GlobalModalService
   ) {}
 
   ngOnInit() {
@@ -118,6 +126,8 @@ export class SearchComponent implements OnInit {
   }
 
   navigateToProfile(user: User) {
+    // Clear any pending modal operations before navigation
+    this.globalModalService.notifyComponentNavigation();
     this.router.navigate(['/', user.handle]);
   }
 
@@ -149,12 +159,14 @@ export class SearchComponent implements OnInit {
       this.posts = [];
       this.users = [];
       this.isLoading = false;
+      this.hasSearched = false;
       return;
     }
 
     this.isLoading = true;
     this.posts = [];
     this.users = [];
+    this.hasSearched = true;
 
     // Determine search terms for different types
     const isHashtagSearch = query.startsWith('#');
@@ -182,7 +194,7 @@ export class SearchComponent implements OnInit {
           // Filter out reposted posts from search results
           this.posts = results.posts.filter(post => post.post_type !== 'repost');
           
-
+          this.hasSearched = true;
           
           this.isLoading = false;
           this.isLoadingUsers = false;
@@ -195,6 +207,7 @@ export class SearchComponent implements OnInit {
           this.isLoading = false;
           this.isLoadingUsers = false;
           this.isLoadingPosts = false;
+          this.hasSearched = true;
         }
       });
     }
@@ -202,11 +215,13 @@ export class SearchComponent implements OnInit {
 
   private searchPosts(query: string) {
     this.isLoadingPosts = true;
+    this.hasSearched = true;
     
     this.postService.searchPosts(query).subscribe({
       next: (posts) => {
         // Filter out reposted posts from search results
         this.posts = posts.filter(post => post.post_type !== 'repost');
+        this.hasSearched = true;
         this.isLoading = false;
         this.isLoadingPosts = false;
       },
@@ -215,6 +230,7 @@ export class SearchComponent implements OnInit {
         this.posts = [];
         this.isLoading = false;
         this.isLoadingPosts = false;
+        this.hasSearched = true;
       }
     });
   }
@@ -222,5 +238,71 @@ export class SearchComponent implements OnInit {
   onPostReported(postId: number): void {
     // Remove the reported post from search results
     this.posts = this.posts.filter(post => post.id !== postId);
+  }
+
+  // User preview modal methods
+  protected onUserHover(event: MouseEvent, user: User): void {
+    if (!user) return;
+    
+    // Clear any pending timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+
+    this.hoverTimeout = setTimeout(() => {
+      // Store the hovered element for accurate positioning
+      this.lastHoveredElement = event.target as Element;
+      
+      // X approach: Pre-fetch full user data before showing modal
+      // This ensures counts and follow button state are ready immediately
+      this.userService.getUserByHandle(user.handle).pipe(take(1)).subscribe({
+        next: (fullUser) => {
+          // Show modal with complete data - no more delayed counts!
+          if (this.lastHoveredElement) {
+            this.globalModalService.showUserPreviewAccurate(fullUser, this.lastHoveredElement, {
+              clearLeaveTimeout: () => {
+                if (this.leaveTimeout) {
+                  clearTimeout(this.leaveTimeout);
+                }
+              }
+            });
+          }
+        },
+        error: () => {
+          // Fallback: show lightweight preview if fetch fails
+          if (this.lastHoveredElement) {
+            this.globalModalService.showUserPreviewAccurate(user, this.lastHoveredElement, {
+              clearLeaveTimeout: () => {
+                if (this.leaveTimeout) {
+                  clearTimeout(this.leaveTimeout);
+                }
+              }
+            });
+          }
+        }
+      });
+    }, 200); // 200ms delay for X-like responsiveness
+  }
+
+  protected onUserHoverLeave(): void {
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
+    
+    // Longer delay to allow moving to the modal
+    this.leaveTimeout = setTimeout(() => {
+      this.globalModalService.hideUserPreview();
+    }, 300); // 300ms delay to allow moving to modal
+  }
+
+  protected onModalHover(): void {
+    // When hovering over the modal, cancel any pending close
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout);
+    }
+    this.globalModalService.onModalHover();
   }
 } 

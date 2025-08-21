@@ -298,6 +298,9 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
     
     // Hide any currently visible modal
     this.globalModalService.hideUserPreview();
+    
+    // Notify global modal service about navigation to clear all pending operations
+    this.globalModalService.notifyComponentNavigation();
   }
 
   followUser(user: UserWithState, event: Event) {

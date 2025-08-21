@@ -311,6 +311,9 @@ export class PostComponent implements OnInit, OnDestroy {
     
     // Hide any currently visible modal
     this.globalModalService.hideUserPreview();
+    
+    // Notify global modal service about navigation to clear all pending operations
+    this.globalModalService.notifyComponentNavigation();
   }
 
   // Get parent author handle for reply context (handles both direct replies and reposted replies)
