@@ -189,7 +189,9 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   }
 
   navigateToHashtag(hashtag: string) {
-    this.router.navigate(['/search'], { queryParams: { q: `#${hashtag}` } });
+    this.router.navigate(['/search'], { queryParams: { q: `#${hashtag}` } }).then(() => {
+      this.scrollToTopAfterNavigation();
+    });
   }
 
   formatCount(count: number): string {
@@ -281,7 +283,22 @@ export class RightSidebarComponent implements OnInit, OnDestroy {
   navigateToProfile(handle: string) {
     // Cancel any pending modal operations before navigation
     this.cancelPendingModal();
-    this.router.navigate(['/', handle]);
+    this.router.navigate(['/', handle]).then(() => {
+      this.scrollToTopAfterNavigation();
+    });
+  }
+
+  /**
+   * Scroll to top after navigation completes
+   */
+  scrollToTopAfterNavigation(): void {
+    // Use setTimeout to ensure navigation has completed
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'auto'
+      });
+    }, 100);
   }
 
   // Cancel any pending modal operations to prevent modal from appearing during navigation

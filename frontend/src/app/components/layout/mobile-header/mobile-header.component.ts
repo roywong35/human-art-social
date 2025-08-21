@@ -176,7 +176,9 @@ export class MobileHeaderComponent implements OnInit {
   navigateToProfile() {
     this.authService.currentUser$.pipe(take(1)).subscribe(user => {
       if (user?.handle) {
-        this.router.navigate(['/', user.handle]);
+        this.router.navigate(['/', user.handle]).then(() => {
+          this.scrollToTopAfterNavigation();
+        });
         this.closeSidebarDrawer();
       }
     });
@@ -187,6 +189,8 @@ export class MobileHeaderComponent implements OnInit {
       if (user?.handle) {
         this.router.navigate(['/', user.handle, 'connections'], { 
           queryParams: { tab: tab } 
+        }).then(() => {
+          this.scrollToTopAfterNavigation();
         });
         this.closeSidebarDrawer();
       }
@@ -270,5 +274,15 @@ export class MobileHeaderComponent implements OnInit {
       top: 0,
       behavior: 'auto'
     });
+  }
+
+  /**
+   * Scroll to top after navigation completes
+   */
+  scrollToTopAfterNavigation(): void {
+    // Use setTimeout to ensure navigation has completed
+    setTimeout(() => {
+      this.scrollToTop();
+    }, 100);
   }
 } 

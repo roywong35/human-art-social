@@ -16,6 +16,7 @@ import { ToastService } from '../../../services/toast.service';
 import { GlobalModalService } from '../../../services/global-modal.service';
 import { HomeRefreshService } from '../../../services/home-refresh.service';
 import { FloatingNewPostsIndicatorComponent } from '../../shared/floating-new-posts-indicator/floating-new-posts-indicator.component';
+import { FloatingCreatePostButtonComponent } from '../../shared/floating-create-post-button/floating-create-post-button.component';
 
 @Component({
   selector: 'app-home',
@@ -26,7 +27,8 @@ import { FloatingNewPostsIndicatorComponent } from '../../shared/floating-new-po
     MatDialogModule,
     FormsModule,
     PostInputBoxComponent,
-    FloatingNewPostsIndicatorComponent
+    FloatingNewPostsIndicatorComponent,
+    FloatingCreatePostButtonComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './home.component.html',

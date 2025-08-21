@@ -430,6 +430,29 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Scroll to top after navigation completes
+   */
+  scrollToTopAfterNavigation(): void {
+    // Use setTimeout to ensure navigation has completed
+    setTimeout(() => {
+      this.scrollToTop();
+    }, 100);
+  }
+
+  /**
+   * Navigate to user profile and scroll to top
+   */
+  navigateToProfile(): void {
+    this.authService.currentUser$.pipe(take(1)).subscribe(user => {
+      if (user?.handle) {
+        this.router.navigate(['/', user.handle]).then(() => {
+          this.scrollToTopAfterNavigation();
+        });
+      }
+    });
+  }
+
   toggleDarkMode(): void {
     this.isDarkMode = !this.isDarkMode;
     localStorage.setItem('darkMode', this.isDarkMode.toString());

@@ -143,7 +143,7 @@
       <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-8 w-8 object-contain">
     </div>
     <ng-template #mobileHeaderSiteIconLink>
-      <a routerLink="/home" class="flex items-center justify-center">
+      <a (click)="navigateToHome()" class="flex items-center justify-center cursor-pointer">
         <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-8 w-8 object-contain">
       </a>
     </ng-template>

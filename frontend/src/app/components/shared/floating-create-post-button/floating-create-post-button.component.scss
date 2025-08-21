@@ -1,0 +1,16 @@
+// Floating Create Post Button - Minimal SCSS to complement Tailwind CSS
+// Most styling is handled by Tailwind classes in the HTML template
+
+// Ensure proper z-index layering
+.floating-create-post-button {
+  z-index: 50;
+}
+
+// Mobile responsive adjustments
+@media (max-width: 500px) {
+  // Mobile-specific styles are handled by Tailwind classes
+}
+
+@media (min-width: 501px) {
+  // Hide on larger screens - handled by Tailwind md:hidden
+}

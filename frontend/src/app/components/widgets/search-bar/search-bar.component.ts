@@ -84,6 +84,8 @@ export class SearchBarComponent implements OnInit, OnDestroy, OnChanges {
     if (this.searchQuery.trim() && !this.isPreview) {
       this.router.navigate(['/search'], { 
         queryParams: { q: this.searchQuery.trim() } 
+      }).then(() => {
+        this.scrollToTopAfterNavigation();
       });
       this.hideResults();
     }
@@ -110,10 +112,14 @@ export class SearchBarComponent implements OnInit, OnDestroy, OnChanges {
   navigateToResult(result: SearchResult) {
     if (result.type === 'user') {
       const user = result.data as User;
-      this.router.navigate(['/', user.handle]);
+      this.router.navigate(['/', user.handle]).then(() => {
+        this.scrollToTopAfterNavigation();
+      });
     } else {
       const hashtag = result.data as HashtagResult;
-      this.router.navigate(['/search'], { queryParams: { q: `#${hashtag.name}` } });
+      this.router.navigate(['/search'], { queryParams: { q: `#${hashtag.name}` } }).then(() => {
+        this.scrollToTopAfterNavigation();
+      });
     }
     this.hideResults();
     // Don't clear searchQuery here - let the user see what they searched for
@@ -177,5 +183,18 @@ export class SearchBarComponent implements OnInit, OnDestroy, OnChanges {
         }
       });
     }
+  }
+
+  /**
+   * Scroll to top after navigation completes
+   */
+  scrollToTopAfterNavigation(): void {
+    // Use setTimeout to ensure navigation has completed
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'auto'
+      });
+    }, 100);
   }
 } 

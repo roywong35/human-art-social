@@ -76,6 +76,21 @@ export class HashtagDirective implements OnInit, OnDestroy {
   private onHashtagClick(hashtag: string) {
     // Remove the # symbol for the search query
     const searchTerm = hashtag.substring(1);
-    this.router.navigate(['/search'], { queryParams: { q: hashtag } });
+    this.router.navigate(['/search'], { queryParams: { q: hashtag } }).then(() => {
+      this.scrollToTopAfterNavigation();
+    });
+  }
+
+  /**
+   * Scroll to top after navigation completes
+   */
+  scrollToTopAfterNavigation(): void {
+    // Use setTimeout to ensure navigation has completed
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'auto'
+      });
+    }, 100);
   }
 } 
