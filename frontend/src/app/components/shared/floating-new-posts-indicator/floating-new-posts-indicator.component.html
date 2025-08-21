@@ -1,0 +1,43 @@
+<div 
+  *ngIf="isVisible" 
+  class="fixed z-50 bg-blue-500 text-white rounded-full px-3 py-1 flex items-center gap-2 cursor-pointer user-select-none shadow-lg hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-500"
+  [ngClass]="getDynamicTopPosition()"
+  [style.left]="getDynamicLeftPosition()"
+  style="transform: translateX(-50%);"
+  (click)="onShowNewPosts()"
+  role="button"
+  tabindex="0"
+  (keydown.enter)="onShowNewPosts()"
+  (keydown.space)="onShowNewPosts()">
+  
+  <!-- Arrow icon (pointing up) - moved to left -->
+  <svg class="w-5 h-5 text-white flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+  </svg>
+  
+  <!-- User avatars (stacked) - smaller now -->
+  <div class="flex items-center -space-x-1 md:-space-x-1.5">
+    <div 
+      *ngFor="let author of getDisplayAuthors(); let i = index" 
+      class="relative"
+      [style.z-index]="getDisplayAuthors().length - i">
+      <img 
+        *ngIf="author.avatar" 
+        [src]="author.avatar" 
+        [alt]="author.username + ' avatar'"
+        class="w-8 h-8  rounded-full border-[1.5px] border-blue-500 object-cover"
+        (error)="onImageError($event)">
+      <div 
+        *ngIf="!author.avatar" 
+        class="w-8 h-8  rounded-full border-[1.5px] border-blue-500 bg-gray-300 flex items-center justify-center">
+        <img 
+          [src]="defaultAvatar" 
+          [alt]="'Default avatar for ' + author.username"
+          class="w-7 h-7">
+      </div>
+    </div>
+  </div>
+  
+  <!-- Text - smaller and more compact -->
+  <span class="text-sm whitespace-nowrap">posted</span>
+</div>

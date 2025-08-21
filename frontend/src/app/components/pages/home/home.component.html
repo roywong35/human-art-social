@@ -1,4 +1,4 @@
-<div class="flex flex-col min-h-screen bg-gray-50 dark:bg-black w-screen min-[500px]:w-full">
+<div class="flex flex-col min-h-screen bg-gray-50 dark:bg-black w-screen min-[500px]:w-full relative">
   <!-- Tab Navigation -->
   <div class="bg-white/90 dark:bg-black/90 backdrop-blur-sm border-b border-gray-200 dark:dark:[border-color:var(--color-border)] z-50 w-full max-w-[598px] mx-auto transition-all duration-300 ease-out min-[680px]:fixed min-[500px]:top-0" 
        [class.-translate-y-full]="isTabHidden && isMobile">
@@ -28,7 +28,7 @@
   
     <!-- Post Input Box (Always visible, never refreshes) -->
   <div *ngIf="activeTab === 'for-you'" 
-       class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)]"
+       class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)] max-[500px]:hidden"
        [ngClass]="{
          'mt-[52px]': !isMobile
        }">
@@ -103,8 +103,17 @@
       </div>
     </div>
   </ng-container>
-</div>
-
+  
+  <!-- Floating New Posts Indicator (X-style blue oval) -->
+  <app-floating-new-posts-indicator
+    [hasNewPosts]="hasNewPosts"
+    [newPostsCount]="newPostsCount"
+    [newPostsAuthors]="newPostsAuthors"
+    [isTabHidden]="isTabHidden"
+    [isMobile]="isMobile"
+    (showNewPosts)="showNewPosts()">
+  </app-floating-new-posts-indicator>
+  
 <style>
 .loading-indicator {
   display: flex;

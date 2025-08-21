@@ -24,6 +24,14 @@ export class PostService {
   private baseUrl = environment.apiUrl + '/api';
   private posts = new BehaviorSubject<Post[]>([]);
   public posts$ = this.posts.asObservable();
+  
+  /**
+   * Get current posts value without making HTTP request
+   */
+  public getCurrentPosts(): Post[] {
+    return this.posts.getValue();
+  }
+  
   private currentPage = 1;
   private hasMore = true;
   private loading = false;

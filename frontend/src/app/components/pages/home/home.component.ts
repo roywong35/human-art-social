@@ -14,6 +14,8 @@ import { Subscription } from 'rxjs';
 import { CommentDialogComponent } from '../../features/comments/comment-dialog/comment-dialog.component';
 import { ToastService } from '../../../services/toast.service';
 import { GlobalModalService } from '../../../services/global-modal.service';
+import { HomeRefreshService } from '../../../services/home-refresh.service';
+import { FloatingNewPostsIndicatorComponent } from '../../shared/floating-new-posts-indicator/floating-new-posts-indicator.component';
 
 @Component({
   selector: 'app-home',
@@ -23,7 +25,8 @@ import { GlobalModalService } from '../../../services/global-modal.service';
     PostComponent,
     MatDialogModule,
     FormsModule,
-    PostInputBoxComponent
+    PostInputBoxComponent,
+    FloatingNewPostsIndicatorComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './home.component.html',
@@ -43,6 +46,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   // New posts check properties
   hasNewPosts = false;
   newPostsCount = 0;
+  newPostsAuthors: Array<{ avatar?: string, username: string }> = [];
   private newPostsCheckInterval: any;
   private latestPostIds: { [key: string]: number | null } = {
     'for-you': null,
@@ -75,7 +79,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private postUpdateService: PostUpdateService,
     private toastService: ToastService,
     private ngZone: NgZone,
-    private globalModalService: GlobalModalService
+    private globalModalService: GlobalModalService,
+    private homeRefreshService: HomeRefreshService
   ) {
     // Subscribe to posts$ stream for initial load and pagination
     this.subscriptions.add(
@@ -224,6 +229,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.startNewPostsCheck();
     }, 5000); // Start after 5 seconds to avoid immediate check
+
+    // Subscribe to home refresh service to refresh posts when sidebar/home button is clicked
+    this.subscriptions.add(
+      this.homeRefreshService.refreshHome$.subscribe(() => {
+        this.refreshHomePosts();
+      })
+    );
 
 
   }
@@ -498,6 +510,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       // Clear new posts state when switching tabs
       this.hasNewPosts = false;
       this.newPostsCount = 0;
+      this.newPostsAuthors = [];
       
       // Show loading state during tab switch
       this.isInitialLoading = true;
@@ -563,6 +576,34 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (response.has_new_posts) {
           this.hasNewPosts = true;
           this.newPostsCount = response.new_posts_count;
+          
+          // Get author information from the posts service
+          // We'll get the most recent posts to show their authors
+          const currentPosts = this.postService.getCurrentPosts();
+          if (currentPosts && currentPosts.length > 0) {
+            // Get unique authors from the most recent posts (up to 3)
+            const recentAuthors = currentPosts
+              .slice(0, Math.min(3, currentPosts.length))
+              .map(post => ({
+                username: post.author.username,
+                avatar: post.author.profile_picture
+              }))
+              .filter((author, index, arr) => 
+                arr.findIndex(a => a.username === author.username) === index
+              )
+              .slice(0, 3);
+            
+            this.newPostsAuthors = recentAuthors;
+            console.log('🏠 Home: New posts detected, authors:', recentAuthors);
+          } else {
+            // Fallback if no posts available
+            this.newPostsAuthors = [
+              { username: 'New posts', avatar: undefined }
+            ];
+            console.log('🏠 Home: New posts detected, using fallback authors');
+          }
+          
+          console.log('🏠 Home: Setting hasNewPosts to true, count:', response.new_posts_count);
           this.cd.markForCheck();
         }
       },
@@ -575,6 +616,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   showNewPosts(): void {
     // Hide the button immediately
     this.hasNewPosts = false;
+    this.newPostsCount = 0;
+    this.newPostsAuthors = [];
     this.cd.markForCheck();
 
     // Refresh only the posts, not the entire component
@@ -595,7 +638,28 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-
-
+  /**
+   * Refresh home posts and check for new posts
+   * Called when sidebar/home button is clicked
+   */
+  private refreshHomePosts(): void {
+    console.log('🏠 Home Component: refreshHomePosts called!');
+    
+    // This method is called when sidebar/mobile header detects new posts and refreshes
+    // Since the posts have already been refreshed, we need to reset the new posts state
+    
+    // Reset the new posts state since posts are already refreshed
+    this.hasNewPosts = false;
+    this.newPostsCount = 0;
+    this.newPostsAuthors = [];
+    
+    // Update the latest post ID to the current posts
+    this.updateLatestPostId();
+    
+    // Force change detection to hide the "Show new posts" button
+    this.cd.markForCheck();
+    
+    console.log('🏠 Home Component: New posts state reset, button hidden');
+  }
 
 } 

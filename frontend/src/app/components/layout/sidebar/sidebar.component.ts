@@ -15,6 +15,7 @@ import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
 import { NotificationService } from '../../../services/notification.service';
 import { ChatService } from '../../../services/chat.service';
+import { HomeRefreshService } from '../../../services/home-refresh.service';
 import { Subscription } from 'rxjs';
 
 
@@ -80,7 +81,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private overlay: Overlay,
     private viewContainerRef: ViewContainerRef,
     private notificationService: NotificationService,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private homeRefreshService: HomeRefreshService
   ) {
     // Subscribe to route changes to detect Human Art tab
     this.router.events.pipe(
@@ -350,16 +352,82 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   navigateToHome(): void {
-    // If already on home page, just refresh the posts
-    if (this.router.url === '/') {
-      this.postService.loadPosts();
+    console.log('🏠 Sidebar: navigateToHome called, current URL:', this.router.url);
+    
+    // If already on home page, check if we need to refresh or just scroll to top
+    if (this.router.url === '/home') {
+      console.log('🏠 Sidebar: Already on home page, checking if refresh needed...');
+      this.scrollToTop();
+      // Only refresh if there are new posts detected
+      this.checkAndRefreshIfNeeded();
     } else {
-      // Navigate to home and then refresh posts
-      this.router.navigate(['/'])
+      console.log('🏠 Sidebar: Navigating to home from different page, refreshing...');
+      // Navigate to home and then refresh posts (always refresh when coming from different page)
+      this.router.navigate(['/home'])
         .then(() => {
-          this.postService.loadPosts();
+          this.postService.loadPosts(true);
         });
     }
+  }
+
+  /**
+   * Check if there are new posts and refresh only if needed
+   */
+  private checkAndRefreshIfNeeded(): void {
+    console.log('🔍 Sidebar: Checking if refresh is needed...');
+    
+    // Get the current latest post ID from the post service
+    const currentPosts = this.postService.getCurrentPosts();
+    console.log('🔍 Sidebar: Current posts count:', currentPosts?.length);
+    
+    if (currentPosts && currentPosts.length > 0) {
+      const currentLatestPostId = currentPosts[0].id;
+      console.log('🔍 Sidebar: Current latest post ID:', currentLatestPostId);
+      
+      // Get the current active tab from localStorage (same as home component)
+      const activeTab = localStorage.getItem('activeTab') || 'for-you';
+      console.log('🔍 Sidebar: Current active tab:', activeTab);
+      
+      // Check for new posts without refreshing the entire feed
+      this.postService.checkNewPosts(currentLatestPostId, activeTab).subscribe({
+        next: (response: any) => {
+          console.log('🔍 Sidebar: checkNewPosts response:', response);
+          if (response.has_new_posts) {
+            console.log('✅ Sidebar: New posts detected! Refreshing feed...');
+            // There are new posts - refresh the feed
+            this.postService.loadPosts(true, activeTab);
+            this.refreshHomeComponent();
+          } else {
+            console.log('ℹ️ Sidebar: No new posts, staying at top without refresh');
+          }
+        },
+        error: (error) => {
+          console.error('❌ Sidebar: Error checking for new posts:', error);
+          // On error, just stay at top without refreshing
+        }
+      });
+    } else {
+      console.log('⚠️ Sidebar: No current posts found, cannot check for new posts');
+    }
+  }
+
+  /**
+   * Refresh the home component to show latest posts and new posts button
+   */
+  private refreshHomeComponent(): void {
+    // Use the service to trigger home component refresh
+    // This will show the "new posts" button if there are new posts
+    this.homeRefreshService.triggerHomeRefresh();
+  }
+
+  /**
+   * Scroll to top of the page instantly (like X)
+   */
+  scrollToTop(): void {
+    window.scrollTo({
+      top: 0,
+      behavior: 'auto'
+    });
   }
 
   toggleDarkMode(): void {

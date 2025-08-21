@@ -2,11 +2,21 @@
      [ngClass]="{'transition-all duration-300 ease-out': isMobile}">
   <!-- Logo and Brand -->
   <div class="pt-3 px-3" *ngIf="!isMobile">
-    <a routerLink="/home" title="Go to Home" class="flex items-center">
+    <div *ngIf="router.url === '/home'; else siteIconLink" 
+         (click)="navigateToHome()" 
+         title="Go to top of page" 
+         class="flex items-center">
       <div class="flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer">
         <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">
       </div>
-    </a>
+    </div>
+    <ng-template #siteIconLink>
+      <a routerLink="/home" title="Go to Home" class="flex items-center">
+        <div class="flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer">
+          <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">
+        </div>
+      </a>
+    </ng-template>
   </div>
 
   <!-- Navigation Links -->
@@ -17,20 +27,35 @@
       <ng-container *ngIf="isMobile">
         <!-- Home -->
         <li>
-          <a routerLink="/home" 
-             routerLinkActive="text-blue-500"
-             [routerLinkActiveOptions]="{exact: true}"
-             title="Home"
-             [class]="'flex items-center p-2 rounded-full transition-all duration-300 ease-out cursor-pointer text-lg'"
-             [ngClass]="{
-               'text-blue-500/60': isMobile && isScrolled && router.url === '/home',
-               'text-gray-600/50 dark:text-gray-300/50': isMobile && isScrolled && router.url !== '/home',
-               'hover:bg-gray-100 dark:hover:bg-gray-800': !isMobile || !isScrolled
-             }">
+          <div *ngIf="router.url === '/home'; else mobileHomeLink" 
+               (click)="navigateToHome()" 
+               title="Go to top of page"
+               [class]="'flex items-center p-2 rounded-full transition-all duration-300 ease-out cursor-pointer text-lg'"
+               [ngClass]="{
+                 'text-blue-500/60': isMobile && isScrolled && router.url === '/home',
+                 'text-gray-600/50 dark:text-gray-300/50': isMobile && isScrolled && router.url !== '/home',
+                 'hover:bg-gray-100 dark:hover:bg-gray-800': !isMobile || !isScrolled
+               }">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
-          </a>
+          </div>
+          <ng-template #mobileHomeLink>
+            <a routerLink="/home" 
+               routerLinkActive="text-blue-500"
+               [routerLinkActiveOptions]="{exact: true}"
+               title="Home"
+               [class]="'flex items-center p-2 rounded-full transition-all duration-300 ease-out cursor-pointer text-lg'"
+               [ngClass]="{
+                 'text-blue-500/60': isMobile && isScrolled && router.url === '/home',
+                 'text-gray-600/50 dark:text-gray-300/50': isMobile && isScrolled && router.url !== '/home',
+                 'hover:bg-gray-100 dark:hover:bg-gray-800': !isMobile || !isScrolled
+               }">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </a>
+          </ng-template>
         </li>
 
                 <!-- Search -->
@@ -138,16 +163,27 @@
       <ng-container *ngIf="!isMobile">
         <!-- Home -->
         <li class="core-item">
-          <a routerLink="/home" 
-             routerLinkActive="text-blue-500"
-             [routerLinkActiveOptions]="{exact: true}"
-             title="Home"
-             [class]="getDesktopLinkClasses()">
+          <div *ngIf="router.url === '/home'; else homeLink" 
+               (click)="navigateToHome()" 
+               title="Go to top of page"
+               [class]="getDesktopLinkClasses()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span [class]="getDesktopTextClasses()" [ngClass]="{'font-bold': router.url === '/home'}">Home</span>
-          </a>
+          </div>
+          <ng-template #homeLink>
+            <a routerLink="/home" 
+               routerLinkActive="text-blue-500"
+               [routerLinkActiveOptions]="{exact: true}"
+               title="Home"
+               [class]="getDesktopLinkClasses()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span [class]="getDesktopTextClasses()" [ngClass]="{'font-bold': router.url === '/home'}">Home</span>
+            </a>
+          </ng-template>
         </li>
 
         <!-- Search -->

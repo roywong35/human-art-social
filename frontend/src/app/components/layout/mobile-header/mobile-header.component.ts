@@ -9,6 +9,7 @@ import { NewPostModalComponent } from '../../features/posts/new-post-modal/new-p
 import { NewArtPostModalComponent } from '../../features/posts/new-art-post-modal/new-art-post-modal';
 import { AuthService } from '../../../services/auth.service';
 import { PostService } from '../../../services/post.service';
+import { HomeRefreshService } from '../../../services/home-refresh.service';
 
 @Component({
   selector: 'app-mobile-header',
@@ -34,9 +35,10 @@ export class MobileHeaderComponent implements OnInit {
   constructor(
     protected authService: AuthService,
     private dialog: MatDialog,
-    private router: Router,
+    protected router: Router,
     private route: ActivatedRoute,
-    private postService: PostService
+    private postService: PostService,
+    private homeRefreshService: HomeRefreshService
   ) {
     // Subscribe to route changes to detect Human Art tab and homepage
     this.router.events.pipe(
@@ -188,6 +190,85 @@ export class MobileHeaderComponent implements OnInit {
         });
         this.closeSidebarDrawer();
       }
+    });
+  }
+
+  navigateToHome(): void {
+    console.log('🏠 Mobile Header: navigateToHome called, current URL:', this.router.url);
+    
+    // If already on home page, check if we need to refresh or just scroll to top
+    if (this.router.url === '/home') {
+      console.log('🏠 Mobile Header: Already on home page, checking if refresh needed...');
+      this.scrollToTop();
+      // Only refresh if there are new posts detected
+      this.checkAndRefreshIfNeeded();
+    } else {
+      console.log('🏠 Mobile Header: Navigating to home from different page, refreshing...');
+      // Navigate to home and then refresh posts (always refresh when coming from different page)
+      this.router.navigate(['/home'])
+        .then(() => {
+          this.postService.loadPosts(true);
+        });
+    }
+  }
+
+  /**
+   * Check if there are new posts and refresh only if needed
+   */
+  private checkAndRefreshIfNeeded(): void {
+    console.log('🔍 Mobile Header: Checking if refresh is needed...');
+    
+    // Get the current latest post ID from the post service
+    const currentPosts = this.postService.getCurrentPosts();
+    console.log('🔍 Mobile Header: Current posts count:', currentPosts?.length);
+    
+    if (currentPosts && currentPosts.length > 0) {
+      const currentLatestPostId = currentPosts[0].id;
+      console.log('🔍 Mobile Header: Current latest post ID:', currentLatestPostId);
+      
+      // Get the current active tab from localStorage (same as home component)
+      const activeTab = localStorage.getItem('activeTab') || 'for-you';
+      console.log('🔍 Mobile Header: Current active tab:', activeTab);
+      
+      // Check for new posts without refreshing the entire feed
+      this.postService.checkNewPosts(currentLatestPostId, activeTab).subscribe({
+        next: (response: any) => {
+          console.log('🔍 Mobile Header: checkNewPosts response:', response);
+          if (response.has_new_posts) {
+            console.log('✅ Mobile Header: New posts detected! Refreshing feed...');
+            // There are new posts - refresh the feed
+            this.postService.loadPosts(true, activeTab);
+            this.refreshHomeComponent();
+          } else {
+            console.log('ℹ️ Mobile Header: No new posts, staying at top without refresh');
+          }
+        },
+        error: (error) => {
+          console.error('❌ Mobile Header: Error checking for new posts:', error);
+          // On error, just stay at top without refreshing
+        }
+      });
+    } else {
+      console.log('⚠️ Mobile Header: No current posts found, cannot check for new posts');
+    }
+  }
+
+  /**
+   * Refresh the home component to show latest posts and new posts button
+   */
+  private refreshHomeComponent(): void {
+    // Use the service to trigger home component refresh
+    // This will show the "new posts" button if there are new posts
+    this.homeRefreshService.triggerHomeRefresh();
+  }
+
+  /**
+   * Scroll to top of the page instantly (like X)
+   */
+  scrollToTop(): void {
+    window.scrollTo({
+      top: 0,
+      behavior: 'auto'
     });
   }
 } 
