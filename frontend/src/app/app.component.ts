@@ -174,4 +174,8 @@ export class AppComponent implements OnInit {
   isNotificationsPage(): boolean {
     return this.router.url === '/notifications';
   }
+
+  isMobileView(): boolean {
+    return window.innerWidth < 500;
+  }
 }

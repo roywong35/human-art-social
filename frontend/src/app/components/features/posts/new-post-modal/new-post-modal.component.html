@@ -230,11 +230,11 @@
           class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
           <i class="far fa-image text-[18px]"></i>
         </button>
-        <button
-          (click)="toggleEmojiPicker($event)"
-          class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
-          <i class="far fa-smile text-[18px]"></i>
-        </button>
+                 <button
+           (click)="toggleEmojiPicker($event)"
+           class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center hidden min-[500px]:flex">
+           <i class="far fa-smile text-[18px]"></i>
+         </button>
         
         <!-- Schedule Icon -->
         <app-schedule-icon
@@ -263,7 +263,7 @@
       </button>
       <button
         (click)="toggleEmojiPicker($event)"
-        class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+        class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center hidden min-[500px]:flex">
         <i class="far fa-smile text-[18px]"></i>
       </button>
       
