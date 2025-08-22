@@ -16,7 +16,7 @@
   </div>
 
   <!-- Messages Area -->
-  <div #messagesContainer class="flex-1 overflow-y-auto px-2 py-2 space-y-4">
+  <div #messagesContainer class="flex-1 overflow-y-auto px-2 py-2 space-y-4 pb-3">
 
     <!-- Loading State -->
     <div *ngIf="isLoadingMessages" class="flex items-center justify-center min-h-[500px]">
@@ -88,7 +88,7 @@
   </div>
 
   <!-- Image Preview -->
-  <div *ngIf="imagePreviews.length > 0" class="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
+  <div *ngIf="imagePreviews.length > 0" class="px-4 py-3 border-t border-gray-200 dark:border-gray-800 pb-20 min-[500px]:pb-2">
     <div class="flex flex-col items-start space-y-2">
       <div *ngFor="let preview of imagePreviews; let i = index" class="relative inline-block">
         <img [src]="preview" 
