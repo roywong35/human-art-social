@@ -1,8 +1,13 @@
 <div class="flex flex-col h-full bg-white dark:bg-black"
      [class.floating-chat-mode]="isFloatingChat">
   <!-- Chat Header (hidden when in floating chat) -->
-  <div *ngIf="!isFloatingChat" class="px-4 py-2 dark:border-gray-800 flex items-center "
-       [class.pl-16]="isMobileView">
+  <div *ngIf="!isFloatingChat" class="chat-header px-4 py-2 border-b border-gray-200 dark:border-gray-800 flex items-center bg-white dark:bg-black">
+    <!-- Back Button (only show on mobile) -->
+    <button (click)="goBack()" 
+            class="min-[500px]:hidden mr-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+      <i class="fas fa-arrow-left text-xl"></i>
+    </button>
+    
     <div class="flex items-center space-x-3">
                     <img 
           [src]="getOtherParticipant()?.profile_picture || defaultAvatar" 
@@ -15,8 +20,11 @@
     </div>
   </div>
 
+  <!-- Header Spacer (for mobile fixed header) -->
+  <div class="header-spacer min-[500px]:hidden"></div>
+
   <!-- Messages Area -->
-  <div #messagesContainer class="flex-1 overflow-y-auto px-2 py-2 space-y-4 pb-3">
+  <div #messagesContainer class="flex-1 overflow-y-auto px-2 py-2 space-y-4">
 
     <!-- Loading State -->
     <div *ngIf="isLoadingMessages" class="flex items-center justify-center min-h-[500px]">
@@ -88,7 +96,7 @@
   </div>
 
   <!-- Image Preview -->
-  <div *ngIf="imagePreviews.length > 0" class="px-4 py-3 border-t border-gray-200 dark:border-gray-800 pb-20 min-[500px]:pb-2">
+  <div *ngIf="imagePreviews.length > 0" class="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
     <div class="flex flex-col items-start space-y-2">
       <div *ngFor="let preview of imagePreviews; let i = index" class="relative inline-block">
         <img [src]="preview" 
@@ -103,7 +111,7 @@
   </div>
 
   <!-- Message Input -->
-  <div class="message-input-container px-1 pt-1 border-t border-gray-200 dark:border-gray-800">
+  <div class="message-input-container px-1 pt-1 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
     <div class="flex items-center space-x-1">
       <!-- Left side buttons container -->
       <div class="flex items-center space-x-0.5">

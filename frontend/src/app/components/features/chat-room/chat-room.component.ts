@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, OnDestroy, OnChanges, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ChatService } from '../../../services/chat.service';
 import { AuthService } from '../../../services/auth.service';
 import { ImageUploadService } from '../../../services/image-upload.service';
@@ -56,7 +57,8 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     private authService: AuthService,
     private imageUploadService: ImageUploadService,
     private emojiPickerService: EmojiPickerService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -373,5 +375,9 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     textarea.style.height = 'auto';
     // Set height to scrollHeight (content height)
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  }
+
+  goBack(): void {
+    this.router.navigate(['/messages']);
   }
 } 
