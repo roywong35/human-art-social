@@ -166,6 +166,11 @@ export class AppComponent implements OnInit {
     return this.router.url.startsWith('/messages');
   }
 
+  isChatRoomPage(): boolean {
+    // Check if we're in a specific chat room (e.g., /messages/123)
+    return this.router.url.startsWith('/messages/') && this.router.url !== '/messages';
+  }
+
   isNotificationsPage(): boolean {
     return this.router.url === '/notifications';
   }

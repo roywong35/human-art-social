@@ -122,4 +122,29 @@ textarea {
       }
     }
   }
+}
+
+// Mobile-specific styling for X-style layout
+@media (max-width: 687px) {
+  // Show mobile post button and action icons, hide desktop elements
+  .mobile-post-btn,
+  .mobile-action-icons {
+    display: flex !important;
+  }
+  
+  .desktop-action-row {
+    display: none !important;
+  }
+}
+
+@media (min-width: 688px) {
+  // Hide mobile elements on desktop, show desktop elements
+  .mobile-post-btn,
+  .mobile-action-icons {
+    display: none !important;
+  }
+  
+  .desktop-action-row {
+    display: flex !important;
+  }
 } 

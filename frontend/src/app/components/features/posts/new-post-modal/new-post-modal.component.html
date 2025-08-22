@@ -7,12 +7,22 @@
 <div class="bg-white dark:bg-black flex flex-col w-full h-full">
   <!-- Header with Close and Drafts buttons -->
   <div class="h-14 relative flex-shrink-0">
-    <button class="absolute top-3 left-3 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]" (click)="closeModal()">
+    <button class="absolute top-3 left-3 max-[688px]:top-2 max-[688px]:left-2 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]" (click)="closeModal()">
       <i class="fas fa-times text-lg"></i>
     </button>
-    <button class="absolute top-3 right-3 px-4 py-2 flex items-center justify-center rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/20 text-sm font-medium" (click)="onDraftsClick()">
-      Drafts
-    </button>
+    <div class="absolute top-3 right-3 flex items-center gap-2">
+      <button class="px-4 py-1.5 flex items-center justify-center rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/20 text-sm font-medium" (click)="onDraftsClick()">
+        Drafts
+      </button>
+      <!-- Mobile Post Button (hidden on desktop) -->
+      <button
+        [class.opacity-50]="!content.trim() && images.length === 0"
+        [class.cursor-not-allowed]="!content.trim() && images.length === 0"
+        (click)="createPost()"
+        class="mobile-post-btn px-4 py-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 text-sm font-semibold">
+        Post
+      </button>
+    </div>
   </div>
 
 
@@ -205,11 +215,39 @@
           </div>
         </div>
       </div>
+
+      <!-- Mobile Action Icons Row (hidden on desktop) -->
+      <div class="mobile-action-icons flex items-center space-x-2 mt-3 pt-2 ml-[-70px] mr-[-10px] border-t border-gray-200 dark:border-gray-800">
+        <input
+          #mobileFileInput
+          type="file"
+          (change)="onImageSelected($event)"
+          accept="image/*"
+          [multiple]="true"
+          class="hidden">
+        <button
+          (click)="mobileFileInput.click()"
+          class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+          <i class="far fa-image text-[18px]"></i>
+        </button>
+        <button
+          (click)="toggleEmojiPicker($event)"
+          class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+          <i class="far fa-smile text-[18px]"></i>
+        </button>
+        
+        <!-- Schedule Icon -->
+        <app-schedule-icon
+          [isScheduled]="!!scheduledTime"
+          [size]="18"
+          (scheduleClick)="openScheduleModal()">
+        </app-schedule-icon>
+      </div>
     </div>
   </div>
 
   <!-- Action Buttons -->
-  <div class="flex-shrink-0 flex justify-between items-center mt-4 pl-1 pr-3 py-2 border-t border-gray-200 dark:border-gray-800">
+  <div class="desktop-action-row flex-shrink-0 flex justify-between items-center mt-4 pl-1 pr-3 py-2 border-t border-gray-200 dark:border-gray-800">
     <div class="flex items-center space-x-2">
       <input
         #fileInput
@@ -242,7 +280,7 @@
       [class.opacity-50]="!content.trim() && images.length === 0"
       [class.cursor-not-allowed]="!content.trim() && images.length === 0"
       (click)="createPost()"
-      class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
+      class="desktop-post-btn px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium">
       Post
     </button>
   </div>

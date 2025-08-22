@@ -69,6 +69,8 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     // Don't load messages here - let ngOnChanges handle it
     if (this.conversation) {
       this.currentConversationId = this.conversation.id;
+      // Ensure we scroll to bottom when component first loads with a conversation
+      this.shouldScrollToBottom = true;
     }
   }
 
@@ -87,6 +89,9 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
         // Update current conversation ID
         this.currentConversationId = this.conversation.id;
         
+        // Ensure we scroll to bottom when entering a new conversation
+        this.shouldScrollToBottom = true;
+        
                  // Subscribe to messages for this conversation (only once)
          if (!this.messagesSub) {
            this.messagesSub = this.chatService.messages$.pipe(
@@ -98,8 +103,14 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
              // Hide loading when we get data
              this.isLoadingMessages = false;
              
+             // Always scroll to bottom when messages are loaded or updated
              this.shouldScrollToBottom = true;
              this.cd.detectChanges();
+             
+             // Also schedule a delayed scroll to ensure DOM is fully rendered
+             setTimeout(() => {
+               this.scrollToBottom();
+             }, 100);
            });
          }
         
