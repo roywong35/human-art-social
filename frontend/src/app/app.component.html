@@ -34,7 +34,7 @@
   
   <!-- Mobile Header -->
   <div class="block min-[500px]:hidden">
-    <app-mobile-header *ngIf="authService.isAuthenticated()"></app-mobile-header>
+    <app-mobile-header *ngIf="authService.isAuthenticated() && !isChatRoomPage()"></app-mobile-header>
   </div>
 
   <div class="min-h-screen bg-white dark:[background-color:var(--color-background)]">
@@ -54,7 +54,7 @@
         <div [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'flex-1 min-[500px]:ml-[80px] xl:ml-[275px]' : 'flex-1 min-[500px]:ml-[80px] xl:ml-[275px] min-[500px]:w-[calc(100%-80px)] min-[681px]:w-auto') : 'w-full'">
           <div class="flex">
             <!-- Main Content -->
-            <main [class]="authService.isAuthenticated() ? (isMessagesPage() ? 'w-full pt-14 min-[500px]:pt-0' : 'w-full min-[500px]:w-full min-[681px]:max-w-[600px] border-x border-gray-200 dark:dark:[border-color:var(--color-border)] pt-14 min-[500px]:pt-0 pb-20 min-h-screen') : 'w-full '">
+            <main [class]="authService.isAuthenticated() ? (isMessagesPage() ? (isChatRoomPage() ? 'w-full min-[500px]:pt-0' : 'w-full pt-14 min-[500px]:pt-0') : 'w-full min-[500px]:w-full min-[681px]:max-w-[600px] border-x border-gray-200 dark:dark:[border-color:var(--color-border)] pt-14 min-[500px]:pt-0 pb-20 min-h-screen') : 'w-full '">
               <router-outlet></router-outlet>
               <app-emoji-picker></app-emoji-picker>
             </main>
