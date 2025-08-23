@@ -1150,3 +1150,163 @@ textarea {
     box-shadow: 0 20px 25px rgba(255, 255, 255, 0.1), 0 10px 10px rgba(255, 255, 255, 0.04) !important;
   }
 }
+
+/* PWA Safe Area Handling */
+@supports (padding: max(0px)) {
+  :root {
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
+    --safe-area-inset-right: env(safe-area-inset-right);
+  }
+}
+
+/* PWA Status Bar Background */
+@media (display-mode: standalone) {
+  body {
+    background-color: var(--color-background, #ffffff) !important;
+  }
+  
+  /* Handle top safe area for notched phones */
+  app-root {
+    padding-top: var(--safe-area-inset-top, 0px);
+    background-color: var(--color-background, #ffffff);
+  }
+  
+  /* Ensure proper background for PWA */
+  html, body {
+    background-color: var(--color-background, #ffffff) !important;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Fix bottom navigation for PWA */
+  .bottom-navigation {
+    padding-bottom: max(20px, var(--safe-area-inset-bottom, 20px)) !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Alternative: if you have a specific bottom nav class */
+  [class*="bottom-nav"],
+  [class*="bottom-navigation"],
+  .nav-bottom {
+    padding-bottom: max(20px, var(--safe-area-inset-bottom, 20px)) !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Specific fix for your mobile bottom navigation */
+  .min-\[500px\]:hidden.fixed.bottom-0.left-0.right-0 {
+    padding-bottom: max(20px, var(--safe-area-inset-bottom, 20px)) !important;
+    margin-bottom: 0 !important;
+    background-color: var(--color-background, #ffffff);
+    border-top: 1px solid var(--color-border, #e5e7eb);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Add padding to main content to prevent overlap */
+  main {
+    padding-bottom: calc(80px + var(--safe-area-inset-bottom, 20px)) !important;
+  }
+  
+  /* Ensure the main container has proper spacing */
+  .min-h-screen {
+    padding-bottom: var(--safe-area-inset-bottom, 0px);
+  }
+}
+
+/* General mobile safe area handling */
+@supports (padding: max(0px)) {
+  .mobile-safe-top {
+    padding-top: max(20px, var(--safe-area-inset-top, 20px));
+  }
+  
+  .mobile-safe-bottom {
+    padding-bottom: max(20px, var(--safe-area-inset-bottom, 20px));
+  }
+  
+  .mobile-safe-left {
+    padding-left: max(20px, var(--safe-area-inset-left, 20px));
+  }
+  
+  .mobile-safe-right {
+    padding-right: max(20px, var(--safe-area-inset-right, 20px));
+  }
+}
+
+/* Additional PWA-specific fixes */
+@media (display-mode: standalone) {
+  /* Fix for the main content area */
+  .flex.justify-center {
+    padding-top: var(--safe-area-inset-top, 0px);
+  }
+  
+  /* Ensure proper spacing for mobile bottom nav */
+  .pb-20 {
+    padding-bottom: calc(5rem + var(--safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  /* Fix for the mobile header */
+  .pt-14 {
+    padding-top: calc(3.5rem + var(--safe-area-inset-top, 0px)) !important;
+  }
+}
+
+/* Dark Mode Support for PWA */
+@media (display-mode: standalone) {
+  /* Light mode (default) */
+  body:not(.dark) {
+    --pwa-background: #ffffff;
+    --pwa-border: #e5e7eb;
+    --pwa-text: #000000;
+  }
+  
+  /* Dark mode */
+  body.dark {
+    --pwa-background: #000000;
+    --pwa-border: #374151;
+    --pwa-text: #ffffff;
+  }
+  
+  /* Apply dark mode backgrounds */
+  body.dark {
+    background-color: var(--pwa-background) !important;
+  }
+  
+  body.dark app-root {
+    background-color: var(--pwa-background);
+  }
+  
+  body.dark html, body {
+    background-color: var(--pwa-background) !important;
+  }
+  
+  /* Dark mode bottom navigation */
+  body.dark .min-\[500px\]:hidden.fixed.bottom-0.left-0.right-0 {
+    background-color: var(--pwa-background);
+    border-top: 1px solid var(--pwa-border);
+    box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Dark mode safe area handling */
+  body.dark {
+    padding-top: var(--safe-area-inset-top, 0px);
+    padding-bottom: var(--safe-area-inset-bottom, 0px);
+  }
+  
+  body.dark app-root {
+    padding-top: var(--safe-area-inset-top, 0px);
+    background-color: var(--pwa-background);
+  }
+  
+  /* Dark mode main container */
+  body.dark .min-h-screen {
+    padding-bottom: var(--safe-area-inset-bottom, 0px);
+    background-color: var(--pwa-background);
+  }
+  
+  /* Dark mode content area */
+  body.dark .flex.justify-center {
+    padding-top: var(--safe-area-inset-top, 0px);
+    background-color: var(--pwa-background);
+  }
+}
