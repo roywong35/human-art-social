@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Renderer2 } from '@angular/core';
+import { Component, EventEmitter, Output, Renderer2, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,7 +15,7 @@ import { RegisterModalComponent } from '../register-modal/register-modal.compone
   templateUrl: './login-modal.component.html',
   styleUrls: ['./login-modal.component.scss']
 })
-export class LoginModalComponent {
+export class LoginModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() openRegister = new EventEmitter<void>();
 
@@ -24,6 +24,7 @@ export class LoginModalComponent {
   loginError: string = '';
   isLoading: boolean = false;
   emailError: string = '';
+  isPWAMode = false;
 
   constructor(
     private authService: AuthService,
@@ -33,6 +34,10 @@ export class LoginModalComponent {
     public dialogRef: MatDialogRef<LoginModalComponent>,
     private dialog: MatDialog
   ) {}
+
+  ngOnInit(): void {
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+  }
 
   validateEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

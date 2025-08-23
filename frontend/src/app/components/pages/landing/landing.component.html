@@ -7,7 +7,8 @@
   </div>
 
   <!-- Mobile Navigation Bar (shows when left sidebar is hidden) -->
-  <div class="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black z-50 block min-[1265px]:hidden">
+  <div class="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black z-50 block min-[1265px]:hidden"
+       [ngClass]="{'pb-10': isPWAMode}">
     <div class="flex items-center justify-between px-4 h-14">
       <div class="flex items-center gap-3">
         <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">

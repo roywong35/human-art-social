@@ -29,6 +29,9 @@ export class LandingComponent implements OnInit, OnDestroy {
   posts: Post[] = [];
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
   isDarkMode = false;
+  isPWAMode = false;
+  showLoginModal = false;
+  showRegisterModal = false;
   
   // Scroll-based hiding properties
   isHeaderHidden = false;
@@ -105,6 +108,14 @@ export class LandingComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+
     // Check if user is authenticated
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/home']);

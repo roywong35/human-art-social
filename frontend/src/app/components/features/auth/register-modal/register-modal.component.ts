@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,7 +16,7 @@ import { LoginModalComponent } from '../login-modal/login-modal.component';
   templateUrl: './register-modal.component.html',
   styleUrls: ['./register-modal.component.scss']
 })
-export class RegisterModalComponent {
+export class RegisterModalComponent implements OnInit {
   registerData: RegisterData = {
     username: '',
     email: '',
@@ -27,6 +27,7 @@ export class RegisterModalComponent {
   
   registerError: string = '';
   isLoading: boolean = false;
+  isPWAMode = false;
 
   constructor(
     private authService: AuthService,
@@ -35,6 +36,10 @@ export class RegisterModalComponent {
     private dialogRef: MatDialogRef<RegisterModalComponent>,
     private dialog: MatDialog
   ) {}
+
+  ngOnInit(): void {
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+  }
 
   onClose() {
     this.dialogRef.close();
