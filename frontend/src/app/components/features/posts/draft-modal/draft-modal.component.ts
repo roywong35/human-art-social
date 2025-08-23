@@ -33,6 +33,7 @@ export class DraftModalComponent implements OnInit, OnDestroy {
   isEditMode = false;
   selectedDraftIds: Set<number> = new Set();
   selectedScheduledIds: Set<number> = new Set();
+  isPWAMode = false;
 
   constructor(
     private dialogRef: MatDialogRef<DraftModalComponent>,
@@ -47,6 +48,14 @@ export class DraftModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     // Subscribe to drafts
     this.subscriptions.add(
       this.draftService.drafts$.subscribe(drafts => {

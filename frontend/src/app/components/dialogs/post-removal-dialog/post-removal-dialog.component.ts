@@ -19,6 +19,7 @@ export class PostRemovalDialogComponent implements OnInit, OnDestroy {
   appealStatus: AppealStatus | null = null;
   loading = true;
   postPreview: Post | null = null;
+  isPWAMode = false;
   
   private resizeObserver?: ResizeObserver;
 
@@ -77,6 +78,14 @@ export class PostRemovalDialogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     this.loadAppealStatus();
   }
 

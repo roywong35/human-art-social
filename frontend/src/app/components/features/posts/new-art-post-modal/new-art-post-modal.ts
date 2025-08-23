@@ -32,6 +32,7 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
   evidenceFiles: EvidenceFile[] = [];
   isSubmitting = false;
   error: string | null = null;
+  isPWAMode = false;
   
   // Schedule-related properties
   scheduledTime: Date | null = null;
@@ -69,6 +70,14 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     // Start observing window size if dialog exists
     if (this.dialogRef && this.resizeObserver) {
       this.resizeObserver.observe(document.body);

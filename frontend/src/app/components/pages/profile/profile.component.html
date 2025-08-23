@@ -334,8 +334,8 @@
 </div>
 
 <!-- Edit Profile Modal -->
-<div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white dark:bg-black rounded-xl w-full max-w-lg mx-4">
+<div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000100]" (click)="closeEditModal()">
+  <div class="bg-white dark:bg-black rounded-xl w-full max-w-lg mx-4" (click)="$event.stopPropagation()">
     <div class="p-4 border-b border-gray-200 dark:[border-color:var(--color-border)]">
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-bold dark:[color:var(--color-text)]">Edit profile</h2>

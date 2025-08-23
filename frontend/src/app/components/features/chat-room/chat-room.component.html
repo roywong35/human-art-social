@@ -1,7 +1,9 @@
 <div class="flex flex-col h-full bg-white dark:bg-black"
      [class.floating-chat-mode]="isFloatingChat">
   <!-- Chat Header (hidden when in floating chat) -->
-  <div *ngIf="!isFloatingChat" class="chat-header px-4 py-2 border-b border-gray-200 dark:border-gray-800 flex items-center bg-white dark:bg-black">
+  <div *ngIf="!isFloatingChat" 
+       class="chat-header px-4 py-2 border-b border-gray-200 dark:border-gray-800 flex items-center bg-white dark:bg-black"
+       [ngClass]="{'pt-10': isPWAMode}">
     <!-- Back Button (only show on mobile) -->
     <button (click)="goBack()" 
             class="min-[500px]:hidden mr-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
@@ -111,7 +113,8 @@
   </div>
 
   <!-- Message Input -->
-  <div class="message-input-container px-1 pt-1 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+  <div class="message-input-container px-1 pt-1 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black"
+       [ngClass]="{'pb-10': isPWAMode}">
     <div class="flex items-center space-x-1">
       <!-- Left side buttons container -->
       <div class="flex items-center space-x-0.5">

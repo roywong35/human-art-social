@@ -39,6 +39,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
   selectedImages: File[] = [];
   imagePreviews: string[] = [];
   isLoadingMessages = false;
+  isPWAMode = false;
   private currentConversationId: number | null = null;
   
   private readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -62,6 +63,14 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
   ) {}
 
   ngOnInit() {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     // Subscribe to typing indicators
     this.typingSub = this.chatService.typingUsers$.subscribe(users => {
       this.typingUsers = users;

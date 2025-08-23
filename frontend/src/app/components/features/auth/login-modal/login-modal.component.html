@@ -2,7 +2,8 @@
 <div class="fixed inset-0 min-[688px]:relative bg-white text-left overflow-hidden min-[688px]:shadow-xl w-full min-[688px]:max-w-md min-[688px]:rounded-[18px]"
      [ngClass]="{'pt-10': isPWAMode}">
   <!-- Close button -->
-  <div class="absolute top-0 right-0 pt-3 pr-3">
+  <div class="absolute top-0 right-0 pt-3 pr-3"
+  [ngClass]="{'pt-14': isPWAMode}">
     <button
       type="button"
       (click)="dialogRef.close()"

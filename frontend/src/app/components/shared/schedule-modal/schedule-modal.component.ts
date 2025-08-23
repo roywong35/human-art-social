@@ -41,8 +41,17 @@ export class ScheduleModalComponent implements OnInit {
   years: Array<{value: string, label: string}> = [];
   hours: Array<{value: string, label: string}> = [];
   minutes: Array<{value: string, label: string}> = [];
+  isPWAMode = false;
 
   ngOnInit() {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     this.setDateLimits();
     this.generateDateOptions();
     this.generateTimeOptions();

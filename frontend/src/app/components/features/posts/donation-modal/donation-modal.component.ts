@@ -21,6 +21,7 @@ export class DonationModalComponent implements OnInit {
   isPublic = true;
   donations: Donation[] = [];
   isSubmitting = false;
+  isPWAMode = false;
 
   constructor(
     public dialogRef: MatDialogRef<DonationModalComponent>,
@@ -30,6 +31,14 @@ export class DonationModalComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     this.loadDonations();
   }
 

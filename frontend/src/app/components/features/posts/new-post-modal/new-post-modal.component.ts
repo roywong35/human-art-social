@@ -68,6 +68,8 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   protected hashtagDropdownPosition = { top: 0, left: 0 };
   private hashtagSubscription?: Subscription;
 
+  isPWAMode = false;
+
   constructor(
     public dialogRef: MatDialogRef<NewPostModalComponent>,
     private postService: PostService,
@@ -107,6 +109,14 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     // Component initialization
     
     // Subscribe to emoji picker state

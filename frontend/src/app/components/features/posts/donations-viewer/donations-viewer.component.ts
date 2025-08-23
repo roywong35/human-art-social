@@ -21,6 +21,7 @@ export class DonationsViewerComponent implements OnInit, OnDestroy {
   donations: Donation[] = [];
   loading = true;
   error: string | null = null;
+  isPWAMode = false;
   
   // User preview modal timeouts
   private hoverTimeout: any;
@@ -39,6 +40,14 @@ export class DonationsViewerComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     this.loadDonations();
   }
 

@@ -1,9 +1,11 @@
 <div class="donation-modal">
-  <div class="bg-white dark:bg-black rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh] max-sm:rounded-none max-sm:max-w-none max-sm:h-full max-sm:p-4 max-sm:w-screen max-sm:min-h-screen">
+  <div class="bg-white dark:bg-black rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh] max-sm:rounded-none max-sm:max-w-none max-sm:h-full max-sm:p-4 max-sm:w-screen max-sm:min-h-screen"
+       [ngClass]="{'pt-10': isPWAMode}">
     <!-- Header -->
     <div class="relative mb-6">
       <button (click)="close()" 
-              class="absolute -top-2 -left-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+              class="absolute -top-2 -left-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 flex items-center justify-center transition-colors"
+              [ngClass]="{'pt-14': isPWAMode}">
         <i class="fas fa-times text-xl"></i>
       </button>
       <h2 class="text-xl font-semibold text-gray-900 dark:text-white text-center">Support Artist</h2>
