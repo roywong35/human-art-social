@@ -1168,13 +1168,13 @@ textarea {
     margin-top: 30px !important; /* Space for header + tab bar */
   }
   
-  /* Fix fixed bottom navigation - try margin-bottom instead of changing position */
+  /* Fix fixed bottom navigation - target the exact class from app.component.html */
   .min-\[500px\]:hidden.fixed.bottom-0.left-0.right-0 {
-    margin-bottom: 50px !important; /* Add bottom margin instead of changing position */
+    bottom: 50px !important; /* Move up from bottom edge */
   }
   
   /* Alternative: if the above doesn't work, try targeting the sidebar component */
   app-sidebar[ismobile="true"] {
-    margin-bottom: 50px !important;
+    bottom: 50px !important;
   }
 }

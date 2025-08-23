@@ -89,11 +89,34 @@ export class MobileHeaderComponent implements OnInit {
       if (scrollDelta > 0 && scrollTop > 50) {
         // Scrolling down - hide header (same threshold as tabs)
         this.isHeaderHidden = true;
+        // Remove margin-top when header is hidden in PWA mode
+        this.updatePWAHeaderMargin(true);
       } else if (scrollDelta < 0) {
         // Scrolling up - show header
         this.isHeaderHidden = false;
+        // Restore margin-top when header is shown in PWA mode
+        this.updatePWAHeaderMargin(false);
       }
       this.lastScrollTop = scrollTop;
+    }
+  }
+
+  /**
+   * Update PWA header margin based on scroll state
+   */
+  private updatePWAHeaderMargin(isHidden: boolean): void {
+    // Check if running as PWA (standalone mode)
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      const headerElement = document.querySelector('app-mobile-header');
+      if (headerElement) {
+        if (isHidden) {
+          // Remove margin-top when header is hidden
+          (headerElement as HTMLElement).style.marginTop = '0px';
+        } else {
+          // Restore margin-top when header is shown
+          (headerElement as HTMLElement).style.marginTop = '30px';
+        }
+      }
     }
   }
 
