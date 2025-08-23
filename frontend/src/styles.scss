@@ -1153,13 +1153,18 @@ textarea {
 
 /* Simple PWA Padding Fix */
 @media (display-mode: standalone) {
-  /* Add top padding to prevent overlap with status bar */
-  body {
-    padding-top: 20px !important;
+  /* Fix fixed header - add top margin to prevent overlap with status bar */
+  app-mobile-header {
+    margin-top: 30px !important;
   }
   
-  /* Add bottom padding to prevent overlap with system UI */
-  body {
-    padding-bottom: 80px !important;
+  /* Fix fixed bottom navigation - move it up to prevent overlap with system UI */
+  .min-\[500px\]:hidden.fixed.bottom-0.left-0.right-0 {
+    bottom: 50px !important; /* Move up from bottom edge */
+  }
+  
+  /* Alternative: if the above doesn't work, try targeting the sidebar component */
+  app-sidebar[ismobile="true"] {
+    bottom: 50px !important;
   }
 }
