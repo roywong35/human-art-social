@@ -1162,8 +1162,66 @@ textarea {
     background-color: #000000 !important;
   }
   
-  /* Simple bottom navigation fix - just add some padding */
+  /* Change purple header to white/black while keeping the area */
+  /* Target the mobile header component specifically */
+  app-mobile-header {
+    display: block !important;
+    min-height: 56px;
+    background-color: #ffffff !important; /* Light mode: white header */
+  }
+  
+  body.dark app-mobile-header {
+    background-color: #000000 !important; /* Dark mode: black header */
+  }
+  
+  /* Also target the header container to ensure full coverage */
+  .block.min-\[500px\]:hidden {
+    position: relative;
+    z-index: 40;
+    background-color: #ffffff !important; /* Light mode: white */
+  }
+  
+  body.dark .block.min-\[500px\]:hidden {
+    background-color: #000000 !important; /* Dark mode: black */
+  }
+  
+  /* Preserve top header area - ensure pt-14 works */
+  .pt-14 {
+    padding-top: 3.5rem !important;
+  }
+  
+  /* Apply bottom padding to main content area for all pages */
+  main {
+    padding-bottom: 120px !important; /* Increased space above bottom nav */
+  }
+  
+  /* Alternative: target the content container */
+  .min-h-screen {
+    padding-bottom: 120px !important;
+  }
+  
+  /* CRITICAL: Fix bottom navigation to be visible above system UI */
   .min-\[500px\]:hidden.fixed.bottom-0.left-0.right-0 {
-    padding-bottom: 20px;
+    padding-bottom: 40px; /* Increased padding to clear system UI */
+    background-color: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    z-index: 1000; /* Ensure it's above other elements */
+    /* Position it above the "Human Art Social" banner */
+    bottom: 60px; /* Move it up to clear the banner */
+  }
+  
+  /* Dark mode bottom navigation */
+  body.dark .min-\[500px\]:hidden.fixed.bottom-0.left-0.right-0 {
+    background-color: #000000;
+    border-top: 1px solid #374151;
+  }
+  
+  /* Ensure the main container has proper background */
+  .min-h-screen.bg-white {
+    background-color: #ffffff !important;
+  }
+  
+  body.dark .min-h-screen.bg-white {
+    background-color: #000000 !important;
   }
 }
