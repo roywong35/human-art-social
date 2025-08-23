@@ -1158,13 +1158,23 @@ textarea {
     margin-top: 30px !important;
   }
   
-  /* Fix fixed bottom navigation - move it up to prevent overlap with system UI */
+  /* Fix tab bar - add top margin since it's also fixed */
+  .min-\[500px\]:hidden.fixed.top-0.left-0.right-0 {
+    margin-top: 30px !important;
+  }
+  
+  /* Add margin-top to body content to prevent overlap with fixed header */
+  body {
+    margin-top: 30px !important; /* Space for header + tab bar */
+  }
+  
+  /* Fix fixed bottom navigation - try margin-bottom instead of changing position */
   .min-\[500px\]:hidden.fixed.bottom-0.left-0.right-0 {
-    bottom: 50px !important; /* Move up from bottom edge */
+    margin-bottom: 50px !important; /* Add bottom margin instead of changing position */
   }
   
   /* Alternative: if the above doesn't work, try targeting the sidebar component */
   app-sidebar[ismobile="true"] {
-    bottom: 50px !important;
+    margin-bottom: 50px !important;
   }
 }
