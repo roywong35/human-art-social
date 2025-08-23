@@ -5,7 +5,17 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  transition: margin-top 0.3s ease-out;
+  transition: transform 0.3s ease-out;
 }
 
-// Add any additional styles if needed 
+/* PWA-specific styling */
+@media (display-mode: standalone) {
+  :host {
+    top: 30px; /* Move header down for status bar spacing */
+  }
+  
+  /* When header is hidden, move it completely off-screen */
+  :host.hidden {
+    transform: translateY(-100%);
+  }
+} 

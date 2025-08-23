@@ -20,7 +20,8 @@
   </div>
 
   <!-- Navigation Links -->
-  <div [class]="isMobile ? 'flex justify-around py-1' : 'flex-1 navigation-container'">
+  <div [class]="isMobile ? 'flex justify-around py-1' : 'flex-1 navigation-container'"
+       [ngClass]="{'pb-10': isMobile && isPWAMode}">
     <ul [class]="isMobile ? 'flex justify-around w-full items-center' : 'px-3 py-3 space-y-3'">
       
       <!-- Mobile: Only essential navigation (6 items) -->

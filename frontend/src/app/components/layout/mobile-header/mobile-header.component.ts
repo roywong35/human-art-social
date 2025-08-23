@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -38,7 +38,8 @@ export class MobileHeaderComponent implements OnInit {
     protected router: Router,
     private route: ActivatedRoute,
     private postService: PostService,
-    private homeRefreshService: HomeRefreshService
+    private homeRefreshService: HomeRefreshService,
+    private elementRef: ElementRef
   ) {
     // Subscribe to route changes to detect Human Art tab and homepage
     this.router.events.pipe(
@@ -89,34 +90,25 @@ export class MobileHeaderComponent implements OnInit {
       if (scrollDelta > 0 && scrollTop > 50) {
         // Scrolling down - hide header (same threshold as tabs)
         this.isHeaderHidden = true;
-        // Remove margin-top when header is hidden in PWA mode
-        this.updatePWAHeaderMargin(true);
+        this.updateHeaderVisibility(true);
       } else if (scrollDelta < 0) {
         // Scrolling up - show header
         this.isHeaderHidden = false;
-        // Restore margin-top when header is shown in PWA mode
-        this.updatePWAHeaderMargin(false);
+        this.updateHeaderVisibility(false);
       }
       this.lastScrollTop = scrollTop;
     }
   }
 
   /**
-   * Update PWA header margin based on scroll state
+   * Update header visibility by adding/removing hidden class
    */
-  private updatePWAHeaderMargin(isHidden: boolean): void {
-    // Check if running as PWA (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      const headerElement = document.querySelector('app-mobile-header');
-      if (headerElement) {
-        if (isHidden) {
-          // Remove margin-top when header is hidden
-          (headerElement as HTMLElement).style.marginTop = '0px';
-        } else {
-          // Restore margin-top when header is shown
-          (headerElement as HTMLElement).style.marginTop = '30px';
-        }
-      }
+  private updateHeaderVisibility(isHidden: boolean): void {
+    const hostElement = this.elementRef.nativeElement;
+    if (isHidden) {
+      hostElement.classList.add('hidden');
+    } else {
+      hostElement.classList.remove('hidden');
     }
   }
 
