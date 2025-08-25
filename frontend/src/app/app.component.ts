@@ -171,6 +171,12 @@ export class AppComponent implements OnInit {
     return this.router.url.startsWith('/messages/') && this.router.url !== '/messages';
   }
 
+  isPostDetailPage(): boolean {
+    // Check if we're on a post detail page (e.g., /test555/post/888)
+    const segments = this.router.url.split('/');
+    return segments.length >= 3 && segments[2] === 'post';
+  }
+
   isNotificationsPage(): boolean {
     return this.router.url === '/notifications';
   }

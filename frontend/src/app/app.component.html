@@ -34,7 +34,7 @@
   
   <!-- Mobile Header -->
   <div class="block min-[500px]:hidden">
-    <app-mobile-header *ngIf="authService.isAuthenticated() && !isChatRoomPage()"></app-mobile-header>
+    <app-mobile-header *ngIf="authService.isAuthenticated() && !isChatRoomPage() && !isPostDetailPage()"></app-mobile-header>
   </div>
 
   <div class="min-h-screen bg-white dark:[background-color:var(--color-background)]">

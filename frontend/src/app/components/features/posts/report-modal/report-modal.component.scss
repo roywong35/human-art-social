@@ -1,3 +1,22 @@
+// Report dialog styles - Clean approach
+// Target the global class that gets added by MatDialog
+
+::ng-deep .report-dialog {
+  .mat-mdc-dialog-container {
+    .mdc-dialog__surface {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      :global(.dark) & {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+      }
+    }
+  }
+}
+
 // Angular Material dialog provides the overlay and container
 // We just need to style the modal content
 

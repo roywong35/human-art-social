@@ -71,3 +71,13 @@
     display: block !important;
   }
 }
+
+// User menu overlay styles
+.user-menu-overlay {
+  z-index: 1000000 !important;
+}
+
+// More menu overlay styles
+.more-menu-overlay {
+  z-index: 1000000 !important;
+}

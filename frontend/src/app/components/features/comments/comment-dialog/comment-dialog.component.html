@@ -4,242 +4,245 @@
      (click)="closeEmojiPickerBackdrop()"
      (keydown.escape)="closeEmojiPickerBackdrop()"></div>
 
-<div class="px-2 py-2 dialog-content bg-white dark:bg-black w-screen min-h-screen min-[688px]:w-[600px] min-[688px]:min-h-0 min-[688px]:max-h-[90vh] min-[688px]:rounded-2xl"
-     [ngClass]="{'pt-10': isPWAMode}">
+<div class="px-2 py-2 dialog-content bg-white dark:bg-black w-screen min-h-screen min-[688px]:w-[600px] min-[688px]:min-h-0 min-[688px]:max-h-[90vh] min-[688px]:rounded-2xl max-[688px]:overflow-y-auto"
+[ngClass]="{'pt-10': isPWAMode}">
   <!-- Close Button -->
-  <div class="h-14 sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 dark:[border-color:var(--color-border)] min-[688px]:relative">
-    <button class="absolute top-0 left-0 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]" 
-            [ngClass]="{'pt-14': isPWAMode}"
+  <div class="h-14 relative flex-shrink-0">
+    <button class="absolute top-2 left-2 max-[688px]:top-2 max-[688px]:left-2 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]"
             (click)="dialogRef.close()">
       <i class="fas fa-times text-lg"></i>
     </button>
   </div>
 
-  <!-- Parent Post -->
-  <div class="px-2">
-    <div class="flex gap-3">
-      <div class="relative flex flex-col items-center">
-        <img [src]="data.post.author.profile_picture || defaultAvatar" 
-             alt="Author avatar" 
+  <!-- Scrollable Content Area for Mobile -->
+  <div class="max-[688px]:flex-1 max-[688px]:overflow-y-auto max-[688px]:min-h-0 max-[688px]:max-h-[calc(100vh-120px)]">
+    <!-- Parent Post -->
+    <div class="px-2">
+      <div class="flex gap-3">
+        <div class="relative flex flex-col items-center">
+          <img [src]="data.post.author.profile_picture || defaultAvatar" 
+               alt="Author avatar" 
+               class="w-10 h-10 rounded-full">
+          <div class="w-0.5 bg-gray-300 dark:bg-gray-700 flex-1 mt-1"></div>
+        </div>
+        <div class="flex-1">
+          <!-- Author Info -->
+          <div class="flex items-center gap-1">
+            <span class="font-bold hover:underline cursor-pointer dark:[color:var(--color-text)]">{{ data.post.author.username }}</span>
+            <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ data.post.author.handle || data.post.author.username }}</span>
+            <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">·</span>
+            <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{ data.post.created_at | timeAgo }}</span>
+          </div>
+          
+          <!-- Post Content -->
+          <p class="text-[16px] whitespace-pre-wrap dark:[color:var(--color-text)]" 
+             appHashtag 
+             [content]="data.post.content"
+             [preventClick]="false"></p>
+
+          <!-- If this is a quote post, show a compact reference block -->
+          <div *ngIf="data.post.post_type === 'quote' && data.post.referenced_post" class="mt-2 text-sm text-gray-500">
+            <div class="border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl p-3 bg-gray-50 dark:bg-gray-900/20">
+              <div class="flex items-center gap-2 mb-1">
+                <img [src]="data.post.referenced_post.author.profile_picture || defaultAvatar" class="h-5 w-5 rounded-full" />
+                <span class="font-semibold dark:[color:var(--color-text)]">{{ data.post.referenced_post.author.username }}</span>
+                <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ data.post.referenced_post.author.handle }}</span>
+                <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">·</span>
+                <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{ data.post.referenced_post.created_at | timeAgo }}</span>
+              </div>
+              <div class="text-[14px] text-gray-700 dark:[color:var(--color-text)] whitespace-pre-wrap">
+                {{ data.post.referenced_post.content || '\u00A0' }}
+              </div>
+              <!-- Media hint for normal quotes (no inner quote URL) -->
+              <div *ngIf="!getQuotedPostForUrl() && data.post.referenced_post.images && data.post.referenced_post.images.length > 0" class="mt-1 text-gray-500 dark:[color:var(--color-text-secondary)] flex items-center gap-1">
+                <i class="far fa-image"></i>
+                <span>
+                  {{ data.post.referenced_post.images.length }} {{ data.post.referenced_post.images.length === 1 ? 'photo' : 'photos' }}
+                </span>
+              </div>
+              <!-- Show a truncated URL when quoting a quote (double quote) to the inner referenced post -->
+              <div *ngIf="getQuotedPostForUrl()" class="mt-1">
+                <a [href]="getBaseUrl() + '/' + getQuotedPostForUrl()!.author.handle + '/post/' + getQuotedPostForUrl()!.id" target="_blank" class="hover:underline">
+                  {{ getDisplayUrl() }}/{{ getQuotedPostForUrl()!.author.handle }}/post...
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Post Image -->
+          <div *ngIf="data.post.images && data.post.images.length > 0" 
+               class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 h-80">
+            <!-- Layout for 1 photo -->
+            <div *ngIf="data.post.images.length === 1" class="flex h-full">
+              <div class="w-full h-full relative p-0.5">
+                <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
+                     class="w-full h-full object-cover rounded-lg">
+              </div>
+            </div>
+
+            <!-- Layout for 2 photos -->
+            <div *ngIf="data.post.images.length === 2" class="flex w-full h-full">
+              <div class="w-1/2 h-full p-0.5 relative">
+                <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
+                     class="w-full h-full object-cover rounded-lg">
+              </div>
+              <div class="w-1/2 h-full p-0.5 relative">
+                <img [src]="data.post.images[1].image_url || data.post.images[1].image" 
+                     class="w-full h-full object-cover rounded-lg">
+              </div>
+            </div>
+
+            <!-- Layout for 3 photos -->
+            <div *ngIf="data.post.images.length === 3" class="flex w-full h-full">
+              <!-- Left side -->
+              <div class="w-1/2 h-full p-0.5 relative">
+                <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
+                     class="w-full h-full object-cover rounded-lg">
+              </div>
+
+              <!-- Right side (stacked) -->
+              <div class="w-1/2 h-full flex flex-col">
+                <!-- Top right -->
+                <div class="h-1/2 p-0.5 relative">
+                  <img [src]="data.post.images[1].image_url || data.post.images[1].image" 
+                       class="w-full h-full object-cover rounded-lg">
+                </div>
+                <!-- Bottom right -->
+                <div class="h-1/2 p-0.5 relative">
+                  <img [src]="data.post.images[2].image_url || data.post.images[2].image" 
+                       class="w-full h-full object-cover rounded-lg">
+                </div>
+              </div>
+            </div>
+
+            <!-- Layout for 4 photos -->
+            <div *ngIf="data.post.images.length === 4" class="flex w-full h-full">
+              <div class="w-1/2 h-full flex flex-col">
+                <div class="h-1/2 p-0.5 relative">
+                  <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
+                       class="w-full h-full object-cover rounded-lg">
+                </div>
+                <div class="h-1/2 p-0.5 relative">
+                  <img [src]="data.post.images[1].image_url || data.post.images[1].image" 
+                       class="w-full h-full object-cover rounded-lg">
+                </div>
+              </div>
+              <div class="w-1/2 h-full flex flex-col">
+                <div class="h-1/2 p-0.5 relative">
+                  <img [src]="data.post.images[2].image_url || data.post.images[2].image" 
+                       class="w-full h-full object-cover rounded-lg">
+                </div>
+                <div class="h-1/2 p-0.5 relative">
+                  <img [src]="data.post.images[3].image_url || data.post.images[3].image" 
+                       class="w-full h-full object-cover rounded-lg">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Replying To -->
+          <div class="text-gray-500 dark:[color:var(--color-text-secondary)] mt-3 text-[15px]">
+            Replying to <span class="text-blue-500 hover:underline cursor-pointer">{{'@'}}{{ data.post.author.handle || data.post.author.username }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reply Input -->
+    <div class="px-2 flex gap-3 py-3">
+      <div class="relative flex flex-col items-center mt-1">
+        <img [src]="data.currentUser?.profile_picture || defaultAvatar" 
+             alt="Your avatar" 
              class="w-10 h-10 rounded-full">
-        <div class="w-0.5 bg-gray-300 dark:bg-gray-700 flex-1 mt-1"></div>
       </div>
       <div class="flex-1">
-        <!-- Author Info -->
-        <div class="flex items-center gap-1">
-          <span class="font-bold hover:underline cursor-pointer dark:[color:var(--color-text)]">{{ data.post.author.username }}</span>
-          <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ data.post.author.handle || data.post.author.username }}</span>
-          <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">·</span>
-          <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{ data.post.created_at | timeAgo }}</span>
+        <!-- Scheduled Time Indicator -->
+        <div *ngIf="scheduledTime" 
+             class="text-xs text-blue-500 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors mb-1"
+             (click)="openScheduleModal()">
+          <i class="fas fa-calendar-alt text-xs mr-1"></i>Will be posted {{ formatScheduledTime(scheduledTime) }}
         </div>
-        
-        <!-- Post Content -->
-        <p class="text-[16px] whitespace-pre-wrap dark:[color:var(--color-text)]" 
-           appHashtag 
-           [content]="data.post.content"
-           [preventClick]="false"></p>
 
-        <!-- If this is a quote post, show a compact reference block -->
-        <div *ngIf="data.post.post_type === 'quote' && data.post.referenced_post" class="mt-2 text-sm text-gray-500">
-          <div class="border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl p-3 bg-gray-50 dark:bg-gray-900/20">
-            <div class="flex items-center gap-2 mb-1">
-              <img [src]="data.post.referenced_post.author.profile_picture || defaultAvatar" class="h-5 w-5 rounded-full" />
-              <span class="font-semibold dark:[color:var(--color-text)]">{{ data.post.referenced_post.author.username }}</span>
-              <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ data.post.referenced_post.author.handle }}</span>
-              <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">·</span>
-              <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{ data.post.referenced_post.created_at | timeAgo }}</span>
-            </div>
-            <div class="text-[14px] text-gray-700 dark:[color:var(--color-text)] whitespace-pre-wrap">
-              {{ data.post.referenced_post.content || '\u00A0' }}
-            </div>
-            <!-- Media hint for normal quotes (no inner quote URL) -->
-            <div *ngIf="!getQuotedPostForUrl() && data.post.referenced_post.images && data.post.referenced_post.images.length > 0" class="mt-1 text-gray-500 dark:[color:var(--color-text-secondary)] flex items-center gap-1">
-              <i class="far fa-image"></i>
-              <span>
-                {{ data.post.referenced_post.images.length }} {{ data.post.referenced_post.images.length === 1 ? 'photo' : 'photos' }}
-              </span>
-            </div>
-            <!-- Show a truncated URL when quoting a quote (double quote) to the inner referenced post -->
-            <div *ngIf="getQuotedPostForUrl()" class="mt-1">
-              <a [href]="getBaseUrl() + '/' + getQuotedPostForUrl()!.author.handle + '/post/' + getQuotedPostForUrl()!.id" target="_blank" class="hover:underline">
-                {{ getDisplayUrl() }}/{{ getQuotedPostForUrl()!.author.handle }}/post...
-              </a>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Post Image -->
-        <div *ngIf="data.post.images && data.post.images.length > 0" 
+        <textarea
+          #replyTextarea
+          [(ngModel)]="replyContent"
+          class="w-full border-none resize-none text-lg focus:outline-none dark:bg-transparent dark:[color:var(--color-text)] dark:placeholder:text-gray-500"
+          [ngClass]="{
+            'min-h-[80px]': images.length === 0,
+            'min-h-[20px]': images.length > 0
+          }"
+          placeholder="Post your reply"
+          (input)="adjustTextarea($event)"
+          (keydown)="onHashtagKeydown($event)">
+        </textarea>
+
+        <!-- Image Preview Grid -->
+        <div *ngIf="images.length > 0" 
              class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 h-80">
-          <!-- Layout for 1 photo -->
-          <div *ngIf="data.post.images.length === 1" class="flex h-full">
-            <div class="w-full h-full relative p-0.5">
-              <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
-                   class="w-full h-full object-cover rounded-lg">
+          <!-- Layout for 1, 2, or 4 photos -->
+          <div *ngIf="images.length !== 3" class="flex flex-wrap h-full">
+            <div *ngFor="let image of images; let i = index" 
+                 [class]="getImageLayoutClass(i)"
+                 class="relative p-0.5">
+              <img [src]="image.preview" 
+                   class="w-full h-full object-cover rounded-lg"
+                   [class.rounded-lg]="images.length > 1">
+              <button 
+                (click)="removeImage(image.id)"
+                class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+                <i class="fas fa-times text-sm"></i>
+              </button>
             </div>
           </div>
 
-          <!-- Layout for 2 photos -->
-          <div *ngIf="data.post.images.length === 2" class="flex w-full h-full">
-            <div class="w-1/2 h-full p-0.5 relative">
-              <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
-                   class="w-full h-full object-cover rounded-lg">
-            </div>
-            <div class="w-1/2 h-full p-0.5 relative">
-              <img [src]="data.post.images[1].image_url || data.post.images[1].image" 
-                   class="w-full h-full object-cover rounded-lg">
-            </div>
-          </div>
-
-          <!-- Layout for 3 photos -->
-          <div *ngIf="data.post.images.length === 3" class="flex w-full h-full">
+          <!-- Special layout for 3 photos -->
+          <div *ngIf="images.length === 3" class="flex w-full h-full">
             <!-- Left side -->
             <div class="w-1/2 h-full p-0.5 relative">
-              <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
-                   class="w-full h-full object-cover rounded-lg">
+              <img [src]="images[0].preview" 
+                   class="w-full h-full object-cover rounded-lg"
+                   [class.rounded-lg]="true">
+              <button 
+                (click)="removeImage(images[0].id)"
+                class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+                <i class="fas fa-times text-sm"></i>
+              </button>
             </div>
 
             <!-- Right side (stacked) -->
             <div class="w-1/2 h-full flex flex-col">
               <!-- Top right -->
               <div class="h-1/2 p-0.5 relative">
-                <img [src]="data.post.images[1].image_url || data.post.images[1].image" 
-                     class="w-full h-full object-cover rounded-lg">
+                <img [src]="images[1].preview" 
+                     class="w-full h-full object-cover rounded-lg"
+                     [class.rounded-lg]="true">
+                <button 
+                  (click)="removeImage(images[1].id)"
+                  class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+                  <i class="fas fa-times text-sm"></i>
+                </button>
               </div>
               <!-- Bottom right -->
               <div class="h-1/2 p-0.5 relative">
-                <img [src]="data.post.images[2].image_url || data.post.images[2].image" 
-                     class="w-full h-full object-cover rounded-lg">
+                <img [src]="images[2].preview" 
+                     class="w-full h-full object-cover rounded-lg"
+                     [class.rounded-lg]="true">
+                <button 
+                  (click)="removeImage(images[2].id)"
+                  class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
+                  <i class="fas fa-times text-sm"></i>
+                </button>
               </div>
-            </div>
-          </div>
-
-          <!-- Layout for 4 photos -->
-          <div *ngIf="data.post.images.length === 4" class="flex w-full h-full">
-            <div class="w-1/2 h-full flex flex-col">
-              <div class="h-1/2 p-0.5 relative">
-                <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
-                     class="w-full h-full object-cover rounded-lg">
-              </div>
-              <div class="h-1/2 p-0.5 relative">
-                <img [src]="data.post.images[1].image_url || data.post.images[1].image" 
-                     class="w-full h-full object-cover rounded-lg">
-              </div>
-            </div>
-            <div class="w-1/2 h-full flex flex-col">
-              <div class="h-1/2 p-0.5 relative">
-                <img [src]="data.post.images[2].image_url || data.post.images[2].image" 
-                     class="w-full h-full object-cover rounded-lg">
-              </div>
-              <div class="h-1/2 p-0.5 relative">
-                <img [src]="data.post.images[3].image_url || data.post.images[3].image" 
-                     class="w-full h-full object-cover rounded-lg">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Replying To -->
-        <div class="text-gray-500 dark:[color:var(--color-text-secondary)] mt-3 text-[15px]">
-          Replying to <span class="text-blue-500 hover:underline cursor-pointer">{{'@'}}{{ data.post.author.handle || data.post.author.username }}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Reply Input -->
-  <div class="px-2 flex gap-3 py-3">
-    <div class="relative flex flex-col items-center mt-1">
-      <img [src]="data.currentUser?.profile_picture || defaultAvatar" 
-           alt="Your avatar" 
-           class="w-10 h-10 rounded-full">
-    </div>
-    <div class="flex-1">
-      <!-- Scheduled Time Indicator -->
-      <div *ngIf="scheduledTime" 
-           class="text-xs text-blue-500 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors mb-1"
-           (click)="openScheduleModal()">
-        <i class="fas fa-calendar-alt text-xs mr-1"></i>Will be posted {{ formatScheduledTime(scheduledTime) }}
-      </div>
-
-      <textarea
-        #replyTextarea
-        [(ngModel)]="replyContent"
-        class="w-full border-none resize-none text-lg focus:outline-none dark:bg-transparent dark:[color:var(--color-text)] dark:placeholder:text-gray-500"
-        [ngClass]="{
-          'min-h-[150px]': images.length === 0,
-          'min-h-[20px]': images.length > 0
-        }"
-        placeholder="Post your reply"
-        (input)="adjustTextarea($event)"
-        (keydown)="onHashtagKeydown($event)">
-      </textarea>
-
-      <!-- Image Preview Grid -->
-      <div *ngIf="images.length > 0" 
-           class="mt-3 relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 h-80">
-        <!-- Layout for 1, 2, or 4 photos -->
-        <div *ngIf="images.length !== 3" class="flex flex-wrap h-full">
-          <div *ngFor="let image of images; let i = index" 
-               [class]="getImageLayoutClass(i)"
-               class="relative p-0.5">
-            <img [src]="image.preview" 
-                 class="w-full h-full object-cover rounded-lg"
-                 [class.rounded-lg]="images.length > 1">
-            <button 
-              (click)="removeImage(image.id)"
-              class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
-              <i class="fas fa-times text-sm"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Special layout for 3 photos -->
-        <div *ngIf="images.length === 3" class="flex w-full h-full">
-          <!-- Left side -->
-          <div class="w-1/2 h-full p-0.5 relative">
-            <img [src]="images[0].preview" 
-                 class="w-full h-full object-cover rounded-lg"
-                 [class.rounded-lg]="true">
-            <button 
-              (click)="removeImage(images[0].id)"
-              class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
-              <i class="fas fa-times text-sm"></i>
-            </button>
-          </div>
-
-          <!-- Right side (stacked) -->
-          <div class="w-1/2 h-full flex flex-col">
-            <!-- Top right -->
-            <div class="h-1/2 p-0.5 relative">
-              <img [src]="images[1].preview" 
-                   class="w-full h-full object-cover rounded-lg"
-                   [class.rounded-lg]="true">
-              <button 
-                (click)="removeImage(images[1].id)"
-                class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
-                <i class="fas fa-times text-sm"></i>
-              </button>
-            </div>
-            <!-- Bottom right -->
-            <div class="h-1/2 p-0.5 relative">
-              <img [src]="images[2].preview" 
-                   class="w-full h-full object-cover rounded-lg"
-                   [class.rounded-lg]="true">
-              <button 
-                (click)="removeImage(images[2].id)"
-                class="absolute top-2 right-2 bg-black bg-opacity-75 text-white rounded-full p-1.5 hover:bg-opacity-100">
-                <i class="fas fa-times text-sm"></i>
-              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Action Buttons -->
-  <div class="px-3 flex justify-between items-center border-t pt-2">
+  <div class="px-3 flex justify-between items-center border-t py-1 max-[688px]:sticky max-[688px]:bottom-0 max-[688px]:bg-white max-[688px]:dark:bg-black">
     <div class="flex gap-4">
       <button 
         (click)="onImageClick()"
@@ -270,7 +273,6 @@
       </span>
     </button>
   </div>
-</div>
 
 <!-- Schedule Modal -->
 <app-schedule-modal

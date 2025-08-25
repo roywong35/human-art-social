@@ -80,7 +80,7 @@ class PostModerationViewSet(viewsets.ViewSet):
             )
             print(f"🚨 Report created: {report.id} for post {post.id}")
             
-            # Send notification to the reporter
+            # Send notification to the reporter (User A) confirming their report was submitted
             create_report_received_notification(request.user, post)
             
             # Get updated report count
@@ -88,7 +88,13 @@ class PostModerationViewSet(viewsets.ViewSet):
             
             # Check if post should be removed (3+ reports) and send notification to author
             if report_count >= 3:
-                print(f"🚨 Post {post.id} has {report_count} reports - sending removal notification")
+                print(f"🚨 Post {post.id} has {report_count} reports - marking as removed")
+                
+                # Mark the post as removed
+                post.is_removed = True
+                post.save()
+                print(f"🚨 Post {post.id} marked as removed")
+                
                 try:
                     # Only send notification if author hasn't been notified yet
                     from notifications.models import Notification

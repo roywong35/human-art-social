@@ -38,7 +38,7 @@
             <!-- Left side: User avatars and text -->
             <div class="flex-1 min-w-0">
               <!-- User Avatars Row -->
-              <div *ngIf="notification.users.length > 0" class="flex items-center space-x-1 mb-1">
+              <div *ngIf="notification.users.length > 0 && notification.notification_type !== 'report_received'" class="flex items-center space-x-1 mb-1">
                 <a *ngFor="let user of notification.users.slice(0, 3)" 
                    [routerLink]="['/', user.handle]"
                    class="flex-shrink-0"
@@ -54,7 +54,13 @@
 
               <!-- Username and Action Text -->
               <p class="dark:text-[color:var(--color-text)] leading-normal text-sm">
-                <ng-container *ngIf="notification.users.length > 0">
+                <!-- Special case for report_received - always show system message -->
+                <ng-container *ngIf="notification.notification_type === 'report_received'">
+                  <span class="font-bold">{{ getSystemMessage(notification.notification_type) }}</span>
+                </ng-container>
+                
+                <!-- Regular user notifications -->
+                <ng-container *ngIf="notification.notification_type !== 'report_received' && notification.users.length > 0">
                   <!-- First username - always clickable -->
                   <a [routerLink]="['/', notification.users[0].handle]"
                      class="font-bold hover:underline cursor-pointer"
@@ -89,8 +95,8 @@
                   <span class="ml-1">{{ getActionText(notification.notification_type) }}</span>
                 </ng-container>
                 
-                <!-- For system notifications without users -->
-                <ng-container *ngIf="notification.users.length === 0">
+                <!-- For other system notifications without users -->
+                <ng-container *ngIf="notification.notification_type !== 'report_received' && notification.users.length === 0">
                   <span class="font-bold">{{ getSystemMessage(notification.notification_type) }}</span>
                 </ng-container>
               </p>

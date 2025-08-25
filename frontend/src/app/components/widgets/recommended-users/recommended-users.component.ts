@@ -45,6 +45,9 @@ export class RecommendedUsersComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Get current user
+    this.currentUser = this.authService.getCurrentUser();
+
     // Subscribe to follow status changes for real-time sync
     this.setupFollowStatusSync();
 

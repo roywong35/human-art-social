@@ -1,54 +1,64 @@
-// New post modal styles
-// Using Tailwind classes in template, minimal custom styles needed
+// New post modal styles - Clean approach
+// Target the global class that gets added by MatDialog
 
-// Ensure the host component takes full space
-:host {
-  display: block;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  
-  @media (max-width: 687px) {
-    width: 100vw !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
-  }
-}
-
-textarea {
-  &::placeholder {
-    color: rgb(83, 100, 113);
-  }
-}
-
-// Dialog overlay configuration for mobile
-:host ::ng-deep .create-post-dialog {
+::ng-deep .create-post-dialog {
+  // Target the Material Dialog container
   .mat-mdc-dialog-container {
-    padding: 0;
+    padding: 0 !important;
+    opacity: 0;
+    animation: containerFadeIn 100ms ease-out forwards;
+    max-height: 90vh;
+    max-width: 90vw;
     
+    // Mobile: full screen container positioning
     @media (max-width: 687px) {
-      max-width: 100vw !important;
-      max-height: 100vh !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
-      border-radius: 0 !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
       margin: 0 !important;
+      padding: 0 !important;
+    }
+  }
+
+  // Target the actual dialog surface
+  .mdc-dialog__surface {
+    background: white;
+    overflow: hidden;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-height: 90vh;
+    
+    // Desktop: rounded corners
+    @media (min-width: 688px) {
+      border-radius: 18px !important;
+      width: 600px !important;
+      max-width: 600px !important;
+      height: auto !important;
+    }
+    
+    // Mobile: no rounded corners and full coverage
+    @media (max-width: 687px) {
+      border-radius: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
   }
   
-  .mat-mdc-dialog-surface,
-  .mdc-dialog__surface {
-    @media (max-width: 687px) {
-      border-radius: 0 !important;
-    }
-  }
-}
-
-// Global CSS for the dialog overlay - More aggressive overrides
-:global(.create-post-dialog) {
-  // CDK Overlay backdrop
+  // Backdrop positioning for mobile
   .cdk-overlay-backdrop {
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(4px);
+    
     @media (max-width: 687px) {
       position: fixed !important;
       top: 0 !important;
@@ -62,65 +72,43 @@ textarea {
     }
   }
   
-  // CDK Overlay pane
+  // Overlay positioning for mobile
   .cdk-overlay-pane {
+    // Desktop: normal positioning
+    @media (min-width: 688px) {
+      position: absolute !important;
+    }
+    
+    // Mobile: fixed positioning with full coverage
     @media (max-width: 687px) {
-      max-width: 100vw !important;
-      max-height: 100vh !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      left: 0 !important;
+      position: fixed !important;
       top: 0 !important;
+      left: 0 !important;
       right: 0 !important;
       bottom: 0 !important;
-      position: fixed !important;
+      width: 100vw !important;
+      height: 100vh !important;
       margin: 0 !important;
       padding: 0 !important;
       transform: none !important;
     }
   }
-  
-  // Material dialog container
-  .mat-mdc-dialog-container {
-    @media (max-width: 687px) {
-      max-width: 100vw !important;
-      max-height: 100vh !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      overflow: visible !important;
-    }
+}
+
+// Animation for container fade in
+@keyframes containerFadeIn {
+  0% {
+    opacity: 0;
   }
-  
-  // Material dialog surface
-  .mat-mdc-dialog-surface,
-  .mdc-dialog__surface {
-    @media (max-width: 687px) {
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      width: 100% !important;
-      height: 100% !important;
-      max-width: none !important;
-      max-height: none !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
+  100% {
+    opacity: 1;
   }
 }
 
-// Additional global overrides for CDK overlay
-:global(.cdk-overlay-container) {
-  .create-post-dialog {
-    .cdk-overlay-pane {
-      @media (max-width: 687px) {
-        inset: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-    }
+// Textarea placeholder styling
+textarea {
+  &::placeholder {
+    color: rgb(83, 100, 113);
   }
 }
 

@@ -72,6 +72,10 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
             
             # Add user to the group
             if notification.sender:
+                # For report_received notifications, don't include sender (system notification)
+                if notification.notification_type == 'report_received':
+                    continue
+                    
                 # Check if user is already in the group to avoid duplicates
                 user_exists = any(user.id == notification.sender.id for user in grouped[key]['users'])
                 if not user_exists:

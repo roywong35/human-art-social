@@ -25,6 +25,7 @@ export class LoginModalComponent implements OnInit {
   isLoading: boolean = false;
   emailError: string = '';
   isPWAMode = false;
+  isMobileView = false;
 
   constructor(
     private authService: AuthService,
@@ -37,6 +38,14 @@ export class LoginModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Check if mobile view
+    this.isMobileView = window.innerWidth < 688;
+    
+    // Listen for window resize
+    window.addEventListener('resize', () => {
+      this.isMobileView = window.innerWidth < 688;
+    });
   }
 
   validateEmail(email: string): boolean {

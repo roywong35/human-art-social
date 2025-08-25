@@ -25,6 +25,7 @@ export class MobileHeaderComponent implements OnInit {
   protected isHomepage = false;
   protected isFollowingOnly = false;
   protected isTogglingFollowingOnly = false;
+  protected isPWAMode = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   
   // Scroll-based hiding properties
@@ -78,6 +79,21 @@ export class MobileHeaderComponent implements OnInit {
     this.route.queryParams.pipe(take(1)).subscribe(params => {
       this.isHumanArtTab = this.router.url.includes('human-art') || params['tab'] === 'human-drawing';
     });
+
+    // Detect PWA mode
+    this.detectPWAMode();
+    
+    // Listen for PWA mode changes
+    if (window.matchMedia) {
+      const mediaQuery = window.matchMedia('(display-mode: standalone)');
+      mediaQuery.addEventListener('change', () => {
+        this.detectPWAMode();
+      });
+    }
+  }
+
+  private detectPWAMode(): void {
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
   }
 
   @HostListener('window:scroll', ['$event'])

@@ -2,6 +2,35 @@
   display: block;
 }
 
+// Login modal styles - Clean approach
+// Target the global class that gets added by MatDialog
+
+::ng-deep .custom-dialog-container {
+  // Target the Material Dialog container
+  .mat-mdc-dialog-container {
+    .mdc-dialog__surface {
+      background: transparent;
+      box-shadow: none;
+      border-radius: 16px !important;
+    }
+  }
+
+  .cdk-overlay-pane {
+    transform: translateY(-50%) !important;
+  }
+}
+
+// Ensure auth modals have proper rounded corners
+::ng-deep .custom-dialog-container .mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 16px !important;
+}
+
+// Override any Material Dialog default border-radius
+::ng-deep .custom-dialog-container .mat-mdc-dialog-container {
+  border-radius: 16px !important;
+}
+
+// Component-specific styles
 .custom-dialog-container {
   mat-dialog-container {
     padding: 0;

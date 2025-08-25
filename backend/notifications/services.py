@@ -200,27 +200,24 @@ def create_donation_notification(sender, post, donation):
 
 def create_report_received_notification(reporter, post):
     """
-    Create a notification to the post author when their post receives a report
+    Create a notification to the reporter when they submit a report
     """
     try:
+        # Create notification with the reporter as sender and recipient
         notification = Notification.objects.create(
             sender=reporter,
-            recipient=post.author,
+            recipient=reporter,  # Fixed: Send to reporter (User A), not post author (User B)
             notification_type='report_received',
             post=post
         )
-        print(f"🔔 Report received notification created: {notification.id}")
+        print(f"🔔 Report submitted notification created: {notification.id}")
         
         # Prepare notification data for WebSocket
         notification_data = {
             'type': 'notification',
             'id': notification.id,
             'notification_type': 'report_received',
-            'sender': {
-                'id': reporter.id,
-                'username': reporter.username,
-                'avatar': reporter.profile_picture.url if reporter.profile_picture else None,
-            },
+            # No sender info - this is a system notification
             'post_id': post.id,
             'created_at': notification.created_at.isoformat(),
         }
@@ -248,10 +245,10 @@ def create_report_received_notification(reporter, post):
             'is_human_drawing': post.is_human_drawing,
         }
         
-        # Send notification through WebSocket
+        # Send notification through WebSocket to the REPORTER (User A)
         try:
             channel_layer = get_channel_layer()
-            group_name = f"notifications_{post.author.id}"
+            group_name = f"notifications_{reporter.id}"  # Fixed: Send to reporter's notification group
             websocket_data = {
                 'type': 'notification_message',
                 'message': notification_data

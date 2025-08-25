@@ -5,3 +5,11 @@
 .min-h-screen {
   min-height: 100vh;
 } 
+
+.centered-dialog {
+  .cdk-global-overlay-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}

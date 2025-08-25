@@ -112,6 +112,13 @@ class UserViewSet(viewsets.ModelViewSet):
                 'evidence_files'
             ).order_by('-created_at')
             
+            # Filter out posts that reference removed content (quotes and reposts of removed posts)
+            # This ensures that if a referenced post is removed, the quote/repost is also hidden
+            posts = posts.exclude(
+                Q(post_type='quote', referenced_post__is_removed=True) |
+                Q(post_type='repost', referenced_post__is_removed=True)
+            )
+            
             # Serialize with request context
             serializer = PostSerializer(posts, many=True, context={'request': request})
             return Response(serializer.data)
@@ -126,12 +133,26 @@ class UserViewSet(viewsets.ModelViewSet):
     def liked_posts(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         posts = Post.objects.filter(likes=user).order_by('-created_at')
+        
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        posts = posts.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
+        
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
     def bookmarked_posts(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
         posts = Post.objects.filter(bookmarks=user).order_by('-created_at')
+        
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        posts = posts.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
+        
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 

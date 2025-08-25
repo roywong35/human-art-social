@@ -1,3 +1,39 @@
+// Post detail modal styles - Clean approach
+// Target the global class that gets added by MatDialog
+
+::ng-deep .post-detail-modal {
+  .mat-mdc-dialog-container {
+    .mdc-dialog__surface {
+      background: transparent;
+      resize: none !important;
+    }
+  }
+}
+
+// Mobile responsive styles for post detail modal
+@media (max-width: 768px) {
+  ::ng-deep .post-detail-modal {
+    .mat-mdc-dialog-container {
+      .bg-white {
+        flex-direction: column !important;
+        
+        /* Image container */
+        > div:first-child {
+          width: 100% !important;
+          height: 50vh !important;
+        }
+        
+        /* Content container */
+        > div:nth-child(2) {
+          width: 100% !important;
+          height: 50vh !important;
+        }
+      }
+    }
+  }
+}
+
+// Component-specific styles
 /* Post detail styles */
 :host {
   display: block;

@@ -25,31 +25,38 @@
           "/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
       }
-    },
-    {
-      "name": "social-content",
-      "installMode": "lazy",
-      "updateMode": "prefetch",
-      "resources": {
-        "urls": [
-          "/api/posts/**",
-          "/api/users/**",
-          "/api/chat/**"
-        ]
-      }
     }
   ],
   "dataGroups": [
     {
-      "name": "api-cache",
+      "name": "read-only-api",
       "urls": [
-        "/api/**"
+        "/api/posts/public/**",
+        "/api/posts/*/",
+        "/api/users/*/",
+        "/api/chat/**"
       ],
       "cacheConfig": {
         "strategy": "freshness",
         "maxSize": 100,
-        "maxAge": "3d",
-        "timeout": "10s"
+        "maxAge": "15m",
+        "timeout": "3s"
+      }
+    },
+    {
+      "name": "write-api",
+      "urls": [
+        "/api/posts/*/*/like/**",
+        "/api/posts/*/*/bookmark/**",
+        "/api/posts/*/*/repost/**",
+        "/api/users/*/follow/**",
+        "/api/posts/*/post/**",
+        "/api/posts/*/*/quote/**"
+      ],
+      "cacheConfig": {
+        "strategy": "networkOnly",
+        "maxSize": 0,
+        "maxAge": "0s"
       }
     }
   ]

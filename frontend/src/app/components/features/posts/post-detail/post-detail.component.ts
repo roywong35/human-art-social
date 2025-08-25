@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,7 +22,7 @@ import { ToastService } from '../../../../services/toast.service';
   templateUrl: './post-detail.component.html',
   styles: []
 })
-export class PostDetailComponent implements OnInit, AfterViewInit {
+export class PostDetailComponent implements OnInit, OnDestroy {
   @ViewChild('postContainer') postContainer!: ElementRef;
   @ViewChild('mainPost') mainPostElement!: ElementRef;
   @ViewChild('replyTextarea') replyTextarea!: ElementRef;
@@ -42,6 +42,7 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   emojiPickerOpen = false;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   public images: { id: string, file: File, preview: string }[] = [];
+  isPWAMode = false;
 
   // Hashtag autocomplete properties
   protected hashtagSuggestions: HashtagResult[] = [];
@@ -68,6 +69,14 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     this.route.params.subscribe(params => {
       this.loading = true;
       this.error = null;
@@ -86,6 +95,10 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
     this.adjustTextareaHeight();
 
     this.scrollToMainPost();
+  }
+
+  ngOnDestroy(): void {
+    // Clean up any subscriptions or resources if needed
   }
 
   adjustTextareaHeight() {
@@ -108,7 +121,8 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
     
     this.commentService.getComments(this.post.author.handle, this.post.id).subscribe({
       next: (replies) => {
-        this.replies = replies;
+        // Filter out replies that reference removed posts
+        this.replies = replies.filter(reply => !this.isReferencedPostRemoved(reply));
       },
       error: (error: Error) => {
         console.error('Error loading replies:', error);
@@ -269,6 +283,23 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
       this.postService.getPost(this.handle, this.postId).subscribe({
         next: (post) => {
 
+          // Check if this post references a removed post
+          if (this.isReferencedPostRemoved(post)) {
+            this.post = null;
+            this.loading = false;
+            
+            // Determine the type of post that was removed
+            let errorMessage = 'This post has been removed due to violations.';
+            if (post.post_type === 'quote') {
+              errorMessage = 'The quoted post has been removed due to violations.';
+            } else if (post.post_type === 'repost') {
+              errorMessage = 'The reposted content has been removed due to violations.';
+            }
+            
+            this.error = errorMessage;
+            return;
+          }
+
           this.post = post;
           this.loading = false;
           
@@ -311,21 +342,45 @@ export class PostDetailComponent implements OnInit, AfterViewInit {
       const chainIds = post.conversation_chain.slice(0, -1);
 
       
-      for (const postId of chainIds) {
-        try {
-          // Use getPostById instead of getPost since parent posts can be from different users
-          const chainPost = await this.postService.getPostById(postId).toPromise();
-          if (chainPost) {
+                for (const postId of chainIds) {
+            try {
+              // Use getPostById instead of getPost since parent posts can be from different users
+              const chainPost = await this.postService.getPostById(postId).toPromise();
+              if (chainPost && !this.isReferencedPostRemoved(chainPost)) {
 
-            this.parentChain.push(chainPost);
+                this.parentChain.push(chainPost);
+              }
+            } catch (error) {
+              console.error(`Error loading parent post ${postId}:`, error);
+            }
           }
-        } catch (error) {
-          console.error(`Error loading parent post ${postId}:`, error);
-        }
-      }
     }
 
 
+  }
+
+  private isReferencedPostRemoved(post: Post): boolean {
+    // Check if the post itself is removed
+    if (post.is_removed === true) {
+      return true;
+    }
+    
+    // Check if the referenced post is removed
+    if (post.post_type === 'quote' && post.referenced_post) {
+      return post.referenced_post.is_removed === true;
+    }
+    
+    // Check if reposting a quote and the quoted post is removed
+    if (post.post_type === 'repost' && post.referenced_post?.post_type === 'quote' && post.referenced_post.referenced_post) {
+      return post.referenced_post.referenced_post.is_removed === true;
+    }
+    
+    // Check if reposting a regular post that is removed
+    if (post.post_type === 'repost' && post.referenced_post) {
+      return post.referenced_post.is_removed === true;
+    }
+    
+    return false;
   }
 
   getConnectingLineHeight(index: number): number {

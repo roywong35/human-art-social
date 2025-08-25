@@ -56,4 +56,5 @@ export interface Post {
   parent_post_author_handle?: string;
   parent_post_author_username?: string;
   scheduled_time?: string;
+  is_removed?: boolean;
 } 

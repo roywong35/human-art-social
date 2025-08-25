@@ -1,11 +1,11 @@
 <div class="main-container bg-white dark:bg-black max-[686px]:w-screen max-[686px]:h-screen max-[686px]:rounded-none max-[686px]:max-w-none max-[686px]:max-h-none"
-     [ngClass]="{'pt-10': isPWAMode}">
+     [ngClass]="{'pt-10': isPWAMode}"
+     [style.paddingTop]="isPWAMode ? '40px !important' : null">
   <!-- Header with Edit Button -->
   <div class="header-section flex items-center p-4 pb-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
     <!-- Left side: Back button -->
     <button (click)="onBack()" 
-            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]"
-            [ngClass]="{'pt-14': isPWAMode}">
+            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]">
       <i class="fas fa-arrow-left text-lg"></i>
     </button>
 

@@ -24,11 +24,20 @@ import { trigger, transition, style, animate } from '@angular/animations';
 })
 export class ToastComponent implements OnInit, OnDestroy {
   toasts: Toast[] = [];
+  isPWAMode = false;
   private subscription: Subscription | null = null;
 
   constructor(private toastService: ToastService) {}
 
   ngOnInit() {
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Listen for PWA mode changes
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+      this.isPWAMode = e.matches;
+    });
+    
     this.subscription = this.toastService.toasts$.subscribe(toast => {
       this.toasts.push(toast);
       setTimeout(() => this.removeToast(toast.id), 2000); // Remove after 2 seconds

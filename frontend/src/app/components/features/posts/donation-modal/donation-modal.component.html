@@ -1,107 +1,109 @@
 <div class="donation-modal">
-  <div class="bg-white dark:bg-black rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh] max-sm:rounded-none max-sm:max-w-none max-sm:h-full max-sm:p-4 max-sm:w-screen max-sm:min-h-screen"
+  <div class="bg-white dark:bg-black rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh] max-sm:rounded-none max-sm:max-w-none max-sm:h-full max-sm:p-4 max-sm:w-screen max-sm:min-h-screen max-[688px]:flex max-[688px]:items-center max-[688px]:justify-center"
        [ngClass]="{'pt-10': isPWAMode}">
-    <!-- Header -->
-    <div class="relative mb-6">
-      <button (click)="close()" 
-              class="absolute -top-2 -left-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 flex items-center justify-center transition-colors"
-              [ngClass]="{'pt-14': isPWAMode}">
-        <i class="fas fa-times text-xl"></i>
-      </button>
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white text-center">Support Artist</h2>
-    </div>
-
-    <!-- Artist Info -->
-    <div class="flex items-center mb-6 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      <img [src]="data.post.author.profile_picture || '/assets/placeholder-image.svg'" 
-           [alt]="data.post.author.username"
-           class="w-12 h-12 rounded-full object-cover mr-3">
-      <div>
-        <p class="font-semibold text-gray-900 dark:text-white">{{ data.post.author.username }}</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{'@'}}{{ data.post.author.handle }}</p>
-      </div>
-    </div>
-
-    <!-- Amount Selection -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Choose Amount</label>
-      <div class="grid grid-cols-3 gap-2 mb-4">
-        <button *ngFor="let amount of predefinedAmounts" 
-                (click)="selectAmount(amount)"
-                [class.bg-blue-500]="selectedAmount === amount"
-                [class.text-white]="selectedAmount === amount"
-                [class.bg-gray-100]="selectedAmount !== amount"
-                [class.text-gray-700]="selectedAmount !== amount"
-                [class.dark:bg-gray-700]="selectedAmount !== amount"
-                [class.dark:text-gray-300]="selectedAmount !== amount"
-                class="py-2 px-4 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors">
-                                                     ￥{{ amount }}
+    <div class="max-[688px]:w-full max-[688px]:max-w-sm">
+      <!-- Header -->
+      <div class="relative mb-6">
+        <button (click)="close()" 
+                *ngIf="!isPWAMode"
+                class="absolute -top-2 -left-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i class="fas fa-times text-xl"></i>
         </button>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white text-center">Support Artist</h2>
       </div>
-      
-      <!-- Custom Amount -->
-      <div class="flex items-center">
-                                         <span class="text-gray-700 dark:text-gray-300 mr-2">￥</span>
-        <input type="number" 
-               [(ngModel)]="customAmount"
-               (input)="onCustomAmountChange($event)"
-               placeholder="Custom amount"
-               min="1"
-               class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-      </div>
-    </div>
 
-    <!-- Message -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message (Optional)</label>
-      <textarea [(ngModel)]="message"
-                placeholder="Leave a supportive message for the artist..."
-                rows="3"
-                maxlength="200"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ message.length }}/200</p>
-    </div>
-
-    <!-- Public/Private Toggle -->
-    <div class="mb-6">
-      <label class="flex items-center">
-        <input type="checkbox" 
-               [(ngModel)]="isPublic"
-               class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-        <span class="text-sm text-gray-700 dark:text-gray-300">Show my donation publicly</span>
-      </label>
-    </div>
-
-    <!-- Recent Donations -->
-    <div class="mb-6" *ngIf="donations.length > 0">
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Supporters</h3>
-      <div class="max-h-32 space-y-2" [class.overflow-y-auto]="donations.length > 5">
-        <div *ngFor="let donation of donations.slice(0, 10)" 
-             class="flex items-center justify-between text-sm">
-          <div class="flex items-center">
-            <img [src]="donation.donor.profile_picture || '/assets/placeholder-image.svg'" 
-                 [alt]="donation.donor.username"
-                 class="w-6 h-6 rounded-full object-cover mr-2">
-            <span class="text-gray-900 dark:text-white">{{ donation.donor.username }}</span>
-          </div>
-                     <span class="text-green-600 dark:text-green-400 font-medium">￥{{ donation.amount }}</span>
+      <!-- Artist Info -->
+      <div class="flex items-center mb-6 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <img [src]="data.post.author.profile_picture || '/assets/placeholder-image.svg'" 
+             [alt]="data.post.author.username"
+             class="w-12 h-12 rounded-full object-cover mr-3">
+        <div>
+          <p class="font-semibold text-gray-900 dark:text-white">{{ data.post.author.username }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{'@'}}{{ data.post.author.handle }}</p>
         </div>
       </div>
-    </div>
 
-    <!-- Action Buttons -->
-    <div class="flex space-x-3">
-      <button (click)="close()" 
-              class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-        Cancel
-      </button>
-      <button (click)="submitDonation()" 
-              [disabled]="!canDonate"
-              [class.opacity-50]="!canDonate"
-              [class.cursor-not-allowed]="!canDonate"
-              class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:hover:bg-green-600 text-white rounded-lg transition-colors">
-                 Donate ￥{{ selectedAmount }}
-      </button>
+      <!-- Amount Selection -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Choose Amount</label>
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <button *ngFor="let amount of predefinedAmounts" 
+                  (click)="selectAmount(amount)"
+                  [class.bg-blue-500]="selectedAmount === amount"
+                  [class.text-white]="selectedAmount === amount"
+                  [class.bg-gray-100]="selectedAmount !== amount"
+                  [class.text-gray-700]="selectedAmount !== amount"
+                  [class.dark:bg-gray-700]="selectedAmount !== amount"
+                  [class.dark:text-gray-300]="selectedAmount !== amount"
+                  class="py-2 px-4 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors">
+                                                       ￥{{ amount }}
+          </button>
+        </div>
+        
+        <!-- Custom Amount -->
+        <div class="flex items-center">
+                                           <span class="text-gray-700 dark:text-gray-300 mr-2">￥</span>
+          <input type="number" 
+                 [(ngModel)]="customAmount"
+                 (input)="onCustomAmountChange($event)"
+                 placeholder="Custom amount"
+                 min="1"
+                 class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+      </div>
+
+      <!-- Message -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message (Optional)</label>
+        <textarea [(ngModel)]="message"
+                  placeholder="Leave a supportive message for the artist..."
+                  rows="3"
+                  maxlength="200"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ message.length }}/200</p>
+      </div>
+
+      <!-- Public/Private Toggle -->
+      <div class="mb-6">
+        <label class="flex items-center">
+          <input type="checkbox" 
+                 [(ngModel)]="isPublic"
+                 class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+          <span class="text-sm text-gray-700 dark:text-gray-300">Show my donation publicly</span>
+        </label>
+      </div>
+
+      <!-- Recent Donations -->
+      <div class="mb-6" *ngIf="donations.length > 0">
+        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Supporters</h3>
+        <div class="max-h-32 space-y-2" [class.overflow-y-auto]="donations.length > 5">
+          <div *ngFor="let donation of donations.slice(0, 10)" 
+               class="flex items-center justify-between text-sm">
+            <div class="flex items-center">
+              <img [src]="donation.donor.profile_picture || '/assets/placeholder-image.svg'" 
+                   [alt]="donation.donor.username"
+                   class="w-6 h-6 rounded-full object-cover mr-2">
+              <span class="text-gray-900 dark:text-white">{{ donation.donor.username }}</span>
+            </div>
+                       <span class="text-green-600 dark:text-green-400 font-medium">￥{{ donation.amount }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex space-x-3">
+        <button (click)="close()" 
+                class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          Cancel
+        </button>
+        <button (click)="submitDonation()" 
+                [disabled]="!canDonate"
+                [class.opacity-50]="!canDonate"
+                [class.cursor-not-allowed]="!canDonate"
+                class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:hover:bg-green-600 text-white rounded-lg transition-colors">
+                   Donate ￥{{ selectedAmount }}
+        </button>
+      </div>
     </div>
   </div>
 </div>

@@ -1,9 +1,7 @@
 <!-- Modal panel -->
-<div class="fixed inset-0 min-[688px]:relative bg-white text-left overflow-hidden min-[688px]:shadow-xl w-full min-[688px]:max-w-md min-[688px]:rounded-[18px]"
-     [ngClass]="{'pt-10': isPWAMode}">
+<div class="fixed inset-0 min-[688px]:relative bg-white text-left overflow-hidden min-[688px]:shadow-xl w-full min-[688px]:max-w-md min-[688px]:rounded-[18px] max-[500px]:flex max-[500px]:items-center max-[500px]:justify-center">
   <!-- Close button -->
-  <div class="absolute top-0 right-0 pt-3 pr-3"
-  [ngClass]="{'pt-14': isPWAMode}">
+  <div *ngIf="!isMobileView" class="absolute top-0 right-0 pt-3 pr-3">
     <button
       type="button"
       (click)="onClose()"
@@ -16,7 +14,8 @@
     </button>
   </div>
 
-  <div class="p-6 min-[688px]:p-8">
+  <div class="p-6 min-[688px]:p-8 max-[500px]:w-full max-[500px]:max-w-sm">
+
     <!-- Header -->
     <div class="text-center">
       <h2 class="text-2xl font-bold text-gray-900 mb-6">
@@ -105,7 +104,7 @@
           {{ registerError }}
         </div>
 
-        <!-- Submit and Demo buttons -->
+        <!-- Submit buttons -->
         <div class="space-y-3">
             <button
                 type="submit"
@@ -122,12 +121,14 @@
             </button>
 
             <button
-                type="button"
-                (click)="fillDemoAccount()"
-                class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-                Fill with demo data
-            </button>
+            *ngIf="isPWAMode || isMobileView"
+            type="button"
+            (click)="onClose()"
+            class="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+        >
+            <i class="fas fa-arrow-left text-sm"></i>
+            Back
+        </button>
             </div>
         <!-- Login link -->
         <div class="text-center mt-4">

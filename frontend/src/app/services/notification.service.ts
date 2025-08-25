@@ -356,6 +356,8 @@ export class NotificationService {
         return `${username} followed you`;
       case 'repost':
         return `${username} reposted your post`;
+      case 'report_received':
+        return `Your report has been submitted successfully`;
       default:
         return '';
     }
@@ -371,6 +373,8 @@ export class NotificationService {
         return `${username1} and ${username2} followed you`;
       case 'repost':
         return `${username1} and ${username2} reposted your post`;
+      case 'report_received':
+        return `Your report has been submitted successfully`;
       default:
         return '';
     }
@@ -386,6 +390,8 @@ export class NotificationService {
         return `${username1}, ${username2} and ${othersCount} others followed you`;
       case 'repost':
         return `${username1}, ${username2} and ${othersCount} others reposted your post`;
+      case 'report_received':
+        return `Your report has been submitted successfully`;
       default:
         return '';
     }
@@ -401,7 +407,7 @@ export class NotificationService {
   private getSystemMessage(type: string): string {
     switch (type) {
       case 'report_received':
-        return `We received your report`;
+        return `Your report has been submitted successfully. We will review it and take appropriate action if needed.`;
       case 'post_removed':
         return `Your post has been removed`;
       case 'appeal_approved':

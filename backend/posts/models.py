@@ -145,6 +145,9 @@ class Post(models.Model):
         blank=True, 
         help_text="When this post should be published. If null, post is published immediately."
     )
+    
+    # Content moderation field
+    is_removed = models.BooleanField(default=False, help_text='Whether this post has been removed due to violations')
 
     hashtags = models.ManyToManyField(Hashtag, through=PostHashtag, related_name='posts')
     

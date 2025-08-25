@@ -1,2 +1,27 @@
-// Save confirmation dialog styles
+// Save confirmation dialog styles - Clean approach
+// Target the global class that gets added by MatDialog
+
+::ng-deep .save-confirmation-dialog {
+  .mat-mdc-dialog-container {
+    opacity: 0;
+    animation: containerFadeIn 100ms ease-out forwards;
+    max-height: 90vh;
+    max-width: 90vw;
+    
+    .mdc-dialog__surface {
+      background: white;
+      border-radius: 18px !important;
+      overflow: hidden;
+      max-height: 90vh;
+    }
+  }
+}
+
+// Override global overlay styles for save confirmation dialog
+::ng-deep .save-confirmation-dialog .cdk-overlay-pane {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+// Component-specific styles
 // Using inline Tailwind classes, no custom styles needed 

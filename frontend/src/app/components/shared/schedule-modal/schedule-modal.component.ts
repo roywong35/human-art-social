@@ -42,6 +42,7 @@ export class ScheduleModalComponent implements OnInit {
   hours: Array<{value: string, label: string}> = [];
   minutes: Array<{value: string, label: string}> = [];
   isPWAMode = false;
+  isMobileView = false;
 
   ngOnInit() {
     // Check if running as PWA
@@ -50,6 +51,14 @@ export class ScheduleModalComponent implements OnInit {
     // Listen for PWA mode changes
     window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
       this.isPWAMode = e.matches;
+    });
+    
+    // Check if mobile view
+    this.isMobileView = window.innerWidth < 688;
+    
+    // Listen for window resize
+    window.addEventListener('resize', () => {
+      this.isMobileView = window.innerWidth < 688;
     });
     
     this.setDateLimits();

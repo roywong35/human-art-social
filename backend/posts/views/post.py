@@ -52,6 +52,13 @@ class PostViewSet(viewsets.ModelViewSet):
             posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
             queryset = queryset.exclude(id__in=posts_reported_by_user)
 
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        # This ensures that if a referenced post is removed, the quote/repost is also hidden
+        queryset = queryset.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
         # Filter by following if the user has following_only_preference enabled
         if self.request.user.following_only_preference:
             following_users = self.request.user.following.all()
@@ -456,6 +463,23 @@ class PostViewSet(viewsets.ModelViewSet):
             'referenced_post',
             'parent_post'
         ).order_by('-created_at')
+        
+        # Filter out posts with 3+ reports (hidden from timeline)
+        posts_to_hide_from_timeline = ContentReport.get_posts_to_hide_from_timeline()
+        posts = posts.exclude(id__in=posts_to_hide_from_timeline)
+        
+        # Filter out posts that the current user has reported (hide from their view)
+        if self.request.user.is_authenticated:
+            posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
+            posts = posts.exclude(id__in=posts_reported_by_user)
+
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        # This ensures that if a referenced post is removed, the quote/repost is also hidden
+        posts = posts.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
+        
         return posts
 
     @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/posts')
@@ -584,6 +608,12 @@ class PostViewSet(viewsets.ModelViewSet):
             'reposts',
             'hashtags'
         ).distinct().order_by('-created_at')
+        
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        posts = posts.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
         
         serializer = self.get_serializer(posts, many=True)
         return Response(serializer.data)
@@ -875,6 +905,12 @@ class PostViewSet(viewsets.ModelViewSet):
             images__isnull=False
         ).distinct().select_related('author').order_by('-created_at')
         
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        media_posts = media_posts.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
+        
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
         serializer = UserPostSerializer(media_posts, many=True, context={'request': request})
@@ -898,6 +934,12 @@ class PostViewSet(viewsets.ModelViewSet):
         if request.user.is_authenticated:
             posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(request.user)
             human_art_posts = human_art_posts.exclude(id__in=posts_reported_by_user)
+
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        human_art_posts = human_art_posts.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
@@ -910,6 +952,12 @@ class PostViewSet(viewsets.ModelViewSet):
         liked_posts = Post.objects.filter(
             likes=user
         ).select_related('author').order_by('-created_at')
+        
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        liked_posts = liked_posts.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
@@ -945,6 +993,13 @@ class PostViewSet(viewsets.ModelViewSet):
             # Filter out posts with 3+ reports (hidden from main timeline)
             posts_to_hide_from_timeline = ContentReport.get_posts_to_hide_from_timeline()
             queryset = queryset.exclude(id__in=posts_to_hide_from_timeline)
+
+            # Filter out posts that reference removed content (quotes and reposts of removed posts)
+            # This ensures that if a referenced post is removed, the quote/repost is also hidden
+            queryset = queryset.exclude(
+                Q(post_type='quote', referenced_post__is_removed=True) |
+                Q(post_type='repost', referenced_post__is_removed=True)
+            )
 
             # Filter based on tab
             if tab == 'human-drawing':
@@ -1141,4 +1196,3 @@ class PostViewSet(viewsets.ModelViewSet):
                 {'error': 'An error occurred while checking for new posts'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-

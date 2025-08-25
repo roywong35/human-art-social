@@ -226,10 +226,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
     const dialogRef = this.dialog.open(PostRemovalDialogComponent, {
       panelClass: ['post-removal-dialog'],
-      maxWidth: '100vw',
-      maxHeight: '100vh',
-      width: '100vw',
-      height: '100vh',
+      maxWidth: window.innerWidth < 688 ? '100vw' : '600px',
+      width: window.innerWidth < 688 ? '100vw' : '600px',
       disableClose: false,
       hasBackdrop: true,
       data: {
@@ -379,6 +377,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         return 'reposted your post';
       case 'donation':
         return 'donated to your post';
+      case 'report_received':
+        return ''; // Empty string so it goes to system notification path
       default:
         return '';
     }
@@ -387,7 +387,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   protected getSystemMessage(notificationType: string): string {
     switch (notificationType) {
       case 'report_received':
-        return 'We received your report';
+        return 'Your report has been submitted successfully';
       case 'post_removed':
         return 'Your post has been removed';
       case 'appeal_approved':
@@ -413,6 +413,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         return 'fas fa-retweet';
       case 'donation':
         return 'fas fa-gift';
+      case 'report_received':
+        return 'fas fa-flag';
       default:
         return 'fas fa-bell';
     }
@@ -430,6 +432,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         return 'bg-green-500 text-white';
       case 'donation':
         return 'bg-yellow-500 text-white';
+      case 'report_received':
+        return 'bg-blue-500 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
