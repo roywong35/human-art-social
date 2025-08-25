@@ -150,3 +150,104 @@ textarea {
     margin-top: 40px !important; /* Space for header + tab bar */
   }
 }
+
+/* Disable all hover effects on mobile devices (<500px) */
+@media (max-width: 499px) {
+  * {
+    &:hover {
+      background-color: inherit !important;
+      transform: none !important;
+      scale: none !important;
+      box-shadow: inherit !important;
+      border-color: inherit !important;
+      color: inherit !important;
+      opacity: inherit !important;
+    }
+  }
+  
+  /* Specific hover class overrides for Tailwind */
+  .hover\\:bg-gray-100:hover,
+  .hover\\:bg-gray-800:hover,
+  .hover\\:bg-blue-100:hover,
+  .hover\\:bg-blue-600:hover,
+  .hover\\:bg-red-200:hover,
+  .hover\\:bg-red-600:hover,
+  .hover\\:bg-white:hover,
+  .hover\\:bg-black:hover,
+  .hover\\:bg-gray-700:hover,
+  .hover\\:bg-gray-900:hover,
+  .hover\\:bg-blue-500:hover,
+  .hover\\:bg-blue-700:hover,
+  .hover\\:bg-red-500:hover,
+  .hover\\:bg-red-700:hover,
+  .hover\\:bg-green-500:hover,
+  .hover\\:bg-green-700:hover,
+  .hover\\:bg-yellow-500:hover,
+  .hover\\:bg-yellow-700:hover,
+  .hover\\:bg-purple-500:hover,
+  .hover\\:bg-purple-700:hover,
+  .hover\\:bg-pink-500:hover,
+  .hover\\:bg-pink-700:hover,
+  .hover\\:bg-indigo-500:hover,
+  .hover\\:bg-indigo-700:hover {
+    background-color: inherit !important;
+  }
+  
+  .hover\\:text-blue-500:hover,
+  .hover\\:text-blue-600:hover,
+  .hover\\:text-red-500:hover,
+  .hover\\:text-red-600:hover,
+  .hover\\:text-green-500:hover,
+  .hover\\:text-green-600:hover,
+  .hover\\:text-yellow-500:hover,
+  .hover\\:text-yellow-600:hover,
+  .hover\\:text-purple-500:hover,
+  .hover\\:text-purple-600:hover,
+  .hover\\:text-pink-500:hover,
+  .hover\\:text-pink-600:hover,
+  .hover\\:text-indigo-500:hover,
+  .hover\\:text-indigo-600:hover,
+  .hover\\:text-gray-500:hover,
+  .hover\\:text-gray-600:hover,
+  .hover\\:text-gray-700:hover,
+  .hover\\:text-gray-800:hover,
+  .hover\\:text-gray-900:hover,
+  .hover\\:text-white:hover,
+  .hover\\:text-black:hover {
+    color: inherit !important;
+  }
+  
+  .hover\\:border-red-600:hover,
+  .hover\\:border-blue-600:hover,
+  .hover\\:border-green-600:hover,
+  .hover\\:border-yellow-600:hover,
+  .hover\\:border-purple-600:hover,
+  .hover\\:border-pink-600:hover,
+  .hover\\:border-indigo-600:hover,
+  .hover\\:border-gray-600:hover,
+  .hover\\:border-gray-700:hover,
+  .hover\\:border-gray-800:hover,
+  .hover\\:border-gray-900:hover,
+  .hover\\:border-white:hover,
+  .hover\\:border-black:hover {
+    border-color: inherit !important;
+  }
+  
+  .hover\\:scale-110:hover,
+  .hover\\:scale-105:hover,
+  .hover\\:scale-95:hover,
+  .hover\\:scale-90:hover {
+    transform: none !important;
+  }
+  
+  .hover\\:shadow-xl:hover,
+  .hover\\:shadow-2xl:hover,
+  .hover\\:shadow-lg:hover {
+    box-shadow: inherit !important;
+  }
+  
+  .hover\\:opacity-80:hover,
+  .hover\\:opacity-90:hover {
+    opacity: inherit !important;
+  }
+}

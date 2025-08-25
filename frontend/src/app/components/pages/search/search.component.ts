@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Post } from '../../../models/post.model';
 import { User } from '../../../models/user.model';
 import { PostService } from '../../../services/post.service';
@@ -11,17 +11,20 @@ import { AuthService } from '../../../services/auth.service';
 import { PostComponent } from '../../features/posts/post/post.component';
 import { SearchBarComponent } from '../../widgets/search-bar/search-bar.component';
 import { GlobalModalService } from '../../../services/global-modal.service';
+import { HashtagResult, HashtagService } from '../../../services/hashtag.service';
 import { forkJoin, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, FormsModule, SearchBarComponent, PostComponent],
+  imports: [CommonModule, FormsModule, RouterModule, SearchBarComponent, PostComponent],
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss']
 })
 export class SearchComponent implements OnInit, OnDestroy {
+  @ViewChild('searchBar') searchBar!: SearchBarComponent;
+  
   searchQuery: string = '';
   posts: Post[] = [];
   users: User[] = [];
@@ -30,7 +33,7 @@ export class SearchComponent implements OnInit, OnDestroy {
   hasSearched: boolean = false;
   
   // Tab management
-  activeTab: 'top' | 'people' = 'top';
+  activeTab: 'top' | 'people' | 'trending' = 'top';
   
   // Loading states for different sections
   isLoadingPosts: boolean = false;
@@ -38,6 +41,15 @@ export class SearchComponent implements OnInit, OnDestroy {
 
   // Current user tracking
   currentUser: User | null = null;
+
+  // Trending hashtags properties
+  trendingTopics: HashtagResult[] = [];
+  readonly maxTrendingTopics = 5;
+  isLoadingTrending = false;
+
+  // Recommended users properties
+  recommendedUsers: User[] = [];
+  readonly maxRecommendedUsers = 3;
 
   // User preview modal properties
   private hoverTimeout: any;
@@ -52,6 +64,7 @@ export class SearchComponent implements OnInit, OnDestroy {
     private router: Router,
     private postService: PostService,
     private userService: UserService,
+    private hashtagService: HashtagService,
     private optimisticUpdateService: OptimisticUpdateService,
     private authService: AuthService,
     private globalModalService: GlobalModalService
@@ -67,6 +80,10 @@ export class SearchComponent implements OnInit, OnDestroy {
     // Subscribe to follow status changes for real-time sync
     this.setupFollowStatusSync();
 
+    // Load trending hashtags and recommended users
+    this.loadTrending(true);
+    this.loadRecommendedUsers();
+
     // Subscribe to route parameter changes to handle navigation to search page
     const routeSub = this.route.queryParams.subscribe(params => {
       const query = params['q'];
@@ -77,16 +94,20 @@ export class SearchComponent implements OnInit, OnDestroy {
         this.searchQuery = query || '';
         if (query) {
           this.performSearch(query);
+          // When searching, switch to 'top' tab to show results
+          this.activeTab = 'top';
         } else {
           // Clear results if no query
           this.posts = [];
           this.users = [];
           this.hasSearched = false;
           this.isLoading = false;
+          // When no search, switch to 'trending' tab
+          this.activeTab = 'trending';
         }
       }
       
-      // Update active tab if it changed
+      // Update active tab if it changed (only for valid tabs)
       if (tab && ['top', 'latest', 'people', 'posts'].includes(tab)) {
         this.activeTab = tab as any;
       }
@@ -105,16 +126,104 @@ export class SearchComponent implements OnInit, OnDestroy {
           this.users[userIndex].followers_count = change.followersCount;
         }
       }
+      
+      // Also update recommended users list
+      if (change && this.recommendedUsers.length > 0) {
+        const userIndex = this.recommendedUsers.findIndex(user => user.handle === change.userHandle);
+        if (userIndex !== -1) {
+          this.recommendedUsers[userIndex].is_following = change.isFollowing;
+          this.recommendedUsers[userIndex].followers_count = change.followersCount;
+        }
+      }
     });
     this.subscriptions.push(followSub);
   }
 
-  goBack() {
-    this.router.navigate(['/']);
+  private loadTrending(forceRefresh: boolean = false) {
+    this.isLoadingTrending = true;
+    
+    // Add cache-busting parameter if forcing refresh
+    const params = forceRefresh ? { _t: Date.now() } : {};
+    
+    this.hashtagService.getTrendingHashtags(undefined, params).subscribe({
+      next: (response) => {
+        this.trendingTopics = response.results;
+        
+        // If we still don't have enough trending topics, add some default popular hashtags
+        if (this.trendingTopics.length < 3) {
+          const defaultTrending = [
+            { name: 'art', post_count: 150 },
+            { name: 'drawing', post_count: 120 },
+            { name: 'creative', post_count: 95 },
+            { name: 'design', post_count: 80 },
+            { name: 'inspiration', post_count: 75 }
+          ];
+          
+          // Add default trending topics that aren't already in the list
+          const existingNames = new Set(this.trendingTopics.map(t => t.name));
+          for (const defaultTopic of defaultTrending) {
+            if (!existingNames.has(defaultTopic.name) && this.trendingTopics.length < this.maxTrendingTopics) {
+              this.trendingTopics.push(defaultTopic);
+            }
+          }
+        }
+        this.isLoadingTrending = false;
+      },
+      error: (error) => {
+        console.error('Error loading trending:', error);
+        
+        // On error, show default trending topics
+        this.trendingTopics = [
+          { name: 'art', post_count: 150 },
+          { name: 'drawing', post_count: 120 },
+          { name: 'creative', post_count: 95 },
+          { name: 'design', post_count: 80 },
+          { name: 'inspiration', post_count: 75 }
+        ];
+        this.isLoadingTrending = false;
+      }
+    });
   }
 
-  switchTab(tab: 'top' | 'people') {
-    this.activeTab = tab;
+  private loadRecommendedUsers() {
+    this.isLoadingUsers = true;
+    this.userService.getRecommendedUsersPaginated(1).subscribe({
+      next: (response) => {
+        this.recommendedUsers = response.results;
+        this.isLoadingUsers = false;
+      },
+      error: (error) => {
+        console.error('Error loading recommended users:', error);
+        this.isLoadingUsers = false;
+      }
+    });
+  }
+
+  goBack() {
+    // Clear search query and navigate back to search page without query params
+    this.searchQuery = '';
+    this.posts = [];
+    this.users = [];
+    this.hasSearched = false;
+    this.isLoading = false;
+    this.activeTab = 'trending';
+    
+    // Clear the search bar text
+    if (this.searchBar) {
+      this.searchBar.searchQuery = '';
+    }
+    
+    // Update URL to remove search parameters
+    this.router.navigate(['/search'], { queryParams: {} });
+  }
+
+  switchTab(tab: 'top' | 'people' | 'trending') {
+    // Only allow switching to tabs that are currently available
+    if (tab === 'trending' && !this.hasSearched) {
+      this.activeTab = tab;
+    } else if ((tab === 'top' || tab === 'people') && this.hasSearched) {
+      this.activeTab = tab;
+    }
   }
 
   trackByPostId(index: number, post: Post): number {
@@ -170,6 +279,32 @@ export class SearchComponent implements OnInit, OnDestroy {
   // Filter out reposted posts from search results
   get filteredPosts(): Post[] {
     return this.posts.filter(post => post.post_type !== 'repost');
+  }
+
+  navigateToHashtag(hashtag: string) {
+    this.router.navigate(['/search'], { queryParams: { q: `#${hashtag}` } }).then(() => {
+      this.scrollToTopAfterNavigation();
+    });
+  }
+
+  formatCount(count: number): string {
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + 'M';
+    }
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'K';
+    }
+    return count.toString();
+  }
+
+  private scrollToTopAfterNavigation(): void {
+    // Use setTimeout to ensure navigation has completed
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'auto'
+      });
+    }, 100);
   }
 
   private performSearch(query: string) {

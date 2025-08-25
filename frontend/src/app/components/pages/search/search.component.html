@@ -1,16 +1,32 @@
-<div class="max-w-4xl mx-auto">
+<div class="w-screen min-[500px]:w-full max-w-4xl mx-auto overflow-hidden">
   <!-- Search Header -->
-  <div class="sticky top-0 bg-white dark:[background-color:var(--color-background)] z-10">
-    <div class="flex items-center gap-4 px-6">
-      <button (click)="goBack()" class="text-gray-600 dark:[color:var(--color-text-secondary)] hover:text-gray-900 dark:hover:[color:var(--color-text)] hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded-full transition-all w-10 h-10 flex items-center justify-center">
-        <i class="fas fa-arrow-left text-xl"></i>
+  <div class="sticky top-0 bg-white dark:[background-color:var(--color-background)] z-10 w-full">
+    <div class="flex items-center px-4 w-full">
+      <!-- Back Button - Only show when searching -->
+      <button *ngIf="hasSearched && searchQuery" 
+              (click)="goBack()"
+              class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <i class="fas fa-arrow-left text-gray-600 dark:text-gray-400 text-base"></i>
       </button>
-      <div class="flex-1">
-        <app-search-bar [initialSearchValue]="searchQuery"></app-search-bar>
+      
+      <div class="flex-1 min-w-0">
+        <app-search-bar #searchBar [initialSearchValue]="searchQuery"></app-search-bar>
       </div>
     </div>
 
     <!-- Tabs -->
+    <!-- Show Trending tab when no search has been performed -->
+    <div *ngIf="!hasSearched" class="flex border-b border-gray-200 dark:[border-color:var(--color-border)]">
+      <button (click)="switchTab('trending')"
+              [class.border-b-2]="activeTab === 'trending'"
+              [class.border-blue-500]="activeTab === 'trending'"
+              [class.text-blue-500]="activeTab === 'trending'"
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]">
+        Trending
+      </button>
+    </div>
+
+    <!-- Show Top and People tabs when search has been performed -->
     <div *ngIf="hasSearched && !isLoading && (users.length > 0 || posts.length > 0)" 
          class="flex border-b border-gray-200 dark:[border-color:var(--color-border)]">
       <button (click)="switchTab('top')"
@@ -24,7 +40,7 @@
               [class.border-b-2]="activeTab === 'people'"
               [class.border-blue-500]="activeTab === 'people'"
               [class.text-blue-500]="activeTab === 'people'"
-              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]">
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-border)] transition-colors dark:[color:var(--color-text)]">
         People
       </button>
     </div>
@@ -38,8 +54,8 @@
       <p class="mt-2 text-gray-500 dark:[color:var(--color-text-secondary)]">Searching for posts and people...</p>
     </div>
 
-    <!-- No Search Performed Yet -->
-    <div *ngIf="!hasSearched && !isLoading" class="text-center py-12 px-6">
+    <!-- No Search Performed Yet - Only show when no search AND not on trending tab -->
+    <div *ngIf="!hasSearched && !isLoading && activeTab !== 'trending'" class="text-center py-12 px-6">
       <i class="fas fa-search text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
         Search for posts, users, and hashtags
@@ -66,7 +82,7 @@
       </div>
     </div>
 
-    <!-- Top Tab Content -->
+    <!-- Top Tab Content - Only show when search has been performed -->
     <div *ngIf="!isLoading && hasSearched && activeTab === 'top' && (users.length > 0 || posts.length > 0)">
       
       <!-- People Section (Max 3 users) -->
@@ -151,7 +167,7 @@
       </div>
     </div>
 
-    <!-- People Tab Content -->
+    <!-- People Tab Content - Only show when search has been performed -->
     <div *ngIf="!isLoading && hasSearched && activeTab === 'people' && users.length > 0">
       <div>
         <div *ngFor="let user of users; trackBy: trackByUserId"
@@ -212,6 +228,98 @@
       <p class="text-gray-500 dark:[color:var(--color-text-secondary)] mb-4">
         Try searching for different keywords or check your spelling
       </p>
+    </div>
+
+    <!-- Trending Tab Content - Show when trending tab is active OR when no search has been performed -->
+    <div *ngIf="activeTab === 'trending' || !hasSearched" class="w-full">
+      <!-- Trending Topics Section -->
+      <div class="bg-white dark:bg-black w-full">
+        <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
+          <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Trending</h3>
+        </div>
+        <div class="divide-y divide-gray-100 dark:divide-gray-700">
+          <!-- Loading state -->
+          <div *ngIf="isLoadingTrending" class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+          </div>
+
+          <!-- Real trending topics -->
+          <div *ngIf="!isLoadingTrending">
+            <div *ngFor="let topic of trendingTopics.slice(0, maxTrendingTopics); let i = index" 
+                 class="px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer w-full"
+                 (click)="navigateToHashtag(topic.name)">
+              <div class="flex items-center justify-between w-full">
+                <div class="flex-1 min-w-0 pr-2">
+                  <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">
+                    Trending
+                  </div>
+                  <div class="font-bold text-gray-900 dark:[color:var(--color-text)] hover:text-blue-500 transition-colors break-words">
+                    #{{ topic.name }}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">
+                    {{ formatCount(topic.post_count) }} posts
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Show message when no trending topics -->
+            <div *ngIf="trendingTopics.length === 0" class="px-4 py-6 text-center">
+              <div class="text-gray-500 dark:text-gray-400 text-sm">
+                No trending topics right now
+              </div>
+              <div class="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                Check back later for updates
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Who to Follow Section -->
+      <div class="bg-white dark:bg-black w-full">
+        <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
+          <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Who to follow</h3>
+        </div>
+        <div class="divide-y divide-gray-100 dark:divide-gray-700">
+          <!-- Loading state -->
+          <div *ngIf="isLoadingUsers" class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+          </div>
+
+          <!-- User list -->
+          <div *ngIf="!isLoadingUsers">
+            <div *ngFor="let user of recommendedUsers.slice(0, maxRecommendedUsers)" 
+                 class="flex items-center px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer w-full"
+                 (click)="navigateToProfile(user)">
+              <div class="flex items-center flex-1 min-w-0">
+                <img [src]="user.profile_picture || 'assets/placeholder-image.svg'" 
+                     [alt]="user.username + ' avatar'" 
+                     class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 object-cover hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0"
+                     (mouseenter)="onUserHover($event, user)"
+                     (mouseleave)="onUserHoverLeave()">
+                <div class="ml-3 min-w-0 flex-1"
+                     (mouseenter)="onUserHover($event, user)"
+                     (mouseleave)="onUserHoverLeave()">
+                  <div class="font-bold text-gray-900 dark:[color:var(--color-text)] transition-colors break-words hover:underline cursor-pointer text-[15px]">{{ user.username }}</div>
+                  <div class="text-gray-500 dark:[color:var(--color-text-secondary)] break-words hover:underline cursor-pointer text-[15px]">{{'@'}}{{ user.handle }}</div>
+                </div>
+              </div>
+              <button *ngIf="shouldShowFollowButton(user)"
+                      (click)="followUser(user, $event)" 
+                      class="follow-button flex-shrink-0 ml-3"
+                      [class.following]="user.is_following"
+                      (mouseenter)="onFollowButtonHover(user, true)"
+                      (mouseleave)="onFollowButtonHover(user, false)">
+                <span>
+                  <span *ngIf="user.is_following">Following</span>
+                  <span *ngIf="!user.is_following">Follow</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div> 

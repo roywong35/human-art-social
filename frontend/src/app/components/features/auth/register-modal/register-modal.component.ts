@@ -39,7 +39,7 @@ export class RegisterModalComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isPWAMode = true;
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
     
     // Check if mobile view
     this.isMobileView = window.innerWidth < 688;
