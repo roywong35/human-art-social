@@ -63,6 +63,18 @@ body {
   background: rgba(255, 255, 255, 0.5) !important;
 }
 
+/* Fix sidebar positioning when modals are open */
+@media (min-width: 500px) {
+  body:has(.cdk-overlay-container) .fixed.h-screen.w-\[80px\].xl\:w-\[275px\] {
+    /* Fix positioning when modal opens - prevent jumping */
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    /* Keep sidebar behind modal backdrop */
+    z-index: 100 !important;
+  }
+}
+
 .mat-mdc-dialog-container.mdc-dialog__container {
   transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
               opacity 150ms cubic-bezier(0.4, 0, 0.2, 1) !important;

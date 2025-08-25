@@ -480,7 +480,7 @@ export class PostService {
   }
 
   deletePost(handle: string, postId: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/posts/${handle}/post/${postId}/`).pipe(
+    return this.http.delete(`${this.baseUrl}/posts/${handle}/${postId}/`).pipe(
       tap(() => {
         const currentPosts = this.posts.value;
         const updatedPosts = currentPosts.filter(post => post.id !== postId);
@@ -496,7 +496,7 @@ export class PostService {
   }
 
   verifyHumanArt(handle: string, postId: number): Observable<Post> {
-    return this.http.post<Post>(`${this.baseUrl}/posts/${handle}/post/${postId}/verify_drawing/`, {}).pipe(
+    return this.http.post<Post>(`${this.baseUrl}/posts/${handle}/${postId}/verify_drawing/`, {}).pipe(
       map(post => this.addImageUrls(post))
     );
   }

@@ -111,12 +111,13 @@
                   Report post
                 </button>
                 
-                <!-- Placeholder for own posts -->
-                <div *ngIf="currentUser && post.author.id === currentUser.id" 
-                     class="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-500 dark:[color:var(--color-text-secondary)] cursor-not-allowed">
-                  <i class="fas fa-cog w-4 h-4 mr-3 text-gray-400 flex-shrink-0"></i>
-                  More features coming soon
-                </div>
+                <!-- Delete option for own posts -->
+                <button *ngIf="currentUser && post.author.id === currentUser.id" 
+                        class="flex items-center w-full px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        (click)="onDelete($event)">
+                  <i class="fas fa-trash w-4 h-4 mr-3 text-red-500 flex-shrink-0"></i>
+                  Delete post
+                </button>
               </div>
             </div>
           </div>

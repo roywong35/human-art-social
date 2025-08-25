@@ -1,0 +1,25 @@
+<!-- Delete Post Confirmation Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000100]">
+  <div class="bg-white dark:bg-black rounded-xl w-full max-w-lg mx-4">
+    <div class="p-6">
+      <div class="text-center">
+        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Delete this post?</h2>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">This action cannot be undone.</p>
+        
+        <!-- Buttons - Vertical Stack -->
+        <div class="flex flex-col gap-3">
+          <button mat-button 
+                  class="w-full px-4 py-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors font-medium" 
+                  (click)="onConfirm()">
+            Delete
+          </button>
+          <button mat-button 
+                  class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-white transition-colors font-medium" 
+                  (click)="onCancel()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

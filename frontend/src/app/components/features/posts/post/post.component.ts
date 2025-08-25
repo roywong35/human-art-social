@@ -19,6 +19,7 @@ import { CommentDialogComponent } from '../../comments/comment-dialog/comment-di
 import { RepostMenuComponent } from '../repost-menu/repost-menu.component';
 import { NewPostModalComponent } from '../new-post-modal/new-post-modal.component';
 import { ReportModalComponent } from '../report-modal/report-modal.component';
+import { DeletePostDialogComponent } from '../../../dialogs/delete-post-dialog/delete-post-dialog.component';
 
 import { ToastService } from '../../../../services/toast.service';
 import { take } from 'rxjs/operators';
@@ -40,7 +41,8 @@ import { DonationsViewerComponent } from '../donations-viewer/donations-viewer.c
     TimeAgoPipe,
     RepostMenuComponent,
     UserPreviewModalComponent,
-    HashtagDirective
+    HashtagDirective,
+    DeletePostDialogComponent
   ],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.scss'],
@@ -646,16 +648,28 @@ export class PostComponent implements OnInit, OnDestroy {
 
   onDelete(event: MouseEvent): void {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this post?')) {
-      this.postService.deletePost(this.post.author.handle, this.post.id).subscribe({
-        next: () => {
-          this.postDeleted.emit(this.post.id);
-        },
-        error: (error) => {
-          console.error('Error deleting post:', error);
-        }
-      });
-    }
+    
+    const dialogRef = this.dialog.open(DeletePostDialogComponent, {
+      width: '400px',
+      data: { postId: this.post.id, content: this.post.content },
+      panelClass: 'delete-post-dialog-fixed'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // User confirmed deletion
+        this.postService.deletePost(this.post.author.handle, this.post.id).subscribe({
+          next: () => {
+            this.postDeleted.emit(this.post.id);
+            this.toastService.showSuccess('Post deleted successfully');
+          },
+          error: (error) => {
+            console.error('Error deleting post:', error);
+            this.toastService.showError('Failed to delete post');
+          }
+        });
+      }
+    });
   }
 
   protected getFormattedDate(dateString: string): string {
