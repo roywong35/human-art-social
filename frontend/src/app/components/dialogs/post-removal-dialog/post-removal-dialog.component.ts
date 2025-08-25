@@ -20,6 +20,7 @@ export class PostRemovalDialogComponent implements OnInit {
   loading = true;
   postPreview: Post | null = null;
   isPWAMode = false;
+  isMobileView = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { postId: number; postHandle: string; post?: Post },
@@ -38,6 +39,14 @@ export class PostRemovalDialogComponent implements OnInit {
     // Listen for PWA mode changes
     window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
       this.isPWAMode = e.matches;
+    });
+    
+    // Check if mobile view
+    this.isMobileView = window.innerWidth < 688;
+    
+    // Listen for window resize
+    window.addEventListener('resize', () => {
+      this.isMobileView = window.innerWidth < 688;
     });
     
     this.loadAppealStatus();

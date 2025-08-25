@@ -1,16 +1,17 @@
-<div class="bg-white dark:bg-gray-900 flex flex-col w-full h-full max-[687px]:min-h-screen"
+<div class="fixed inset-0 min-[688px]:relative bg-white dark:bg-black min-[688px]:rounded-[18px] text-left overflow-hidden min-[688px]:shadow-xl w-full min-[688px]:max-w-2xl min-[688px]:w-auto min-[688px]:h-auto"
      [ngClass]="{'pt-10': isPWAMode}">
   <!-- Header - Fixed at top -->
   <div class="flex items-center justify-between p-6 pb-4 flex-shrink-0 border-b border-gray-200 dark:border-gray-700 max-[687px]:p-4 max-[687px]:pb-3">
     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Post Removed</h2>
-    <button (click)="onClose()" 
+    <!-- Close button - hidden on mobile -->
+    <button *ngIf="!isMobileView" (click)="onClose()" 
             class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded-full transition-all w-10 h-10 flex items-center justify-center">
       <i class="fas fa-times text-ellipsis"></i>
     </button>
   </div>
 
   <!-- Scrollable Content -->
-  <div class="flex-1 overflow-y-auto p-6 pt-4 max-[687px]:p-4 max-[687px]:pt-3">
+  <div class="flex-1 overflow-y-auto p-6 pt-4 max-[687px]:p-4 min-[688px]:w-auto">
     <div *ngIf="loading" class="flex justify-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
     </div>
@@ -47,6 +48,17 @@
             class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
             Submit Appeal
           </button>
+
+          <!-- Back button for mobile -->
+          <div *ngIf="isPWAMode || isMobileView">
+            <button
+              type="button"
+              (click)="onClose()"
+              class="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors mt-3">
+              <i class="fas fa-arrow-left text-sm"></i>
+              Back
+            </button>
+          </div>
         </div>
 
         <!-- If appeal already exists -->
@@ -75,4 +87,5 @@
       </div>
     </div>
   </div>
-</div> 
+</div>
+
