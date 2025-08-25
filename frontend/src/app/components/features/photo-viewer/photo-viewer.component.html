@@ -2,6 +2,7 @@
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/90" (click)="close()">
   <!-- Close button -->
   <button class="absolute top-4 left-4 z-10 text-white hover:text-gray-300 transition-colors"
+          [class.pt-10]="isPWAMode"
           (click)="close(); $event.stopPropagation()">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

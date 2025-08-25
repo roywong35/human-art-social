@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { filter, take } from 'rxjs/operators';
 import { NewPostModalComponent } from '../../features/posts/new-post-modal/new-post-modal.component';
 import { NewArtPostModalComponent } from '../../features/posts/new-art-post-modal/new-art-post-modal';
+import { ChangePasswordDialogComponent } from '../../features/auth/change-password-dialog/change-password-dialog.component';
 import { AuthService } from '../../../services/auth.service';
 import { PostService } from '../../../services/post.service';
 import { HomeRefreshService } from '../../../services/home-refresh.service';
@@ -202,6 +203,18 @@ export class MobileHeaderComponent implements OnInit {
         hasBackdrop: true
       });
     }
+  }
+
+  openChangePasswordDialog() {
+    this.dialog.open(ChangePasswordDialogComponent, {
+      panelClass: ['change-password-dialog'],
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      width: '100vw',
+      height: '100vh',
+      disableClose: false,
+      hasBackdrop: true
+    });
   }
 
   navigateToProfile() {

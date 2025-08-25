@@ -492,8 +492,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   openChangePasswordDialog(): void {
     const dialogRef = this.dialog.open(ChangePasswordDialogComponent, {
-      width: '100%',
-      maxWidth: '100%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      width: '90vw',
       height: 'auto',
       panelClass: ['change-password-dialog'],
       backdropClass: 'change-password-backdrop'

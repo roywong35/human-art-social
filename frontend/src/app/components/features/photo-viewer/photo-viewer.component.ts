@@ -24,6 +24,7 @@ export class PhotoViewerComponent implements OnInit, OnDestroy {
   currentPhoto: PostImage | null = null;
   totalPhotos: number;
   defaultPlaceholder = 'assets/placeholder-image.svg';
+  isPWAMode = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: PhotoViewerData,
@@ -36,6 +37,8 @@ export class PhotoViewerComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     document.body.style.overflow = 'hidden';
+    // Check if running as PWA
+    this.isPWAMode = window.matchMedia('(display-mode: standalone)').matches;
   }
 
   ngOnDestroy() {
