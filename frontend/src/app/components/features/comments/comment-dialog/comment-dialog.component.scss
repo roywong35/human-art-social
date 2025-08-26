@@ -253,4 +253,27 @@ textarea {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-// Emoji picker styles moved to emoji-picker.component.scss for consistency 
+// Emoji picker styles moved to emoji-picker.component.scss for consistency
+
+// Mobile-specific styling for X-style layout
+@media (max-width: 687px) {
+  // Show mobile action icons, hide desktop elements
+  .mobile-action-icons {
+    display: flex !important;
+  }
+  
+  .desktop-action-row {
+    display: none !important;
+  }
+}
+
+@media (min-width: 688px) {
+  // Hide mobile elements on desktop, show desktop elements
+  .mobile-action-icons {
+    display: none !important;
+  }
+  
+  .desktop-action-row {
+    display: flex !important;
+  }
+} 

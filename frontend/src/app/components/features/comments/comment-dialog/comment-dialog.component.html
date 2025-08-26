@@ -4,13 +4,25 @@
      (click)="closeEmojiPickerBackdrop()"
      (keydown.escape)="closeEmojiPickerBackdrop()"></div>
 
-<div class="px-2 py-2 dialog-content bg-white dark:bg-black w-screen min-h-screen min-[688px]:w-[600px] min-[688px]:min-h-0 min-[688px]:max-h-[90vh] min-[688px]:rounded-2xl max-[688px]:overflow-y-auto"
+<div class="dialog-content bg-white dark:bg-black w-screen min-h-screen min-[688px]:w-[600px] min-[688px]:min-h-0 min-[688px]:max-h-[90vh] min-[688px]:rounded-2xl max-[688px]:overflow-y-auto"
 [ngClass]="{'pt-10': isPWAMode}">
   <!-- Close Button -->
   <div class="h-14 relative flex-shrink-0">
-    <button class="absolute top-2 left-2 max-[688px]:top-2 max-[688px]:left-2 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]"
+    <button class="absolute top-3 left-3 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:[background-color:var(--color-surface-hover)] dark:[color:var(--color-text)]"
             (click)="dialogRef.close()">
       <i class="fas fa-times text-lg"></i>
+    </button>
+    
+    <!-- Mobile Reply Button (top right corner) -->
+    <button 
+      class="absolute top-3 right-3 max-[688px]:block min-[688px]:hidden px-4 py-1.5 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+      [disabled]="(!replyContent.trim() && images.length === 0) || isSubmitting"
+      (click)="onSubmit()">
+      <span *ngIf="!isSubmitting">{{ scheduledTime ? 'Schedule' : 'Reply' }}</span>
+      <span *ngIf="isSubmitting" class="flex items-center">
+        <i class="fas fa-spinner fa-spin mr-2"></i>
+        {{ scheduledTime ? 'Scheduling...' : 'Replying...' }}
+      </span>
     </button>
   </div>
 
@@ -239,10 +251,30 @@
       </div>
     </div>
   </div>
-</div>
+
+      <!-- Mobile Action Icons Row (hidden on desktop) -->
+      <div class="mobile-action-icons flex items-center space-x-2 mt-3 pt-2 px-2 border-t border-gray-200 dark:border-gray-800">
+        <button 
+          (click)="onImageClick()"
+          class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center">
+          <i class="far fa-image text-[18px]"></i>
+        </button>
+        <button 
+          (click)="toggleEmojiPicker($event)"
+          class="text-blue-500 hover:text-blue-500 hover:bg-blue-100 dark:hover:[background-color:var(--color-surface-hover)] p-2 rounded-full transition-all w-9 h-9 flex items-center justify-center hidden min-[500px]:flex">
+          <i class="far fa-smile text-[18px]"></i>
+        </button>
+        
+        <!-- Schedule Icon -->
+        <app-schedule-icon
+          [isScheduled]="!!scheduledTime"
+          [size]="18"
+          (scheduleClick)="openScheduleModal()">
+        </app-schedule-icon>
+      </div>
 
   <!-- Action Buttons -->
-  <div class="px-3 flex justify-between items-center border-t py-1 max-[688px]:sticky max-[688px]:bottom-0 max-[688px]:bg-white max-[688px]:dark:bg-black">
+  <div class="desktop-action-row flex-shrink-0 flex justify-between items-center mt-4 pl-1 pr-3 py-2 border-t border-gray-200 dark:border-gray-800">
     <div class="flex gap-4">
       <button 
         (click)="onImageClick()"

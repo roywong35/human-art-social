@@ -1,4 +1,4 @@
-<div class="bg-white dark:bg-black w-screen min-[688px]:w-[600px] min-[688px]:rounded-2xl h-screen min-[688px]:h-[80vh] flex flex-col"
+<div class="bg-white dark:bg-black w-screen min-[688px]:w-[600px] min-[688px]:rounded-2xl min-h-[500px] max-h-[90vh] min-[688px]:max-h-[85vh] flex flex-col"
      [ngClass]="{'pt-10': isPWAMode}">
   <div class="flex-shrink-0 relative flex items-center justify-between p-4 max-[688px]:py-1.5 max-[688px]:px-4 border-b border-gray-200 dark:[border-color:var(--color-border)]">
     <button (click)="closeModal()" 
@@ -12,16 +12,15 @@
         (scheduleClick)="openScheduleModal()"
         class="schedule-icon-wrapper">
       </app-schedule-icon>
-      <button 
-        (click)="submitArt()" 
-        [disabled]="!artFile || !evidenceFiles.length || isSubmitting"
-        class="px-4 py-1.5 bg-blue-500 text-white rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
-      >
-        <span *ngIf="!isSubmitting">{{ scheduledTime ? 'Schedule' : 'Submit' }}</span>
-        <span *ngIf="isSubmitting" class="flex items-center">
-          <i class="fas fa-spinner fa-spin mr-2"></i>
-          {{ scheduledTime ? 'Scheduling...' : 'Submitting...' }}
-        </span>
+             <button 
+         (click)="submitArt()" 
+         [disabled]="!artFile || !evidenceFiles.length || isSubmitting"
+         class="w-20 px-4 py-1.5 bg-blue-500 text-white rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+       >
+                 <span *ngIf="!isSubmitting" class="flex items-center justify-center w-full">{{ scheduledTime ? 'Schedule' : 'Submit' }}</span>
+         <span *ngIf="isSubmitting" class="flex items-center justify-center w-full">
+           <i class="fas fa-spinner fa-spin"></i>
+         </span>
       </button>
     </div>
   </div>
@@ -142,7 +141,7 @@
         Your artwork will be reviewed before appearing in the Human Art section.
       </div>
 
-      <div class="max-[688px]:h-[100px]"></div>
+
     </div>
   </div>
 

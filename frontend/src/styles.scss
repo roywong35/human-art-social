@@ -163,21 +163,9 @@ textarea {
   }
 }
 
-/* Disable all hover effects on mobile devices (<500px) */
+/* Prevent unwanted hover effects on mobile devices (<500px) - TARGETED APPROACH */
 @media (max-width: 499px) {
-  * {
-    &:hover {
-      background-color: inherit !important;
-      transform: none !important;
-      scale: none !important;
-      box-shadow: inherit !important;
-      border-color: inherit !important;
-      color: inherit !important;
-      opacity: inherit !important;
-    }
-  }
-  
-  /* Specific hover class overrides for Tailwind */
+  /* Only prevent background color changes on swipe - don't break modals */
   .hover\\:bg-gray-100:hover,
   .hover\\:bg-gray-800:hover,
   .hover\\:bg-blue-100:hover,
@@ -205,6 +193,7 @@ textarea {
     background-color: inherit !important;
   }
   
+  /* Prevent text color changes on swipe */
   .hover\\:text-blue-500:hover,
   .hover\\:text-blue-600:hover,
   .hover\\:text-red-500:hover,
@@ -229,6 +218,7 @@ textarea {
     color: inherit !important;
   }
   
+  /* Prevent border color changes on swipe */
   .hover\\:border-red-600:hover,
   .hover\\:border-blue-600:hover,
   .hover\\:border-green-600:hover,
@@ -245,6 +235,7 @@ textarea {
     border-color: inherit !important;
   }
   
+  /* Prevent scale/transform effects on swipe */
   .hover\\:scale-110:hover,
   .hover\\:scale-105:hover,
   .hover\\:scale-95:hover,
@@ -252,12 +243,14 @@ textarea {
     transform: none !important;
   }
   
+  /* Prevent shadow effects on swipe */
   .hover\\:shadow-xl:hover,
   .hover\\:shadow-2xl:hover,
   .hover\\:shadow-lg:hover {
     box-shadow: inherit !important;
   }
   
+  /* Prevent opacity changes on swipe */
   .hover\\:opacity-80:hover,
   .hover\\:opacity-90:hover {
     opacity: inherit !important;
