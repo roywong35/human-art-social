@@ -4,7 +4,7 @@
      (click)="closeAllMenusAndBackdrop()"
      (keydown.escape)="closeAllMenusAndBackdrop()"></div>
 
-<div [class]="'post-container pb-0.5 pt-[4px] pl-4 pr-1.5 bg-white dark:[background-color:var(--color-background)] ' + (!isPreview ? 'hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer' : '') + ' transition-colors duration-200 ' + (!isConnectedToParent ? 'border-b border-gray-200 dark:[border-color:var(--color-border)]' : '') + ' relative'" (click)="!isPreview ? navigateToPost($event) : null">
+<div *ngIf="shouldDisplayPost()" [class]="'post-container pb-0.5 pt-[4px] pl-4 pr-1.5 bg-white dark:[background-color:var(--color-background)] ' + (!isPreview ? 'hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] cursor-pointer' : '') + ' transition-colors duration-200 ' + (!isConnectedToParent ? 'border-b border-gray-200 dark:[border-color:var(--color-border)]' : '') + ' relative'" (click)="!isPreview ? navigateToPost($event) : null">
 
   <!-- Repost header -->
   <div *ngIf="post.post_type === 'repost'" class="flex items-center gap-2 mt-1 text-gray-500 dark:[color:var(--color-text-secondary)]">

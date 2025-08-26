@@ -79,6 +79,12 @@ class PostViewSet(viewsets.ModelViewSet):
             Q(post_type='reply', parent_post__is_deleted=True)
         )
 
+        # Filter out posts with invalid conversation chains (replies/reposts/quotes with deleted/removed posts in chain)
+        # This is a more comprehensive approach that checks the entire conversation chain
+        posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+        if posts_with_invalid_chains:
+            queryset = queryset.exclude(id__in=posts_with_invalid_chains)
+
         # Filter by following if the user has following_only_preference enabled
         if self.request.user.following_only_preference:
             following_users = self.request.user.following.all()
@@ -91,6 +97,41 @@ class PostViewSet(viewsets.ModelViewSet):
         # Order by created_at for all posts
         final_queryset = queryset.order_by('-created_at')
         return final_queryset
+
+    def _get_posts_with_invalid_conversation_chains(self):
+        """
+        Helper method to identify posts with invalid conversation chains.
+        Returns a list of post IDs that should be excluded.
+        """
+        invalid_post_ids = []
+        
+        # Get all posts with conversation chains (replies, reposts, quotes)
+        posts_with_chains = Post.objects.filter(
+            Q(post_type__in=['reply', 'repost', 'quote']) & 
+            ~Q(conversation_chain__isnull=True) & 
+            ~Q(conversation_chain=[])
+        ).values('id', 'conversation_chain', 'post_type')
+        
+        for post_data in posts_with_chains:
+            post_id = post_data['id']
+            conversation_chain = post_data['conversation_chain']
+            
+            # Check each post in the conversation chain
+            for chain_post_id in conversation_chain:
+                if chain_post_id == post_id:  # Skip self
+                    continue
+                    
+                # Check if the chain post is deleted or removed
+                try:
+                    chain_post = Post.all_objects.filter(id=chain_post_id).first()
+                    if chain_post and (chain_post.is_deleted or chain_post.is_removed):
+                        invalid_post_ids.append(post_id)
+                        break  # No need to check other posts in this chain
+                except Exception:
+                    # If there's any error, assume the chain is valid
+                    continue
+        
+        return invalid_post_ids
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -407,6 +448,16 @@ class PostViewSet(viewsets.ModelViewSet):
         bookmarked_posts = bookmarked_posts.exclude(
             Q(post_type='reply', parent_post__is_deleted=True)
         )
+
+        # Filter out posts that are removed or deleted themselves
+        bookmarked_posts = bookmarked_posts.exclude(
+            Q(is_removed=True) | Q(is_deleted=True)
+        )
+
+        # Filter out posts with invalid conversation chains
+        posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+        if posts_with_invalid_chains:
+            bookmarked_posts = bookmarked_posts.exclude(id__in=posts_with_invalid_chains)
         
         serializer = self.get_serializer(bookmarked_posts, many=True)
         return Response(serializer.data)
@@ -441,6 +492,14 @@ class PostViewSet(viewsets.ModelViewSet):
         """
         try:
             instance = self.get_object()
+            
+            # Check if the post is deleted or removed
+            if instance.is_deleted or instance.is_removed:
+                return Response(
+                    {'error': 'This post has been deleted or removed'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
             # Get the post data
             post_data = self.get_serializer(instance).data
             
@@ -459,6 +518,11 @@ class PostViewSet(viewsets.ModelViewSet):
                 'replies',
                 'images'
             ).order_by('-created_at')
+
+            # Filter out replies with invalid conversation chains
+            posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+            if posts_with_invalid_chains:
+                replies = replies.exclude(id__in=posts_with_invalid_chains)
             
             # Paginate the replies
             paginator = self.pagination_class()
@@ -495,9 +559,70 @@ class PostViewSet(viewsets.ModelViewSet):
         Retrieve a post by handle and post ID
         """
         try:
-            post = get_object_or_404(Post, author__handle=handle, pk=pk)
-            serializer = self.get_serializer(post)
-            return Response(serializer.data)
+            # Debug logging
+            print(f"🔍 Looking for post: handle={handle}, pk={pk}, type(pk)={type(pk)}")
+            
+            # Check if post exists by ID first (including deleted posts)
+            try:
+                post = Post.all_objects.get(id=pk)
+                print(f"📝 Found post {pk}: author_handle={post.author.handle}, is_deleted={post.is_deleted}")
+                
+                # Also check what posts exist for this handle
+                posts_for_handle = Post.objects.filter(author__handle=handle).values_list('id', flat=True)
+                print(f"📝 Posts for handle '{handle}': {list(posts_for_handle)}")
+                
+                # Check if this specific post is in that list
+                if pk in posts_for_handle:
+                    print(f"✅ Post {pk} is indeed owned by handle '{handle}'")
+                else:
+                    print(f"❌ Post {pk} is NOT owned by handle '{handle}'")
+                    print(f"   Post author: {post.author.handle}")
+                    print(f"   Requested handle: {handle}")
+                    print(f"   Case sensitive comparison: '{post.author.handle}' == '{handle}' = {post.author.handle == handle}")
+                
+                # Check if the post is deleted or removed
+                if post.is_deleted or post.is_removed:
+                    print(f"🔍 Post {pk} is deleted/removed, returning 404")
+                    return Response(
+                        {'error': 'This post has been deleted or removed'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                # Verify the handle matches (for security)
+                if post.author.handle != handle:
+                    print(f"⚠️ Handle mismatch: expected {handle}, got {post.author.handle}")
+                    # For debugging, let's still return the post to see what's happening
+                    print(f"🔍 Returning post anyway for debugging purposes")
+                    try:
+                        serializer = self.get_serializer(post)
+                        print(f"✅ Serializer created successfully")
+                        return Response(serializer.data)
+                    except Exception as serializer_error:
+                        print(f"❌ Serializer error: {str(serializer_error)}")
+                        return Response(
+                            {'error': f'Serializer error: {str(serializer_error)}'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        )
+                
+                print(f"🔍 Creating serializer for post {pk}")
+                try:
+                    serializer = self.get_serializer(post)
+                    print(f"✅ Serializer created successfully")
+                    return Response(serializer.data)
+                except Exception as serializer_error:
+                    print(f"❌ Serializer error: {str(serializer_error)}")
+                    return Response(
+                        {'error': f'Serializer error: {str(serializer_error)}'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                
+            except Post.DoesNotExist:
+                print(f"❌ Post with ID {pk} not found")
+                return Response(
+                    {'error': 'Post not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+                
         except Exception as e:
             print(f"❌ Error in retrieve_by_handle method: {str(e)}")
             return Response(
@@ -510,7 +635,7 @@ class PostViewSet(viewsets.ModelViewSet):
         Retrieve a post by ID only (for conversation chains)
         """
         try:
-            post = Post.objects.select_related(
+            post = Post.all_objects.select_related(
                 'author',
                 'referenced_post',
                 'referenced_post__author',
@@ -521,6 +646,14 @@ class PostViewSet(viewsets.ModelViewSet):
                 'bookmarks',
                 'reposts'
             ).get(id=pk)
+            
+            # Check if the post is deleted or removed
+            if post.is_deleted or post.is_removed:
+                return Response(
+                    {'error': 'This post has been deleted or removed'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
             serializer = self.get_serializer(post)
             return Response(serializer.data)
         except Post.DoesNotExist:
@@ -579,6 +712,16 @@ class PostViewSet(viewsets.ModelViewSet):
         posts = posts.exclude(
             Q(post_type='reply', parent_post__is_deleted=True)
         )
+
+        # Filter out posts that are removed or deleted themselves
+        posts = posts.exclude(
+            Q(is_removed=True) | Q(is_deleted=True)
+        )
+
+        # Filter out posts with invalid conversation chains
+        posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+        if posts_with_invalid_chains:
+            posts = posts.exclude(id__in=posts_with_invalid_chains)
         
         return posts
 
@@ -738,6 +881,16 @@ class PostViewSet(viewsets.ModelViewSet):
         posts = posts.exclude(
             Q(post_type='reply', parent_post__is_deleted=True)
         )
+
+        # Filter out posts that are removed or deleted themselves
+        posts = posts.exclude(
+            Q(is_removed=True) | Q(is_deleted=True)
+        )
+
+        # Filter out posts with invalid conversation chains
+        posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+        if posts_with_invalid_chains:
+            posts = posts.exclude(id__in=posts_with_invalid_chains)
         
         serializer = self.get_serializer(posts, many=True)
         return Response(serializer.data)
@@ -1045,6 +1198,16 @@ class PostViewSet(viewsets.ModelViewSet):
         replies = replies.exclude(
             Q(post_type='reply', parent_post__is_deleted=True)
         )
+
+        # Filter out posts that are removed or deleted themselves
+        replies = replies.exclude(
+            Q(is_removed=True) | Q(is_deleted=True)
+        )
+
+        # Filter out posts with invalid conversation chains
+        posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+        if posts_with_invalid_chains:
+            replies = replies.exclude(id__in=posts_with_invalid_chains)
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
@@ -1088,6 +1251,16 @@ class PostViewSet(viewsets.ModelViewSet):
         media_posts = media_posts.exclude(
             Q(post_type='reply', parent_post__is_deleted=True)
         )
+
+        # Filter out posts that are removed or deleted themselves
+        media_posts = media_posts.exclude(
+            Q(is_removed=True) | Q(is_deleted=True)
+        )
+
+        # Filter out posts with invalid conversation chains
+        posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+        if posts_with_invalid_chains:
+            media_posts = media_posts.exclude(id__in=posts_with_invalid_chains)
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
@@ -1137,6 +1310,16 @@ class PostViewSet(viewsets.ModelViewSet):
         human_art_posts = human_art_posts.exclude(
             Q(post_type='reply', parent_post__is_deleted=True)
         )
+
+        # Filter out posts that are removed or deleted themselves
+        human_art_posts = human_art_posts.exclude(
+            Q(is_removed=True) | Q(is_deleted=True)
+        )
+
+        # Filter out posts with invalid conversation chains
+        posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+        if posts_with_invalid_chains:
+            human_art_posts = human_art_posts.exclude(id__in=posts_with_invalid_chains)
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
@@ -1179,6 +1362,16 @@ class PostViewSet(viewsets.ModelViewSet):
         liked_posts = liked_posts.exclude(
             Q(post_type='reply', parent_post__is_deleted=True)
         )
+
+        # Filter out posts that are removed or deleted themselves
+        liked_posts = liked_posts.exclude(
+            Q(is_removed=True) | Q(is_deleted=True)
+        )
+
+        # Filter out posts with invalid conversation chains
+        posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+        if posts_with_invalid_chains:
+            liked_posts = liked_posts.exclude(id__in=posts_with_invalid_chains)
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
@@ -1233,6 +1426,16 @@ class PostViewSet(viewsets.ModelViewSet):
             queryset = queryset.exclude(
                 Q(post_type='reply', parent_post__is_deleted=True)
             )
+
+            # Filter out posts that are removed or deleted themselves
+            queryset = queryset.exclude(
+                Q(is_removed=True) | Q(is_deleted=True)
+            )
+
+            # Filter out posts with invalid conversation chains
+            posts_with_invalid_chains = self._get_posts_with_invalid_conversation_chains()
+            if posts_with_invalid_chains:
+                queryset = queryset.exclude(id__in=posts_with_invalid_chains)
 
             # Filter based on tab
             if tab == 'human-drawing':

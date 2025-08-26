@@ -59,4 +59,6 @@ export interface Post {
   is_removed?: boolean;
   is_deleted?: boolean;
   deleted_at?: string;
+  is_conversation_chain_valid?: boolean;
+  conversation_chain_invalid_reason?: string;
 } 

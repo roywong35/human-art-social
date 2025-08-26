@@ -121,8 +121,8 @@ export class PostDetailComponent implements OnInit, OnDestroy {
     
     this.commentService.getComments(this.post.author.handle, this.post.id).subscribe({
       next: (replies) => {
-        // Filter out replies that reference removed posts
-        this.replies = replies.filter(reply => !this.isReferencedPostRemoved(reply));
+        // Filter out replies that are removed, deleted, or have invalid conversation chains
+        this.replies = replies.filter(reply => !this.shouldHidePost(reply));
       },
       error: (error: Error) => {
         console.error('Error loading replies:', error);
@@ -131,7 +131,7 @@ export class PostDetailComponent implements OnInit, OnDestroy {
   }
 
   submitReply(): void {
-    if (!this.post || (!this.newReply.trim() && this.images.length === 0)) return;
+    if (!this.post || this.shouldHidePost(this.post) || (!this.newReply.trim() && this.images.length === 0)) return;
 
     const imageFiles = this.images.map(img => img.file);
 
@@ -174,7 +174,7 @@ export class PostDetailComponent implements OnInit, OnDestroy {
   }
 
   toggleLike(): void {
-    if (!this.post) return;
+    if (!this.post || this.shouldHidePost(this.post)) return;
 
     const handle = this.post.author.handle;
     this.postService.likePost(handle, this.post.id).subscribe({
@@ -191,7 +191,7 @@ export class PostDetailComponent implements OnInit, OnDestroy {
   }
 
   toggleBookmark(): void {
-    if (!this.post) return;
+    if (!this.post || this.shouldHidePost(this.post)) return;
 
     this.postService.bookmarkPost(this.post.author.handle, this.post.id).subscribe({
       next: (response) => {
@@ -207,8 +207,12 @@ export class PostDetailComponent implements OnInit, OnDestroy {
 
   // Wire child post actions to existing service methods
   onLikeFromChild(target: Post): void {
+    if (this.shouldHidePost(target)) return;
+    
     const isRepost = target.post_type === 'repost' && !!target.referenced_post;
     const objToUpdate = isRepost ? target.referenced_post! : target;
+    if (this.shouldHidePost(objToUpdate)) return;
+    
     const prevLiked = !!objToUpdate.is_liked;
     const prevCount = objToUpdate.likes_count || 0;
 
@@ -227,8 +231,12 @@ export class PostDetailComponent implements OnInit, OnDestroy {
   }
 
   onRepostFromChild(target: Post): void {
+    if (this.shouldHidePost(target)) return;
+    
     const isRepost = target.post_type === 'repost' && !!target.referenced_post;
     const objToUpdate = isRepost ? target.referenced_post! : target;
+    if (this.shouldHidePost(objToUpdate)) return;
+    
     const prevReposted = !!objToUpdate.is_reposted;
     const prevCount = objToUpdate.reposts_count || 0;
 
@@ -247,8 +255,12 @@ export class PostDetailComponent implements OnInit, OnDestroy {
   }
 
   onBookmarkFromChild(target: Post): void {
+    if (this.shouldHidePost(target)) return;
+    
     const isRepost = target.post_type === 'repost' && !!target.referenced_post;
     const objToUpdate = isRepost ? target.referenced_post! : target;
+    if (this.shouldHidePost(objToUpdate)) return;
+    
     const prevBookmarked = !!objToUpdate.is_bookmarked;
 
     // Optimistic UI update
@@ -281,24 +293,30 @@ export class PostDetailComponent implements OnInit, OnDestroy {
     
     if (this.postId && this.handle) {
       this.postService.getPost(this.handle, this.postId).subscribe({
-        next: (post) => {
-
-          // Check if this post references a removed post
-          if (this.isReferencedPostRemoved(post)) {
-            this.post = null;
-            this.loading = false;
-            
-            // Determine the type of post that was removed
-            let errorMessage = 'This post has been removed due to violations.';
-            if (post.post_type === 'quote') {
-              errorMessage = 'The quoted post has been removed due to violations.';
-            } else if (post.post_type === 'repost') {
-              errorMessage = 'The reposted content has been removed due to violations.';
-            }
-            
-            this.error = errorMessage;
-            return;
-          }
+                 next: (post) => {
+           // Check if this post is removed, deleted, or has invalid conversation chain
+           if (this.shouldHidePost(post)) {
+             this.post = null;
+             this.loading = false;
+             
+             // Determine the type of post that was removed, deleted, or has invalid conversation chain
+             let errorMessage = 'This post has been removed due to violations.';
+             
+             // Check if this is a repost/quote with a deleted referenced post
+             if ((post.post_type === 'repost' || post.post_type === 'quote') && 
+                 post.referenced_post && post.referenced_post.is_deleted === true) {
+               errorMessage = 'This post references content that has been deleted by the author.';
+             } else if (post.is_deleted === true) {
+               errorMessage = 'This post has been deleted by the author.';
+             } else if (post.is_removed === true) {
+               errorMessage = 'This post has been removed due to violations.';
+             } else if (post.is_conversation_chain_valid === false) {
+               errorMessage = 'This post is part of a conversation that contains deleted or removed content.';
+             }
+             
+             this.error = errorMessage;
+             return;
+           }
 
           this.post = post;
           this.loading = false;
@@ -318,11 +336,17 @@ export class PostDetailComponent implements OnInit, OnDestroy {
           // Try scrolling immediately after post load
           this.scrollToMainPost();
         },
-        error: (error) => {
-          console.error('Error loading post:', error);
-          this.loading = false;
-          this.error = 'Failed to load post. Please try again.';
-        }
+                 error: (error) => {
+           console.error('Error loading post:', error);
+           this.loading = false;
+           
+           // Handle different error types
+           if (error.status === 404) {
+             this.error = 'This post has been deleted, removed, or is part of an invalid conversation.';
+           } else {
+             this.error = 'Failed to load post. Please try again.';
+           }
+         }
       });
     } else {
       this.error = 'Invalid post URL';
@@ -346,7 +370,7 @@ export class PostDetailComponent implements OnInit, OnDestroy {
             try {
               // Use getPostById instead of getPost since parent posts can be from different users
               const chainPost = await this.postService.getPostById(postId).toPromise();
-              if (chainPost && !this.isReferencedPostRemoved(chainPost)) {
+              if (chainPost && !this.shouldHidePost(chainPost)) {
 
                 this.parentChain.push(chainPost);
               }
@@ -359,28 +383,34 @@ export class PostDetailComponent implements OnInit, OnDestroy {
 
   }
 
-  private isReferencedPostRemoved(post: Post): boolean {
-    // Check if the post itself is removed
-    if (post.is_removed === true) {
+  private isPostRemovedOrDeleted(post: Post): boolean {
+    // Check if the post itself is removed or deleted
+    if (post.is_removed === true || post.is_deleted === true) {
       return true;
     }
     
-    // Check if the referenced post is removed
-    if (post.post_type === 'quote' && post.referenced_post) {
-      return post.referenced_post.is_removed === true;
-    }
-    
-    // Check if reposting a quote and the quoted post is removed
-    if (post.post_type === 'repost' && post.referenced_post?.post_type === 'quote' && post.referenced_post.referenced_post) {
-      return post.referenced_post.referenced_post.is_removed === true;
-    }
-    
-    // Check if reposting a regular post that is removed
-    if (post.post_type === 'repost' && post.referenced_post) {
-      return post.referenced_post.is_removed === true;
+    // For reposts and quotes, also check if their referenced post is removed or deleted
+    if ((post.post_type === 'repost' || post.post_type === 'quote') && post.referenced_post) {
+      if (post.referenced_post.is_removed === true || post.referenced_post.is_deleted === true) {
+        return true;
+      }
     }
     
     return false;
+  }
+
+  private isPostConversationChainInvalid(post: Post): boolean {
+    // Check if the post has an invalid conversation chain
+    if (post.is_conversation_chain_valid === false) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  private shouldHidePost(post: Post): boolean {
+    // Check if post should be hidden due to being removed, deleted, or having invalid conversation chain
+    return this.isPostRemovedOrDeleted(post) || this.isPostConversationChainInvalid(post);
   }
 
   getConnectingLineHeight(index: number): number {

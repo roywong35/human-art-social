@@ -73,6 +73,8 @@ class PostSerializer(serializers.ModelSerializer):
     referenced_post = serializers.SerializerMethodField()
     evidence_files = EvidenceFileSerializer(many=True, read_only=True)
     images = PostImageSerializer(many=True, read_only=True)
+    is_conversation_chain_valid = serializers.SerializerMethodField()
+    conversation_chain_invalid_reason = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -82,7 +84,8 @@ class PostSerializer(serializers.ModelSerializer):
                  'post_type', 'referenced_post', 'evidence_files', 'images',
                  'conversation_chain', 'is_human_drawing', 'is_verified',
                  'image', 'parent_post_author_handle', 'parent_post_author_username',
-                 'scheduled_time']
+                 'scheduled_time', 'is_conversation_chain_valid', 
+                 'conversation_chain_invalid_reason']
 
     def get_likes_count(self, obj):
         # For reposts, use the original post's likes count
@@ -134,9 +137,79 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_referenced_post(self, obj):
         if (obj.post_type == 'repost' or obj.post_type == 'quote') and obj.referenced_post:
+            # Check if referenced post is deleted or removed
+            if obj.referenced_post.is_deleted or obj.referenced_post.is_removed:
+                # Only return essential fields for deleted/removed posts
+                return {
+                    'id': obj.referenced_post.id,
+                    'is_deleted': obj.referenced_post.is_deleted,
+                    'is_removed': obj.referenced_post.is_removed
+                }
             # Return the original post data using the same serializer to include all fields
             return UserPostSerializer(obj.referenced_post, context=self.context).data
         return None
+
+    def get_is_conversation_chain_valid(self, obj):
+        """
+        Check if the conversation chain is valid (no deleted/removed posts in chain)
+        """
+        if not obj.conversation_chain or obj.post_type not in ['reply', 'repost', 'quote']:
+            return True  # No conversation chain or not a reply/repost/quote
+        
+        try:
+            from .models import Post
+            # Check each post in the conversation chain
+            for post_id in obj.conversation_chain:
+                if post_id == obj.id:  # Skip self
+                    continue
+                    
+                # Use all_objects to include deleted posts
+                chain_post = Post.all_objects.filter(id=post_id).first()
+                if chain_post and (chain_post.is_deleted or chain_post.is_removed):
+                    return False
+            return True
+        except Exception:
+            # If there's any error checking the chain, assume it's valid
+            return True
+
+    def get_conversation_chain_invalid_reason(self, obj):
+        """
+        Provide reason why conversation chain is invalid
+        """
+        if self.get_is_conversation_chain_valid(obj):
+            return None
+            
+        if not obj.conversation_chain:
+            return None
+            
+        try:
+            from .models import Post
+            # Find the first invalid post in the chain
+            for post_id in obj.conversation_chain:
+                if post_id == obj.id:  # Skip self
+                    continue
+                    
+                chain_post = Post.all_objects.filter(id=post_id).first()
+                if chain_post:
+                    if chain_post.is_deleted:
+                        return f"Post {post_id} has been deleted"
+                    elif chain_post.is_removed:
+                        return f"Post {post_id} has been removed"
+            return "Conversation chain contains deleted or removed posts"
+        except Exception:
+            return "Unable to verify conversation chain"
+
+    def to_representation(self, instance):
+        """Override to hide content for deleted/removed posts"""
+        if instance.is_deleted or instance.is_removed:
+            # Only return essential fields for deleted/removed posts
+            return {
+                'id': instance.id,
+                'is_deleted': instance.is_deleted,
+                'is_removed': instance.is_removed
+            }
+        # Return full representation for normal posts
+        return super().to_representation(instance)
 
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
@@ -153,6 +226,8 @@ class PublicPostSerializer(serializers.ModelSerializer):
     replies_count = serializers.SerializerMethodField()
     referenced_post = serializers.SerializerMethodField()
     images = PostImageSerializer(many=True, read_only=True)
+    is_conversation_chain_valid = serializers.SerializerMethodField()
+    conversation_chain_invalid_reason = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -161,7 +236,9 @@ class PublicPostSerializer(serializers.ModelSerializer):
         fields = ['id', 'content', 'author', 'created_at', 
                  'likes_count', 'reposts_count', 'replies_count',
                  'post_type', 'referenced_post', 'images',
-                 'conversation_chain', 'is_human_drawing', 'is_verified']
+                 'conversation_chain', 'is_human_drawing', 'is_verified',
+                 'is_removed', 'is_deleted', 'is_conversation_chain_valid',
+                 'conversation_chain_invalid_reason']
 
     def get_likes_count(self, obj):
         # For reposts, use the original post's likes count
@@ -183,9 +260,79 @@ class PublicPostSerializer(serializers.ModelSerializer):
     
     def get_referenced_post(self, obj):
         if (obj.post_type == 'repost' or obj.post_type == 'quote') and obj.referenced_post:
-            # Use PublicPostSerializer for referenced posts too
+            # Check if referenced post is deleted or removed
+            if obj.referenced_post.is_deleted or obj.referenced_post.is_removed:
+                # Only return essential fields for deleted/removed posts
+                return {
+                    'id': obj.referenced_post.id,
+                    'is_deleted': obj.referenced_post.is_deleted,
+                    'is_removed': obj.referenced_post.is_removed
+                }
+            # Use PublicPostSerializer for normal referenced posts
             return PublicPostSerializer(obj.referenced_post, context=self.context).data
         return None
+
+    def get_is_conversation_chain_valid(self, obj):
+        """
+        Check if the conversation chain is valid (no deleted/removed posts in chain)
+        """
+        if not obj.conversation_chain or obj.post_type not in ['reply', 'repost', 'quote']:
+            return True  # No conversation chain or not a reply/repost/quote
+        
+        try:
+            from .models import Post
+            # Check each post in the conversation chain
+            for post_id in obj.conversation_chain:
+                if post_id == obj.id:  # Skip self
+                    continue
+                    
+                # Use all_objects to include deleted posts
+                chain_post = Post.all_objects.filter(id=post_id).first()
+                if chain_post and (chain_post.is_deleted or chain_post.is_removed):
+                    return False
+            return True
+        except Exception:
+            # If there's any error checking the chain, assume it's valid
+            return True
+
+    def get_conversation_chain_invalid_reason(self, obj):
+        """
+        Provide reason why conversation chain is invalid
+        """
+        if self.get_is_conversation_chain_valid(obj):
+            return None
+            
+        if not obj.conversation_chain:
+            return None
+            
+        try:
+            from .models import Post
+            # Find the first invalid post in the chain
+            for post_id in obj.conversation_chain:
+                if post_id == obj.id:  # Skip self
+                    continue
+                    
+                chain_post = Post.all_objects.filter(id=post_id).first()
+                if chain_post:
+                    if chain_post.is_deleted:
+                        return f"Post {post_id} has been deleted"
+                    elif chain_post.is_removed:
+                        return f"Post {post_id} has been removed"
+            return "Conversation chain contains deleted or removed posts"
+        except Exception:
+            return "Unable to verify conversation chain"
+
+    def to_representation(self, instance):
+        """Override to hide content for deleted/removed posts"""
+        if instance.is_deleted or instance.is_removed:
+            # Only return essential fields for deleted/removed posts
+            return {
+                'id': instance.id,
+                'is_deleted': instance.is_deleted,
+                'is_removed': instance.is_removed
+            }
+        # Return full representation for normal posts
+        return super().to_representation(instance)
 
 class HashtagSerializer(serializers.ModelSerializer):
     post_count = serializers.SerializerMethodField()
@@ -366,6 +513,8 @@ class UserPostSerializer(serializers.ModelSerializer):
     is_bookmarked = serializers.SerializerMethodField()
     referenced_post = serializers.SerializerMethodField()
     images = PostImageSerializer(many=True, read_only=True)
+    is_conversation_chain_valid = serializers.SerializerMethodField()
+    conversation_chain_invalid_reason = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -377,7 +526,8 @@ class UserPostSerializer(serializers.ModelSerializer):
                  'post_type', 'referenced_post', 'images',
                  'conversation_chain', 'is_human_drawing', 'is_verified',
                  'parent_post_author_handle', 'parent_post_author_username',
-                 'is_removed']
+                 'is_removed', 'is_deleted', 'is_conversation_chain_valid', 
+                 'conversation_chain_invalid_reason']
 
     def get_likes_count(self, obj):
         # For reposts, use the original post's likes count
@@ -429,9 +579,79 @@ class UserPostSerializer(serializers.ModelSerializer):
 
     def get_referenced_post(self, obj):
         if (obj.post_type == 'repost' or obj.post_type == 'quote') and obj.referenced_post:
-            # Use UserPostSerializer for referenced posts too
+            # Check if referenced post is deleted or removed
+            if obj.referenced_post.is_deleted or obj.referenced_post.is_removed:
+                # Only return essential fields for deleted/removed posts
+                return {
+                    'id': obj.referenced_post.id,
+                    'is_deleted': obj.referenced_post.is_deleted,
+                    'is_removed': obj.referenced_post.is_removed
+                }
+            # Use UserPostSerializer for normal referenced posts
             return UserPostSerializer(obj.referenced_post, context=self.context).data
-        return None 
+        return None
+
+    def get_is_conversation_chain_valid(self, obj):
+        """
+        Check if the conversation chain is valid (no deleted/removed posts in chain)
+        """
+        if not obj.conversation_chain or obj.post_type not in ['reply', 'repost', 'quote']:
+            return True  # No conversation chain or not a reply/repost/quote
+        
+        try:
+            from .models import Post
+            # Check each post in the conversation chain
+            for post_id in obj.conversation_chain:
+                if post_id == obj.id:  # Skip self
+                    continue
+                    
+                # Use all_objects to include deleted posts
+                chain_post = Post.all_objects.filter(id=post_id).first()
+                if chain_post and (chain_post.is_deleted or chain_post.is_removed):
+                    return False
+            return True
+        except Exception:
+            # If there's any error checking the chain, assume it's valid
+            return True
+
+    def get_conversation_chain_invalid_reason(self, obj):
+        """
+        Provide reason why conversation chain is invalid
+        """
+        if self.get_is_conversation_chain_valid(obj):
+            return None
+            
+        if not obj.conversation_chain:
+            return None
+            
+        try:
+            from .models import Post
+            # Find the first invalid post in the chain
+            for post_id in obj.conversation_chain:
+                if post_id == obj.id:  # Skip self
+                    continue
+                    
+                chain_post = Post.all_objects.filter(id=post_id).first()
+                if chain_post:
+                    if chain_post.is_deleted:
+                        return f"Post {post_id} has been deleted"
+                    elif chain_post.is_removed:
+                        return f"Post {post_id} has been removed"
+            return "Conversation chain contains deleted or removed posts"
+        except Exception:
+            return "Unable to verify conversation chain"
+
+    def to_representation(self, instance):
+        """Override to hide content for deleted/removed posts"""
+        if instance.is_deleted or instance.is_removed:
+            # Only return essential fields for deleted/removed posts
+            return {
+                'id': instance.id,
+                'is_deleted': instance.is_deleted,
+                'is_removed': instance.is_removed
+            }
+        # Return full representation for normal posts
+        return super().to_representation(instance) 
 
 class DonationSerializer(serializers.ModelSerializer):
     """

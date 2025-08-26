@@ -796,7 +796,37 @@ export class PostComponent implements OnInit, OnDestroy {
     return true;
   }
 
+  protected shouldDisplayPost(): boolean {
+    // Check if the post has the minimum required data to be displayed
+    if (!this.post || !this.post.author) {
+      return false;
+    }
+    
+    // Check if this is a minimal post object (only has id, is_deleted, is_removed)
+    if (this.post.is_deleted === true || this.post.is_removed === true) {
+      return false;
+    }
+    
+    // Check if the post has the required author fields
+    if (!this.post.author.username || !this.post.author.handle) {
+      return false;
+    }
+    
+    return true;
+  }
+
   protected getDisplayAuthor(): User {
+    // Safety check for minimal post objects
+    if (!this.post.author || !this.post.author.username) {
+      // Return a fallback user object to prevent errors
+      return {
+        id: 0,
+        username: 'Unknown User',
+        handle: 'unknown',
+        profile_picture: this.defaultAvatar
+      } as User;
+    }
+    
     if (this.post.post_type === 'repost' && this.post.referenced_post?.author) {
       // For reposts, always show the referenced post's author (preserve the structure)
       return this.post.referenced_post.author;
