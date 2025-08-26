@@ -480,7 +480,7 @@ export class PostService {
   }
 
   deletePost(handle: string, postId: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/posts/${handle}/${postId}/`).pipe(
+    return this.http.post(`${this.baseUrl}/posts/${handle}/${postId}/soft_delete/`, null).pipe(
       tap(() => {
         const currentPosts = this.posts.value;
         const updatedPosts = currentPosts.filter(post => post.id !== postId);

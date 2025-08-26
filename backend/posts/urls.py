@@ -95,6 +95,11 @@ urlpatterns = [
     path('posts/<str:handle>/<int:pk>/verify_drawing/', PostViewSet.as_view({
         'post': 'verify_drawing'
     }, permission_classes=[IsAdminUser])),
+    
+    # Soft delete endpoint
+    path('posts/<str:handle>/<int:pk>/soft_delete/', PostViewSet.as_view({
+        'post': 'soft_delete'
+    })),
 
     # The router will add the following URLs:
     # - /api/posts/search_hashtags/

@@ -118,6 +118,18 @@ class UserViewSet(viewsets.ModelViewSet):
                 Q(post_type='quote', referenced_post__is_removed=True) |
                 Q(post_type='repost', referenced_post__is_removed=True)
             )
+
+            # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+            # This ensures that if a referenced post is deleted, the quote/repost is also hidden
+            posts = posts.exclude(
+                Q(post_type='quote', referenced_post__is_deleted=True) |
+                Q(post_type='repost', referenced_post__is_deleted=True)
+            )
+
+            # Filter out replies to deleted posts
+            posts = posts.exclude(
+                Q(post_type='reply', parent_post__is_deleted=True)
+            )
             
             # Serialize with request context
             serializer = PostSerializer(posts, many=True, context={'request': request})
@@ -139,6 +151,17 @@ class UserViewSet(viewsets.ModelViewSet):
             Q(post_type='quote', referenced_post__is_removed=True) |
             Q(post_type='repost', referenced_post__is_removed=True)
         )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        posts = posts.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        posts = posts.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
+        )
         
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
@@ -151,6 +174,17 @@ class UserViewSet(viewsets.ModelViewSet):
         posts = posts.exclude(
             Q(post_type='quote', referenced_post__is_removed=True) |
             Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        posts = posts.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        posts = posts.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
         )
         
         serializer = PostSerializer(posts, many=True, context={'request': request})

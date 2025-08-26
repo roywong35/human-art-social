@@ -51,12 +51,32 @@ class PostViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
             queryset = queryset.exclude(id__in=posts_reported_by_user)
+            
+            # Also filter out posts that reference posts the user has reported
+            # This ensures that if User A reports Post B, User A won't see quotes/reposts/replies of Post B
+            queryset = queryset.exclude(
+                Q(post_type='quote', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='repost', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='reply', parent_post__in=posts_reported_by_user)
+            )
 
         # Filter out posts that reference removed content (quotes and reposts of removed posts)
         # This ensures that if a referenced post is removed, the quote/repost is also hidden
         queryset = queryset.exclude(
             Q(post_type='quote', referenced_post__is_removed=True) |
             Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        # This ensures that if a referenced post is deleted, the quote/repost is also hidden
+        queryset = queryset.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        queryset = queryset.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
         )
 
         # Filter by following if the user has following_only_preference enabled
@@ -76,6 +96,36 @@ class PostViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+    @action(detail=True, methods=['POST'])
+    def soft_delete(self, request, handle=None, pk=None):
+        """
+        Soft delete a post by setting is_deleted flag and deleted_at timestamp.
+        This ensures that deleted posts can still be referenced for filtering.
+        """
+        try:
+            instance = self.get_object()
+            
+            # Check if user is the author of the post
+            if instance.author != request.user:
+                return Response(
+                    {'error': 'You can only delete your own posts.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Soft delete: set is_deleted flag and deleted_at timestamp
+            instance.is_deleted = True
+            instance.deleted_at = timezone.now()
+            instance.save()
+            
+            return Response({'message': 'Post deleted successfully'}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"❌ Error in soft delete: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while deleting the post'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def list(self, request, *args, **kwargs):
         """
@@ -328,6 +378,36 @@ class PostViewSet(viewsets.ModelViewSet):
         Get all bookmarked posts for the current user
         """
         bookmarked_posts = Post.objects.filter(bookmarks=request.user).order_by('-created_at')
+        
+        # Filter out posts that the current user has reported (hide from their view)
+        posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(request.user)
+        bookmarked_posts = bookmarked_posts.exclude(id__in=posts_reported_by_user)
+        
+        # Also filter out posts that reference posts the user has reported
+        # This ensures that if User A reports Post B, User A won't see quotes/reposts/replies of Post B
+        bookmarked_posts = bookmarked_posts.exclude(
+            Q(post_type='quote', referenced_post__in=posts_reported_by_user) |
+            Q(post_type='repost', referenced_post__in=posts_reported_by_user) |
+            Q(post_type='reply', parent_post__in=posts_reported_by_user)
+        )
+        
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        bookmarked_posts = bookmarked_posts.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        bookmarked_posts = bookmarked_posts.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        bookmarked_posts = bookmarked_posts.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
+        )
+        
         serializer = self.get_serializer(bookmarked_posts, many=True)
         return Response(serializer.data)
 
@@ -472,12 +552,32 @@ class PostViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
             posts = posts.exclude(id__in=posts_reported_by_user)
+            
+            # Also filter out posts that reference posts the user has reported
+            # This ensures that if User A reports Post B, User A won't see quotes/reposts/replies of Post B
+            posts = posts.exclude(
+                Q(post_type='quote', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='repost', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='reply', parent_post__in=posts_reported_by_user)
+            )
 
         # Filter out posts that reference removed content (quotes and reposts of removed posts)
         # This ensures that if a referenced post is removed, the quote/repost is also hidden
         posts = posts.exclude(
             Q(post_type='quote', referenced_post__is_removed=True) |
             Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        # This ensures that if a referenced post is deleted, the quote/repost is also hidden
+        posts = posts.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        posts = posts.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
         )
         
         return posts
@@ -609,10 +709,34 @@ class PostViewSet(viewsets.ModelViewSet):
             'hashtags'
         ).distinct().order_by('-created_at')
         
+        # Filter out posts that the current user has reported (hide from their view)
+        if self.request.user.is_authenticated:
+            posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
+            posts = posts.exclude(id__in=posts_reported_by_user)
+            
+            # Also filter out posts that reference posts the user has reported
+            # This ensures that if User A reports Post B, User A won't see quotes/reposts/replies of Post B
+            posts = posts.exclude(
+                Q(post_type='quote', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='repost', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='reply', parent_post__in=posts_reported_by_user)
+            )
+        
         # Filter out posts that reference removed content (quotes and reposts of removed posts)
         posts = posts.exclude(
             Q(post_type='quote', referenced_post__is_removed=True) |
             Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        posts = posts.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        posts = posts.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
         )
         
         serializer = self.get_serializer(posts, many=True)
@@ -892,6 +1016,36 @@ class PostViewSet(viewsets.ModelViewSet):
             'parent_post__reposts'
         ).order_by('-created_at')
         
+        # Filter out posts that the current user has reported (hide from their view)
+        if self.request.user.is_authenticated:
+            posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
+            replies = replies.exclude(id__in=posts_reported_by_user)
+            
+            # Also filter out posts that reference posts the user has reported
+            # This ensures that if User A reports Post B, User A won't see quotes/reposts/replies of Post B
+            replies = replies.exclude(
+                Q(post_type='quote', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='repost', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='reply', parent_post__in=posts_reported_by_user)
+            )
+        
+        # Filter out posts that reference removed content (quotes and reposts of removed posts)
+        replies = replies.exclude(
+            Q(post_type='quote', referenced_post__is_removed=True) |
+            Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        replies = replies.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        replies = replies.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
+        )
+        
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
         serializer = UserPostSerializer(replies, many=True, context={'request': request})
@@ -905,10 +1059,34 @@ class PostViewSet(viewsets.ModelViewSet):
             images__isnull=False
         ).distinct().select_related('author').order_by('-created_at')
         
+        # Filter out posts that the current user has reported (hide from their view)
+        if self.request.user.is_authenticated:
+            posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
+            media_posts = media_posts.exclude(id__in=posts_reported_by_user)
+            
+            # Also filter out posts that reference posts the user has reported
+            # This ensures that if User A reports Post B, User A won't see quotes/reposts/replies of Post B
+            media_posts = media_posts.exclude(
+                Q(post_type='quote', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='repost', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='reply', parent_post__in=posts_reported_by_user)
+            )
+        
         # Filter out posts that reference removed content (quotes and reposts of removed posts)
         media_posts = media_posts.exclude(
             Q(post_type='quote', referenced_post__is_removed=True) |
             Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        media_posts = media_posts.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        media_posts = media_posts.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
         )
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
@@ -934,11 +1112,30 @@ class PostViewSet(viewsets.ModelViewSet):
         if request.user.is_authenticated:
             posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(request.user)
             human_art_posts = human_art_posts.exclude(id__in=posts_reported_by_user)
+            
+            # Also filter out posts that reference posts the user has reported
+            # This ensures that if User A reports Post B, User A won't see quotes/reposts/replies of Post B
+            human_art_posts = human_art_posts.exclude(
+                Q(post_type='quote', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='repost', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='reply', parent_post__in=posts_reported_by_user)
+            )
 
         # Filter out posts that reference removed content (quotes and reposts of removed posts)
         human_art_posts = human_art_posts.exclude(
             Q(post_type='quote', referenced_post__is_removed=True) |
             Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        human_art_posts = human_art_posts.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        human_art_posts = human_art_posts.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
         )
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
@@ -953,10 +1150,34 @@ class PostViewSet(viewsets.ModelViewSet):
             likes=user
         ).select_related('author').order_by('-created_at')
         
+        # Filter out posts that the current user has reported (hide from their view)
+        if self.request.user.is_authenticated:
+            posts_reported_by_user = ContentReport.get_posts_to_hide_from_user(self.request.user)
+            liked_posts = liked_posts.exclude(id__in=posts_reported_by_user)
+            
+            # Also filter out posts that reference posts the user has reported
+            # This ensures that if User A reports Post B, User A won't see quotes/reposts/replies of Post B
+            liked_posts = liked_posts.exclude(
+                Q(post_type='quote', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='repost', referenced_post__in=posts_reported_by_user) |
+                Q(post_type='reply', parent_post__in=posts_reported_by_user)
+            )
+        
         # Filter out posts that reference removed content (quotes and reposts of removed posts)
         liked_posts = liked_posts.exclude(
             Q(post_type='quote', referenced_post__is_removed=True) |
             Q(post_type='repost', referenced_post__is_removed=True)
+        )
+
+        # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+        liked_posts = liked_posts.exclude(
+            Q(post_type='quote', referenced_post__is_deleted=True) |
+            Q(post_type='repost', referenced_post__is_deleted=True)
+        )
+
+        # Filter out replies to deleted posts
+        liked_posts = liked_posts.exclude(
+            Q(post_type='reply', parent_post__is_deleted=True)
         )
         
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
@@ -999,6 +1220,18 @@ class PostViewSet(viewsets.ModelViewSet):
             queryset = queryset.exclude(
                 Q(post_type='quote', referenced_post__is_removed=True) |
                 Q(post_type='repost', referenced_post__is_removed=True)
+            )
+
+            # Filter out posts that reference deleted content (quotes and reposts of deleted posts)
+            # This ensures that if a referenced post is deleted, the quote/repost is also hidden
+            queryset = queryset.exclude(
+                Q(post_type='quote', referenced_post__is_deleted=True) |
+                Q(post_type='repost', referenced_post__is_deleted=True)
+            )
+
+            # Filter out replies to deleted posts
+            queryset = queryset.exclude(
+                Q(post_type='reply', parent_post__is_deleted=True)
             )
 
             # Filter based on tab
