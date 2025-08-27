@@ -47,7 +47,7 @@
   </div>
 
   <!-- Search Results Content -->
-  <div>
+  <div class="search-results-content">
     <!-- Loading Row Above Tabs - Show for both refresh and initial search -->
     <div *ngIf="shouldShowLoadingRow" class="w-full bg-white dark:bg-black">
       <div class="flex justify-center py-4">
@@ -56,27 +56,27 @@
     </div>
 
     <!-- No Search Performed Yet - Only show when no search AND not on trending tab -->
-    <div *ngIf="!hasSearched && activeTab !== 'trending' && !isLoading" class="text-center py-12 px-6">
+    <div *ngIf="!hasSearched && activeTab !== 'trending' && !isLoading" class="text-center py-12 px-6 no-results-area">
       <i class="fas fa-search text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
         Search for posts, users, and hashtags
       </h3>
-      <p class="text-gray-500 dark:[color:var(--color-text-secondary)]">
+      <p class="text-gray-500 dark:text-gray-500">
         Enter a search term in the search bar above to get started
       </p>
     </div>
 
     <!-- No Results -->
     <div *ngIf="hasSearched && users.length === 0 && posts.length === 0 && searchQuery && !isLoading" 
-         class="text-center py-12 px-6">
-      <i class="fas fa-search text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
-      <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
+         class="text-center py-12 px-6 no-results-area">
+      <i class="fas fa-search text-4xl text-gray-300 dark:text-gray-500 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-500 mb-2">
         No results found
       </h3>
-      <p class="text-gray-500 dark:[color:var(--color-text-secondary)] mb-4">
+      <p class="text-gray-500 dark:text-gray-500 mb-4">
         Try searching for something else or check your spelling
       </p>
-      <div class="space-y-2 text-sm text-gray-500 dark:[color:var(--color-text-secondary)]">
+      <div class="space-y-2 text-sm text-gray-500 dark:text-gray-500">
         <p>• Search for posts containing specific words</p>
         <p>• Use hashtags like #art or #drawing</p>
         <p>• Search for users by typing their username or &#64;handle</p>
@@ -221,12 +221,12 @@
 
     <!-- No People Results for People Tab -->
     <div *ngIf="hasSearched && activeTab === 'people' && users.length === 0 && searchQuery && !isLoading" 
-         class="text-center py-12 px-6">
-      <i class="fas fa-users text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
-      <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
+         class="text-center py-12 px-6 no-results-area">
+      <i class="fas fa-users text-4xl text-gray-300 dark:text-gray-500 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-500 mb-2">
         No people found
       </h3>
-      <p class="text-gray-500 dark:[color:var(--color-text-secondary)] mb-4">
+      <p class="text-gray-500 dark:text-gray-500 mb-4">
         Try searching for different keywords or check your spelling
       </p>
     </div>

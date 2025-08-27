@@ -77,8 +77,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit() {
-    console.log('🚀 Search Component Initialized - isRefreshing:', this.isRefreshing);
-    
     // Get current user first
     const userSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -124,7 +122,9 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.setupGestureSupport();
+    if (this.searchContainer) {
+      this.setupGestureSupport();
+    }
   }
 
   private setupFollowStatusSync(): void {
@@ -152,7 +152,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadTrending(forceRefresh: boolean = false) {
-    console.log('📈 loadTrending called - isRefreshing:', this.isRefreshing, 'forceRefresh:', forceRefresh);
     
     // Only set loading state if NOT refreshing (prevents content from disappearing during refresh)
     if (!this.isRefreshing) {
@@ -213,7 +212,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadRecommendedUsers() {
-    console.log('👥 loadRecommendedUsers called - isRefreshing:', this.isRefreshing);
     
     // Only set loading state if NOT refreshing (prevents content from disappearing during refresh)
     if (!this.isRefreshing) {
@@ -261,11 +259,15 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   switchTab(tab: 'top' | 'people' | 'trending') {
-    // Only allow switching to tabs that are currently available
-    if (tab === 'trending' && !this.hasSearched) {
+    
+    // Allow switching between top and people tabs when searching
+    if (this.hasSearched && (tab === 'top' || tab === 'people')) {
       this.activeTab = tab;
-    } else if ((tab === 'top' || tab === 'people') && this.hasSearched) {
+      this.cd.markForCheck(); // Trigger change detection
+    } else if (!this.hasSearched && tab === 'trending') {
+      // Allow switching to trending tab when not searching
       this.activeTab = tab;
+      this.cd.markForCheck(); // Trigger change detection
     }
   }
 
@@ -351,7 +353,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     const hasData = this.trendingTopics.length > 0 || this.recommendedUsers.length > 0;
     const result = (!this.isLoading && hasData) || this.isRefreshing;
     
-    console.log('🎯 shouldShowTrendingSections:', result, '- isLoading:', this.isLoading, 'isRefreshing:', this.isRefreshing, 'hasData:', hasData);
     return result;
   }
 
@@ -362,18 +363,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
   get shouldShowUsersLoading(): boolean {
     return this.isLoadingUsers && !this.isRefreshing;
-  }
-
-  // Debug method to log isRefreshing flag state
-  logIsRefreshingState(): void {
-    console.log('🔍 isRefreshing State Debug:', {
-      isRefreshing: this.isRefreshing,
-      isLoading: this.isLoading,
-      hasSearched: this.hasSearched,
-      shouldShowTrendingSections: this.shouldShowTrendingSections,
-      isLoadingTrending: this.isLoadingTrending,
-      isLoadingUsers: this.isLoadingUsers
-    });
   }
 
   navigateToHashtag(hashtag: string) {
@@ -606,7 +595,9 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private setupGestureSupport(): void {
-    if (!this.searchContainer) return;
+    if (!this.searchContainer) {
+      return;
+    }
     
     const hammer = new Hammer(this.searchContainer.nativeElement);
     
@@ -615,27 +606,50 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     if (swipeRecognizer) {
       // Only detect horizontal swipes, not vertical ones - this allows normal scrolling
       swipeRecognizer.set({ direction: Hammer.DIRECTION_HORIZONTAL });
-      console.log('🔄 Search: Horizontal swipe recognizer configured - vertical scrolling enabled');
     }
     
     // Swipe left to next tab
-    hammer.on('swipeleft', () => {
-      this.swipeToNextTab();
+    hammer.on('swipeleft', (event) => {
+      
+      if (this.hasSearched) {
+        // When searching, only allow swipe left from Top to People
+        if (this.activeTab === 'top') {
+          this.switchTab('people');
+        } else if (this.activeTab === 'people') {
+          // Swipe left from People tab does nothing (no content to the right visually)
+        }
+      } else {
+        // When not searching (Trending tab), swipe left does nothing
+      }
     });
     
-    // Swipe right to previous tab
-    hammer.on('swiperight', () => {
-      if (this.activeTab === 'people') {
-        this.switchTab('top');
-      } else if (this.activeTab === 'top') {
-        this.switchTab('trending');
+    // Swipe right to previous tab or open sidebar
+    hammer.on('swiperight', (event) => {
+      
+      if (this.hasSearched) {
+        // When searching, handle tab switching
+        if (this.activeTab === 'people') {
+          // From People tab, go to Top tab
+          this.switchTab('top');
+        } else if (this.activeTab === 'top') {
+          // From Top tab (leftmost), open sidebar
+          this.openSidebar();
+        }
+      } else {
+        // When not searching (Trending tab), swipe right opens sidebar
+        this.openSidebar();
       }
+    });
+
+    // Add some debugging for other Hammer events
+    hammer.on('pan', (event) => {
+    });
+    
+    hammer.on('tap', (event) => {
     });
 
     // Add pull-to-refresh (only at top of page)
     this.setupPullToRefresh();
-    
-    console.log('🔄 Search: Swipe gestures initialized successfully');
   }
 
   /**
@@ -684,7 +698,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
    * Pull to refresh functionality
    */
   private pullToRefresh(): void {
-    console.log('🔄 Search: Pull to refresh triggered');
     
     // Set refreshing state to show loading row and keep content visible
     this.isRefreshing = true;
@@ -697,33 +710,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     // If there's an active search, refresh those results too
     if (this.hasSearched) {
       this.performSearch(this.searchQuery);
-    }
-  }
-
-  private swipeToNextTab(): void {
-    if (this.hasSearched) {
-      // When searching, switch between 'top' and 'people' tabs
-      if (this.activeTab === 'top') {
-        this.switchTab('people');
-      }
-    } else {
-      // When not searching, stay on 'trending' tab
-      // Could add more tabs here in the future
-    }
-  }
-
-  private swipeToPreviousTab(): void {
-    if (this.hasSearched) {
-      // When searching, switch between 'top' and 'people' tabs
-      if (this.activeTab === 'people') {
-        this.switchTab('top');
-      } else if (this.activeTab === 'top') {
-        // If we're on the leftmost tab, open the sidebar
-        this.openSidebar();
-      }
-    } else {
-      // When not searching, open sidebar from 'trending' tab
-      this.openSidebar();
     }
   }
 

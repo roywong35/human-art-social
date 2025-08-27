@@ -4,6 +4,26 @@
   width: 100%;
 }
 
+// Ensure gesture detection works on all areas
+#searchContainer {
+  touch-action: pan-y; // Allow vertical scrolling but enable horizontal gestures
+  min-height: 100vh; // Ensure full height coverage for gesture detection
+  position: relative; // Ensure proper positioning for gesture detection
+  overflow: visible; // Ensure content doesn't interfere with gesture detection
+}
+
+// Ensure all content areas can receive gestures
+.search-results-content {
+  min-height: 100vh;
+  position: relative;
+}
+
+// Ensure blank spaces can receive gestures
+.no-results-area {
+  min-height: 50vh;
+  position: relative;
+}
+
 .search-section {
   &:not(:last-child) {
     border-bottom: 1px solid var(--color-border, #e5e7eb);
