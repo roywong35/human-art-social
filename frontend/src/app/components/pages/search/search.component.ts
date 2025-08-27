@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -72,7 +72,8 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     private optimisticUpdateService: OptimisticUpdateService,
     private authService: AuthService,
     private globalModalService: GlobalModalService,
-    private sidebarService: SidebarService
+    private sidebarService: SidebarService,
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -152,7 +153,11 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private loadTrending(forceRefresh: boolean = false) {
     console.log('📈 loadTrending called - isRefreshing:', this.isRefreshing, 'forceRefresh:', forceRefresh);
-    this.isLoadingTrending = true;
+    
+    // Only set loading state if NOT refreshing (prevents content from disappearing during refresh)
+    if (!this.isRefreshing) {
+      this.isLoadingTrending = true;
+    }
     
     // Add cache-busting parameter if forcing refresh
     const params = forceRefresh ? { _t: Date.now() } : {};
@@ -183,6 +188,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         // Also clear the refresh state if this was called from pullToRefresh
         if (this.isRefreshing) {
           this.isRefreshing = false;
+          this.cd.markForCheck(); // Trigger change detection
         }
       },
       error: (error) => {
@@ -200,6 +206,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         // Also clear the refresh state if this was called from pullToRefresh
         if (this.isRefreshing) {
           this.isRefreshing = false;
+          this.cd.markForCheck(); // Trigger change detection
         }
       }
     });
@@ -207,7 +214,12 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private loadRecommendedUsers() {
     console.log('👥 loadRecommendedUsers called - isRefreshing:', this.isRefreshing);
-    this.isLoadingUsers = true;
+    
+    // Only set loading state if NOT refreshing (prevents content from disappearing during refresh)
+    if (!this.isRefreshing) {
+      this.isLoadingUsers = true;
+    }
+    
     this.userService.getRecommendedUsersPaginated(1).subscribe({
       next: (response) => {
         this.recommendedUsers = response.results;
@@ -215,6 +227,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         // Also clear the refresh state if this was called from pullToRefresh
         if (this.isRefreshing) {
           this.isRefreshing = false;
+          this.cd.markForCheck(); // Trigger change detection
         }
       },
       error: (error) => {
@@ -223,6 +236,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         // Also clear the refresh state if this was called from pullToRefresh
         if (this.isRefreshing) {
           this.isRefreshing = false;
+          this.cd.markForCheck(); // Trigger change detection
         }
       }
     });
@@ -323,7 +337,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   // Simplified logic for showing loading row
   get shouldShowLoadingRow(): boolean {
     // Show loading row for:
-    // 1. Pull-to-refresh (isRefreshing = true)
+    // 1. Pull-to-refresh (isRefreshing = true) - shows loading above content
     // 2. Initial search with no results yet (isLoading && hasSearched && no results)
     return this.isRefreshing || (this.isLoading && this.hasSearched && this.users.length === 0 && this.posts.length === 0);
   }
@@ -339,6 +353,15 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     
     console.log('🎯 shouldShowTrendingSections:', result, '- isLoading:', this.isLoading, 'isRefreshing:', this.isRefreshing, 'hasData:', hasData);
     return result;
+  }
+
+  // Check if we should show individual loading states (only during initial load, not refresh)
+  get shouldShowTrendingLoading(): boolean {
+    return this.isLoadingTrending && !this.isRefreshing;
+  }
+
+  get shouldShowUsersLoading(): boolean {
+    return this.isLoadingUsers && !this.isRefreshing;
   }
 
   // Debug method to log isRefreshing flag state
@@ -412,8 +435,11 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       const postSearchTerm = isUserSearch ? userSearchTerm : query;
       
       // Search both users and posts simultaneously
-      this.isLoadingUsers = true;
-      this.isLoadingPosts = true;
+      // Only set loading states if NOT refreshing (prevents content from disappearing)
+      if (!this.isRefreshing) {
+        this.isLoadingUsers = true;
+        this.isLoadingPosts = true;
+      }
       
       forkJoin({
         users: this.userService.searchUsers(userSearchTerm),
@@ -433,6 +459,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
           // Also clear refresh state if this was a refresh operation
           if (this.isRefreshing) {
             this.isRefreshing = false;
+            this.cd.markForCheck(); // Trigger change detection
           }
         },
         error: (error) => {
@@ -446,6 +473,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
           // Also clear refresh state if this was a refresh operation
           if (this.isRefreshing) {
             this.isRefreshing = false;
+            this.cd.markForCheck(); // Trigger change detection
           }
         }
       });
@@ -453,7 +481,10 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private searchPosts(query: string) {
-    this.isLoadingPosts = true;
+    // Only set loading state if NOT refreshing (prevents content from disappearing during refresh)
+    if (!this.isRefreshing) {
+      this.isLoadingPosts = true;
+    }
     this.hasSearched = true;
     
     // Only clear results on initial search, not on refresh
@@ -471,6 +502,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         // Also clear refresh state if this was a refresh operation
         if (this.isRefreshing) {
           this.isRefreshing = false;
+          this.cd.markForCheck(); // Trigger change detection
         }
       },
       error: (error) => {
@@ -482,6 +514,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         // Also clear refresh state if this was a refresh operation
         if (this.isRefreshing) {
           this.isRefreshing = false;
+          this.cd.markForCheck(); // Trigger change detection
         }
       }
     });
@@ -577,26 +610,94 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     
     const hammer = new Hammer(this.searchContainer.nativeElement);
     
-    // Configure swipe gestures for horizontal swipes
-    hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
+    // Configure swipe gestures for horizontal swipes only (don't interfere with vertical scrolling)
+    const swipeRecognizer = hammer.get('swipe');
+    if (swipeRecognizer) {
+      // Only detect horizontal swipes, not vertical ones - this allows normal scrolling
+      swipeRecognizer.set({ direction: Hammer.DIRECTION_HORIZONTAL });
+      console.log('🔄 Search: Horizontal swipe recognizer configured - vertical scrolling enabled');
+    }
     
     // Swipe left to next tab
     hammer.on('swipeleft', () => {
       this.swipeToNextTab();
     });
     
-    // Swipe right to previous tab or open sidebar
+    // Swipe right to previous tab
     hammer.on('swiperight', () => {
-      this.swipeToPreviousTab();
+      if (this.activeTab === 'people') {
+        this.switchTab('top');
+      } else if (this.activeTab === 'top') {
+        this.switchTab('trending');
+      }
     });
 
-    // Configure pull-to-refresh gesture
-    hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+    // Add pull-to-refresh (only at top of page)
+    this.setupPullToRefresh();
     
-    // Swipe down to refresh content
-    hammer.on('swipedown', () => {
-      this.pullToRefresh();
-    });
+    console.log('🔄 Search: Swipe gestures initialized successfully');
+  }
+
+  /**
+   * Setup pull-to-refresh using touch events (only at top of page)
+   */
+  private setupPullToRefresh(): void {
+    let startY = 0;
+    let currentY = 0;
+    const threshold = 100; // Minimum distance to trigger refresh
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      // Only detect at the very top of the page
+      if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+      }
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      // Only process if we started at the top
+      if (startY > 0) {
+        currentY = e.touches[0].clientY;
+        const deltaY = currentY - startY;
+        
+        // If pulling down more than threshold, trigger refresh
+        if (deltaY > threshold) {
+          this.pullToRefresh();
+          startY = 0; // Reset to prevent multiple triggers
+        }
+      }
+    };
+    
+    const handleTouchEnd = () => {
+      startY = 0; // Reset
+    };
+    
+    // Add touch event listeners to the search container
+    const container = this.searchContainer?.nativeElement;
+    if (container) {
+      container.addEventListener('touchstart', handleTouchStart, { passive: true });
+      container.addEventListener('touchmove', handleTouchMove, { passive: true });
+      container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+  }
+
+  /**
+   * Pull to refresh functionality
+   */
+  private pullToRefresh(): void {
+    console.log('🔄 Search: Pull to refresh triggered');
+    
+    // Set refreshing state to show loading row and keep content visible
+    this.isRefreshing = true;
+    this.cd.markForCheck(); // Trigger change detection
+    
+    // Refresh trending and recommended users
+    this.loadTrending();
+    this.loadRecommendedUsers();
+    
+    // If there's an active search, refresh those results too
+    if (this.hasSearched) {
+      this.performSearch(this.searchQuery);
+    }
   }
 
   private swipeToNextTab(): void {
@@ -629,25 +730,5 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   private openSidebar(): void {
     // Open the mobile sidebar via the service
     this.sidebarService.openSidebar();
-  }
-
-  private pullToRefresh(): void {
-    console.log('🔄 Pull to Refresh Started - isRefreshing:', this.isRefreshing);
-    
-    // Show refresh state (keeps content visible)
-    this.isRefreshing = true;
-    console.log('🔄 Set isRefreshing = true');
-    
-    if (this.hasSearched) {
-      // Refresh search results
-      this.performSearch(this.searchQuery);
-    } else {
-      // Refresh trending hashtags and recommended users
-      this.loadTrending(true);
-      this.loadRecommendedUsers();
-    }
-    
-    // Don't manually set isRefreshing to false - let the actual operations handle it
-    // This prevents the "No results found" flash
   }
 } 

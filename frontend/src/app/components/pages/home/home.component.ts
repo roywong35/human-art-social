@@ -78,6 +78,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   private hammerManager?: HammerManager;
   isRefreshing = false; // For pull-to-refresh only
 
+  // Touch event handler properties for cleanup
+  private handleTouchStart!: (e: Event) => void;
+  private handleTouchMove!: (e: Event) => void;
+  private handleTouchEnd!: () => void;
+
 
   constructor(
     private postService: PostService,
@@ -590,6 +595,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.hammerManager) {
       this.hammerManager.destroy();
     }
+    
+    // Clean up touch event listeners
+    const container = document.querySelector('.posts-container');
+    if (container && this.handleTouchStart && this.handleTouchMove && this.handleTouchEnd) {
+      container.removeEventListener('touchstart', this.handleTouchStart);
+      container.removeEventListener('touchmove', this.handleTouchMove);
+      container.removeEventListener('touchend', this.handleTouchEnd);
+      console.log('🔄 Home: Touch event listeners cleaned up');
+    }
   }
 
   /**
@@ -621,11 +635,12 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.hammerManager = new Hammer(container);
       console.log('🔄 Home: Hammer manager created successfully');
       
-      // Configure for horizontal and vertical swipes
+      // Configure for horizontal swipes only (don't interfere with vertical scrolling)
       const swipeRecognizer = this.hammerManager.get('swipe');
       if (swipeRecognizer) {
-        swipeRecognizer.set({ direction: Hammer.DIRECTION_ALL });
-        console.log('🔄 Home: Swipe recognizer configured');
+        // Only detect horizontal swipes, not vertical ones
+        swipeRecognizer.set({ direction: Hammer.DIRECTION_HORIZONTAL });
+        console.log('🔄 Home: Horizontal swipe recognizer configured');
       } else {
         console.log('🔄 Home: No swipe recognizer found');
       }
@@ -641,11 +656,11 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.handleSwipeRight();
       });
       
-      // Handle vertical swipes for pull-to-refresh
-      this.hammerManager.on('swipedown', (event) => {
-        console.log('🔄 Home: Swipe down detected!', event);
-        this.handleSwipeDown();
-      });
+      // Remove vertical swipe detection - it was interfering with scrolling
+      console.log('🔄 Home: Vertical swipe detection disabled to allow normal scrolling');
+      
+      // Instead, use a more specific approach for pull-to-refresh
+      this.setupPullToRefresh();
       
       console.log('🔄 Home: All gesture handlers registered successfully');
     } catch (error) {
@@ -691,21 +706,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       // On rightmost tab (Human Art), swipe right should switch to For You (left tab)
       console.log('🔄 Home: Switching from human-drawing to for-you tab');
       this.setActiveTab('for-you');
-    }
-  }
-
-  /**
-   * Handle down swipe - pull to refresh (only at top of page)
-   */
-  private handleSwipeDown(): void {
-    console.log('🔄 Home: handleSwipeDown called, scrollY =', window.scrollY);
-    
-    // Only trigger refresh if we're at the top of the page
-    if (window.scrollY === 0) {
-      console.log('🔄 Home: At top of page, triggering pull-to-refresh');
-      this.pullToRefresh();
-    } else {
-      console.log('🔄 Home: Not at top of page, ignoring swipe down');
     }
   }
 
@@ -843,4 +843,51 @@ export class HomeComponent implements OnInit, OnDestroy {
     console.log('🏠 Home Component: New posts state reset, button hidden');
   }
 
+  /**
+   * Setup pull-to-refresh using touch events instead of Hammer.js
+   */
+  private setupPullToRefresh(): void {
+    let startY = 0;
+    let currentY = 0;
+    const threshold = 100; // Minimum distance to trigger refresh
+    
+    // Store references to handlers so we can remove them later
+    this.handleTouchStart = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      // Only detect at the very top of the page
+      if (window.scrollY === 0) {
+        startY = touchEvent.touches[0].clientY;
+        console.log('🔄 Home: Touch start at top, startY =', startY);
+      }
+    };
+    
+    this.handleTouchMove = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      // Only process if we started at the top
+      if (startY > 0) {
+        currentY = touchEvent.touches[0].clientY;
+        const deltaY = currentY - startY;
+        
+        // If pulling down more than threshold, trigger refresh
+        if (deltaY > threshold && !this.isRefreshing) {
+          console.log('🔄 Home: Pull-to-refresh threshold reached, deltaY =', deltaY);
+          this.pullToRefresh();
+          startY = 0; // Reset to prevent multiple triggers
+        }
+      }
+    };
+    
+    this.handleTouchEnd = () => {
+      startY = 0; // Reset
+    };
+    
+    // Add touch event listeners to the posts container
+    const container = document.querySelector('.posts-container');
+    if (container) {
+      container.addEventListener('touchstart', this.handleTouchStart, { passive: true });
+      container.addEventListener('touchmove', this.handleTouchMove, { passive: true });
+      container.addEventListener('touchend', this.handleTouchEnd, { passive: true });
+      console.log('🔄 Home: Pull-to-refresh touch events added');
+    }
+  }
 } 
