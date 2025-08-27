@@ -48,18 +48,8 @@ export class FloatingNewPostsIndicatorComponent implements OnInit, OnDestroy, On
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const shouldShow = this.hasNewPosts && scrollTop > this.scrollThreshold;
     
-    // Debug logging
-    console.log('🔍 Floating Indicator: Scroll check:', {
-      scrollTop,
-      threshold: this.scrollThreshold,
-      hasNewPosts: this.hasNewPosts,
-      shouldShow,
-      isVisible: this.isVisible
-    });
-    
     if (this.isVisible !== shouldShow) {
       this.isVisible = shouldShow;
-      console.log('🔍 Floating Indicator: Visibility changed to:', shouldShow);
       this.cd.markForCheck();
     }
   }
@@ -92,11 +82,9 @@ export class FloatingNewPostsIndicatorComponent implements OnInit, OnDestroy, On
       const rect = homeContainer.getBoundingClientRect();
       const centerX = rect.left + (rect.width / 2);
       this.homeComponentCenter = centerX;
-      console.log('🎯 Floating Indicator: Home component center calculated:', centerX);
     } else {
       // Fallback: center of viewport
       this.homeComponentCenter = window.innerWidth / 2;
-      console.log('⚠️ Floating Indicator: Home component not found, using viewport center');
     }
   }
 

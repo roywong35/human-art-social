@@ -25,6 +25,13 @@
       </button>
     </div>
   </div>
+
+  <!-- Refresh Loading Row (Only for pull-to-refresh) -->
+  <div *ngIf="isRefreshing" class="bg-white dark:bg-black border-b border-gray-200 dark:dark:[border-color:var(--color-border)] py-3">
+    <div class="flex items-center justify-center">
+      <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+    </div>
+  </div>
   
     <!-- Post Input Box (Always visible, never refreshes) -->
   <div *ngIf="activeTab === 'for-you'" 

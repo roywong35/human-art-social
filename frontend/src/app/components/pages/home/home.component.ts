@@ -17,6 +17,10 @@ import { GlobalModalService } from '../../../services/global-modal.service';
 import { HomeRefreshService } from '../../../services/home-refresh.service';
 import { FloatingNewPostsIndicatorComponent } from '../../shared/floating-new-posts-indicator/floating-new-posts-indicator.component';
 import { FloatingCreatePostButtonComponent } from '../../shared/floating-create-post-button/floating-create-post-button.component';
+import { SidebarService } from '../../../services/sidebar.service';
+
+// Hammer.js imports
+import Hammer from 'hammerjs';
 
 @Component({
   selector: 'app-home',
@@ -70,6 +74,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   private subscriptions = new Subscription();
   private scrollThrottleTimeout: any;
 
+  // Swipe gesture properties
+  private hammerManager?: HammerManager;
+  isRefreshing = false; // For pull-to-refresh only
+
 
   constructor(
     private postService: PostService,
@@ -82,7 +90,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private ngZone: NgZone,
     private globalModalService: GlobalModalService,
-    private homeRefreshService: HomeRefreshService
+    private homeRefreshService: HomeRefreshService,
+    private sidebarService: SidebarService
   ) {
     // Subscribe to posts$ stream for initial load and pagination
     this.subscriptions.add(
@@ -102,7 +111,21 @@ export class HomeComponent implements OnInit, OnDestroy {
           // This prevents the subscription from immediately hiding the loading state
           if (this.isInitialLoading) {
             this.isInitialLoading = false;
+            
+            // Initialize swipe gestures after posts are loaded and container exists (only once)
+            console.log('🏠 Home: Posts loaded, now initializing swipe gestures...');
+            setTimeout(() => {
+              this.initializeSwipeGestures();
+            }, 100); // Small delay to ensure DOM is fully rendered
           }
+          
+          // Clear refreshing state if this was a pull-to-refresh
+          if (this.isRefreshing) {
+            console.log('🔄 Home: Pull-to-refresh completed, clearing refresh state');
+            this.isRefreshing = false;
+            this.cd.markForCheck();
+          }
+          
           this.isLoadingMore = false;
           this.cd.markForCheck();
         },
@@ -113,6 +136,12 @@ export class HomeComponent implements OnInit, OnDestroy {
           // Stop loading immediately on error
           this.isInitialLoading = false;
           this.isLoadingMore = false;
+          
+          // Clear refreshing state on error
+          if (this.isRefreshing) {
+            this.isRefreshing = false;
+          }
+          
           this.cd.markForCheck();
         }
       })
@@ -198,6 +227,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Always show loading state when loading posts
     if (refresh) {
       this.isInitialLoading = true;
+    }
+    
+    // Clear refreshing state if this was a pull-to-refresh
+    if (this.isRefreshing) {
+      this.isRefreshing = false;
       this.cd.markForCheck();
     }
     
@@ -206,6 +240,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    console.log('🏠 Home: ngOnInit called');
+    
     // Get initial tab state from URL params or localStorage
     const tabFromParams = this.route.snapshot.queryParams['tab'];
     const savedTab = localStorage.getItem('activeTab');
@@ -227,11 +263,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       })
     );
 
-    // Start checking for new posts after initial load
-    setTimeout(() => {
-      this.startNewPostsCheck();
-    }, 5000); // Start after 5 seconds to avoid immediate check
-
     // Subscribe to home refresh service to refresh posts when sidebar/home button is clicked
     this.subscriptions.add(
       this.homeRefreshService.refreshHome$.subscribe(() => {
@@ -239,7 +270,13 @@ export class HomeComponent implements OnInit, OnDestroy {
       })
     );
 
+    // Start checking for new posts after initial load
+    setTimeout(() => {
+      this.startNewPostsCheck();
+    }, 5000); // Start after 5 seconds to avoid immediate check
 
+    // Don't initialize swipe gestures here - wait for posts to load
+    console.log('🏠 Home: Skipping swipe gesture initialization in ngOnInit (posts not loaded yet)');
   }
 
   onPostUpdated(updatedPost: Post): void {
@@ -535,7 +572,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Clear any pending modal operations when component is destroyed
     this.globalModalService.notifyComponentNavigation();
     
+    // Clean up subscriptions
     this.subscriptions.unsubscribe();
+    
+    // Clean up scroll throttle timeout
     if (this.scrollThrottleTimeout) {
       clearTimeout(this.scrollThrottleTimeout);
     }
@@ -545,6 +585,145 @@ export class HomeComponent implements OnInit, OnDestroy {
       clearInterval(this.newPostsCheckInterval);
       this.newPostsCheckInterval = null;
     }
+    
+    // Clean up Hammer manager
+    if (this.hammerManager) {
+      this.hammerManager.destroy();
+    }
+  }
+
+  /**
+   * Initialize Hammer.js swipe gestures for mobile
+   */
+  private initializeSwipeGestures(): void {
+    console.log('🔄 Home: Initializing swipe gestures...');
+    console.log('🔄 Home: isMobile =', this.isMobile);
+    console.log('🔄 Home: Hammer available =', typeof Hammer !== 'undefined');
+    console.log('🔄 Home: Hammer object =', Hammer);
+    
+    // Only initialize on mobile devices
+    if (!this.isMobile) {
+      console.log('🔄 Home: Not mobile, skipping gesture initialization');
+      return;
+    }
+
+    // Get the main container element
+    const container = document.querySelector('.posts-container') as HTMLElement;
+    console.log('🔄 Home: Container element =', container);
+    
+    if (!container) {
+      console.log('🔄 Home: No container found, skipping gesture initialization');
+      return;
+    }
+
+    try {
+      // Create Hammer manager
+      this.hammerManager = new Hammer(container);
+      console.log('🔄 Home: Hammer manager created successfully');
+      
+      // Configure for horizontal and vertical swipes
+      const swipeRecognizer = this.hammerManager.get('swipe');
+      if (swipeRecognizer) {
+        swipeRecognizer.set({ direction: Hammer.DIRECTION_ALL });
+        console.log('🔄 Home: Swipe recognizer configured');
+      } else {
+        console.log('🔄 Home: No swipe recognizer found');
+      }
+      
+      // Handle horizontal swipes for tab switching and sidebar
+      this.hammerManager.on('swipeleft', (event) => {
+        console.log('🔄 Home: Swipe left detected!', event);
+        this.handleSwipeLeft();
+      });
+      
+      this.hammerManager.on('swiperight', (event) => {
+        console.log('🔄 Home: Swipe right detected!', event);
+        this.handleSwipeRight();
+      });
+      
+      // Handle vertical swipes for pull-to-refresh
+      this.hammerManager.on('swipedown', (event) => {
+        console.log('🔄 Home: Swipe down detected!', event);
+        this.handleSwipeDown();
+      });
+      
+      console.log('🔄 Home: All gesture handlers registered successfully');
+    } catch (error) {
+      console.error('🔄 Home: Error initializing Hammer.js:', error);
+    }
+  }
+
+  /**
+   * Handle left swipe - switch to next tab or close sidebar
+   */
+  private handleSwipeLeft(): void {
+    console.log('🔄 Home: handleSwipeLeft called, activeTab =', this.activeTab);
+    
+    // First check if sidebar is open - if so, close it regardless of tab
+    if (this.sidebarService.isSidebarOpen()) {
+      console.log('🔄 Home: Sidebar is open, closing it via swipe left');
+      this.sidebarService.closeSidebar();
+      return;
+    }
+    
+    if (this.activeTab === 'for-you') {
+      // On leftmost tab (For You), swipe left should switch to Human Art (right tab)
+      console.log('🔄 Home: Switching from for-you to human-drawing tab');
+      this.setActiveTab('human-drawing');
+    } else if (this.activeTab === 'human-drawing') {
+      // On rightmost tab (Human Art), swipe left should switch to For You (left tab)
+      console.log('🔄 Home: Switching from human-drawing to for-you tab');
+      this.setActiveTab('for-you');
+    }
+  }
+
+  /**
+   * Handle right swipe - switch to previous tab or open sidebar
+   */
+  private handleSwipeRight(): void {
+    console.log('🔄 Home: handleSwipeRight called, activeTab =', this.activeTab);
+    
+    if (this.activeTab === 'for-you') {
+      // On leftmost tab (For You), swipe right opens sidebar
+      console.log('🔄 Home: Opening sidebar via swipe right');
+      this.sidebarService.openSidebar();
+    } else if (this.activeTab === 'human-drawing') {
+      // On rightmost tab (Human Art), swipe right should switch to For You (left tab)
+      console.log('🔄 Home: Switching from human-drawing to for-you tab');
+      this.setActiveTab('for-you');
+    }
+  }
+
+  /**
+   * Handle down swipe - pull to refresh (only at top of page)
+   */
+  private handleSwipeDown(): void {
+    console.log('🔄 Home: handleSwipeDown called, scrollY =', window.scrollY);
+    
+    // Only trigger refresh if we're at the top of the page
+    if (window.scrollY === 0) {
+      console.log('🔄 Home: At top of page, triggering pull-to-refresh');
+      this.pullToRefresh();
+    } else {
+      console.log('🔄 Home: Not at top of page, ignoring swipe down');
+    }
+  }
+
+  /**
+   * Pull to refresh functionality
+   */
+  private pullToRefresh(): void {
+    if (this.isRefreshing) {
+      console.log('🔄 Home: Already refreshing, ignoring duplicate request');
+      return; // Prevent multiple refreshes
+    }
+
+    console.log('🔄 Home: Pull to refresh started');
+    this.isRefreshing = true;
+    this.cd.markForCheck();
+
+    // Refresh posts without hiding content
+    this.postService.loadPosts(true, this.activeTab);
   }
 
   // New posts check methods
