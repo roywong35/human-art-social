@@ -4,7 +4,7 @@
      (click)="closeSidebarDrawer()"></div>
 
 <!-- Sidebar Drawer -->
-<div class="fixed top-0 left-0 h-full w-80 max-w-[80vw] bg-white dark:bg-black z-[1002] transform transition-transform duration-300 ease-in-out shadow-2xl"
+<div #sidebarDrawer class="fixed top-0 left-0 h-full w-80 max-w-[80vw] bg-white dark:bg-black z-[1002] transform transition-transform duration-300 ease-in-out shadow-2xl"
      [ngClass]="{
        'translate-x-0': showSidebarDrawer,
        '-translate-x-full': !showSidebarDrawer,

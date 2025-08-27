@@ -1,4 +1,4 @@
-<div class="w-screen min-[500px]:w-full max-w-4xl mx-auto overflow-hidden">
+<div #searchContainer class="w-screen min-[500px]:w-full max-w-4xl mx-auto overflow-hidden">
   <!-- Search Header -->
   <div class="sticky top-0 bg-white dark:[background-color:var(--color-background)] z-10 w-full">
     <div class="flex items-center px-4 w-full">
@@ -27,7 +27,7 @@
     </div>
 
     <!-- Show Top and People tabs when search has been performed -->
-    <div *ngIf="hasSearched && !isLoading && (users.length > 0 || posts.length > 0)" 
+    <div *ngIf="hasSearched && (users.length > 0 || posts.length > 0)" 
          class="flex border-b border-gray-200 dark:[border-color:var(--color-border)]">
       <button (click)="switchTab('top')"
               [class.border-b-2]="activeTab === 'top'"
@@ -48,14 +48,15 @@
 
   <!-- Search Results Content -->
   <div>
-    <!-- Loading State -->
-    <div *ngIf="isLoading" class="text-center py-8 px-6">
-      <i class="fas fa-spinner fa-spin text-2xl text-gray-500 dark:[color:var(--color-text-secondary)]"></i>
-      <p class="mt-2 text-gray-500 dark:[color:var(--color-text-secondary)]">Searching for posts and people...</p>
+    <!-- Loading Row Above Tabs - Show for both refresh and initial search -->
+    <div *ngIf="shouldShowLoadingRow" class="w-full bg-white dark:bg-black">
+      <div class="flex justify-center py-4">
+        <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+      </div>
     </div>
 
     <!-- No Search Performed Yet - Only show when no search AND not on trending tab -->
-    <div *ngIf="!hasSearched && !isLoading && activeTab !== 'trending'" class="text-center py-12 px-6">
+    <div *ngIf="!hasSearched && activeTab !== 'trending' && !isLoading" class="text-center py-12 px-6">
       <i class="fas fa-search text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
         Search for posts, users, and hashtags
@@ -66,7 +67,7 @@
     </div>
 
     <!-- No Results -->
-    <div *ngIf="!isLoading && hasSearched && users.length === 0 && posts.length === 0 && searchQuery" 
+    <div *ngIf="hasSearched && users.length === 0 && posts.length === 0 && searchQuery && !isLoading" 
          class="text-center py-12 px-6">
       <i class="fas fa-search text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
@@ -83,7 +84,7 @@
     </div>
 
     <!-- Top Tab Content - Only show when search has been performed -->
-    <div *ngIf="!isLoading && hasSearched && activeTab === 'top' && (users.length > 0 || posts.length > 0)">
+    <div *ngIf="hasSearched && activeTab === 'top' && (users.length > 0 || posts.length > 0)">
       
       <!-- People Section (Max 3 users) -->
       <div *ngIf="!isHashtagSearch && limitedUsers.length > 0">
@@ -168,7 +169,7 @@
     </div>
 
     <!-- People Tab Content - Only show when search has been performed -->
-    <div *ngIf="!isLoading && hasSearched && activeTab === 'people' && users.length > 0">
+    <div *ngIf="hasSearched && activeTab === 'people' && users.length > 0">
       <div>
         <div *ngFor="let user of users; trackBy: trackByUserId"
              class="flex items-center px-4 py-3 bg-white dark:[background-color:var(--color-background)] hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors user-card">
@@ -219,7 +220,7 @@
     </div>
 
     <!-- No People Results for People Tab -->
-    <div *ngIf="!isLoading && hasSearched && activeTab === 'people' && users.length === 0 && searchQuery" 
+    <div *ngIf="hasSearched && activeTab === 'people' && users.length === 0 && searchQuery && !isLoading" 
          class="text-center py-12 px-6">
       <i class="fas fa-users text-4xl text-gray-300 dark:[color:var(--color-text-secondary)] mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-900 dark:[color:var(--color-text)] mb-2">
@@ -238,13 +239,7 @@
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Trending</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-          <!-- Loading state -->
-          <div *ngIf="isLoadingTrending" class="flex items-center justify-center py-8">
-            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
-          </div>
-
-          <!-- Real trending topics -->
-          <div *ngIf="!isLoadingTrending">
+          <!-- Trending Topics List -->
             <div *ngFor="let topic of trendingTopics.slice(0, maxTrendingTopics); let i = index" 
                  class="px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer w-full"
                  (click)="navigateToHashtag(topic.name)">
@@ -272,7 +267,6 @@
                 Check back later for updates
               </div>
             </div>
-          </div>
         </div>
       </div>
 
@@ -282,13 +276,7 @@
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Who to follow</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-          <!-- Loading state -->
-          <div *ngIf="isLoadingUsers" class="flex items-center justify-center py-8">
-            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
-          </div>
-
           <!-- User list -->
-          <div *ngIf="!isLoadingUsers">
             <div *ngFor="let user of recommendedUsers.slice(0, maxRecommendedUsers)" 
                  class="flex items-center px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer w-full"
                  (click)="navigateToProfile(user)">
@@ -322,4 +310,3 @@
       </div>
     </div>
   </div>
-</div> 

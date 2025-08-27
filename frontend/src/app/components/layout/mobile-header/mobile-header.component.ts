@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -11,6 +11,9 @@ import { ChangePasswordDialogComponent } from '../../features/auth/change-passwo
 import { AuthService } from '../../../services/auth.service';
 import { PostService } from '../../../services/post.service';
 import { HomeRefreshService } from '../../../services/home-refresh.service';
+import { SidebarService } from '../../../services/sidebar.service';
+import { Subscription } from 'rxjs';
+import Hammer from 'hammerjs';
 
 @Component({
   selector: 'app-mobile-header',
@@ -19,8 +22,11 @@ import { HomeRefreshService } from '../../../services/home-refresh.service';
   templateUrl: './mobile-header.component.html',
   styleUrls: ['./mobile-header.component.scss']
 })
-export class MobileHeaderComponent implements OnInit {
+export class MobileHeaderComponent implements OnInit, OnDestroy, AfterViewInit {
   protected showSidebarDrawer = false;
+  private sidebarSubscription?: Subscription;
+  @ViewChild('sidebarDrawer', { static: false }) sidebarDrawer!: ElementRef;
+  private subscriptions: Subscription[] = [];
   protected isHumanArtTab = false;
   protected isDarkMode = false;
   protected isHomepage = false;
@@ -41,7 +47,8 @@ export class MobileHeaderComponent implements OnInit {
     private route: ActivatedRoute,
     private postService: PostService,
     private homeRefreshService: HomeRefreshService,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private sidebarService: SidebarService
   ) {
     // Subscribe to route changes to detect Human Art tab and homepage
     this.router.events.pipe(
@@ -91,6 +98,15 @@ export class MobileHeaderComponent implements OnInit {
         this.detectPWAMode();
       });
     }
+
+    // Subscribe to sidebar service
+    this.sidebarSubscription = this.sidebarService.sidebarOpen$.subscribe(isOpen => {
+      this.showSidebarDrawer = isOpen;
+    });
+  }
+
+  ngAfterViewInit() {
+    this.setupSidebarGestures();
   }
 
   private detectPWAMode(): void {
@@ -328,5 +344,51 @@ export class MobileHeaderComponent implements OnInit {
     setTimeout(() => {
       this.scrollToTop();
     }, 100);
+  }
+
+  ngOnDestroy(): void {
+    if (this.sidebarSubscription) {
+      this.sidebarSubscription.unsubscribe();
+    }
+    // Clean up all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
+  }
+
+  private setupSidebarGestures(): void {
+    // Set up gestures when sidebar is shown
+    const gestureSubscription = this.sidebarService.sidebarOpen$.subscribe(isOpen => {
+      if (isOpen && this.sidebarDrawer) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+          this.initializeSidebarGestures();
+        }, 100);
+      }
+    });
+    this.subscriptions.push(gestureSubscription);
+  }
+
+  private initializeSidebarGestures(): void {
+    if (!this.sidebarDrawer) return;
+
+    const hammer = new Hammer(this.sidebarDrawer.nativeElement);
+    
+    // Configure swipe gestures for the sidebar
+    hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
+    
+    // Swipe left to close sidebar
+    hammer.on('swipeleft', () => {
+      this.sidebarService.closeSidebar();
+    });
+
+    // Also add gesture to the backdrop
+    const backdrop = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50.z-\\[1001\\]') as HTMLElement;
+    if (backdrop) {
+      const backdropHammer = new Hammer(backdrop);
+      backdropHammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
+      backdropHammer.on('swipeleft', () => {
+        this.sidebarService.closeSidebar();
+      });
+    }
   }
 } 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -14,6 +14,8 @@ import { GlobalModalService } from '../../../services/global-modal.service';
 import { HashtagResult, HashtagService } from '../../../services/hashtag.service';
 import { forkJoin, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
+import Hammer from 'hammerjs';
+import { SidebarService } from '../../../services/sidebar.service';
 
 @Component({
   selector: 'app-search',
@@ -22,13 +24,15 @@ import { take } from 'rxjs/operators';
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss']
 })
-export class SearchComponent implements OnInit, OnDestroy {
+export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('searchBar') searchBar!: SearchBarComponent;
+  @ViewChild('searchContainer', { static: false }) searchContainer!: ElementRef;
   
   searchQuery: string = '';
   posts: Post[] = [];
   users: User[] = [];
   isLoading: boolean = false;
+  isRefreshing: boolean = false; // New state for pull-to-refresh
   isHashtagSearch: boolean = false;
   hasSearched: boolean = false;
   
@@ -67,7 +71,8 @@ export class SearchComponent implements OnInit, OnDestroy {
     private hashtagService: HashtagService,
     private optimisticUpdateService: OptimisticUpdateService,
     private authService: AuthService,
-    private globalModalService: GlobalModalService
+    private globalModalService: GlobalModalService,
+    private sidebarService: SidebarService
   ) {}
 
   ngOnInit() {
@@ -113,6 +118,10 @@ export class SearchComponent implements OnInit, OnDestroy {
       }
     });
     this.subscriptions.push(routeSub);
+  }
+
+  ngAfterViewInit() {
+    this.setupGestureSupport();
   }
 
   private setupFollowStatusSync(): void {
@@ -168,6 +177,10 @@ export class SearchComponent implements OnInit, OnDestroy {
           }
         }
         this.isLoadingTrending = false;
+        // Also clear the refresh state if this was called from pullToRefresh
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+        }
       },
       error: (error) => {
         console.error('Error loading trending:', error);
@@ -181,6 +194,10 @@ export class SearchComponent implements OnInit, OnDestroy {
           { name: 'inspiration', post_count: 75 }
         ];
         this.isLoadingTrending = false;
+        // Also clear the refresh state if this was called from pullToRefresh
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+        }
       }
     });
   }
@@ -191,10 +208,18 @@ export class SearchComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.recommendedUsers = response.results;
         this.isLoadingUsers = false;
+        // Also clear the refresh state if this was called from pullToRefresh
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+        }
       },
       error: (error) => {
         console.error('Error loading recommended users:', error);
         this.isLoadingUsers = false;
+        // Also clear the refresh state if this was called from pullToRefresh
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+        }
       }
     });
   }
@@ -281,6 +306,51 @@ export class SearchComponent implements OnInit, OnDestroy {
     return this.posts.filter(post => post.post_type !== 'repost');
   }
 
+  // Smart loading logic: show content if we have results, hide if we don't
+  get shouldShowContentDuringLoading(): boolean {
+    console.log('🔍 Smart Loading Logic Debug:', {
+      hasSearched: this.hasSearched,
+      usersLength: this.users.length,
+      postsLength: this.posts.length,
+      isLoading: this.isLoading,
+      isRefreshing: this.isRefreshing,
+      activeTab: this.activeTab
+    });
+    
+    // If we have search results, keep them visible during refresh
+    if (this.hasSearched && (this.users.length > 0 || this.posts.length > 0)) {
+      console.log('✅ Should show content during loading: TRUE (has results)');
+      return true;
+    }
+    // If no results yet, hide content during loading
+    console.log('❌ Should show content during loading: FALSE (no results)');
+    return false;
+  }
+
+  // Simplified logic for showing loading row
+  get shouldShowLoadingRow(): boolean {
+    // Show loading row for:
+    // 1. Pull-to-refresh (isRefreshing = true)
+    // 2. Initial search with no results yet (isLoading && hasSearched && no results)
+    return this.isRefreshing || (this.isLoading && this.hasSearched && this.users.length === 0 && this.posts.length === 0);
+  }
+
+  // Debug method to log template conditions
+  logTemplateConditions(): void {
+    console.log('🎯 Template Conditions Debug:', {
+      hasSearched: this.hasSearched,
+      activeTab: this.activeTab,
+      usersLength: this.users.length,
+      postsLength: this.posts.length,
+      shouldShowContentDuringLoading: this.shouldShowContentDuringLoading,
+      isLoading: this.isLoading,
+      isRefreshing: this.isRefreshing,
+      tabsCondition: this.hasSearched && (this.users.length > 0 || this.posts.length > 0),
+      topTabCondition: this.hasSearched && this.activeTab === 'top' && (this.users.length > 0 || this.posts.length > 0),
+      peopleTabCondition: this.hasSearched && this.activeTab === 'people' && this.users.length > 0
+    });
+  }
+
   navigateToHashtag(hashtag: string) {
     this.router.navigate(['/search'], { queryParams: { q: `#${hashtag}` } }).then(() => {
       this.scrollToTopAfterNavigation();
@@ -316,10 +386,34 @@ export class SearchComponent implements OnInit, OnDestroy {
       return;
     }
 
+    console.log('🔍 Perform Search Started:', {
+      query: query,
+      hasSearched: this.hasSearched,
+      usersLength: this.users.length,
+      postsLength: this.posts.length,
+      isRefreshing: this.isRefreshing
+    });
+
     this.isLoading = true;
-    this.posts = [];
-    this.users = [];
+    
+    // Only clear results on initial search, not on refresh
+    if (!this.isRefreshing) {
+      this.posts = [];
+      this.users = [];
+      console.log('🔍 Cleared results (initial search)');
+    } else {
+      console.log('🔍 Kept existing results (refresh)');
+    }
+    
     this.hasSearched = true;
+    
+    console.log('🔍 Set loading states:', {
+      isLoading: this.isLoading,
+      hasSearched: this.hasSearched,
+      posts: this.posts.length,
+      users: this.users.length,
+      isRefreshing: this.isRefreshing
+    });
 
     // Determine search terms for different types
     const isHashtagSearch = query.startsWith('#');
@@ -343,6 +437,12 @@ export class SearchComponent implements OnInit, OnDestroy {
         posts: this.postService.searchPosts(postSearchTerm)
       }).subscribe({
         next: (results) => {
+          console.log('🔍 Search Results Received:', {
+            usersCount: results.users.length,
+            postsCount: results.posts.length,
+            isRefreshing: this.isRefreshing
+          });
+          
           this.users = results.users;
           // Filter out reposted posts from search results
           this.posts = results.posts.filter(post => post.post_type !== 'repost');
@@ -352,6 +452,20 @@ export class SearchComponent implements OnInit, OnDestroy {
           this.isLoading = false;
           this.isLoadingUsers = false;
           this.isLoadingPosts = false;
+          
+          console.log('🔍 After Setting Results:', {
+            hasSearched: this.hasSearched,
+            usersLength: this.users.length,
+            postsLength: this.posts.length,
+            isLoading: this.isLoading,
+            isRefreshing: this.isRefreshing
+          });
+          
+          // Also clear refresh state if this was a refresh operation
+          if (this.isRefreshing) {
+            this.isRefreshing = false;
+            console.log('🔄 Cleared isRefreshing = false');
+          }
         },
         error: (error) => {
           console.error('Error searching:', error);
@@ -361,6 +475,10 @@ export class SearchComponent implements OnInit, OnDestroy {
           this.isLoadingUsers = false;
           this.isLoadingPosts = false;
           this.hasSearched = true;
+          // Also clear refresh state if this was a refresh operation
+          if (this.isRefreshing) {
+            this.isRefreshing = false;
+          }
         }
       });
     }
@@ -370,6 +488,14 @@ export class SearchComponent implements OnInit, OnDestroy {
     this.isLoadingPosts = true;
     this.hasSearched = true;
     
+    // Only clear results on initial search, not on refresh
+    if (!this.isRefreshing) {
+      this.posts = [];
+      console.log('🔍 searchPosts: Cleared results (initial search)');
+    } else {
+      console.log('🔍 searchPosts: Kept existing results (refresh)');
+    }
+    
     this.postService.searchPosts(query).subscribe({
       next: (posts) => {
         // Filter out reposted posts from search results
@@ -377,6 +503,10 @@ export class SearchComponent implements OnInit, OnDestroy {
         this.hasSearched = true;
         this.isLoading = false;
         this.isLoadingPosts = false;
+        // Also clear refresh state if this was a refresh operation
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+        }
       },
       error: (error) => {
         console.error('Error searching posts:', error);
@@ -384,6 +514,10 @@ export class SearchComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         this.isLoadingPosts = false;
         this.hasSearched = true;
+        // Also clear refresh state if this was a refresh operation
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+        }
       }
     });
   }
@@ -471,5 +605,97 @@ export class SearchComponent implements OnInit, OnDestroy {
     // Unsubscribe from all subscriptions
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.subscriptions = [];
+  }
+
+  private setupGestureSupport(): void {
+    if (!this.searchContainer) return;
+    
+    const hammer = new Hammer(this.searchContainer.nativeElement);
+    
+    // Configure swipe gestures for horizontal swipes
+    hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
+    
+    // Swipe left to next tab
+    hammer.on('swipeleft', () => {
+      this.swipeToNextTab();
+    });
+    
+    // Swipe right to previous tab or open sidebar
+    hammer.on('swiperight', () => {
+      this.swipeToPreviousTab();
+    });
+
+    // Configure pull-to-refresh gesture
+    hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+    
+    // Swipe down to refresh content
+    hammer.on('swipedown', () => {
+      this.pullToRefresh();
+    });
+  }
+
+  private swipeToNextTab(): void {
+    if (this.hasSearched) {
+      // When searching, switch between 'top' and 'people' tabs
+      if (this.activeTab === 'top') {
+        this.switchTab('people');
+      }
+    } else {
+      // When not searching, stay on 'trending' tab
+      // Could add more tabs here in the future
+    }
+  }
+
+  private swipeToPreviousTab(): void {
+    if (this.hasSearched) {
+      // When searching, switch between 'top' and 'people' tabs
+      if (this.activeTab === 'people') {
+        this.switchTab('top');
+      } else if (this.activeTab === 'top') {
+        // If we're on the leftmost tab, open the sidebar
+        this.openSidebar();
+      }
+    } else {
+      // When not searching, open sidebar from 'trending' tab
+      this.openSidebar();
+    }
+  }
+
+  private openSidebar(): void {
+    // Open the mobile sidebar via the service
+    this.sidebarService.openSidebar();
+  }
+
+  private pullToRefresh(): void {
+    console.log('🔄 Pull to Refresh Started:', {
+      hasSearched: this.hasSearched,
+      searchQuery: this.searchQuery,
+      usersLength: this.users.length,
+      postsLength: this.posts.length,
+      activeTab: this.activeTab
+    });
+    
+    // Show refresh state (keeps content visible)
+    this.isRefreshing = true;
+    console.log('🔄 Set isRefreshing = true');
+    
+    if (this.hasSearched) {
+      console.log('🔄 Refreshing search results for:', this.searchQuery);
+      // Refresh search results
+      this.performSearch(this.searchQuery);
+    } else {
+      console.log('🔄 Refreshing trending content');
+      // Refresh trending hashtags and recommended users
+      this.loadTrending(true);
+      this.loadRecommendedUsers();
+    }
+    
+    // Don't manually set isRefreshing to false - let the actual operations handle it
+    // This prevents the "No results found" flash
+    
+    // Log template conditions for debugging
+    setTimeout(() => {
+      this.logTemplateConditions();
+    }, 100);
   }
 } 
