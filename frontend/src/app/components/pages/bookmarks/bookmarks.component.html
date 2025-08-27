@@ -1,11 +1,25 @@
-<div class="min-h-screen bg-white dark:bg-black">
-  <div>
+<div #bookmarksContainer class="min-h-screen bg-white dark:bg-black relative">
+  <!-- Gesture Detection Overlay (Mobile Only) -->
+  <div *ngIf="isMobile" 
+       class="absolute inset-0 z-10 pointer-events-none"
+       style="touch-action: pan-y;">
+    <!-- This overlay captures gestures across the entire area -->
+  </div>
+  
+  <div class="relative z-20">
     <div class="border-b border-gray-200 dark:[border-color:var(--color-border)] p-4">
       <h1 class="text-xl font-bold dark:[color:var(--color-text)]">Bookmarks</h1>
     </div>
 
-    <!-- Loading State -->
-    <div *ngIf="loading" class="flex justify-center items-center py-8">
+    <!-- Refresh Loading Row (Only for pull-to-refresh) -->
+    <div *ngIf="isRefreshing" class="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-700 py-3">
+      <div class="flex items-center justify-center">
+        <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+      </div>
+    </div>
+
+    <!-- Loading State (Only for initial load, not for pull-to-refresh) -->
+    <div *ngIf="loading && !isRefreshing" class="flex justify-center items-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
     </div>
 
@@ -18,7 +32,7 @@
     <div *ngIf="!loading && !error && bookmarkedItems.length === 0" 
          class="bg-white dark:bg-black rounded-lg shadow p-8 text-center my-4">
       <p class="text-gray-500 dark:[color:var(--color-text-secondary)] text-lg">No bookmarks yet.</p>
-      <p class="text-gray-400 dark:[color:var(--color-text-secondary)] mt-2">Posts and comments you bookmark will appear here.</p>
+      <p class="text-sm text-gray-400 dark:[color:var(--color-text-secondary)] mt-2">Posts and comments you bookmark will appear here.</p>
     </div>
 
     <!-- Bookmarks List -->

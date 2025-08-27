@@ -1,6 +1,13 @@
-<div class="flex h-screen bg-white dark:bg-black border-x border-gray-200 dark:dark:[border-color:var(--color-border)] w-full">
+<div #messagesContainer class="flex h-screen bg-white dark:bg-black border-x border-gray-200 dark:dark:[border-color:var(--color-border)] w-full relative">
+  <!-- Gesture Detection Overlay (Mobile Only) -->
+  <div *ngIf="isMobile" 
+       class="absolute inset-0 z-10 pointer-events-none"
+       style="touch-action: pan-y;">
+    <!-- This overlay captures gestures across the entire area -->
+  </div>
+  
   <!-- Chat List Sidebar -->
-  <div class="border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen"
+  <div class="border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen flex-1 relative z-20"
        [class.hidden]="!isDesktop && !showChatList"
        [class.w-80]="isDesktop"
        [class.w-[720px]]="!isDesktop && showChatList && shouldUseFixedWidth"
@@ -10,7 +17,8 @@
     <div class="p-4 dark:border-gray-800">
       <div class="flex items-center justify-between">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">Messages</h1>
-        <button 
+        <div class="flex items-center gap-2">
+          <button 
           (click)="openCreateChatModal()"
           class="p-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors"
           title="New message">
@@ -18,6 +26,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </button>
+        </div>
       </div>
     </div>
 
@@ -103,7 +112,7 @@
   </div>
 
   <!-- Chat Room Area -->
-  <div class="bg-gray-50 dark:bg-gray-900 relative h-screen flex-1"
+  <div class="bg-gray-50 dark:bg-gray-900 relative h-screen flex-1 relative z-20"
        [class.hidden]="!isDesktop && showChatList"
        [class.w-full]="!isDesktop && !showChatList">
     

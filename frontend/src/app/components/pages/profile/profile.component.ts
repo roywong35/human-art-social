@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject, ChangeDetectorRef, HostListener, NgZone, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, ChangeDetectorRef, HostListener, NgZone, ViewChildren, QueryList, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -10,12 +10,16 @@ import { OptimisticUpdateService } from '../../../services/optimistic-update.ser
 import { PostService } from '../../../services/post.service';
 import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
+import { SidebarService } from '../../../services/sidebar.service';
 import { PostComponent } from '../../features/posts/post/post.component';
 import { take } from 'rxjs/operators';
 import { MatDialog, MatDialogModule} from '@angular/material/dialog';
 import { UserListDialogComponent } from '../../dialogs/user-list-dialog/user-list-dialog.component';
 import { Subscription } from 'rxjs';
 import { UnfollowDialogComponent } from '../../dialogs/unfollow-dialogs/unfollow-dialog.component';
+
+// Hammer.js imports
+import Hammer from 'hammerjs';
 
 
 @Component({
@@ -52,6 +56,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isLoadingMedia = false;
   isLoadingHumanArt = false;
   isLoadingLikes = false;
+  isRefreshing = false; // For pull-to-refresh only
   error: string | null = null;
   isCurrentUser = false;
   showEditModal = false;
@@ -59,6 +64,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isHoveringFollowButton = false;
   private scrollThrottleTimeout: any;
   private currentHandle: string | null = null;
+  
+  // Mobile detection - make it a getter for real-time detection
+  get isMobile(): boolean {
+    const mobile = window.innerWidth < 768;
+    return mobile;
+  }
+  
+  // Swipe gesture properties
+  private hammerManager?: HammerManager;
+  
+  // Touch event handler properties for cleanup
+  private handleTouchStart!: (e: Event) => void;
+  private handleTouchMove!: (e: Event) => void;
+  private handleTouchEnd!: () => void;
+  
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   editForm = {
     username: '',
@@ -77,6 +97,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     public postService: PostService,
     private toastService: ToastService,
     private authService: AuthService,
+    private sidebarService: SidebarService,
     private dialog: MatDialog,
     private cd: ChangeDetectorRef,
     private ngZone: NgZone
@@ -141,44 +162,27 @@ export class ProfileComponent implements OnInit, OnDestroy {
     );
   }
 
-  ngOnInit() {
-    // Subscribe to route parameter changes
-    this.routeSubscription = this.route.paramMap.subscribe(params => {
-      const handle = params.get('handle');
-
-      if (!handle) {
-        this.error = 'Invalid profile URL';
-        this.isLoading = false;
-        return;
+  ngOnInit(): void {
+    // Subscribe to route changes to handle tab switching
+    this.route.queryParamMap.subscribe(params => {
+      const tab = params.get('tab') as 'posts' | 'replies' | 'media' | 'human-art' | 'likes';
+      if (tab && tab !== this.activeTab) {
+        this.activeTab = tab;
       }
-
-      // Reset state
-      this.isLoading = true;
-      this.error = null;
-      this.user = null;
-      this.posts = [];
-      this.replies = [];
-      this.replyParentChains = {};
-      this.mediaItems = [];
-      this.humanArtPosts = [];
-      this.likedPosts = [];
-
-      this.loadUserProfile(handle);
     });
 
-    // Subscribe to query params for tab
-    this.route.queryParamMap.subscribe(params => {
-      const tab = params.get('tab');
-      if (tab && ['posts', 'replies', 'media', 'human-art', 'likes'].includes(tab)) {
-        this.activeTab = tab as any;
-        if (this.user?.handle) {
-          this.loadTabContent(this.user.handle);
-        }
+    // Get user handle from route params
+    this.route.params.subscribe(params => {
+      const handle = params['handle'];
+      if (handle) {
+        this.loadUserProfile(handle);
       }
     });
 
     // Subscribe to follow status changes from other components
     this.setupFollowStatusSync();
+    
+    // Don't initialize gestures here - wait for content to load like home component does
   }
 
   ngOnDestroy(): void {
@@ -193,12 +197,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
       clearTimeout(this.scrollThrottleTimeout);
     }
     
-    // Clean up object URLs to prevent memory leaks
-    if (this.editForm.profile_picture_preview && this.editForm.profile_picture_preview.startsWith('blob:')) {
-      URL.revokeObjectURL(this.editForm.profile_picture_preview);
+    // Clean up Hammer.js instance if it exists
+    if (this.hammerManager) {
+      this.hammerManager.destroy();
     }
-    if (this.editForm.banner_image_preview && this.editForm.banner_image_preview.startsWith('blob:')) {
-      URL.revokeObjectURL(this.editForm.banner_image_preview);
+    
+    // Clean up touch event listeners
+    if (this.handleTouchStart && this.handleTouchMove && this.handleTouchEnd) {
+      document.body.removeEventListener('touchstart', this.handleTouchStart);
+      document.body.removeEventListener('touchmove', this.handleTouchMove);
+      document.body.removeEventListener('touchend', this.handleTouchEnd);
     }
     
     // Clear user posts and replies when leaving profile
@@ -234,22 +242,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserProfile(handle: string): void {
+    this.isLoading = true;
+    this.error = null;
 
     this.userService.getUserByHandle(handle).subscribe({
       next: (user) => {
-
         this.user = user;
-        // Profile info is loaded, but tab content might still be loading
         this.isLoading = false;
-        // Subscribe to auth changes to update isCurrentUser reactively
-        this.authService.currentUser$.subscribe(currentUser => {
-          this.isCurrentUser = currentUser?.id === user.id;
-          this.cd.detectChanges(); // Update view when auth state changes
-        });
         this.loadTabContent(handle);
+        
+        // Initialize gesture support after content loads
+        if (this.isMobile) {
+          setTimeout(() => {
+            this.initializeGestureSupport();
+          }, 100);
+        }
       },
       error: (error) => {
-        console.error('ProfileComponent: Error loading profile:', error);
+        console.error('Error loading user profile:', error);
         this.error = 'Failed to load profile';
         this.isLoading = false;
       }
@@ -283,34 +293,77 @@ export class ProfileComponent implements OnInit, OnDestroy {
       queryParams: { tab },
       queryParamsHandling: 'merge'
     });
+    
     this.loadTabContent(this.user?.handle || '');
   }
 
   private loadTabContent(handle: string): void {
     if (!handle) return;
 
-    switch (this.activeTab) {
-      case 'posts':
-        this.loadUserPosts(handle);
-        break;
-      case 'replies':
-        this.loadUserReplies(handle);
-        break;
-      case 'media':
-        this.loadUserMedia(handle);
-        break;
-      case 'human-art':
-        this.loadUserHumanArt(handle);
-        break;
-      case 'likes':
-        this.loadUserLikes(handle);
-        break;
+    // Only set loading flags if this is not a refresh operation
+    if (!this.isRefreshing) {
+      switch (this.activeTab) {
+        case 'posts':
+          this.isLoadingPosts = true;
+          this.loadUserPosts(handle);
+          break;
+        case 'replies':
+          this.isLoadingReplies = true;
+          this.loadUserReplies(handle);
+          break;
+        case 'media':
+          this.isLoadingMedia = true;
+          this.loadUserMedia(handle);
+          break;
+        case 'human-art':
+          this.isLoadingHumanArt = true;
+          this.loadUserHumanArt(handle);
+          break;
+        case 'likes':
+          this.isLoadingLikes = true;
+          this.loadUserLikes(handle);
+          break;
+      }
+    } else {
+      // For refresh operations, just reload the content without setting loading flags
+      switch (this.activeTab) {
+        case 'posts':
+          this.loadUserPosts(handle);
+          break;
+        case 'replies':
+          this.loadUserReplies(handle);
+          break;
+        case 'media':
+          this.loadUserMedia(handle);
+          break;
+        case 'human-art':
+          this.loadUserHumanArt(handle);
+          break;
+        case 'likes':
+          this.loadUserLikes(handle);
+          break;
+      }
+    }
+    
+    // Clear refreshing state after a short delay to ensure content loads
+    if (this.isRefreshing) {
+      setTimeout(() => {
+        this.isRefreshing = false;
+        this.cd.markForCheck();
+      }, 500); // Increased delay to ensure content loads properly
+    }
+    
+    // Fallback gesture initialization if needed
+    if (this.isMobile && !this.hammerManager) {
+      this.initializeGestureSupport();
     }
   }
 
   private loadUserPosts(handle: string): void {
-    // Set loading state like homepage
-    this.isLoadingPosts = true;
+    // Only set loading state if this is not a refresh operation
+    if (!this.isRefreshing) {
+      this.isLoadingPosts = true;
+    }
     this.error = null;
     
     // Only clear posts if switching users
@@ -326,7 +379,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserReplies(handle: string): void {
-    this.isLoadingReplies = true;
+    // Only set loading state if this is not a refresh operation
+    if (!this.isRefreshing) {
+      this.isLoadingReplies = true;
+    }
     this.error = null;
     
     // Only clear replies if switching users
@@ -364,7 +420,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserMedia(handle: string): void {
-    this.isLoadingMedia = true;
+    // Only set loading state if this is not a refresh operation
+    if (!this.isRefreshing) {
+      this.isLoadingMedia = true;
+    }
     this.error = null;
     
     this.postService.getUserMedia(handle).subscribe({
@@ -389,7 +448,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserHumanArt(handle: string): void {
-    this.isLoadingHumanArt = true;
+    // Only set loading state if this is not a refresh operation
+    if (!this.isRefreshing) {
+      this.isLoadingHumanArt = true;
+    }
     this.error = null;
     
     this.postService.getUserHumanArt(handle).subscribe({
@@ -408,7 +470,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserLikes(handle: string): void {
-    this.isLoadingLikes = true;
+    // Only set loading state if this is not a refresh operation
+    if (!this.isRefreshing) {
+      this.isLoadingLikes = true;
+    }
     this.error = null;
     
     this.postService.getUserLikes(handle).subscribe({
@@ -679,14 +744,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   onPostReported(postId: number): void {
-    // Remove the reported post from all relevant arrays
-    this.posts = this.posts.filter(post => post.id !== postId);
-    this.replies = this.replies.filter(post => post.id !== postId);
-    this.likedPosts = this.likedPosts.filter(post => post.id !== postId);
-    this.humanArtPosts = this.humanArtPosts.filter(post => post.id !== postId);
-    
-    // Remove from media items as well
-    this.mediaItems = this.mediaItems.filter(item => item.postId !== postId);
+    // Remove the reported post from the current tab's posts
+    if (this.activeTab === 'posts') {
+      this.posts = this.posts.filter(post => post.id !== postId);
+    } else if (this.activeTab === 'replies') {
+      this.replies = this.replies.filter(reply => reply.id !== postId);
+    } else if (this.activeTab === 'human-art') {
+      this.humanArtPosts = this.humanArtPosts.filter(post => post.id !== postId);
+    } else if (this.activeTab === 'likes') {
+      this.likedPosts = this.likedPosts.filter(post => post.id !== postId);
+    }
   }
 
   onLike(post: Post): void {
@@ -1121,5 +1188,163 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.cd.markForCheck();
       this.postService.loadMoreUserReplies();
     }
+  }
+
+  /**
+   * Initialize Hammer.js for swipe gestures
+   */
+  private initializeGestureSupport(): void {
+    try {
+      if (!this.isMobile) {
+        return;
+      }
+
+      // Get the main container element (like home component does)
+      const container = document.querySelector('.profile-container') as HTMLElement;
+      
+      if (!container) {
+        return;
+      }
+      
+      // Initialize Hammer.js on the profile container (like search component does)
+      this.hammerManager = new Hammer(container);
+      
+      // Configure swipe gestures for horizontal swipes only (like search component)
+      const swipeRecognizer = this.hammerManager.get('swipe');
+      if (swipeRecognizer) {
+        // Only detect horizontal swipes, not vertical ones - this allows normal scrolling
+        swipeRecognizer.set({ direction: Hammer.DIRECTION_HORIZONTAL });
+      }
+      
+      // Handle swipe left - switch to next tab (like search component)
+      this.hammerManager.on('swipeleft', (event) => {
+        this.handleSwipeLeft();
+      });
+      
+      // Handle swipe right - switch to previous tab or open sidebar (like search component)
+      this.hammerManager.on('swiperight', (event) => {
+        this.handleSwipeRight();
+      });
+      
+      // Setup pull-to-refresh
+      this.setupPullToRefresh();
+      
+    } catch (error) {
+      console.error('🔄 Profile: Error initializing Hammer.js:', error);
+    }
+  }
+
+  /**
+   * Handle left swipe - switch to next tab
+   */
+  private handleSwipeLeft(): void {
+    switch (this.activeTab) {
+      case 'posts':
+        setTimeout(() => this.setActiveTab('replies'), 50);
+        break;
+      case 'replies':
+        setTimeout(() => this.setActiveTab('media'), 50);
+        break;
+      case 'media':
+        setTimeout(() => this.setActiveTab('human-art'), 50);
+        break;
+      case 'human-art':
+        setTimeout(() => this.setActiveTab('likes'), 50);
+        break;
+      case 'likes':
+        // Already on rightmost tab (likes), swipe left ignored
+        break;
+    }
+  }
+
+  /**
+   * Handle right swipe - switch to previous tab or open sidebar
+   */
+  private handleSwipeRight(): void {
+    switch (this.activeTab) {
+      case 'posts':
+        // On leftmost tab, swipe right opens sidebar
+        this.sidebarService.openSidebar();
+        break;
+      case 'replies':
+        setTimeout(() => this.setActiveTab('posts'), 50);
+        break;
+      case 'media':
+        setTimeout(() => this.setActiveTab('replies'), 50);
+        break;
+      case 'human-art':
+        setTimeout(() => this.setActiveTab('media'), 50);
+        break;
+      case 'likes':
+        setTimeout(() => this.setActiveTab('human-art'), 50);
+        break;
+    }
+  }
+
+  /**
+   * Pull to refresh functionality
+   */
+  private pullToRefresh(): void {
+    if (this.isRefreshing) {
+      return; // Prevent multiple refreshes
+    }
+
+    this.isRefreshing = true;
+    
+    // Reset all loading flags to prevent duplicate loading states
+    this.isLoadingPosts = false;
+    this.isLoadingReplies = false;
+    this.isLoadingMedia = false;
+    this.isLoadingHumanArt = false;
+    this.isLoadingLikes = false;
+    
+    this.cd.markForCheck();
+
+    // Refresh the current tab content without setting loading flags
+    if (this.user?.handle) {
+      this.loadTabContent(this.user.handle);
+    }
+  }
+
+  /**
+   * Setup pull-to-refresh using touch events instead of Hammer.js
+   */
+  private setupPullToRefresh(): void {
+    let startY = 0;
+    let currentY = 0;
+    const threshold = 100; // Minimum distance to trigger refresh
+    
+    // Store references to handlers so we can remove them later
+    this.handleTouchStart = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      // Only detect at the very top of the page
+      if (window.scrollY === 0) {
+        startY = touchEvent.touches[0].clientY;
+      }
+    };
+    
+    this.handleTouchMove = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      // Only process if we started at the top
+      if (startY > 0) {
+        currentY = touchEvent.touches[0].clientY;
+        const deltaY = currentY - startY;
+        
+        // If pulling down more than threshold, trigger refresh
+        if (deltaY > threshold && !this.isRefreshing) {
+          this.pullToRefresh();
+          startY = 0; // Reset to prevent multiple triggers
+        }
+      }
+    };
+    
+    this.handleTouchEnd = () => {
+      startY = 0; // Reset
+    };
+    
+    // Add touch event listeners to the document body for full coverage
+    document.body.addEventListener('touchstart', this.handleTouchStart, { passive: true });
+    document.body.addEventListener('touchmove', this.handleTouchMove, { passive: true });
+    document.body.addEventListener('touchend', this.handleTouchEnd, { passive: true });
   }
 } 

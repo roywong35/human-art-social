@@ -1,4 +1,4 @@
-<div class="flex flex-col min-h-screen bg-white dark:bg-black w-full">
+<div #notificationsContainer class="flex flex-col min-h-screen bg-white dark:bg-black w-full">
   <div class="sticky top-0 z-10 bg-white dark:bg-[color:var(--color-background)] border-b dark:border-[color:var(--color-border)] p-4">
     <h1 class="text-xl font-bold dark:text-[color:var(--color-text)]">Notifications</h1>
     <button *ngIf="notifications.length > 0" 
@@ -6,6 +6,13 @@
             class="text-sm text-primary hover:underline mt-2">
       Mark all as read
     </button>
+  </div>
+
+  <!-- Refresh Loading Row (Only for pull-to-refresh) -->
+  <div *ngIf="isRefreshing" class="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-700 py-3">
+    <div class="flex items-center justify-center">
+      <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+    </div>
   </div>
 
   <div class="divide-y dark:divide-[color:var(--color-border)]">

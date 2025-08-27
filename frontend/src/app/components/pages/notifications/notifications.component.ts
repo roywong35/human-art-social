@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService, GroupedNotification } from '../../../services/notification.service';
 import { Router, RouterModule } from '@angular/router';
@@ -13,7 +13,10 @@ import { Subscription } from 'rxjs';
 import { ReportStatusDialogComponent } from '../../dialogs/report-status-dialog/report-status-dialog.component';
 import { AuthService } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
+import { SidebarService } from '../../../services/sidebar.service';
 import { take } from 'rxjs/operators';
+
+declare var Hammer: any;
 
 @Component({
   selector: 'app-notifications',
@@ -23,12 +26,17 @@ import { take } from 'rxjs/operators';
   styleUrls: ['./notifications.component.scss']
 })
 export class NotificationsComponent implements OnInit, OnDestroy {
+  @ViewChild('notificationsContainer', { static: false }) notificationsContainer!: ElementRef;
+  
   notifications: GroupedNotification[] = [];
   loading = true;
   loadingMore = false; // Added for infinite scroll
   currentPage = 1;
   hasMore = false;
   hoveredIndex = -1;
+  isRefreshing = false;
+  isMobile = false;
+  private hammerManager: any;
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   
   // User preview modal
@@ -44,7 +52,9 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     private router: Router,
     private dialog: MatDialog,
     private globalModalService: GlobalModalService,
-    private userService: UserService
+    private userService: UserService,
+    private sidebarService: SidebarService,
+    private cd: ChangeDetectorRef
   ) {
     
     // Subscribe to global notifications list (similar to chat service)
@@ -60,12 +70,81 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Check if mobile
+    this.isMobile = window.innerWidth < 500;
+    
     // Only load notifications if user is authenticated
     this.notificationService.unreadCount$.subscribe(count => {
       if (count !== undefined) {
         this.loadNotifications();
       }
     });
+    
+    // Initialize gesture support after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      this.initializeGestureSupport();
+    }, 100);
+  }
+
+  private initializeGestureSupport() {
+    if (!this.isMobile || !this.notificationsContainer?.nativeElement) {
+      return;
+    }
+
+    // Initialize Hammer.js for swipe gestures
+    if (typeof Hammer !== 'undefined') {
+      this.hammerManager = new Hammer(this.notificationsContainer.nativeElement);
+      this.hammerManager.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
+      
+      this.hammerManager.on('swiperight', () => {
+        this.handleSwipeRight();
+      });
+    }
+
+    // Setup pull-to-refresh
+    this.setupPullToRefresh();
+  }
+
+  private setupPullToRefresh() {
+    if (!this.notificationsContainer?.nativeElement) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+
+    const container = this.notificationsContainer.nativeElement;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      isPulling = false;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      currentY = e.touches[0].clientY;
+      const deltaY = currentY - startY;
+      
+      // Only trigger pull-to-refresh if at top of page and pulling down
+      if (window.scrollY === 0 && deltaY > 50 && !isPulling) {
+        isPulling = true;
+        this.pullToRefresh();
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+  }
+
+  private pullToRefresh() {
+    this.isRefreshing = true;
+    this.cd.markForCheck();
+    
+    // Reset to first page and reload
+    this.currentPage = 1;
+    this.loadNotifications();
+  }
+
+  private handleSwipeRight() {
+    this.sidebarService.openSidebar();
   }
 
   ngOnDestroy() {
@@ -76,6 +155,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     // Clean up scroll throttle timeout
     if (this.scrollThrottleTimeout) {
       clearTimeout(this.scrollThrottleTimeout);
+    }
+    
+    // Clean up Hammer.js gesture manager
+    if (this.hammerManager) {
+      this.hammerManager.destroy();
     }
   }
 
@@ -91,10 +175,22 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         }
         this.hasMore = response.results.length === 20; // 20 notifications per page as requested
         this.loading = false;
+        
+        // Clear refreshing state if this was a pull-to-refresh
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+          this.cd.markForCheck();
+        }
       },
       error: (error) => {
         console.error('❌ Error loading notifications:', error);
         this.loading = false;
+        
+        // Clear refreshing state on error too
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+          this.cd.markForCheck();
+        }
       }
     });
   }

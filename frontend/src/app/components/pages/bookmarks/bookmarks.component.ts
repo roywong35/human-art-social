@@ -1,4 +1,4 @@
-import { Component, OnInit, QueryList, ViewChildren, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, QueryList, ViewChildren, NgZone, ChangeDetectorRef, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PostComponent } from '../../features/posts/post/post.component';
 import { CommentComponent } from '../../features/comments/comment/comment.component';
@@ -6,6 +6,7 @@ import { Post } from '../../../models/post.model';
 import { BookmarkService } from '../../../services/bookmark.service';
 import { PostService } from '../../../services/post.service';
 import { ToastService } from '../../../services/toast.service';
+import { SidebarService } from '../../../services/sidebar.service';
 
 
 @Component({
@@ -15,22 +16,43 @@ import { ToastService } from '../../../services/toast.service';
   templateUrl: './bookmarks.component.html',
   styleUrls: ['./bookmarks.component.scss']
 })
-export class BookmarksComponent implements OnInit {
+export class BookmarksComponent implements OnInit, OnDestroy {
   @ViewChildren(PostComponent) postComponents!: QueryList<PostComponent>;
+  @ViewChild('bookmarksContainer', { static: false }) bookmarksContainer!: ElementRef;
+  
   bookmarkedItems: any[] = [];
   loading = true;
   error: string | null = null;
+  isRefreshing = false;
+  isMobile = false;
+  private hammerManager: any;
 
   constructor(
     private bookmarkService: BookmarkService,
     private postService: PostService,
     private ngZone: NgZone,
     private cd: ChangeDetectorRef,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private sidebarService: SidebarService
   ) {}
 
   ngOnInit() {
+    this.isMobile = window.innerWidth < 768;
     this.loadBookmarks();
+    
+    // Initialize gesture support after a short delay to ensure DOM is ready
+    if (this.isMobile) {
+      setTimeout(() => {
+        this.initializeGestureSupport();
+      }, 100);
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Clean up Hammer.js instance if it exists
+    if (this.hammerManager) {
+      this.hammerManager.destroy();
+    }
   }
 
   // Check if a post has any bookmarked comments
@@ -71,22 +93,20 @@ export class BookmarksComponent implements OnInit {
   }
 
   loadBookmarks() {
-    this.loading = true;
+    // Only set loading to true if this is not a refresh operation
+    if (!this.isRefreshing) {
+      this.loading = true;
+    }
     this.error = null;
     
     this.bookmarkService.getBookmarkedPosts().subscribe({
       next: (posts) => {
-
-        
         // Create a combined list of bookmarked items
         this.bookmarkedItems = [];
         
         posts.forEach(post => {
-
-          
           // Only add posts that are explicitly bookmarked by the user
           if (post.is_bookmarked === true) {
-
             this.bookmarkedItems.push({
               type: 'post',
               item: post,
@@ -97,32 +117,33 @@ export class BookmarksComponent implements OnInit {
           // Add bookmarked comments
           const comments = (post as any).bookmarked_comments || [];
           if (comments.length > 0) {
-
-          }
-          comments.forEach((comment: any) => {
-            // Ensure the comment has the post ID
-            comment.post_id = post.id;
-            this.bookmarkedItems.push({
-              type: 'comment',
-              item: comment,
-              bookmarked_at: comment.bookmarked_at || comment.created_at
+            comments.forEach((comment: any) => {
+              // Ensure the comment has the post ID
+              comment.post_id = post.id;
+              this.bookmarkedItems.push({
+                type: 'comment',
+                item: comment,
+                bookmarked_at: comment.bookmarked_at || comment.created_at
+              });
             });
-          });
+          }
         });
         
         // Sort all items by bookmark time
         this.bookmarkedItems.sort((a, b) => 
           new Date(b.bookmarked_at).getTime() - new Date(a.bookmarked_at).getTime()
         );
-
-
         
         this.loading = false;
+        this.isRefreshing = false;
+        this.cd.markForCheck();
       },
       error: (error) => {
         console.error('Error loading bookmarks:', error);
         this.error = 'Failed to load bookmarks. Please try again later.';
         this.loading = false;
+        this.isRefreshing = false;
+        this.cd.markForCheck();
       }
     });
   }
@@ -271,5 +292,102 @@ export class BookmarksComponent implements OnInit {
     this.bookmarkedItems = this.bookmarkedItems.filter(item => 
       !(item.type === 'post' && item.item.id === postId)
     );
+  }
+
+  private initializeGestureSupport() {
+    if (!this.isMobile || !this.bookmarksContainer?.nativeElement) {
+      return;
+    }
+
+    // Initialize Hammer.js for swipe gestures
+    if (typeof Hammer !== 'undefined') {
+      this.hammerManager = new Hammer(this.bookmarksContainer.nativeElement);
+      
+      // Configure swipe recognition for horizontal gestures only
+      this.hammerManager.get('swipe').set({ 
+        direction: Hammer.DIRECTION_HORIZONTAL,
+        threshold: 5,
+        velocity: 0.2,
+        pointers: 1
+      });
+      
+      // Add pan recognizer for better gesture coverage
+      this.hammerManager.add(new Hammer.Pan({
+        direction: Hammer.DIRECTION_HORIZONTAL,
+        threshold: 5,
+        pointers: 1
+      }));
+      
+      this.hammerManager.on('swiperight', () => {
+        this.handleSwipeRight();
+      });
+      
+      this.hammerManager.on('panright', (e: any) => {
+        // Handle pan right as an alternative to swipe
+        if (e.deltaX > 50 && e.velocity > 0.3) {
+          this.handleSwipeRight();
+        }
+      });
+    }
+    
+    // Setup pull-to-refresh using native touch events
+    this.setupPullToRefresh();
+  }
+
+  private handleSwipeRight() {
+    this.sidebarService.openSidebar();
+  }
+
+  private setupPullToRefresh() {
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPulling) return;
+      
+      currentY = e.touches[0].clientY;
+      const deltaY = currentY - startY;
+      
+      // Only allow pull down when at top of page
+      if (deltaY > 0 && window.scrollY === 0) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!isPulling) return;
+      
+      const deltaY = currentY - startY;
+      
+      // Trigger refresh if pulled down more than 50px
+      if (deltaY > 50 && window.scrollY === 0) {
+        this.pullToRefresh();
+      }
+      
+      isPulling = false;
+    };
+
+    const container = this.bookmarksContainer?.nativeElement;
+    if (container) {
+      container.addEventListener('touchstart', handleTouchStart, { passive: false });
+      container.addEventListener('touchmove', handleTouchMove, { passive: false });
+      container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+  }
+
+  private pullToRefresh() {
+    this.isRefreshing = true;
+    this.cd.markForCheck();
+    
+    // Refresh the bookmarks
+    this.loadBookmarks();
   }
 } 

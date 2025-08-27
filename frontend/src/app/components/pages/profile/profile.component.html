@@ -11,12 +11,24 @@
   </div>
 </div>
 
-<div *ngIf="!isLoading && !error" class="flex flex-col min-h-screen bg-white dark:bg-black w-screen min-[500px]:w-full">
+<div *ngIf="!isLoading && !error" class="flex flex-col min-h-screen bg-white dark:bg-black w-screen min-[500px]:w-full profile-container">
   <!-- Banner and Profile Info -->
   <div class="relative w-full">
     <!-- Banner -->
-    <div class="h-48 bg-gray-300 dark:bg-gray-800 w-full">
+    <div class="h-48 bg-gray-300 dark:bg-gray-800 w-full relative">
       <img *ngIf="user?.banner_image" [src]="user?.banner_image" alt="Profile banner" class="w-full h-48 object-cover">
+      
+      <!-- Pull-to-Refresh Loading Circle (Overlay on banner) -->
+      <div *ngIf="isRefreshing" 
+           class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
+      </div>
+      
+      <!-- Fallback Loading Circle (When no banner image) -->
+      <div *ngIf="isRefreshing && !user?.banner_image" 
+           class="absolute inset-0 flex items-center justify-center bg-gray-300 dark:bg-gray-800">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+      </div>
     </div>
 
     <!-- Profile Picture -->
@@ -155,13 +167,13 @@
   <div [ngSwitch]="activeTab" class="flex-1 w-full">
     <!-- Posts Tab -->
     <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
-      <!-- Initial loading for posts -->
-      <div *ngIf="isLoadingPosts" class="p-8 flex justify-center w-full">
+      <!-- Initial loading for posts (only when not refreshing) -->
+      <div *ngIf="isLoadingPosts && !isRefreshing" class="p-8 flex justify-center w-full">
         <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Posts list -->
-      <ng-container *ngIf="!isLoadingPosts">
+      <ng-container *ngIf="!isLoadingPosts || isRefreshing">
         <app-post *ngFor="let post of posts"
           [post]="post"
           [showReplyContext]="post.post_type === 'reply' || (post.post_type === 'repost' && post.referenced_post?.post_type === 'reply')"
@@ -193,13 +205,13 @@
 
     <!-- Replies Tab -->
     <div *ngSwitchCase="'replies'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
-      <!-- Loading spinner for replies -->
-      <div *ngIf="isLoadingReplies" class="p-8 flex justify-center w-full">
+      <!-- Loading spinner for replies (only when not refreshing) -->
+      <div *ngIf="isLoadingReplies && !isRefreshing" class="p-8 flex justify-center w-full">
         <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Replies list -->
-      <ng-container *ngIf="!isLoadingReplies">
+      <ng-container *ngIf="!isLoadingReplies || isRefreshing">
         <div *ngFor="let reply of replies" class="relative">
         <!-- Parent Chain -->
         <ng-container *ngIf="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0">
@@ -265,13 +277,13 @@
 
     <!-- Media Tab -->
     <div *ngSwitchCase="'media'" class="p-1 w-full">
-      <!-- Loading spinner for media -->
-      <div *ngIf="isLoadingMedia" class="p-8 flex justify-center w-full">
+      <!-- Loading spinner for media (only when not refreshing) -->
+      <div *ngIf="isLoadingMedia && !isRefreshing" class="p-8 flex justify-center w-full">
         <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Media grid -->
-      <ng-container *ngIf="!isLoadingMedia">
+      <ng-container *ngIf="!isLoadingMedia || isRefreshing">
         <div class="grid grid-cols-3 gap-1">
           <div *ngFor="let media of mediaItems" 
                class="aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
@@ -291,13 +303,13 @@
 
     <!-- Human Art Tab -->
     <div *ngSwitchCase="'human-art'" class="p-1 w-full">
-      <!-- Loading spinner for human art -->
-      <div *ngIf="isLoadingHumanArt" class="p-8 flex justify-center w-full">
+      <!-- Loading spinner for human art (only when not refreshing) -->
+      <div *ngIf="isLoadingHumanArt && !isRefreshing" class="p-8 flex justify-center w-full">
         <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Human art grid -->
-      <ng-container *ngIf="!isLoadingHumanArt">
+      <ng-container *ngIf="!isLoadingHumanArt || isRefreshing">
         <div class="grid grid-cols-3 gap-1">
           <div *ngFor="let art of humanArtPosts" 
                class="aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
@@ -317,13 +329,13 @@
 
     <!-- Likes Tab -->
     <div *ngSwitchCase="'likes'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
-      <!-- Loading spinner for likes -->
-      <div *ngIf="isLoadingLikes" class="p-8 flex justify-center w-full">
+      <!-- Loading spinner for likes (only when not refreshing) -->
+      <div *ngIf="isLoadingLikes && !isRefreshing" class="p-8 flex justify-center w-full">
         <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Liked posts list -->
-      <ng-container *ngIf="!isLoadingLikes">
+      <ng-container *ngIf="!isLoadingLikes || isRefreshing">
         <app-post *ngFor="let post of likedPosts"
           [post]="post"
           [showFullHeader]="true"

@@ -1,1 +1,21 @@
-// Add any specific styles for the bookmarks component here 
+// Bookmarks page styles
+
+// Ensure gesture detection covers the full area
+#bookmarksContainer {
+  touch-action: pan-y;
+  min-height: 100vh;
+  position: relative;
+  overflow: visible;
+}
+
+// Ensure all child elements allow gesture detection
+#bookmarksContainer * {
+  touch-action: pan-y;
+  pointer-events: auto;
+}
+
+// Specific areas that need gesture detection
+.bookmarks-content {
+  touch-action: pan-y;
+  pointer-events: auto;
+} 

@@ -1,15 +1,18 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../../services/chat.service';
 import { AuthService } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
+import { SidebarService } from '../../../services/sidebar.service';
 import { Conversation, ConversationDetail, User } from '../../../models';
 import { Subscription, take } from 'rxjs';
 import { skip } from 'rxjs/operators';
 import { TimeAgoPipe } from '../../../pipes/time-ago.pipe';
 import { ChatRoomComponent } from '../../features/chat-room/chat-room.component';
+
+declare var Hammer: any;
 
 @Component({
   selector: 'app-messages',
@@ -19,6 +22,8 @@ import { ChatRoomComponent } from '../../features/chat-room/chat-room.component'
   styleUrls: ['./messages.component.scss']
 })
 export class MessagesComponent implements OnInit, OnDestroy {
+  @ViewChild('messagesContainer', { static: false }) messagesContainer!: ElementRef;
+  
   conversations: Conversation[] = [];
   selectedConversation: ConversationDetail | null = null;
   currentUser: User | null = null;
@@ -38,6 +43,10 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private readonly DESKTOP_BREAKPOINT = 1120;
   private readonly MOBILE_BREAKPOINT = 800;
   
+  // Gesture support
+  isMobile = false;
+  private hammerManager: any;
+  
   private routeSub?: Subscription;
   private currentUserSub?: Subscription;
   
@@ -48,10 +57,14 @@ export class MessagesComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private userService: UserService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private sidebarService: SidebarService
   ) {}
 
   ngOnInit() {
+    // Check if mobile
+    this.isMobile = window.innerWidth < 500;
+    
     // Initialize responsive state
     this.checkScreenSize();
 
@@ -105,6 +118,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
         }
       }
     });
+    
+    // Initialize gesture support after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      this.initializeGestureSupport();
+    }, 100);
   }
 
   ngOnDestroy() {
@@ -118,6 +136,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
     // Reset loading state
     this.isLoadingConversation = false;
     this.loadingConversationId = null;
+    
+    // Clean up Hammer.js gesture manager
+    if (this.hammerManager) {
+      this.hammerManager.destroy();
+    }
   }
 
   @HostListener('window:resize', ['$event'])
@@ -320,5 +343,48 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   getConversationHandle(conversation: Conversation): string {
     return conversation.other_participant?.handle || '';
+  }
+
+  private initializeGestureSupport() {
+    if (!this.isMobile || !this.messagesContainer?.nativeElement) {
+      return;
+    }
+
+    const container = this.messagesContainer.nativeElement;
+
+    // Initialize Hammer.js for swipe gestures
+    if (typeof Hammer !== 'undefined') {
+      this.hammerManager = new Hammer(container);
+      
+      // Configure swipe recognition to be more sensitive and cover entire area
+      this.hammerManager.get('swipe').set({ 
+        direction: Hammer.DIRECTION_HORIZONTAL,
+        threshold: 5, // Very low threshold for easier activation
+        velocity: 0.2, // Lower velocity requirement
+        pointers: 1 // Single finger swipe
+      });
+      
+      // Add additional gesture recognizers to ensure coverage
+      this.hammerManager.add(new Hammer.Pan({
+        direction: Hammer.DIRECTION_HORIZONTAL,
+        threshold: 5,
+        pointers: 1
+      }));
+      
+      this.hammerManager.on('swiperight', (e: any) => {
+        this.handleSwipeRight();
+      });
+      
+      this.hammerManager.on('panright', (e: any) => {
+        // Handle pan right as an alternative to swipe
+        if (e.deltaX > 50 && e.velocity > 0.3) {
+          this.handleSwipeRight();
+        }
+      });
+    }
+  }
+
+  private handleSwipeRight() {
+    this.sidebarService.openSidebar();
   }
 } 

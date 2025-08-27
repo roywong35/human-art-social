@@ -3,6 +3,48 @@
   height: 100vh;
 }
 
+// Ensure gesture detection covers the full area
+#messagesContainer {
+  touch-action: pan-y;
+  min-height: 100vh;
+  position: relative;
+  overflow: visible;
+}
+
+// Ensure all child elements allow gesture detection
+#messagesContainer * {
+  touch-action: pan-y;
+  pointer-events: auto;
+}
+
+// Specific areas that need gesture detection
+.conversations-list,
+.chat-room-area,
+.create-chat-modal {
+  touch-action: pan-y;
+  pointer-events: auto;
+}
+
+// Critical fix: Ensure conversations list area can receive gestures
+.flex-1.overflow-y-auto {
+  touch-action: pan-y !important;
+  pointer-events: auto !important;
+  position: relative !important;
+}
+
+// Ensure conversation items don't block gestures
+.divide-y > div {
+  touch-action: pan-y !important;
+  pointer-events: auto !important;
+}
+
+// Ensure blank spaces and empty states can receive gestures
+.p-4.text-center {
+  touch-action: pan-y !important;
+  pointer-events: auto !important;
+  min-height: 200px !important;
+}
+
 // Chat list styles - fixed width that doesn't change based on content
 .chat-list {
   width: 320px;
