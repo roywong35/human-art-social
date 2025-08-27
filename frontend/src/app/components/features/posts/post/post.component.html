@@ -74,6 +74,14 @@
                     <span class="max-[500px]:hidden">Verified Art</span>
                   </span>
                 </div>
+                <!-- Add removal badge for removed posts in preview mode -->
+                <div *ngIf="showRemovalBadge && post.is_removed" 
+                     class="ml-2 inline-flex items-center flex-shrink-0">
+                  <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-medium rounded-full flex items-center justify-center max-[500px]:w-6 max-[500px]:h-6 max-[500px]:p-0">
+                    <i class="fas fa-exclamation-triangle mr-1 max-[500px]:mr-0"></i>
+                    <span class="max-[500px]:hidden">Removed</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>

@@ -62,27 +62,54 @@ def create_notification(sender, recipient, notification_type, post=None, comment
     
     # Add full post data if post exists
     if post:
-        notification_data['post'] = {
-            'id': post.id,
-            'content': post.content,
-            'author': {
-                'id': post.author.id,
-                'username': post.author.username,
-                'handle': post.author.handle,
-                'profile_picture': post.author.profile_picture.url if post.author.profile_picture else None,
-            },
-            'post_type': post.post_type,
-            'created_at': post.created_at.isoformat(),
-            'image': post.image.url if post.image else None,
-            'images': [
-                {
-                    'id': img.id,
-                    'image': img.image.url,
-                    'filename': img.image.name.split('/')[-1]
-                } for img in post.images.all()
-            ],
-            'is_human_drawing': post.is_human_drawing,
-        }
+        # For post removal notifications, include full post content for the author
+        if notification_type == 'post_removed':
+            notification_data['post'] = {
+                'id': post.id,
+                'content': post.content,
+                'author': {
+                    'id': post.author.id,
+                    'username': post.author.username,
+                    'handle': post.author.handle,
+                    'profile_picture': post.author.profile_picture.url if post.author.profile_picture else None,
+                },
+                'post_type': post.post_type,
+                'created_at': post.created_at.isoformat(),
+                'image': post.image.url if post.image else None,
+                'images': [
+                    {
+                        'id': img.id,
+                        'image': img.image.url,
+                        'filename': img.image.name.split('/')[-1]
+                    } for img in post.images.all()
+                ],
+                'is_human_drawing': post.is_human_drawing,
+                'is_removed': post.is_removed,
+                'is_deleted': post.is_deleted,
+            }
+        else:
+            # For other notifications, use standard post data
+            notification_data['post'] = {
+                'id': post.id,
+                'content': post.content,
+                'author': {
+                    'id': post.author.id,
+                    'username': post.author.username,
+                    'handle': post.author.handle,
+                    'profile_picture': post.author.profile_picture.url if post.author.profile_picture else None,
+                },
+                'post_type': post.post_type,
+                'created_at': post.created_at.isoformat(),
+                'image': post.image.url if post.image else None,
+                'images': [
+                    {
+                        'id': img.id,
+                        'image': img.image.url,
+                        'filename': img.image.name.split('/')[-1]
+                    } for img in post.images.all()
+                ],
+                'is_human_drawing': post.is_human_drawing,
+            }
     
     # Send notification through WebSocket
     try:

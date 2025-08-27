@@ -653,6 +653,41 @@ class UserPostSerializer(serializers.ModelSerializer):
         # Return full representation for normal posts
         return super().to_representation(instance) 
 
+
+class PostRemovalSerializer(serializers.ModelSerializer):
+    """
+    Special serializer for post removal notifications and dialogs
+    Shows full post content to the author so they can see what was removed
+    """
+    author = UserSerializer(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    reposts_count = serializers.SerializerMethodField()
+    replies_count = serializers.SerializerMethodField()
+    images = PostImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['id', 'content', 'author', 'created_at', 
+                 'likes_count', 'reposts_count', 'replies_count',
+                 'post_type', 'images', 'is_human_drawing', 'is_verified',
+                 'is_removed', 'is_deleted']
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_reposts_count(self, obj):
+        return obj.reposts.count()
+
+    def get_replies_count(self, obj):
+        return obj.replies.count()
+
+    def to_representation(self, instance):
+        """
+        Always return full representation for post removal context
+        This allows authors to see their removed posts for appeal purposes
+        """
+        return super().to_representation(instance)
+
 class DonationSerializer(serializers.ModelSerializer):
     """
     Serializer for Donation model

@@ -803,7 +803,8 @@ export class PostComponent implements OnInit, OnDestroy {
     }
     
     // Check if this is a minimal post object (only has id, is_deleted, is_removed)
-    if (this.post.is_deleted === true || this.post.is_removed === true) {
+    // BUT allow removed posts to display if they're in preview mode (for post removal dialog)
+    if (this.post.is_deleted === true || (this.post.is_removed === true && !this.isPreview)) {
       return false;
     }
     

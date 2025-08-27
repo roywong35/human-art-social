@@ -1,18 +1,29 @@
 from rest_framework import serializers
 from .models import Notification
 from users.serializers import UserSerializer
-from posts.serializers import UserPostSerializer
+from posts.serializers import UserPostSerializer, PostRemovalSerializer
 
 class NotificationSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
-    # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
-    post = UserPostSerializer(read_only=True, required=False, allow_null=True)
+    # Use PostRemovalSerializer for post_removed notifications, UserPostSerializer for others
+    post = serializers.SerializerMethodField()
     comment = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
         fields = ['id', 'sender', 'notification_type', 'post', 'comment', 'is_read', 'created_at']
         read_only_fields = ['sender', 'notification_type', 'post', 'created_at']
+
+    def get_post(self, obj):
+        """Use appropriate serializer based on notification type"""
+        if obj.post:
+            if obj.notification_type == 'post_removed':
+                # Use PostRemovalSerializer to show full content for removed posts
+                return PostRemovalSerializer(obj.post, context=self.context).data
+            else:
+                # Use secure UserPostSerializer for other notifications
+                return UserPostSerializer(obj.post, context=self.context).data
+        return None
 
     def get_comment(self, obj):
         """Handle both comments and donations"""
@@ -39,12 +50,24 @@ class NotificationSerializer(serializers.ModelSerializer):
 class GroupedNotificationSerializer(serializers.Serializer):
     """Serializer for grouped notifications"""
     notification_type = serializers.CharField()
-    post = UserPostSerializer(required=False, allow_null=True)
+    post = serializers.SerializerMethodField(required=False, allow_null=True)
     comment = serializers.SerializerMethodField(required=False)
     users = serializers.ListField(child=UserSerializer())
     latest_time = serializers.DateTimeField()
     is_read = serializers.BooleanField()
     notification_ids = serializers.ListField(child=serializers.IntegerField())
+    
+    def get_post(self, obj):
+        """Use appropriate serializer based on notification type"""
+        if obj.get('post'):
+            if obj.get('notification_type') == 'post_removed':
+                # Use PostRemovalSerializer to show full content for removed posts
+                from posts.serializers import PostRemovalSerializer
+                return PostRemovalSerializer(obj['post'], context=self.context).data
+            else:
+                # Use secure UserPostSerializer for other notifications
+                return UserPostSerializer(obj['post'], context=self.context).data
+        return None
     
     def get_comment(self, obj):
         """Handle both comments and donations"""
