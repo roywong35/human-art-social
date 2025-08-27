@@ -20,7 +20,7 @@
 
   <!-- Tabs -->
   <div class="border-b border-gray-200 dark:border-gray-700 flex-shrink-0 max-[686px]:flex-shrink-0">
-    <div class="flex">
+    <div class="flex relative">
       <button 
         (click)="selectedTab = 'unsent'" 
         [ngClass]="{
@@ -29,7 +29,8 @@
         }"
         class="flex-1 py-3 px-4 text-center text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
         Unsent
-        <div *ngIf="selectedTab === 'unsent'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[50px] h-1 bg-blue-500"></div>
+        <!-- Static underline for larger screens -->
+        <div *ngIf="selectedTab === 'unsent'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[50px] h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
       </button>
       <button 
         (click)="selectedTab = 'scheduled'" 
@@ -39,8 +40,19 @@
         }"
         class="flex-1 py-3 px-4 text-center text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
         Scheduled
-        <div *ngIf="selectedTab === 'scheduled'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[74px] h-1 bg-blue-500"></div>
+        <!-- Static underline for larger screens -->
+        <div *ngIf="selectedTab === 'scheduled'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[74px] h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
       </button>
+      
+      <!-- Animated Underline (Mobile only) -->
+      <div class="absolute bottom-0 h-1 bg-blue-500 rounded-full transition-all duration-300 ease-out max-[499px]:block min-[500px]:hidden"
+           [ngClass]="{
+             'w-[50px]': selectedTab === 'unsent',
+             'w-[74px]': selectedTab === 'scheduled'
+           }"
+           [style.left]="selectedTab === 'unsent' ? '25%' : '75%'"
+           [style.transform]="'translateX(-50%)'">
+      </div>
     </div>
   </div>
 
