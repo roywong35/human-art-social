@@ -234,7 +234,7 @@
     <!-- Trending Tab Content - Show when trending tab is active OR when no search has been performed -->
     <div *ngIf="activeTab === 'trending' || !hasSearched" class="w-full">
       <!-- Trending Topics Section -->
-      <div *ngIf="!isLoadingUsers && recommendedUsers.length > 0" class="bg-white dark:bg-black w-full">
+      <div class="bg-white dark:bg-black w-full">
         <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Trending</h3>
         </div>
@@ -274,7 +274,7 @@
 
       <!-- Who to Follow Section -->
       <div class="bg-white dark:bg-black w-full">
-        <div *ngIf="!isLoadingUsers && recommendedUsers.length > 0" class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
+        <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Who to follow</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
