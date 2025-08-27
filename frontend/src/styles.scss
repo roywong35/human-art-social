@@ -165,94 +165,96 @@ textarea {
 
 /* Prevent unwanted hover effects on mobile devices (<500px) - TARGETED APPROACH */
 @media (max-width: 499px) {
-  /* Only prevent background color changes on swipe - don't break modals */
-  .hover\\:bg-gray-100:hover,
-  .hover\\:bg-gray-800:hover,
-  .hover\\:bg-blue-100:hover,
-  .hover\\:bg-blue-600:hover,
-  .hover\\:bg-red-200:hover,
-  .hover\\:bg-red-600:hover,
-  .hover\\:bg-white:hover,
-  .hover\\:bg-black:hover,
-  .hover\\:bg-gray-700:hover,
-  .hover\\:bg-gray-900:hover,
-  .hover\\:bg-blue-500:hover,
-  .hover\\:bg-blue-700:hover,
-  .hover\\:bg-red-500:hover,
-  .hover\\:bg-red-700:hover,
-  .hover\\:bg-green-500:hover,
-  .hover\\:bg-green-700:hover,
-  .hover\\:bg-yellow-500:hover,
-  .hover\\:bg-yellow-700:hover,
-  .hover\\:bg-purple-500:hover,
-  .hover\\:bg-purple-700:hover,
-  .hover\\:bg-pink-500:hover,
-  .hover\\:bg-pink-700:hover,
-  .hover\\:bg-indigo-500:hover,
-  .hover\\:bg-indigo-700:hover {
+  /* Use attribute selectors to target Tailwind hover classes more reliably */
+  
+  /* Prevent background color changes on swipe */
+  [class*="hover:bg-gray-100"]:hover,
+  [class*="hover:bg-gray-800"]:hover,
+  [class*="hover:bg-blue-100"]:hover,
+  [class*="hover:bg-blue-600"]:hover,
+  [class*="hover:bg-red-200"]:hover,
+  [class*="hover:bg-red-600"]:hover,
+  [class*="hover:bg-white"]:hover,
+  [class*="hover:bg-black"]:hover,
+  [class*="hover:bg-gray-700"]:hover,
+  [class*="hover:bg-gray-900"]:hover,
+  [class*="hover:bg-blue-500"]:hover,
+  [class*="hover:bg-blue-700"]:hover,
+  [class*="hover:bg-red-500"]:hover,
+  [class*="hover:bg-red-700"]:hover,
+  [class*="hover:bg-green-500"]:hover,
+  [class*="hover:bg-green-700"]:hover,
+  [class*="hover:bg-yellow-500"]:hover,
+  [class*="hover:bg-yellow-700"]:hover,
+  [class*="hover:bg-purple-500"]:hover,
+  [class*="hover:bg-purple-700"]:hover,
+  [class*="hover:bg-pink-500"]:hover,
+  [class*="hover:bg-pink-700"]:hover,
+  [class*="hover:bg-indigo-500"]:hover,
+  [class*="hover:bg-indigo-700"]:hover {
     background-color: inherit !important;
   }
   
   /* Prevent text color changes on swipe */
-  .hover\\:text-blue-500:hover,
-  .hover\\:text-blue-600:hover,
-  .hover\\:text-red-500:hover,
-  .hover\\:text-red-600:hover,
-  .hover\\:text-green-500:hover,
-  .hover\\:text-green-600:hover,
-  .hover\\:text-yellow-500:hover,
-  .hover\\:text-yellow-600:hover,
-  .hover\\:text-purple-500:hover,
-  .hover\\:text-purple-600:hover,
-  .hover\\:text-pink-500:hover,
-  .hover\\:text-pink-600:hover,
-  .hover\\:text-indigo-500:hover,
-  .hover\\:text-indigo-600:hover,
-  .hover\\:text-gray-500:hover,
-  .hover\\:text-gray-600:hover,
-  .hover\\:text-gray-700:hover,
-  .hover\\:text-gray-800:hover,
-  .hover\\:text-gray-900:hover,
-  .hover\\:text-white:hover,
-  .hover\\:text-black:hover {
+  [class*="hover:text-blue-500"]:hover,
+  [class*="hover:text-blue-600"]:hover,
+  [class*="hover:text-red-500"]:hover,
+  [class*="hover:text-red-600"]:hover,
+  [class*="hover:text-green-500"]:hover,
+  [class*="hover:text-green-600"]:hover,
+  [class*="hover:text-yellow-500"]:hover,
+  [class*="hover:text-yellow-600"]:hover,
+  [class*="hover:text-purple-500"]:hover,
+  [class*="hover:text-purple-600"]:hover,
+  [class*="hover:text-pink-500"]:hover,
+  [class*="hover:text-pink-600"]:hover,
+  [class*="hover:text-indigo-500"]:hover,
+  [class*="hover:text-indigo-600"]:hover,
+  [class*="hover:text-gray-500"]:hover,
+  [class*="hover:text-gray-600"]:hover,
+  [class*="hover:text-gray-700"]:hover,
+  [class*="hover:text-gray-800"]:hover,
+  [class*="hover:text-gray-900"]:hover,
+  [class*="hover:text-white"]:hover,
+  [class*="hover:text-black"]:hover {
     color: inherit !important;
   }
   
   /* Prevent border color changes on swipe */
-  .hover\\:border-red-600:hover,
-  .hover\\:border-blue-600:hover,
-  .hover\\:border-green-600:hover,
-  .hover\\:border-yellow-600:hover,
-  .hover\\:border-purple-600:hover,
-  .hover\\:border-pink-600:hover,
-  .hover\\:border-indigo-600:hover,
-  .hover\\:border-gray-600:hover,
-  .hover\\:border-gray-700:hover,
-  .hover\\:border-gray-800:hover,
-  .hover\\:border-gray-900:hover,
-  .hover\\:border-white:hover,
-  .hover\\:border-black:hover {
+  [class*="hover:border-red-600"]:hover,
+  [class*="hover:border-blue-600"]:hover,
+  [class*="hover:border-green-600"]:hover,
+  [class*="hover:border-yellow-600"]:hover,
+  [class*="hover:border-purple-600"]:hover,
+  [class*="hover:border-pink-600"]:hover,
+  [class*="hover:border-indigo-600"]:hover,
+  [class*="hover:border-gray-600"]:hover,
+  [class*="hover:border-gray-700"]:hover,
+  [class*="hover:border-gray-800"]:hover,
+  [class*="hover:border-gray-900"]:hover,
+  [class*="hover:border-white"]:hover,
+  [class*="hover:border-black"]:hover {
     border-color: inherit !important;
   }
   
   /* Prevent scale/transform effects on swipe */
-  .hover\\:scale-110:hover,
-  .hover\\:scale-105:hover,
-  .hover\\:scale-95:hover,
-  .hover\\:scale-90:hover {
+  [class*="hover:scale-110"]:hover,
+  [class*="hover:scale-105"]:hover,
+  [class*="hover:scale-95"]:hover,
+  [class*="hover:scale-90"]:hover {
     transform: none !important;
   }
   
   /* Prevent shadow effects on swipe */
-  .hover\\:shadow-xl:hover,
-  .hover\\:shadow-2xl:hover,
-  .hover\\:shadow-lg:hover {
+  [class*="hover:shadow-xl"]:hover,
+  [class*="hover:shadow-2xl"]:hover,
+  [class*="hover:shadow-lg"]:hover {
     box-shadow: inherit !important;
   }
   
   /* Prevent opacity changes on swipe */
-  .hover\\:opacity-80:hover,
-  .hover\\:opacity-90:hover {
+  [class*="hover:opacity-80"]:hover,
+  [class*="hover:opacity-90"]:hover {
     opacity: inherit !important;
   }
 }
