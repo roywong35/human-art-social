@@ -1,4 +1,4 @@
-<div class="main-container bg-white dark:bg-black max-[686px]:w-screen max-[686px]:h-screen max-[686px]:rounded-none max-[686px]:max-w-none max-[686px]:max-h-none"
+<div class="main-container bg-white dark:bg-black max-[686px]:w-screen max-[686px]:h-screen max-[686px]:rounded-none max-[686px]:max-w-none max-[686px]:max-h-none max-[686px]:overflow-hidden"
      [ngClass]="{'pt-10': isPWAMode}"
      [style.paddingTop]="isPWAMode ? '40px !important' : null">
   <!-- Header with Edit Button -->
@@ -23,15 +23,23 @@
     <div class="flex">
       <button 
         (click)="selectedTab = 'unsent'" 
-        [class]="selectedTab === 'unsent' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'"
-        class="flex-1 py-3 px-4 text-center font-medium text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-        Unsent ({{ drafts.length }})
+        [ngClass]="{
+          'text-blue-600 dark:text-blue-400 font-bold': selectedTab === 'unsent',
+          'text-gray-600 dark:text-gray-400': selectedTab !== 'unsent'
+        }"
+        class="flex-1 py-3 px-4 text-center text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
+        Unsent
+        <div *ngIf="selectedTab === 'unsent'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[50px] h-1 bg-blue-500"></div>
       </button>
       <button 
         (click)="selectedTab = 'scheduled'" 
-        [class]="selectedTab === 'scheduled' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'"
-        class="flex-1 py-3 px-4 text-center font-medium text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-        Scheduled ({{ scheduledPosts.length }})
+        [ngClass]="{
+          'text-blue-600 dark:text-blue-400 font-bold': selectedTab === 'scheduled',
+          'text-gray-600 dark:text-gray-400': selectedTab !== 'scheduled'
+        }"
+        class="flex-1 py-3 px-4 text-center text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
+        Scheduled
+        <div *ngIf="selectedTab === 'scheduled'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[74px] h-1 bg-blue-500"></div>
       </button>
     </div>
   </div>

@@ -11,7 +11,7 @@
         (click)="setActiveTab('for-you')"
       >
         For You
-        <div *ngIf="activeTab === 'for-you'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-14 h-1 bg-blue-500"></div>
+        <div *ngIf="activeTab === 'for-you'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[60px] h-1 bg-blue-500"></div>
       </button>
       <button 
         [ngClass]="{
@@ -21,7 +21,7 @@
         (click)="setActiveTab('human-drawing')"
       >
         Human Art
-        <div *ngIf="activeTab === 'human-drawing'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-20 h-1 bg-blue-500"></div>
+        <div *ngIf="activeTab === 'human-drawing'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[85px] h-1 bg-blue-500"></div>
       </button>
     </div>
   </div>

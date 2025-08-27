@@ -18,11 +18,10 @@
     <!-- Show Trending tab when no search has been performed -->
     <div *ngIf="!hasSearched" class="flex border-b border-gray-200 dark:[border-color:var(--color-border)]">
       <button (click)="switchTab('trending')"
-              [class.border-b-2]="activeTab === 'trending'"
-              [class.border-blue-500]="activeTab === 'trending'"
               [class.text-blue-500]="activeTab === 'trending'"
-              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]">
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)] relative">
         Trending
+        <div *ngIf="activeTab === 'trending'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[68px] h-1 bg-blue-500"></div>
       </button>
     </div>
 
@@ -30,18 +29,16 @@
     <div *ngIf="hasSearched && (users.length > 0 || posts.length > 0)" 
          class="flex border-b border-gray-200 dark:[border-color:var(--color-border)]">
       <button (click)="switchTab('top')"
-              [class.border-b-2]="activeTab === 'top'"
-              [class.border-blue-500]="activeTab === 'top'"
               [class.text-blue-500]="activeTab === 'top'"
-              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)]">
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)] relative">
         Top
+        <div *ngIf="activeTab === 'top'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-7 h-1 bg-blue-500"></div>
       </button>
       <button (click)="switchTab('people')"
-              [class.border-b-2]="activeTab === 'people'"
-              [class.border-blue-500]="activeTab === 'people'"
               [class.text-blue-500]="activeTab === 'people'"
-              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-border)] transition-colors dark:[color:var(--color-text)]">
+              class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-border)] transition-colors dark:[color:var(--color-text)] relative">
         People
+        <div *ngIf="activeTab === 'people'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[54px] h-1 bg-blue-500"></div>
       </button>
     </div>
   </div>

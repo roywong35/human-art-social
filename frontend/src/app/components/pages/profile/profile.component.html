@@ -88,54 +88,49 @@
   <!-- Tabs Navigation -->
   <nav class="flex border-b border-gray-200 dark:[border-color:var(--color-border)] w-full">
     <button 
-      [class.border-b-2]="activeTab === 'posts'"
-      [class.border-blue-500]="activeTab === 'posts'"
       [class.text-blue-500]="activeTab === 'posts'"
       class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors relative group dark:[color:var(--color-text)]"
       (click)="setActiveTab('posts')"
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Posts
+      <div *ngIf="activeTab === 'posts'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-11 h-1 bg-blue-500"></div>
     </button>
     <button 
-      [class.border-b-2]="activeTab === 'replies'"
-      [class.border-blue-500]="activeTab === 'replies'"
       [class.text-blue-500]="activeTab === 'replies'"
       class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors relative group dark:[color:var(--color-text)]"
       (click)="setActiveTab('replies')"
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Replies
+      <div *ngIf="activeTab === 'replies'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[58px] h-1 bg-blue-500"></div>
     </button>
     <button 
-      [class.border-b-2]="activeTab === 'media'"
-      [class.border-blue-500]="activeTab === 'media'"
       [class.text-blue-500]="activeTab === 'media'"
       class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors relative group dark:[color:var(--color-text)]"
       (click)="setActiveTab('media')"
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Media
+      <div *ngIf="activeTab === 'media'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-12 h-1 bg-blue-500"></div>
     </button>
     <button 
-      [class.border-b-2]="activeTab === 'human-art'"
-      [class.border-blue-500]="activeTab === 'human-art'"
       [class.text-blue-500]="activeTab === 'human-art'"
       class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors relative group dark:[color:var(--color-text)]"
       (click)="setActiveTab('human-art')"
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Human Art
+      <div *ngIf="activeTab === 'human-art'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[86px] h-1 bg-blue-500"></div>
     </button>
     <button 
-      [class.border-b-2]="activeTab === 'likes'"
-      [class.border-blue-500]="activeTab === 'likes'"
       [class.text-blue-500]="activeTab === 'likes'"
       class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors relative group dark:[color:var(--color-text)]"
       (click)="setActiveTab('likes')"
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Likes
+      <div *ngIf="activeTab === 'likes'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-11 h-1 bg-blue-500"></div>
     </button>
   </nav>
 
