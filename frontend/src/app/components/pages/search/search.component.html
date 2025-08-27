@@ -234,12 +234,13 @@
     <!-- Trending Tab Content - Show when trending tab is active OR when no search has been performed -->
     <div *ngIf="activeTab === 'trending' || !hasSearched" class="w-full">
       <!-- Trending Topics Section -->
-      <div class="bg-white dark:bg-black w-full">
+      <div *ngIf="!isLoadingUsers && recommendedUsers.length > 0" class="bg-white dark:bg-black w-full">
         <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Trending</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
           <!-- Trending Topics List -->
+          <div *ngIf="!isLoadingTrending && trendingTopics.length > 0">
             <div *ngFor="let topic of trendingTopics.slice(0, maxTrendingTopics); let i = index" 
                  class="px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer w-full"
                  (click)="navigateToHashtag(topic.name)">
@@ -257,26 +258,28 @@
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Show message when no trending topics -->
-            <div *ngIf="trendingTopics.length === 0" class="px-4 py-6 text-center">
-              <div class="text-gray-500 dark:text-gray-400 text-sm">
-                No trending topics right now
-              </div>
-              <div class="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                Check back later for updates
-              </div>
+          <!-- Show message when no trending topics -->
+          <div *ngIf="!isLoadingTrending && trendingTopics.length === 0" class="px-4 py-6 text-center">
+            <div class="text-gray-500 dark:text-gray-400 text-sm">
+              No trending topics right now
             </div>
+            <div class="text-gray-400 dark:text-gray-500 text-xs mt-1">
+              Check back later for updates
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Who to Follow Section -->
       <div class="bg-white dark:bg-black w-full">
-        <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
+        <div *ngIf="!isLoadingUsers && recommendedUsers.length > 0" class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Who to follow</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
           <!-- User list -->
+          <div *ngIf="!isLoadingUsers && recommendedUsers.length > 0">
             <div *ngFor="let user of recommendedUsers.slice(0, maxRecommendedUsers)" 
                  class="flex items-center px-4 py-3 hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer w-full"
                  (click)="navigateToProfile(user)">
@@ -304,6 +307,16 @@
                   <span *ngIf="!user.is_following">Follow</span>
                 </span>
               </button>
+            </div>
+          </div>
+
+          <!-- Show message when no recommended users -->
+          <div *ngIf="!isLoadingUsers && recommendedUsers.length === 0" class="px-4 py-6 text-center">
+            <div class="text-gray-500 dark:text-gray-400 text-sm">
+              No recommended users right now
+            </div>
+            <div class="text-gray-400 dark:text-gray-500 text-xs mt-1">
+              Check back later for updates
             </div>
           </div>
         </div>
