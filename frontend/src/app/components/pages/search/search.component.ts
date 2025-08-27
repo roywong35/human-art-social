@@ -76,6 +76,8 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit() {
+    console.log('🚀 Search Component Initialized - isRefreshing:', this.isRefreshing);
+    
     // Get current user first
     const userSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -149,6 +151,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadTrending(forceRefresh: boolean = false) {
+    console.log('📈 loadTrending called - isRefreshing:', this.isRefreshing, 'forceRefresh:', forceRefresh);
     this.isLoadingTrending = true;
     
     // Add cache-busting parameter if forcing refresh
@@ -203,6 +206,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadRecommendedUsers() {
+    console.log('👥 loadRecommendedUsers called - isRefreshing:', this.isRefreshing);
     this.isLoadingUsers = true;
     this.userService.getRecommendedUsersPaginated(1).subscribe({
       next: (response) => {
@@ -308,22 +312,11 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Smart loading logic: show content if we have results, hide if we don't
   get shouldShowContentDuringLoading(): boolean {
-    console.log('🔍 Smart Loading Logic Debug:', {
-      hasSearched: this.hasSearched,
-      usersLength: this.users.length,
-      postsLength: this.posts.length,
-      isLoading: this.isLoading,
-      isRefreshing: this.isRefreshing,
-      activeTab: this.activeTab
-    });
-    
     // If we have search results, keep them visible during refresh
     if (this.hasSearched && (this.users.length > 0 || this.posts.length > 0)) {
-      console.log('✅ Should show content during loading: TRUE (has results)');
       return true;
     }
     // If no results yet, hide content during loading
-    console.log('❌ Should show content during loading: FALSE (no results)');
     return false;
   }
 
@@ -335,19 +328,28 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.isRefreshing || (this.isLoading && this.hasSearched && this.users.length === 0 && this.posts.length === 0);
   }
 
-  // Debug method to log template conditions
-  logTemplateConditions(): void {
-    console.log('🎯 Template Conditions Debug:', {
-      hasSearched: this.hasSearched,
-      activeTab: this.activeTab,
-      usersLength: this.users.length,
-      postsLength: this.posts.length,
-      shouldShowContentDuringLoading: this.shouldShowContentDuringLoading,
-      isLoading: this.isLoading,
+  // Logic for showing Trending/Who to follow sections
+  get shouldShowTrendingSections(): boolean {
+    // Show sections when:
+    // 1. Initial loading is complete (isLoading = false)
+    // 2. AND we have some data loaded (trending or users)
+    // 3. OR when refreshing (keep content visible during refresh)
+    const hasData = this.trendingTopics.length > 0 || this.recommendedUsers.length > 0;
+    const result = (!this.isLoading && hasData) || this.isRefreshing;
+    
+    console.log('🎯 shouldShowTrendingSections:', result, '- isLoading:', this.isLoading, 'isRefreshing:', this.isRefreshing, 'hasData:', hasData);
+    return result;
+  }
+
+  // Debug method to log isRefreshing flag state
+  logIsRefreshingState(): void {
+    console.log('🔍 isRefreshing State Debug:', {
       isRefreshing: this.isRefreshing,
-      tabsCondition: this.hasSearched && (this.users.length > 0 || this.posts.length > 0),
-      topTabCondition: this.hasSearched && this.activeTab === 'top' && (this.users.length > 0 || this.posts.length > 0),
-      peopleTabCondition: this.hasSearched && this.activeTab === 'people' && this.users.length > 0
+      isLoading: this.isLoading,
+      hasSearched: this.hasSearched,
+      shouldShowTrendingSections: this.shouldShowTrendingSections,
+      isLoadingTrending: this.isLoadingTrending,
+      isLoadingUsers: this.isLoadingUsers
     });
   }
 
@@ -386,34 +388,15 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    console.log('🔍 Perform Search Started:', {
-      query: query,
-      hasSearched: this.hasSearched,
-      usersLength: this.users.length,
-      postsLength: this.posts.length,
-      isRefreshing: this.isRefreshing
-    });
-
     this.isLoading = true;
     
     // Only clear results on initial search, not on refresh
     if (!this.isRefreshing) {
       this.posts = [];
       this.users = [];
-      console.log('🔍 Cleared results (initial search)');
-    } else {
-      console.log('🔍 Kept existing results (refresh)');
     }
     
     this.hasSearched = true;
-    
-    console.log('🔍 Set loading states:', {
-      isLoading: this.isLoading,
-      hasSearched: this.hasSearched,
-      posts: this.posts.length,
-      users: this.users.length,
-      isRefreshing: this.isRefreshing
-    });
 
     // Determine search terms for different types
     const isHashtagSearch = query.startsWith('#');
@@ -437,12 +420,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         posts: this.postService.searchPosts(postSearchTerm)
       }).subscribe({
         next: (results) => {
-          console.log('🔍 Search Results Received:', {
-            usersCount: results.users.length,
-            postsCount: results.posts.length,
-            isRefreshing: this.isRefreshing
-          });
-          
           this.users = results.users;
           // Filter out reposted posts from search results
           this.posts = results.posts.filter(post => post.post_type !== 'repost');
@@ -453,18 +430,9 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
           this.isLoadingUsers = false;
           this.isLoadingPosts = false;
           
-          console.log('🔍 After Setting Results:', {
-            hasSearched: this.hasSearched,
-            usersLength: this.users.length,
-            postsLength: this.posts.length,
-            isLoading: this.isLoading,
-            isRefreshing: this.isRefreshing
-          });
-          
           // Also clear refresh state if this was a refresh operation
           if (this.isRefreshing) {
             this.isRefreshing = false;
-            console.log('🔄 Cleared isRefreshing = false');
           }
         },
         error: (error) => {
@@ -491,9 +459,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     // Only clear results on initial search, not on refresh
     if (!this.isRefreshing) {
       this.posts = [];
-      console.log('🔍 searchPosts: Cleared results (initial search)');
-    } else {
-      console.log('🔍 searchPosts: Kept existing results (refresh)');
     }
     
     this.postService.searchPosts(query).subscribe({
@@ -667,24 +632,16 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private pullToRefresh(): void {
-    console.log('🔄 Pull to Refresh Started:', {
-      hasSearched: this.hasSearched,
-      searchQuery: this.searchQuery,
-      usersLength: this.users.length,
-      postsLength: this.posts.length,
-      activeTab: this.activeTab
-    });
+    console.log('🔄 Pull to Refresh Started - isRefreshing:', this.isRefreshing);
     
     // Show refresh state (keeps content visible)
     this.isRefreshing = true;
     console.log('🔄 Set isRefreshing = true');
     
     if (this.hasSearched) {
-      console.log('🔄 Refreshing search results for:', this.searchQuery);
       // Refresh search results
       this.performSearch(this.searchQuery);
     } else {
-      console.log('🔄 Refreshing trending content');
       // Refresh trending hashtags and recommended users
       this.loadTrending(true);
       this.loadRecommendedUsers();
@@ -692,10 +649,5 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     
     // Don't manually set isRefreshing to false - let the actual operations handle it
     // This prevents the "No results found" flash
-    
-    // Log template conditions for debugging
-    setTimeout(() => {
-      this.logTemplateConditions();
-    }, 100);
   }
 } 

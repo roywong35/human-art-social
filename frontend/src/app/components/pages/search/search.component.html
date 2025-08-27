@@ -232,15 +232,15 @@
     </div>
 
     <!-- Trending Tab Content - Show when trending tab is active OR when no search has been performed -->
-    <div *ngIf="activeTab === 'trending' || !hasSearched" class="w-full">
+    <div *ngIf="(activeTab === 'trending' || !hasSearched) && shouldShowTrendingSections" class="w-full">
       <!-- Trending Topics Section -->
       <div class="bg-white dark:bg-black w-full">
         <div class="px-4 py-3 border-b border-gray-200 dark:[border-color:var(--color-border)]">
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Trending</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-          <!-- Loading State for Trending -->
-          <div *ngIf="isLoadingTrending" class="flex items-center justify-center py-8">
+          <!-- Loading State for Trending - Only show during initial load, not during refresh -->
+          <div *ngIf="isLoadingTrending && !isRefreshing" class="flex items-center justify-center py-8">
             <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
           </div>
 
@@ -283,8 +283,8 @@
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Who to follow</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-          <!-- Loading State for Who to Follow -->
-          <div *ngIf="isLoadingUsers" class="flex items-center justify-center py-8">
+          <!-- Loading State for Who to Follow - Only show during initial load, not during refresh -->
+          <div *ngIf="isLoadingUsers && !isRefreshing" class="flex items-center justify-center py-8">
             <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
           </div>
 
