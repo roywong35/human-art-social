@@ -239,6 +239,11 @@
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Trending</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
+          <!-- Loading State for Trending -->
+          <div *ngIf="isLoadingTrending" class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+          </div>
+
           <!-- Trending Topics List -->
           <div *ngIf="!isLoadingTrending && trendingTopics.length > 0">
             <div *ngFor="let topic of trendingTopics.slice(0, maxTrendingTopics); let i = index" 
@@ -278,6 +283,11 @@
           <h3 class="text-xl font-bold dark:[color:var(--color-text)]">Who to follow</h3>
         </div>
         <div class="divide-y divide-gray-100 dark:divide-gray-700">
+          <!-- Loading State for Who to Follow -->
+          <div *ngIf="isLoadingUsers" class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+          </div>
+
           <!-- User list -->
           <div *ngIf="!isLoadingUsers && recommendedUsers.length > 0">
             <div *ngFor="let user of recommendedUsers.slice(0, maxRecommendedUsers)" 
