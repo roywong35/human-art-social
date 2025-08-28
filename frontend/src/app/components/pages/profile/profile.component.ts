@@ -40,6 +40,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | undefined;
   private userPostsSubscription: Subscription | undefined;
   private subscriptions = new Subscription();
+  
+  // Tab content caching system - separate arrays for each tab
+  private postsCache: Post[] = [];
+  private repliesCache: Post[] = [];
+  private mediaCache: { image: string; postId: number }[] = [];
+  private humanArtCache: Post[] = [];
+  private likesCache: Post[] = [];
+  
   user: User | null = null;
   posts: Post[] = [];
   replies: Post[] = [];
@@ -79,6 +87,92 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private handleTouchMove!: (e: Event) => void;
   private handleTouchEnd!: () => void;
   
+  /**
+   * Check if a tab has cached content
+   */
+  private hasCachedContent(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): boolean {
+    switch (tab) {
+      case 'posts':
+        return this.postsCache.length > 0;
+      case 'replies':
+        return this.repliesCache.length > 0;
+      case 'media':
+        return this.mediaCache.length > 0;
+      case 'human-art':
+        return this.humanArtCache.length > 0;
+      case 'likes':
+        return this.likesCache.length > 0;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Get cached content for a tab
+   */
+  private getCachedContent(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): any {
+    switch (tab) {
+      case 'posts':
+        return this.postsCache;
+      case 'replies':
+        return this.repliesCache;
+      case 'media':
+        return this.mediaCache;
+      case 'human-art':
+        return this.humanArtCache;
+      case 'likes':
+        return this.likesCache;
+      default:
+        return [];
+    }
+  }
+
+  /**
+   * Cache content for the current tab
+   */
+  private cacheCurrentTabContent(): void {
+    switch (this.activeTab) {
+      case 'posts':
+        this.postsCache = [...this.posts];
+        break;
+      case 'replies':
+        this.repliesCache = [...this.replies];
+        break;
+      case 'media':
+        this.mediaCache = [...this.mediaItems];
+        break;
+      case 'human-art':
+        this.humanArtCache = [...this.humanArtPosts];
+        break;
+      case 'likes':
+        this.likesCache = [...this.likedPosts];
+        break;
+    }
+  }
+
+  /**
+   * Show cached content for a specific tab
+   */
+  private showCachedContent(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): void {
+    switch (tab) {
+      case 'posts':
+        this.posts = this.postsCache;
+        break;
+      case 'replies':
+        this.replies = this.repliesCache;
+        break;
+      case 'media':
+        this.mediaItems = this.mediaCache;
+        break;
+      case 'human-art':
+        this.humanArtPosts = this.humanArtCache;
+        break;
+      case 'likes':
+        this.likedPosts = this.likesCache;
+        break;
+    }
+  }
+  
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   editForm = {
     username: '',
@@ -111,6 +205,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
           } else {
             // Always replace posts array to ensure change detection
             this.posts = [...posts];
+            
+            // Cache the content for the current tab
+            this.cacheCurrentTabContent();
           }
           
           this.isLoadingPosts = false;
@@ -144,6 +241,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
                 await this.buildParentChain(reply);
               }
             }
+            
+            // Cache the content for the current tab
+            this.cacheCurrentTabContent();
           }
           
           this.isLoadingReplies = false;
@@ -269,23 +369,34 @@ export class ProfileComponent implements OnInit, OnDestroy {
   setActiveTab(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): void {
     this.activeTab = tab;
     
-    // Set appropriate loading state for the tab
-    switch (tab) {
-      case 'posts':
-        this.isLoadingPosts = true;
-        break;
-      case 'replies':
-        this.isLoadingReplies = true;
-        break;
-      case 'media':
-        this.isLoadingMedia = true;
-        break;
-      case 'human-art':
-        this.isLoadingHumanArt = true;
-        break;
-      case 'likes':
-        this.isLoadingLikes = true;
-        break;
+    // Check if the target tab already has cached content
+    if (this.hasCachedContent(tab)) {
+      // Tab has cached content - show instantly without loading
+      this.showCachedContent(tab);
+      this.isLoadingPosts = false;
+      this.isLoadingReplies = false;
+      this.isLoadingMedia = false;
+      this.isLoadingHumanArt = false;
+      this.isLoadingLikes = false;
+    } else {
+      // Tab has no cached content - show loading state
+      switch (tab) {
+        case 'posts':
+          this.isLoadingPosts = true;
+          break;
+        case 'replies':
+          this.isLoadingReplies = true;
+          break;
+        case 'media':
+          this.isLoadingMedia = true;
+          break;
+        case 'human-art':
+          this.isLoadingHumanArt = true;
+          break;
+        case 'likes':
+          this.isLoadingLikes = true;
+          break;
+      }
     }
     
     this.router.navigate([], {
@@ -294,7 +405,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       queryParamsHandling: 'merge'
     });
     
-    this.loadTabContent(this.user?.handle || '');
+    // Only load content if the target tab has no cached content
+    if (!this.hasCachedContent(tab)) {
+      this.loadTabContent(this.user?.handle || '');
+    }
   }
 
   private loadTabContent(handle: string): void {
@@ -436,6 +550,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
           return [...acc, ...images];
         }, []);
         this.isLoadingMedia = false;
+        
+        // Cache the content for the current tab
+        this.cacheCurrentTabContent();
+        
         this.cd.markForCheck();
       },
       error: (error: Error) => {
@@ -458,6 +576,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       next: (posts: Post[]) => {
         this.humanArtPosts = posts.filter(post => post.is_verified);
         this.isLoadingHumanArt = false;
+        
+        // Cache the content for the current tab
+        this.cacheCurrentTabContent();
+        
         this.cd.markForCheck();
       },
       error: (error: Error) => {
@@ -480,6 +602,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       next: (posts: Post[]) => {
         this.likedPosts = posts;
         this.isLoadingLikes = false;
+        
+        // Cache the content for the current tab
+        this.cacheCurrentTabContent();
+        
         this.cd.markForCheck();
       },
       error: (error: Error) => {

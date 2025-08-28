@@ -41,6 +41,11 @@ import Hammer from 'hammerjs';
 })
 export class HomeComponent implements OnInit, OnDestroy {
   @ViewChildren(PostComponent) postComponents!: QueryList<PostComponent>;
+  
+  // Tab content caching system - separate arrays for each tab
+  private forYouPostsCache: Post[] = [];
+  private humanArtPostsCache: Post[] = [];
+  
   posts: Post[] = [];
   isInitialLoading = true;
   isLoadingMore = false;
@@ -83,6 +88,39 @@ export class HomeComponent implements OnInit, OnDestroy {
   private handleTouchMove!: (e: Event) => void;
   private handleTouchEnd!: () => void;
 
+  /**
+   * Check if a tab has cached content
+   */
+  private hasCachedContent(tab: 'for-you' | 'human-drawing'): boolean {
+    if (tab === 'for-you') {
+      return this.forYouPostsCache.length > 0;
+    } else {
+      return this.humanArtPostsCache.length > 0;
+    }
+  }
+
+  /**
+   * Get cached content for a tab
+   */
+  private getCachedContent(tab: 'for-you' | 'human-drawing'): Post[] {
+    if (tab === 'for-you') {
+      return this.forYouPostsCache;
+    } else {
+      return this.humanArtPostsCache;
+    }
+  }
+
+  /**
+   * Cache content for the current tab
+   */
+  private cacheCurrentTabContent(): void {
+    if (this.activeTab === 'for-you') {
+      this.forYouPostsCache = [...this.posts];
+    } else {
+      this.humanArtPostsCache = [...this.posts];
+    }
+  }
+
 
   constructor(
     private postService: PostService,
@@ -107,6 +145,9 @@ export class HomeComponent implements OnInit, OnDestroy {
           } else {
             // Always replace posts array to ensure change detection
             this.posts = [...posts];
+            
+            // Cache the content for the current tab
+            this.cacheCurrentTabContent();
           }
           
           // Update latest post ID for new posts check
@@ -556,9 +597,17 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.newPostsCount = 0;
       this.newPostsAuthors = [];
       
-      // Show loading state during tab switch
-      this.isInitialLoading = true;
-      this.cd.markForCheck();
+      // Check if the target tab already has cached content
+      if (this.hasCachedContent(tab)) {
+        // Tab has cached content - show instantly without loading
+        this.posts = this.getCachedContent(tab);
+        this.isInitialLoading = false;
+        this.cd.markForCheck();
+      } else {
+        // Tab has no cached content - show loading state
+        this.isInitialLoading = true;
+        this.cd.markForCheck();
+      }
       
       // Update URL without triggering the router subscription
       this.router.navigate([], {
@@ -568,8 +617,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         replaceUrl: true
       });
 
-      // Reload posts for the new tab
-      this.loadPosts(true);
+      // Only load posts if the target tab has no cached content
+      if (!this.hasCachedContent(tab)) {
+        this.loadPosts(true);
+      }
     }
   }
 

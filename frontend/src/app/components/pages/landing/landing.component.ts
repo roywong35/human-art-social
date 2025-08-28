@@ -29,7 +29,15 @@ import { RegisterModalComponent } from '../../features/auth/register-modal/regis
   styleUrls: ['./landing.component.scss']
 })
 export class LandingComponent implements OnInit, OnDestroy {
-  posts: Post[] = [];
+  // Separate post arrays for each tab to enable caching
+  forYouPosts: Post[] = [];
+  humanArtPosts: Post[] = [];
+  
+  // Get current tab's posts
+  get posts(): Post[] {
+    return this.activeTab === 'for-you' ? this.forYouPosts : this.humanArtPosts;
+  }
+  
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
   isDarkMode = false;
   isPWAMode = false;
@@ -47,12 +55,31 @@ export class LandingComponent implements OnInit, OnDestroy {
     return window.innerWidth < 500;
   }
   
-  // Infinite scroll properties
-  loading = false;
+  // Infinite scroll properties per tab
+  forYouLoading = false;
+  humanArtLoading = false;
   loadingMore = false;
-  hasMore = true;
-  currentPage = 1;
+  forYouHasMore = true;
+  humanArtHasMore = true;
+  forYouCurrentPage = 1;
+  humanArtCurrentPage = 1;
   private pageSize = 20;
+  
+  // Get current tab's loading state
+  get loading(): boolean {
+    return this.activeTab === 'for-you' ? this.forYouLoading : this.humanArtLoading;
+  }
+  
+  // Get current tab's hasMore state
+  get hasMore(): boolean {
+    return this.activeTab === 'for-you' ? this.forYouHasMore : this.humanArtHasMore;
+  }
+  
+  // Get current tab's current page
+  get currentPage(): number {
+    return this.activeTab === 'for-you' ? this.forYouCurrentPage : this.humanArtCurrentPage;
+  }
+  
   isInitialLoading = true; // Track initial page load vs pull-to-refresh
   
   // Swipe gesture properties
@@ -159,8 +186,8 @@ export class LandingComponent implements OnInit, OnDestroy {
       this.initializeGestureSupport();
     }, 100);
     
-    // Initial load of posts
-    this.loadPosts();
+    // Initial load of posts for the active tab
+    this.loadPostsForTab(this.activeTab);
     
     // Subscribe to future tab changes
     this.route.queryParams.subscribe(params => {
@@ -196,6 +223,20 @@ export class LandingComponent implements OnInit, OnDestroy {
     if (this.activeTab !== tab) {
       this.activeTab = tab;
       
+      // Check if the target tab already has cached content
+      const targetTabHasContent = (tab === 'for-you' && this.forYouPosts.length > 0) || 
+                                 (tab === 'human-drawing' && this.humanArtPosts.length > 0);
+      
+      if (targetTabHasContent) {
+        // Tab has cached content - show instantly without loading
+        this.isInitialLoading = false;
+        this.cd.markForCheck();
+      } else {
+        // Tab has no cached content - show loading state
+        this.isInitialLoading = true;
+        this.cd.markForCheck();
+      }
+      
       // Update URL without navigation
       this.router.navigate([], {
         relativeTo: this.route,
@@ -204,37 +245,45 @@ export class LandingComponent implements OnInit, OnDestroy {
         replaceUrl: true
       });
 
-      // Reset pagination and reload posts for the new tab
-      this.currentPage = 1;
-      this.hasMore = true;
-      this.posts = [];
-      this.loadPosts();
+      // Only load posts if the target tab has no cached content
+      if (!targetTabHasContent) {
+        this.loadPostsForTab(tab);
+      }
     }
   }
 
-  private loadPosts() {
-    this.loading = true;
+  /**
+   * Load posts for a specific tab
+   */
+  private loadPostsForTab(tab: 'for-you' | 'human-drawing'): void {
+    if (tab === 'for-you') {
+      this.forYouLoading = true;
+      this.forYouCurrentPage = 1;
+      this.forYouHasMore = true;
+    } else {
+      this.humanArtLoading = true;
+      this.humanArtCurrentPage = 1;
+      this.humanArtHasMore = true;
+    }
     
-    this.postService.getPublicPosts(this.activeTab, this.currentPage).subscribe({
+    this.postService.getPublicPosts(tab, 1).subscribe({
       next: response => {
-        // Handle paginated response
         const posts = response.results || [];
-        if (this.currentPage === 1) {
-          // First page - replace posts
-          this.posts = posts;
-          // Set isInitialLoading to false after first successful load
-          if (this.isInitialLoading) {
-            this.isInitialLoading = false;
-          }
+        
+        if (tab === 'for-you') {
+          this.forYouPosts = posts;
+          this.forYouHasMore = !!response.next;
+          this.forYouLoading = false;
         } else {
-          // Subsequent pages - append posts
-          this.posts = [...this.posts, ...posts];
+          this.humanArtPosts = posts;
+          this.humanArtHasMore = !!response.next;
+          this.humanArtLoading = false;
         }
         
-        // Check if there are more posts
-        this.hasMore = !!response.next;
-        this.loading = false;
-        this.loadingMore = false;
+        // Set isInitialLoading to false after first successful load
+        if (this.isInitialLoading) {
+          this.isInitialLoading = false;
+        }
         
         // Reset refreshing state after a delay to show the loading row briefly
         if (this.isRefreshing) {
@@ -245,7 +294,7 @@ export class LandingComponent implements OnInit, OnDestroy {
         }
         
         // Fallback gesture initialization if not already initialized
-        if (this.currentPage === 1 && !this.hammerManager) {
+        if (!this.hammerManager) {
           setTimeout(() => {
             this.initializeGestureSupport();
           }, 100);
@@ -253,8 +302,12 @@ export class LandingComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading public posts:', error);
-        this.loading = false;
-        this.loadingMore = false;
+        
+        if (tab === 'for-you') {
+          this.forYouLoading = false;
+        } else {
+          this.humanArtLoading = false;
+        }
         
         // Reset refreshing state on error
         if (this.isRefreshing) {
@@ -268,6 +321,54 @@ export class LandingComponent implements OnInit, OnDestroy {
             this.initializeGestureSupport();
           }, 100);
         }
+      }
+    });
+  }
+
+  private loadPosts() {
+    // Use the tab-specific loading method for first page
+    if (this.currentPage === 1) {
+      this.loadPostsForTab(this.activeTab);
+    } else {
+      // Load more posts for pagination
+      this.loadMorePostsForTab(this.activeTab);
+    }
+  }
+
+  /**
+   * Load more posts for pagination (infinite scroll)
+   */
+  private loadMorePostsForTab(tab: 'for-you' | 'human-drawing'): void {
+    const currentPage = tab === 'for-you' ? this.forYouCurrentPage : this.humanArtCurrentPage;
+    
+    this.postService.getPublicPosts(tab, currentPage).subscribe({
+      next: response => {
+        const posts = response.results || [];
+        
+        if (tab === 'for-you') {
+          // Append new posts to existing ones
+          this.forYouPosts = [...this.forYouPosts, ...posts];
+          this.forYouHasMore = !!response.next;
+          this.forYouLoading = false;
+        } else {
+          // Append new posts to existing ones
+          this.humanArtPosts = [...this.humanArtPosts, ...posts];
+          this.humanArtHasMore = !!response.next;
+          this.humanArtLoading = false;
+        }
+        
+        this.loadingMore = false;
+      },
+      error: (error) => {
+        console.error('Error loading more posts:', error);
+        
+        if (tab === 'for-you') {
+          this.forYouLoading = false;
+        } else {
+          this.humanArtLoading = false;
+        }
+        
+        this.loadingMore = false;
       }
     });
   }
@@ -363,9 +464,14 @@ export class LandingComponent implements OnInit, OnDestroy {
     this.isRefreshing = true;
     this.cd.markForCheck();
 
-    // Reset pagination and reload posts without clearing existing content
-    this.currentPage = 1;
-    this.hasMore = true;
+    // Reset pagination and reload posts for current tab without clearing existing content
+    if (this.activeTab === 'for-you') {
+      this.forYouCurrentPage = 1;
+      this.forYouHasMore = true;
+    } else {
+      this.humanArtCurrentPage = 1;
+      this.humanArtHasMore = true;
+    }
     this.loadPosts();
   }
 
@@ -425,7 +531,14 @@ export class LandingComponent implements OnInit, OnDestroy {
     if (this.loadingMore || !this.hasMore) return;
     
     this.loadingMore = true;
-    this.currentPage++;
+    
+    // Increment the appropriate tab's current page
+    if (this.activeTab === 'for-you') {
+      this.forYouCurrentPage++;
+    } else {
+      this.humanArtCurrentPage++;
+    }
+    
     this.loadPosts();
   }
 
