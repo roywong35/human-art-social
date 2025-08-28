@@ -1,83 +1,57 @@
-<!-- Header -->
-<div class="modal-header">
-  <h2 class="modal-title">Report post</h2>
-  <button (click)="onCancel()" class="text-gray-500 dark:[color:var(--color-text-secondary)] hover:text-gray-700 dark:hover:text-gray-300 w-10 h-10 rounded-full hover:bg-gray-200 dark:hover:[background-color:var(--color-surface-hover)] transition-colors">
-    <i class="fas fa-times text-xl"></i>
-  </button>
-</div>
-
-<!-- Content -->
-<div class="modal-content">
-  <!-- Loading state -->
-  <div *ngIf="loadingReportTypes" class="loading-container">
-    <div class="spinner"></div>
-    <p>Loading report options...</p>
+<div class="bg-white dark:bg-black rounded-2xl shadow-2xl">
+  <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0">Report post</h2>
+    <button (click)="onCancel()" class="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 w-10 h-10 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+      <i class="fas fa-times text-xl"></i>
+    </button>
   </div>
 
-  <!-- Report form -->
-  <div *ngIf="!loadingReportTypes" class="report-form">
-    <div class="form-section">
-      <label class="form-label">Why are you reporting this post?</label>
-      <div class="report-options">
-        <div *ngFor="let reportType of reportTypes" 
-             class="report-option" 
-             [class.selected]="selectedReportType === reportType.value">
-          <div class="radio-container">
-            <input type="radio" 
-                   [id]="'report-' + reportType.value"
-                   [value]="reportType.value"
-                   [(ngModel)]="selectedReportType"
-                   name="reportType">
-            <div class="radio-custom"></div>
+  <div class="max-h-[calc(80vh-180px)] overflow-y-auto px-6">
+    <div *ngIf="loadingReportTypes" class="flex flex-col items-center justify-center py-10">
+      <div class="spinner"></div>
+      <p class="mt-4 text-gray-600 dark:text-gray-300 text-sm">Loading report options...</p>
+    </div>
+
+    <div *ngIf="!loadingReportTypes" class="py-5">
+      <div class="mb-6">
+        <label class="block font-semibold text-gray-900 dark:text-white mb-3 text-sm">Why are you reporting this post?</label>
+        <div class="flex flex-col gap-2">
+          <div *ngFor="let reportType of reportTypes" class="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-black" [class.bg-blue-50]="selectedReportType === reportType.value" [class.border-blue-500]="selectedReportType === reportType.value" [class.dark:bg-blue-900]="selectedReportType === reportType.value">
+            <div class="radio-container">
+              <input type="radio" [id]="'report-' + reportType.value" [value]="reportType.value" [(ngModel)]="selectedReportType" name="reportType">
+              <div class="radio-custom"></div>
+            </div>
+            <label [for]="'report-' + reportType.value" class="flex flex-col cursor-pointer flex-1">
+              <span class="font-medium text-gray-900 dark:text-white text-sm">{{ reportType.label }}</span>
+              <span *ngIf="reportType.value === 'ai_art'" class="text-gray-600 dark:text-gray-400 text-xs mt-1 leading-relaxed">This post claims to be human-created art but appears to be AI-generated</span>
+            </label>
           </div>
-          <label [for]="'report-' + reportType.value" class="report-label">
-            <span class="report-text">{{ reportType.label }}</span>
-            <span *ngIf="reportType.value === 'ai_art'" class="report-description">
-              This post claims to be human-created art but appears to be AI-generated
-            </span>
-          </label>
+        </div>
+      </div>
+
+      <div class="mb-6" *ngIf="selectedReportType">
+        <label class="block font-semibold text-gray-900 dark:text-white mb-3 text-sm" for="description">Additional details (optional)</label>
+        <textarea id="description" [(ngModel)]="description" placeholder="Please provide any additional context that would help us review this report..." class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-y font-inherit text-sm leading-relaxed transition-colors duration-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400" rows="4" maxlength="500"></textarea>
+        <div class="text-right mt-1 text-xs text-gray-600 dark:text-gray-400">{{ description.length }}/500</div>
+      </div>
+
+      <div *ngIf="isAiArtReport" class="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg mt-4">
+        <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0"></i>
+        <div class="flex-1">
+          <p class="text-yellow-800 dark:text-yellow-200 text-sm leading-relaxed m-0 mb-2"><strong>Before reporting:</strong></p>
+          <p class="text-yellow-800 dark:text-yellow-200 text-sm leading-relaxed m-0">Please ensure this post is actually claiming to be human-created art. Regular AI art posts are welcome and should not be reported.</p>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Additional details -->
-    <div class="form-section" *ngIf="selectedReportType">
-      <label class="form-label" for="description">
-        Additional details (optional)
-      </label>
-      <textarea id="description"
-                [(ngModel)]="description"
-                placeholder="Please provide any additional context that would help us review this report..."
-                class="description-textarea"
-                rows="4"
-                maxlength="500"></textarea>
-      <div class="character-count">
-        {{ description.length }}/500
-      </div>
-    </div>
-
-    <!-- AI Art specific warning -->
-    <div *ngIf="isAiArtReport" class="warning-box">
-      <i class="fas fa-exclamation-triangle"></i>
-      <div class="warning-content">
-        <p><strong>Before reporting:</strong></p>
-        <p>Please ensure this post is actually claiming to be human-created art. Regular AI art posts are welcome and should not be reported.</p>
-      </div>
-    </div>
+  <div class="flex justify-center py-3 px-6 border-t border-gray-200 dark:border-gray-700">
+    <button type="button" class="px-6 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed text-white border-none rounded-full font-bold cursor-pointer transition-all duration-200 text-base flex items-center gap-2 min-w-[120px] justify-center" [disabled]="!canSubmit" [class.opacity-80]="isSubmitting" (click)="onSubmit()">
+      <span *ngIf="!isSubmitting">Submit Report</span>
+      <span *ngIf="isSubmitting" class="flex items-center gap-2">
+        <div class="spinner-small"></div>
+        Submitting...
+      </span>
+    </button>
   </div>
 </div>
-
-<!-- Footer -->
-<div class="modal-footer">
-  <button type="button" 
-          class="submit-button" 
-          [disabled]="!canSubmit"
-          [class.loading]="isSubmitting"
-          (click)="onSubmit()">
-    <span *ngIf="!isSubmitting">Submit Report</span>
-    <span *ngIf="isSubmitting" class="loading-text">
-      <div class="spinner-small"></div>
-      Submitting...
-    </span>
-  </button>
-</div> 

@@ -4,15 +4,10 @@
 ::ng-deep .report-dialog {
   .mat-mdc-dialog-container {
     .mdc-dialog__surface {
-      background: white;
+      background: transparent;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      
-      :global(.dark) & {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-      }
+      box-shadow: none;
     }
   }
 }
@@ -26,134 +21,7 @@
   overflow: visible;
 }
 
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  
-  :global(.dark) & {
-    border-bottom-color: var(--color-border);
-  }
-}
-
-.modal-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
-  
-  :global(.dark) & {
-    color: var(--color-text);
-  }
-}
-
-
-.modal-content {
-  max-height: calc(80vh - 180px);
-  overflow-y: auto;
-  padding: 0 24px;
-  
-  // Make sure scrolling works properly
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
-  }
-  
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.2);
-  }
-}
-
-// Post preview removed
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  
-  p {
-    margin-top: 16px;
-    color: #6b7280;
-    font-size: 14px;
-    
-    :global(.dark) & {
-      color: var(--color-text-secondary);
-    }
-  }
-}
-
-.report-form {
-  padding: 20px 0;
-}
-
-.form-section {
-  margin-bottom: 24px;
-}
-
-.form-label {
-  display: block;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 12px;
-  font-size: 15px;
-  
-  :global(.dark) & {
-    color: var(--color-text);
-  }
-}
-
-.report-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.report-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background-color: #f9fafb;
-    border-color: #d1d5db;
-  }
-  
-  &.selected {
-    background-color: #eff6ff;
-    border-color: #3b82f6;
-  }
-  
-  :global(.dark) & {
-    border-color: var(--color-border);
-    
-    &:hover {
-      background-color: var(--color-surface-hover);
-    }
-    
-    &.selected {
-      background-color: rgba(59, 130, 246, 0.1);
-      border-color: #3b82f6;
-    }
-  }
-}
-
+// Custom radio button styling (cannot be done with Tailwind)
 .radio-container {
   position: relative;
   flex-shrink: 0;
@@ -189,176 +57,9 @@
       border-radius: 50%;
     }
   }
-  
-  :global(.dark) & {
-    border-color: var(--color-border);
-  }
 }
 
-.report-label {
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  flex: 1;
-}
-
-.report-text {
-  font-weight: 500;
-  color: #111827;
-  font-size: 15px;
-  
-  :global(.dark) & {
-    color: var(--color-text);
-  }
-}
-
-.report-description {
-  color: #6b7280;
-  font-size: 13px;
-  margin-top: 4px;
-  line-height: 1.4;
-  
-  :global(.dark) & {
-    color: var(--color-text-secondary);
-  }
-}
-
-.description-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  resize: vertical;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-  transition: border-color 0.2s;
-  
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-  
-  &::placeholder {
-    color: #9ca3af;
-  }
-  
-  :global(.dark) & {
-    background: var(--color-surface);
-    border-color: var(--color-border);
-    color: var(--color-text);
-    
-    &::placeholder {
-      color: var(--color-text-secondary);
-    }
-  }
-}
-
-.character-count {
-  text-align: right;
-  margin-top: 4px;
-  font-size: 12px;
-  color: #6b7280;
-  
-  :global(.dark) & {
-    color: var(--color-text-secondary);
-  }
-}
-
-.warning-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background-color: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: 8px;
-  margin-top: 16px;
-  
-  i {
-    color: #f59e0b;
-    margin-top: 2px;
-    flex-shrink: 0;
-  }
-  
-  :global(.dark) & {
-    background-color: rgba(245, 158, 11, 0.1);
-    border-color: rgba(245, 158, 11, 0.3);
-  }
-}
-
-.warning-content {
-  flex: 1;
-  
-  p {
-    margin: 0;
-    color: #92400e;
-    font-size: 14px;
-    line-height: 1.4;
-    
-    &:not(:last-child) {
-      margin-bottom: 8px;
-    }
-    
-    :global(.dark) & {
-      color: #fbbf24;
-    }
-  }
-  
-  strong {
-    font-weight: 600;
-  }
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: center;
-  padding: 12px 24px 12px 24px;
-  border-top: 1px solid #e5e7eb;
-  
-  :global(.dark) & {
-    border-top-color: var(--color-border);
-  }
-}
-
-.submit-button {
-  padding: 12px 24px;
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 50px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 120px;
-  justify-content: center;
-  
-  &:hover:not(:disabled) {
-    background: #dc2626;
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  
-  &.loading {
-    opacity: 0.8;
-    cursor: not-allowed;
-  }
-}
-
-.loading-text {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
+// Custom spinner animations (cannot be done with Tailwind)
 .spinner {
   width: 24px;
   height: 24px;
@@ -366,11 +67,6 @@
   border-top: 2px solid #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  
-  :global(.dark) & {
-    border-color: var(--color-border);
-    border-top-color: #3b82f6;
-  }
 }
 
 .spinner-small {
