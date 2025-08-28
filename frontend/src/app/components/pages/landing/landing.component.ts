@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
+import { Component, OnInit, HostListener, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PostComponent } from '../../features/posts/post/post.component';
@@ -6,10 +6,13 @@ import { SearchBarComponent } from '../../widgets/search-bar/search-bar.componen
 import { PostService } from '../../../services/post.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Post } from '../../../models/post.model';
-import { LoginModalComponent } from '../../features/auth/login-modal/login-modal.component';
 import { AuthService } from '../../../services/auth.service';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
+
+// Hammer.js imports
+import Hammer from 'hammerjs';
+import { LoginModalComponent } from '../../features/auth/login-modal/login-modal.component';
 import { RegisterModalComponent } from '../../features/auth/register-modal/register-modal.component';
 
 @Component({
@@ -47,19 +50,44 @@ export class LandingComponent implements OnInit, OnDestroy {
   // Infinite scroll properties
   loading = false;
   loadingMore = false;
-  currentPage = 1;
   hasMore = true;
+  currentPage = 1;
+  private pageSize = 20;
+  isInitialLoading = true; // Track initial page load vs pull-to-refresh
+  
+  // Swipe gesture properties
+  private hammerManager?: HammerManager;
+  isRefreshing = false; // For pull-to-refresh only
+
+  // Touch event handler properties for cleanup
+  private handleTouchStart!: (e: Event) => void;
+  private handleTouchMove!: (e: Event) => void;
+  private handleTouchEnd!: () => void;
   private scrollThrottleTimeout: any;
 
   constructor(
     private postService: PostService,
     private router: Router,
     private route: ActivatedRoute,
+    private dialog: MatDialog,
     private authService: AuthService,
-    private dialog: MatDialog
+    private cd: ChangeDetectorRef
   ) {}
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
+    // Clean up Hammer manager
+    if (this.hammerManager) {
+      this.hammerManager.destroy();
+    }
+    
+    // Clean up touch event listeners
+    const container = document.querySelector('.posts-container');
+    if (container && this.handleTouchStart && this.handleTouchMove && this.handleTouchEnd) {
+      container.removeEventListener('touchstart', this.handleTouchStart);
+      container.removeEventListener('touchmove', this.handleTouchMove);
+      container.removeEventListener('touchend', this.handleTouchEnd);
+    }
+    
     // Clean up scroll throttle timeout
     if (this.scrollThrottleTimeout) {
       clearTimeout(this.scrollThrottleTimeout);
@@ -126,6 +154,11 @@ export class LandingComponent implements OnInit, OnDestroy {
     const tabFromParams = this.route.snapshot.queryParams['tab'];
     this.activeTab = (tabFromParams || 'for-you') as 'for-you' | 'human-drawing';
     
+    // Initialize gestures immediately (don't wait for posts)
+    setTimeout(() => {
+      this.initializeGestureSupport();
+    }, 100);
+    
     // Initial load of posts
     this.loadPosts();
     
@@ -181,6 +214,7 @@ export class LandingComponent implements OnInit, OnDestroy {
 
   private loadPosts() {
     this.loading = true;
+    
     this.postService.getPublicPosts(this.activeTab, this.currentPage).subscribe({
       next: response => {
         // Handle paginated response
@@ -188,6 +222,10 @@ export class LandingComponent implements OnInit, OnDestroy {
         if (this.currentPage === 1) {
           // First page - replace posts
           this.posts = posts;
+          // Set isInitialLoading to false after first successful load
+          if (this.isInitialLoading) {
+            this.isInitialLoading = false;
+          }
         } else {
           // Subsequent pages - append posts
           this.posts = [...this.posts, ...posts];
@@ -197,13 +235,190 @@ export class LandingComponent implements OnInit, OnDestroy {
         this.hasMore = !!response.next;
         this.loading = false;
         this.loadingMore = false;
+        
+        // Reset refreshing state after a delay to show the loading row briefly
+        if (this.isRefreshing) {
+          setTimeout(() => {
+            this.isRefreshing = false;
+            this.cd.markForCheck();
+          }, 500);
+        }
+        
+        // Fallback gesture initialization if not already initialized
+        if (this.currentPage === 1 && !this.hammerManager) {
+          setTimeout(() => {
+            this.initializeGestureSupport();
+          }, 100);
+        }
       },
       error: (error) => {
         console.error('Error loading public posts:', error);
         this.loading = false;
         this.loadingMore = false;
+        
+        // Reset refreshing state on error
+        if (this.isRefreshing) {
+          this.isRefreshing = false;
+          this.cd.markForCheck();
+        }
+        
+        // Initialize gestures even if posts fail to load
+        if (!this.hammerManager) {
+          setTimeout(() => {
+            this.initializeGestureSupport();
+          }, 100);
+        }
       }
     });
+  }
+
+  /**
+   * Initialize gesture support for mobile
+   */
+  private initializeGestureSupport(): void {
+    try {
+      if (!this.isMobile) {
+        return;
+      }
+
+      // Try to get the posts container, but fall back to body if it doesn't exist
+      let container = document.querySelector('.posts-container') as HTMLElement;
+      
+      if (!container) {
+        // Fallback: use the main content area if posts container doesn't exist
+        container = document.querySelector('main') as HTMLElement;
+      }
+      
+      if (!container) {
+        // Final fallback: use body for gesture detection
+        container = document.body as HTMLElement;
+      }
+      
+      if (!container) {
+        return;
+      }
+      
+      // Initialize Hammer.js on the container
+      this.hammerManager = new Hammer(container);
+      
+      // Configure swipe gestures for horizontal swipes only
+      const swipeRecognizer = this.hammerManager.get('swipe');
+      if (swipeRecognizer) {
+        // Only detect horizontal swipes, not vertical ones - this allows normal scrolling
+        swipeRecognizer.set({ direction: Hammer.DIRECTION_HORIZONTAL });
+      }
+      
+      // Handle swipe left - switch to next tab
+      this.hammerManager.on('swipeleft', (event) => {
+        this.handleSwipeLeft();
+      });
+      
+      // Handle swipe right - switch to previous tab
+      this.hammerManager.on('swiperight', (event) => {
+        this.handleSwipeRight();
+      });
+      
+      // Setup pull-to-refresh
+      this.setupPullToRefresh();
+      
+    } catch (error) {
+      console.error('Error initializing Hammer.js:', error);
+    }
+  }
+
+  /**
+   * Handle left swipe - switch to next tab
+   */
+  private handleSwipeLeft(): void {
+    if (this.activeTab === 'for-you') {
+      // On leftmost tab (For You), swipe left should switch to Human Art (right tab)
+      this.setActiveTab('human-drawing');
+    } else if (this.activeTab === 'human-drawing') {
+      // On rightmost tab (Human Art), swipe left should switch to For You (left tab)
+      this.setActiveTab('for-you');
+    }
+  }
+
+  /**
+   * Handle right swipe - switch to previous tab
+   */
+  private handleSwipeRight(): void {
+    if (this.activeTab === 'for-you') {
+      // On leftmost tab (For You), swipe right should switch to Human Art (right tab)
+      this.setActiveTab('human-drawing');
+    } else if (this.activeTab === 'human-drawing') {
+      // On rightmost tab (Human Art), swipe right should switch to For You (left tab)
+      this.setActiveTab('for-you');
+    }
+  }
+
+  /**
+   * Pull to refresh functionality
+   */
+  private pullToRefresh(): void {
+    if (this.isRefreshing) {
+      return; // Prevent multiple refreshes
+    }
+
+    this.isRefreshing = true;
+    this.cd.markForCheck();
+
+    // Reset pagination and reload posts without clearing existing content
+    this.currentPage = 1;
+    this.hasMore = true;
+    this.loadPosts();
+  }
+
+  /**
+   * Setup pull-to-refresh using touch events instead of Hammer.js
+   */
+  private setupPullToRefresh(): void {
+    let startY = 0;
+    let currentY = 0;
+    const threshold = 100; // Minimum distance to trigger refresh
+    
+    // Store references to handlers so we can remove them later
+    this.handleTouchStart = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      // Only detect at the very top of the page
+      if (window.scrollY === 0) {
+        startY = touchEvent.touches[0].clientY;
+      }
+    };
+    
+    this.handleTouchMove = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      // Only process if we started at the top
+      if (startY > 0) {
+        currentY = touchEvent.touches[0].clientY;
+        const deltaY = currentY - startY;
+        
+        // If pulling down more than threshold, trigger refresh
+        if (deltaY > threshold && !this.isRefreshing) {
+          this.pullToRefresh();
+          startY = 0; // Reset to prevent multiple triggers
+        }
+      }
+    };
+    
+    this.handleTouchEnd = () => {
+      startY = 0; // Reset
+    };
+    
+    // Try to add touch event listeners to the posts container, fallback to body
+    let container = document.querySelector('.posts-container');
+    if (!container) {
+      container = document.querySelector('main');
+    }
+    if (!container) {
+      container = document.body;
+    }
+    
+    if (container) {
+      container.addEventListener('touchstart', this.handleTouchStart, { passive: true });
+      container.addEventListener('touchmove', this.handleTouchMove, { passive: true });
+      container.addEventListener('touchend', this.handleTouchEnd, { passive: true });
+    }
   }
 
   private loadMore() {

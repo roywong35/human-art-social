@@ -84,7 +84,7 @@
             <!-- Tab Navigation -->
             <div #tabNavigation class="bg-white/90 dark:bg-black/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-40 w-full max-w-[598px] mx-auto transition-all duration-300 ease-out min-[500px]:fixed min-[500px]:top-0" 
                  [class.-translate-y-full]="isTabHidden && isMobile">
-              <div class="flex w-full">
+              <div class="flex w-full relative">
                 <button 
                   [ngClass]="{
                     'text-blue-500': activeTab === 'for-you'
@@ -93,7 +93,8 @@
                   (click)="setActiveTab('for-you')"
                 >
                   For You
-                  <div *ngIf="activeTab === 'for-you'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-14 h-1 bg-blue-500"></div>
+                  <!-- Static underline for larger screens -->
+                  <div *ngIf="activeTab === 'for-you'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-14 h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
                 </button>
                 <button 
                   [ngClass]="{
@@ -103,8 +104,25 @@
                   (click)="setActiveTab('human-drawing')"
                 >
                   Human Art
-                  <div *ngIf="activeTab === 'human-drawing'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-20 h-1 bg-blue-500"></div>
+                  <!-- Static underline for larger screens -->
+                  <div *ngIf="activeTab === 'human-drawing'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-20 h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
                 </button>
+                
+                <!-- Animated underline for mobile only -->
+                <div class="absolute bottom-0 h-1 bg-blue-500 rounded-full transition-all duration-300 ease-out max-[499px]:block min-[500px]:hidden"
+                     [ngClass]="{
+                       'w-14': activeTab === 'for-you',
+                       'w-20': activeTab === 'human-drawing'
+                     }"
+                     [style.left]="activeTab === 'for-you' ? 'calc(25% - 28px)' : 'calc(75% - 40px)'">
+                </div>
+              </div>
+            </div>
+
+            <!-- Refresh Loading Row (Only for pull-to-refresh) -->
+            <div *ngIf="isRefreshing" class="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 py-3">
+              <div class="flex items-center justify-center">
+                <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
               </div>
             </div>
 
@@ -113,31 +131,34 @@
                    'pt-16': !isMobile,
                    'pt-0': isMobile
                  }">
-              <!-- Initial loading state -->
-              <div *ngIf="loading && currentPage === 1" class="p-8 flex justify-center">
+              <!-- Initial loading state (only for first page load, not pull-to-refresh) -->
+              <div *ngIf="isInitialLoading" class="p-8 flex justify-center">
                 <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
               </div>
               
-              <!-- Posts list -->
-              <ng-container *ngIf="!loading || currentPage > 1">
-                <app-post *ngFor="let post of posts" [post]="post" [isPreview]="true"></app-post>
-                
-                <!-- Loading more indicator for infinite scroll -->
-                <div *ngIf="loadingMore" class="p-4 flex justify-center">
-                  <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent mx-auto mb-2"></div>
-                  <span class="text-gray-500 dark:text-gray-400 text-sm ml-3">Loading more posts...</span>
-                </div>
-                
-                <!-- End of posts indicator -->
-                <div *ngIf="!hasMore && !loading && !loadingMore && posts.length > 0" 
-                     class="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                  You've seen all posts
-                </div>
-                
-                <!-- Empty state -->
-                <div *ngIf="posts.length === 0 && !loading" 
-                     class="p-8 text-center text-gray-500 dark:text-gray-400">
-                  No posts available
+              <!-- Content (only show when not in initial loading state) -->
+              <ng-container *ngIf="!isInitialLoading">
+                <!-- Posts list -->
+                <div class="posts-container">
+                  <app-post *ngFor="let post of posts" [post]="post" [isPreview]="true"></app-post>
+                  
+                  <!-- Loading more indicator for infinite scroll -->
+                  <div *ngIf="loadingMore" class="p-4 flex justify-center">
+                    <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent mx-auto mb-2"></div>
+                    <span class="text-gray-500 dark:text-gray-400 text-sm ml-3">Loading more posts...</span>
+                  </div>
+                  
+                  <!-- End of posts indicator -->
+                  <div *ngIf="!hasMore && !loading && !loadingMore && posts.length > 0" 
+                       class="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    You've seen all posts
+                  </div>
+                  
+                  <!-- Empty state -->
+                  <div *ngIf="posts.length === 0 && !loading" 
+                       class="p-8 text-center text-gray-500 dark:text-gray-400">
+                    No posts available
+                  </div>
                 </div>
               </ng-container>
             </div>
