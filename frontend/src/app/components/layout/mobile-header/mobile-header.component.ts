@@ -287,15 +287,17 @@ export class MobileHeaderComponent implements OnInit, OnDestroy, AfterViewInit {
     console.log('🔍 Mobile Header: Current posts count:', currentPosts?.length);
     
     if (currentPosts && currentPosts.length > 0) {
-      const currentLatestPostId = currentPosts[0].id;
-      console.log('🔍 Mobile Header: Current latest post ID:', currentLatestPostId);
-      
+      const latestPost = currentPosts[0];
+      // Use effective publication time: scheduled_time if exists, otherwise created_at
+      const currentLatestTimestamp = latestPost.scheduled_time || latestPost.created_at;
+      console.log('🔍 Mobile Header: Current latest post timestamp:', currentLatestTimestamp);
+
       // Get the current active tab from localStorage (same as home component)
       const activeTab = localStorage.getItem('activeTab') || 'for-you';
       console.log('🔍 Mobile Header: Current active tab:', activeTab);
-      
+
       // Check for new posts without refreshing the entire feed
-      this.postService.checkNewPosts(currentLatestPostId, activeTab).subscribe({
+      this.postService.checkNewPosts(currentLatestTimestamp, activeTab).subscribe({
         next: (response: any) => {
           console.log('🔍 Mobile Header: checkNewPosts response:', response);
           if (response.has_new_posts) {

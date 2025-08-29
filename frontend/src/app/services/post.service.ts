@@ -787,9 +787,9 @@ export class PostService {
     return this.http.get<any>(`${this.baseUrl}/moderation/posts/reported/`);
   }
 
-  checkNewPosts(latestPostId: number, tab: string = 'for-you'): Observable<any> {
+  checkNewPosts(latestTimestamp: string, tab: string = 'for-you'): Observable<any> {
     const params = new HttpParams()
-      .set('latest_post_id', latestPostId.toString())
+      .set('latest_timestamp', latestTimestamp)
       .set('tab', tab);
     return this.http.get<any>(`${this.baseUrl}/posts/check_new_posts/`, { params });
   }

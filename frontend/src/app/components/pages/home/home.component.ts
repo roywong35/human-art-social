@@ -59,7 +59,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   newPostsCount = 0;
   newPostsAuthors: Array<{ avatar?: string, username: string }> = [];
   private newPostsCheckInterval: any;
-  private latestPostIds: { [key: string]: number | null } = {
+  private latestPostTimestamps: { [key: string]: string | null } = {
     'for-you': null,
     'human-drawing': null
   };
@@ -151,7 +151,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           }
           
           // Update latest post ID for new posts check
-          this.updateLatestPostId();
+          this.updateLatestPostTimestamp();
           
           // Only stop loading if we're not in initial loading state
           // This prevents the subscription from immediately hiding the loading state
@@ -792,8 +792,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private checkForNewPosts(): void {
-    const currentLatestPostId = this.latestPostIds[this.activeTab];
-    if (!currentLatestPostId || this.posts.length === 0) {
+    const currentLatestTimestamp = this.latestPostTimestamps[this.activeTab];
+    if (!currentLatestTimestamp || this.posts.length === 0) {
       return;
     }
 
@@ -803,7 +803,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     // Call backend to check for new posts
-    this.postService.checkNewPosts(currentLatestPostId, this.activeTab).subscribe({
+    this.postService.checkNewPosts(currentLatestTimestamp, this.activeTab).subscribe({
       next: (response: any) => {
         if (response.has_new_posts) {
           this.hasNewPosts = true;
@@ -858,15 +858,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Wait for posts to load, then reset latest post ID and restart timer
     setTimeout(() => {
       // Reset latest post ID to current posts after refresh
-      this.updateLatestPostId();
+      this.updateLatestPostTimestamp();
       // Restart the timer
       this.startNewPostsCheck();
     }, 2000); // Wait 2 seconds for posts to fully load
   }
 
-  private updateLatestPostId(): void {
+  private updateLatestPostTimestamp(): void {
     if (this.posts.length > 0) {
-      this.latestPostIds[this.activeTab] = this.posts[0].id; // First post is the latest for current tab
+      const latestPost = this.posts[0];
+      // Use effective publication time: scheduled_time if exists, otherwise created_at
+      const effectiveTime = latestPost.scheduled_time || latestPost.created_at;
+      this.latestPostTimestamps[this.activeTab] = effectiveTime;
     }
   }
 
@@ -885,8 +888,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.newPostsCount = 0;
     this.newPostsAuthors = [];
     
-    // Update the latest post ID to the current posts
-    this.updateLatestPostId();
+    // Update the latest post timestamp to the current posts
+    this.updateLatestPostTimestamp();
     
     // Force change detection to hide the "Show new posts" button
     this.cd.markForCheck();

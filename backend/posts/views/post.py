@@ -9,7 +9,7 @@ from ..serializers import HashtagSerializer
 from django.db import transaction
 from django.utils import timezone
 import mimetypes
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, Max, Case, When, Value, DateTimeField
 from datetime import timedelta
 from django.core.cache import cache
 from django.http import Http404
@@ -94,8 +94,15 @@ class PostViewSet(viewsets.ModelViewSet):
                 Q(author__in=following_users) | Q(author=self.request.user)
             )
 
-        # Order by created_at for all posts
-        final_queryset = queryset.order_by('-created_at')
+        # Order by effective publication time for proper timeline ordering
+        # This ensures scheduled posts appear in the correct chronological order
+        final_queryset = queryset.annotate(
+            effective_published_at=Case(
+                When(scheduled_time__isnull=True, then='created_at'),
+                default='scheduled_time',
+                output_field=DateTimeField()
+            )
+        ).order_by('-effective_published_at')
         return final_queryset
 
     def _get_posts_with_invalid_conversation_chains(self):
@@ -1566,24 +1573,28 @@ class PostViewSet(viewsets.ModelViewSet):
     def check_new_posts(self, request):
         """
         Check if there are new posts available for the user.
-        Compares the latest post in DB with the latest post the frontend has.
+        Compares the latest post timestamp in DB with the latest post timestamp the frontend has.
         Returns count of new posts (capped at 35).
         """
         try:
-            # Get the latest post ID that frontend has
-            latest_frontend_post_id = request.query_params.get('latest_post_id')
-            
-            if not latest_frontend_post_id:
+            # Get the latest post timestamp that frontend has
+            latest_frontend_timestamp = request.query_params.get('latest_timestamp')
+
+            if not latest_frontend_timestamp:
                 return Response(
-                    {'error': 'latest_post_id parameter is required'},
+                    {'error': 'latest_timestamp parameter is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             try:
-                latest_frontend_post_id = int(latest_frontend_post_id)
+                # Parse the timestamp
+                from django.utils.dateparse import parse_datetime
+                latest_frontend_timestamp = parse_datetime(latest_frontend_timestamp)
+                if not latest_frontend_timestamp:
+                    raise ValueError("Invalid timestamp format")
             except ValueError:
                 return Response(
-                    {'error': 'latest_post_id must be a valid integer'},
+                    {'error': 'latest_timestamp must be a valid ISO datetime string'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -1592,7 +1603,7 @@ class PostViewSet(viewsets.ModelViewSet):
             
             # Apply the same filters as feed/explore endpoints
             post_type = request.query_params.get('tab', 'for-you')
-            
+
             if post_type == 'human-drawing':
                 # Only show verified human drawings in Human Art tab
                 user_queryset = user_queryset.filter(
@@ -1606,24 +1617,25 @@ class PostViewSet(viewsets.ModelViewSet):
                     Q(is_human_drawing=False) |  # Regular posts
                     Q(is_human_drawing=True, is_verified=True)  # Verified human drawings
                 ).exclude(post_type='reply')  # Exclude replies
-            
-            # Count posts newer than the frontend's latest post
+
+            # Note: effective_published_at annotation is already added in get_queryset()
+            # Get the actual latest post's effective publication time from DB
+            latest_db_post = user_queryset.first()  # Already ordered by -effective_published_at
+            latest_db_timestamp = latest_db_post.effective_published_at if latest_db_post else None
+
+            # Count posts newer than the frontend's latest post timestamp
             new_posts_count = user_queryset.filter(
-                id__gt=latest_frontend_post_id
+                effective_published_at__gt=latest_frontend_timestamp
             ).count()
-            
+
             # Cap at 35 posts maximum
             new_posts_count = min(new_posts_count, 35)
-            
-            # Get the actual latest post ID from DB for comparison
-            latest_db_post = user_queryset.first()
-            latest_db_post_id = latest_db_post.id if latest_db_post else None
-            
+
             return Response({
                 'has_new_posts': new_posts_count > 0,
                 'new_posts_count': new_posts_count,
-                'latest_db_post_id': latest_db_post_id,
-                'latest_frontend_post_id': latest_frontend_post_id
+                'latest_db_timestamp': latest_db_timestamp.isoformat() if latest_db_timestamp else None,
+                'latest_frontend_timestamp': latest_frontend_timestamp.isoformat()
             })
             
         except Exception as e:
