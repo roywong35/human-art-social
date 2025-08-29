@@ -57,7 +57,6 @@ class TokenAuthMiddleware(BaseMiddleware):
                 
                 if scope["user"].is_anonymous:
                     print(f"❌ WebSocket authentication failed - user is anonymous")
-                else:
 
             else:
                 scope["user"] = AnonymousUser()
