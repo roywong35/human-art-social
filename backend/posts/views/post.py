@@ -228,7 +228,7 @@ class PostViewSet(viewsets.ModelViewSet):
             post_type=post_type,
             scheduled_time=scheduled_time
         )
-        print(f"📝 Post created: {post.id}")
+
 
         # Handle multiple images
         for key in self.request.FILES:
@@ -251,7 +251,7 @@ class PostViewSet(viewsets.ModelViewSet):
                         file_type=self.get_file_type(evidence_file)
                     )
 
-        print(f"📝 Post {post.id} created with {post.images.count()} images and {post.evidence_files.count()} evidence files")
+
 
     @action(detail=True, methods=['GET'])
     def replies(self, request, handle=None, pk=None):
@@ -566,65 +566,34 @@ class PostViewSet(viewsets.ModelViewSet):
         Retrieve a post by handle and post ID
         """
         try:
-            # Debug logging
-            print(f"🔍 Looking for post: handle={handle}, pk={pk}, type(pk)={type(pk)}")
-            
             # Check if post exists by ID first (including deleted posts)
             try:
                 post = Post.all_objects.get(id=pk)
-                print(f"📝 Found post {pk}: author_handle={post.author.handle}, is_deleted={post.is_deleted}")
-                
-                # Also check what posts exist for this handle
-                posts_for_handle = Post.objects.filter(author__handle=handle).values_list('id', flat=True)
-                print(f"📝 Posts for handle '{handle}': {list(posts_for_handle)}")
-                
-                # Check if this specific post is in that list
-                if pk in posts_for_handle:
-                    print(f"✅ Post {pk} is indeed owned by handle '{handle}'")
-                else:
-                    print(f"❌ Post {pk} is NOT owned by handle '{handle}'")
-                    print(f"   Post author: {post.author.handle}")
-                    print(f"   Requested handle: {handle}")
-                    print(f"   Case sensitive comparison: '{post.author.handle}' == '{handle}' = {post.author.handle == handle}")
-                
+
                 # Check if the post is deleted or removed
                 if post.is_deleted or post.is_removed:
-                    print(f"🔍 Post {pk} is deleted/removed, returning 404")
                     return Response(
                         {'error': 'This post has been deleted or removed'},
                         status=status.HTTP_404_NOT_FOUND
                     )
-                
+
                 # Verify the handle matches (for security)
                 if post.author.handle != handle:
-                    print(f"⚠️ Handle mismatch: expected {handle}, got {post.author.handle}")
-                    # For debugging, let's still return the post to see what's happening
-                    print(f"🔍 Returning post anyway for debugging purposes")
-                    try:
-                        serializer = self.get_serializer(post)
-                        print(f"✅ Serializer created successfully")
-                        return Response(serializer.data)
-                    except Exception as serializer_error:
-                        print(f"❌ Serializer error: {str(serializer_error)}")
-                        return Response(
-                            {'error': f'Serializer error: {str(serializer_error)}'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                        )
-                
-                print(f"🔍 Creating serializer for post {pk}")
+                    return Response(
+                        {'error': 'Post not found'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
                 try:
                     serializer = self.get_serializer(post)
-                    print(f"✅ Serializer created successfully")
                     return Response(serializer.data)
                 except Exception as serializer_error:
-                    print(f"❌ Serializer error: {str(serializer_error)}")
                     return Response(
                         {'error': f'Serializer error: {str(serializer_error)}'},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
-                
+
             except Post.DoesNotExist:
-                print(f"❌ Post with ID {pk} not found")
                 return Response(
                     {'error': 'Post not found'},
                     status=status.HTTP_404_NOT_FOUND

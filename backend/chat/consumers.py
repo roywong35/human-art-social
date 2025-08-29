@@ -8,10 +8,9 @@ User = get_user_model()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        print(f"🔌 WebSocket connection attempt from user: {self.scope['user']}")
+
         
         if self.scope["user"].is_anonymous:
-            print("❌ Rejecting anonymous user connection")
             await self.close()
             return
         
@@ -19,34 +18,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
             self.room_group_name = f"chat_{self.conversation_id}"
             
-            print(f"👤 User {self.scope['user'].username} attempting to connect to conversation {self.conversation_id}")
-            
             # Check if user is a participant in this conversation
             if await self.is_participant():
-                print(f"✅ User is participant, joining room group: {self.room_group_name}")
                 # Join room group
                 await self.channel_layer.group_add(
                     self.room_group_name,
                     self.channel_name
                 )
                 await self.accept()
-                print(f"✅ WebSocket connection accepted for user {self.scope['user'].username}")
             else:
-                print(f"❌ User {self.scope['user'].username} is not a participant in conversation {self.conversation_id}")
                 await self.close()
         except Exception as e:
-            print(f"❌ Error during WebSocket connection: {e}")
             await self.close()
 
     async def disconnect(self, close_code):
-        print(f"🔌 WebSocket disconnection: {close_code}")
         # Leave room group
         if hasattr(self, 'room_group_name'):
             await self.channel_layer.group_discard(
                 self.room_group_name,
                 self.channel_name
             )
-            print(f"👋 Left room group: {self.room_group_name}")
 
     async def receive(self, text_data):
         """
@@ -57,18 +48,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             text_data_json = json.loads(text_data)
             action = text_data_json.get('action')
             
-            print(f"📨 Received WebSocket action: {action} from user {self.scope['user'].username}")
-            
             if action == 'send_message':
                 content = text_data_json.get('content', '')
-                
+
                 if content.strip():
-                    print(f"💬 Sending message: '{content}' in conversation {self.conversation_id}")
                     # Save message to database
                     message = await self.save_message(content)
-                    
+
                     if message:
-                        print(f"📤 Broadcasting message to room group: {self.room_group_name}")
                         # Send message to room group
                         await self.channel_layer.group_send(
                             self.room_group_name,
@@ -83,13 +70,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                                 }
                             }
                         )
-                        
+
                         # Send chat notification to other participants
                         await self.send_chat_notification(message)
                         
             elif action == 'typing':
                 is_typing = text_data_json.get('is_typing', False)
-                print(f"⌨️ Typing indicator: {is_typing} from user {self.scope['user'].username}")
                 # Send typing indicator to room group
                 await self.channel_layer.group_send(
                     self.room_group_name,
@@ -107,7 +93,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     await self.mark_message_as_read(message_id)
                     
         except json.JSONDecodeError:
-            print("❌ Invalid JSON received")
             await self.send(text_data=json.dumps({
                 'error': 'Invalid JSON format'
             }))
@@ -117,7 +102,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Receive chat message from room group
         """
         message = event['message']
-        print(f"📤 Sending message to WebSocket client: {message['content']}")
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
@@ -146,10 +130,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             conversation = Conversation.objects.get(id=self.conversation_id)
             is_participant = conversation.participants.filter(id=self.scope["user"].id).exists()
-            print(f"🔍 Participant check for user {self.scope['user'].username}: {is_participant}")
             return is_participant
         except Conversation.DoesNotExist:
-            print(f"❌ Conversation {self.conversation_id} does not exist")
             return False
 
     @database_sync_to_async
@@ -164,8 +146,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 sender=self.scope["user"],
                 content=content
             )
-            
-            print(f"💾 Message saved to database: ID {message.id}")
             
             # Construct absolute URL for profile picture
             profile_picture_url = None
@@ -189,7 +169,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'is_read': message.is_read
             }
         except Conversation.DoesNotExist:
-            print(f"❌ Conversation {self.conversation_id} does not exist when saving message")
             return None
 
     @database_sync_to_async
@@ -231,7 +210,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     }
                 }
             )
-            print(f"📬 Sent chat notification to user {participant_id}")
 
     @database_sync_to_async
     def get_other_participants(self):

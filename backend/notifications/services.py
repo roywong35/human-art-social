@@ -21,7 +21,6 @@ def create_notification(sender, recipient, notification_type, post=None, comment
             post=post,
             comment=comment
         )
-        print(f"🔔 Notification created: {notification.id}")
     except Exception as e:
         print(f"❌ Error creating notification in database: {str(e)}")
         import traceback
@@ -160,7 +159,7 @@ def create_donation_notification(sender, post, donation):
             post=post,
             content_object=donation  # Use content_object for donation
         )
-        print(f"🔔 Donation notification created: {notification.id}")
+
         
         # Prepare notification data for WebSocket
         notification_data = {
@@ -237,7 +236,7 @@ def create_report_received_notification(reporter, post):
             notification_type='report_received',
             post=post
         )
-        print(f"🔔 Report submitted notification created: {notification.id}")
+
         
         # Prepare notification data for WebSocket
         notification_data = {
@@ -323,7 +322,7 @@ def update_existing_notification(notification):
     notification.action_count += 1
     notification.save(update_fields=['action_timestamp', 'action_count'])
     
-    print(f"🔔 Updated existing notification: {notification.id} (count: {notification.action_count})")
+
     return notification
 
 def create_deduplicated_notification(sender, recipient, notification_type, post=None, comment=None):

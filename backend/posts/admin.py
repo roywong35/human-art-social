@@ -173,7 +173,7 @@ class PostAdmin(admin.ModelAdmin):
                 # Send notification to the post author
                 try:
                     create_art_verified_notification(post)
-                    print(f"🎉 Art verification notification sent to {post.author.username} for post {post.id}")
+
                 except Exception as e:
                     print(f"❌ Failed to send art verification notification: {str(e)}")
                 
@@ -443,30 +443,26 @@ class PostAppealAdmin(admin.ModelAdmin):
         for appeal in queryset.filter(status='pending'):
             try:
                 with transaction.atomic():
-                    print(f"🔔 [ADMIN] Processing appeal {appeal.id} for post {appeal.post.id} by {appeal.author.username}")
-                    
                     # Update appeal status
                     appeal.status = 'approved'
                     appeal.reviewed_by = request.user
                     appeal.reviewed_at = timezone.now()
                     appeal.save()
-                    print(f"🔔 [ADMIN] Appeal {appeal.id} marked as approved")
-                    
+
                     # Restore post to timeline by resolving all pending reports for this post
                     pending_reports = ContentReport.objects.filter(reported_post=appeal.post, status='pending')
-                    print(f"🔔 [ADMIN] Found {pending_reports.count()} pending reports for post {appeal.post.id}")
-                    
+
                     for report in pending_reports:
                         report.status = 'resolved'
                         report.resolved_at = timezone.now()
                         report.resolved_by = request.user
                         report.save()
-                        print(f"🔔 [ADMIN] Resolved report {report.id}")
+
                     
                     # Send notification to the appeal author
                     try:
                         result = create_appeal_approved_notification(appeal)
-                        print(f"🔔 [ADMIN] Appeal approved notification sent to {appeal.author.username}, result: {result}")
+
                     except Exception as e:
                         print(f"❌ [ADMIN] Error sending appeal approved notification: {str(e)}")
                         import traceback
@@ -474,7 +470,7 @@ class PostAppealAdmin(admin.ModelAdmin):
                         # Don't fail the admin action if notification fails
                     
                     updated += 1
-                    print(f"🔔 [ADMIN] Successfully processed appeal {appeal.id}")
+
                     
             except Exception as e:
                 print(f"❌ [ADMIN] Error processing appeal {appeal.id}: {str(e)}")
@@ -492,19 +488,15 @@ class PostAppealAdmin(admin.ModelAdmin):
         for appeal in queryset.filter(status='pending'):
             try:
                 with transaction.atomic():
-                    print(f"🔔 [ADMIN] Processing appeal rejection {appeal.id} for post {appeal.post.id} by {appeal.author.username}")
-                    
                     # Update appeal status
                     appeal.status = 'rejected'
                     appeal.reviewed_by = request.user
                     appeal.reviewed_at = timezone.now()
                     appeal.save()
-                    print(f"🔔 [ADMIN] Appeal {appeal.id} marked as rejected")
-                    
+
                     # Send notification to the appeal author
                     try:
                         result = create_appeal_rejected_notification(appeal)
-                        print(f"🔔 [ADMIN] Appeal rejected notification sent to {appeal.author.username}, result: {result}")
                     except Exception as e:
                         print(f"❌ [ADMIN] Error sending appeal rejected notification: {str(e)}")
                         import traceback
@@ -512,7 +504,7 @@ class PostAppealAdmin(admin.ModelAdmin):
                         # Don't fail the admin action if notification fails
                     
                     updated += 1
-                    print(f"🔔 [ADMIN] Successfully processed appeal rejection {appeal.id}")
+
                     
             except Exception as e:
                 print(f"❌ [ADMIN] Error processing appeal rejection {appeal.id}: {str(e)}")

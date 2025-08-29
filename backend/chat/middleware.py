@@ -22,7 +22,7 @@ def get_user_from_jwt(token_string):
             return AnonymousUser()
         
         user = User.objects.get(id=user_id)
-        print(f"✅ JWT authentication successful for user: {user.username}")
+
         return user
         
     except InvalidToken as e:
@@ -52,13 +52,13 @@ class TokenAuthMiddleware(BaseMiddleware):
             token_string = query_params.get("token", [None])[0]
             
             if token_string:
-                print(f"🔐 Attempting to authenticate WebSocket with token: {token_string[:20]}...")
+
                 scope["user"] = await get_user_from_jwt(token_string)
                 
                 if scope["user"].is_anonymous:
                     print(f"❌ WebSocket authentication failed - user is anonymous")
                 else:
-                    print(f"✅ WebSocket authenticated user: {scope['user'].username} (ID: {scope['user'].id})")
+
             else:
                 scope["user"] = AnonymousUser()
                 print("❌ No token provided for WebSocket connection")

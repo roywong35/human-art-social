@@ -21,7 +21,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     self.channel_name
                 )
                 await self.accept()
-                print(f"✅ WebSocket connected: {self.scope['user'].username}")
             except Exception as e:
                 print(f"❌ Error during connection: {str(e)}")
                 import traceback
@@ -35,7 +34,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 self.channel_name
             )
-            print(f"👋 WebSocket disconnected: {self.scope['user'].username}")
+
 
     async def receive(self, text_data):
         """

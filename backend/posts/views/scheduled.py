@@ -45,7 +45,7 @@ class ScheduledPostViewSet(viewsets.ModelViewSet):
         """
         # Create the scheduled post
         scheduled_post = serializer.save(author=self.request.user)
-        print(f"⏰ Scheduled post created: {scheduled_post.id}")
+
 
         # Handle multiple images
         for key in self.request.FILES:
@@ -58,7 +58,7 @@ class ScheduledPostViewSet(viewsets.ModelViewSet):
                     order=order
                 )
 
-        print(f"⏰ Scheduled post {scheduled_post.id} created with {scheduled_post.images.count()} images")
+
 
     @transaction.atomic
     def perform_update(self, serializer):

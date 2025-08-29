@@ -158,7 +158,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
         )
         
         # Send global chat notifications to other participants
-        print(f"📬 Sending global chat notifications for conversation {conversation.id}")
+
         other_participants = conversation.participants.exclude(id=request.user.id)
         
         for participant in other_participants:
@@ -179,7 +179,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
                     }
                 }
             )
-            print(f"📬 Sent global chat notification to user {participant.id}")
+
         
         serializer = MessageSerializer(message, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_201_CREATED)

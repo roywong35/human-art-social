@@ -359,16 +359,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   navigateToHome(): void {
-    console.log('🏠 Sidebar: navigateToHome called, current URL:', this.router.url);
+
     
     // If already on home page, check if we need to refresh or just scroll to top
     if (this.router.url === '/home') {
-      console.log('🏠 Sidebar: Already on home page, checking if refresh needed...');
       this.scrollToTop();
       // Only refresh if there are new posts detected
       this.checkAndRefreshIfNeeded();
     } else {
-      console.log('🏠 Sidebar: Navigating to home from different page, refreshing...');
       // Navigate to home and then refresh posts (always refresh when coming from different page)
       this.router.navigate(['/home'])
         .then(() => {
@@ -381,33 +379,25 @@ export class SidebarComponent implements OnInit, OnDestroy {
    * Check if there are new posts and refresh only if needed
    */
   private checkAndRefreshIfNeeded(): void {
-    console.log('🔍 Sidebar: Checking if refresh is needed...');
-    
     // Get the current latest post ID from the post service
     const currentPosts = this.postService.getCurrentPosts();
-    console.log('🔍 Sidebar: Current posts count:', currentPosts?.length);
-    
+
     if (currentPosts && currentPosts.length > 0) {
       const latestPost = currentPosts[0];
       // Use effective publication time: scheduled_time if exists, otherwise created_at
       const currentLatestTimestamp = latestPost.scheduled_time || latestPost.created_at;
-      console.log('🔍 Sidebar: Current latest post timestamp:', currentLatestTimestamp);
 
       // Get the current active tab from localStorage (same as home component)
       const activeTab = localStorage.getItem('activeTab') || 'for-you';
-      console.log('🔍 Sidebar: Current active tab:', activeTab);
 
       // Check for new posts without refreshing the entire feed
       this.postService.checkNewPosts(currentLatestTimestamp, activeTab).subscribe({
         next: (response: any) => {
-          console.log('🔍 Sidebar: checkNewPosts response:', response);
           if (response.has_new_posts) {
-            console.log('✅ Sidebar: New posts detected! Refreshing feed...');
             // There are new posts - refresh the feed
             this.postService.loadPosts(true, activeTab);
             this.refreshHomeComponent();
           } else {
-            console.log('ℹ️ Sidebar: No new posts, staying at top without refresh');
           }
         },
         error: (error) => {
@@ -416,7 +406,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       });
     } else {
-      console.log('⚠️ Sidebar: No current posts found, cannot check for new posts');
     }
   }
 

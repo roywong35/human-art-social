@@ -159,7 +159,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.isInitialLoading = false;
             
             // Initialize swipe gestures after posts are loaded and container exists (only once)
-            console.log('🏠 Home: Posts loaded, now initializing swipe gestures...');
+
             setTimeout(() => {
               this.initializeSwipeGestures();
             }, 100); // Small delay to ensure DOM is fully rendered
@@ -167,7 +167,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           
           // Clear refreshing state if this was a pull-to-refresh
           if (this.isRefreshing) {
-            console.log('🔄 Home: Pull-to-refresh completed, clearing refresh state');
+
             this.isRefreshing = false;
             this.cd.markForCheck();
           }
@@ -286,7 +286,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    console.log('🏠 Home: ngOnInit called');
+
     
     // Get initial tab state from URL params or localStorage
     const tabFromParams = this.route.snapshot.queryParams['tab'];
@@ -322,7 +322,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }, 5000); // Start after 5 seconds to avoid immediate check
 
     // Don't initialize swipe gestures here - wait for posts to load
-    console.log('🏠 Home: Skipping swipe gesture initialization in ngOnInit (posts not loaded yet)');
+
   }
 
   onPostUpdated(updatedPost: Post): void {
@@ -653,7 +653,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       container.removeEventListener('touchstart', this.handleTouchStart);
       container.removeEventListener('touchmove', this.handleTouchMove);
       container.removeEventListener('touchend', this.handleTouchEnd);
-      console.log('🔄 Home: Touch event listeners cleaned up');
     }
   }
 
@@ -661,59 +660,42 @@ export class HomeComponent implements OnInit, OnDestroy {
    * Initialize Hammer.js swipe gestures for mobile
    */
   private initializeSwipeGestures(): void {
-    console.log('🔄 Home: Initializing swipe gestures...');
-    console.log('🔄 Home: isMobile =', this.isMobile);
-    console.log('🔄 Home: Hammer available =', typeof Hammer !== 'undefined');
-    console.log('🔄 Home: Hammer object =', Hammer);
-    
     // Only initialize on mobile devices
     if (!this.isMobile) {
-      console.log('🔄 Home: Not mobile, skipping gesture initialization');
       return;
     }
 
     // Get the main container element
     const container = document.querySelector('.posts-container') as HTMLElement;
-    console.log('🔄 Home: Container element =', container);
-    
+
     if (!container) {
-      console.log('🔄 Home: No container found, skipping gesture initialization');
       return;
     }
 
     try {
       // Create Hammer manager
       this.hammerManager = new Hammer(container);
-      console.log('🔄 Home: Hammer manager created successfully');
       
       // Configure for horizontal swipes only (don't interfere with vertical scrolling)
       const swipeRecognizer = this.hammerManager.get('swipe');
       if (swipeRecognizer) {
         // Only detect horizontal swipes, not vertical ones
         swipeRecognizer.set({ direction: Hammer.DIRECTION_HORIZONTAL });
-        console.log('🔄 Home: Horizontal swipe recognizer configured');
-      } else {
-        console.log('🔄 Home: No swipe recognizer found');
       }
-      
+
       // Handle horizontal swipes for tab switching and sidebar
       this.hammerManager.on('swipeleft', (event) => {
-        console.log('🔄 Home: Swipe left detected!', event);
         this.handleSwipeLeft();
       });
-      
+
       this.hammerManager.on('swiperight', (event) => {
-        console.log('🔄 Home: Swipe right detected!', event);
         this.handleSwipeRight();
       });
       
       // Remove vertical swipe detection - it was interfering with scrolling
-      console.log('🔄 Home: Vertical swipe detection disabled to allow normal scrolling');
-      
+
       // Instead, use a more specific approach for pull-to-refresh
       this.setupPullToRefresh();
-      
-      console.log('🔄 Home: All gesture handlers registered successfully');
     } catch (error) {
       console.error('🔄 Home: Error initializing Hammer.js:', error);
     }
@@ -723,22 +705,17 @@ export class HomeComponent implements OnInit, OnDestroy {
    * Handle left swipe - switch to next tab or close sidebar
    */
   private handleSwipeLeft(): void {
-    console.log('🔄 Home: handleSwipeLeft called, activeTab =', this.activeTab);
-    
     // First check if sidebar is open - if so, close it regardless of tab
     if (this.sidebarService.isSidebarOpen()) {
-      console.log('🔄 Home: Sidebar is open, closing it via swipe left');
       this.sidebarService.closeSidebar();
       return;
     }
-    
+
     if (this.activeTab === 'for-you') {
       // On leftmost tab (For You), swipe left should switch to Human Art (right tab)
-      console.log('🔄 Home: Switching from for-you to human-drawing tab');
       this.setActiveTab('human-drawing');
     } else if (this.activeTab === 'human-drawing') {
       // On rightmost tab (Human Art), swipe left should switch to For You (left tab)
-      console.log('🔄 Home: Switching from human-drawing to for-you tab');
       this.setActiveTab('for-you');
     }
   }
@@ -747,15 +724,11 @@ export class HomeComponent implements OnInit, OnDestroy {
    * Handle right swipe - switch to previous tab or open sidebar
    */
   private handleSwipeRight(): void {
-    console.log('🔄 Home: handleSwipeRight called, activeTab =', this.activeTab);
-    
     if (this.activeTab === 'for-you') {
       // On leftmost tab (For You), swipe right opens sidebar
-      console.log('🔄 Home: Opening sidebar via swipe right');
       this.sidebarService.openSidebar();
     } else if (this.activeTab === 'human-drawing') {
       // On rightmost tab (Human Art), swipe right should switch to For You (left tab)
-      console.log('🔄 Home: Switching from human-drawing to for-you tab');
       this.setActiveTab('for-you');
     }
   }
@@ -765,11 +738,9 @@ export class HomeComponent implements OnInit, OnDestroy {
    */
   private pullToRefresh(): void {
     if (this.isRefreshing) {
-      console.log('🔄 Home: Already refreshing, ignoring duplicate request');
       return; // Prevent multiple refreshes
     }
 
-    console.log('🔄 Home: Pull to refresh started');
     this.isRefreshing = true;
     this.cd.markForCheck();
 
@@ -826,16 +797,12 @@ export class HomeComponent implements OnInit, OnDestroy {
               .slice(0, 3);
             
             this.newPostsAuthors = recentAuthors;
-            console.log('🏠 Home: New posts detected, authors:', recentAuthors);
           } else {
             // Fallback if no posts available
             this.newPostsAuthors = [
               { username: 'New posts', avatar: undefined }
             ];
-            console.log('🏠 Home: New posts detected, using fallback authors');
           }
-          
-          console.log('🏠 Home: Setting hasNewPosts to true, count:', response.new_posts_count);
           this.cd.markForCheck();
         }
       },
@@ -878,23 +845,19 @@ export class HomeComponent implements OnInit, OnDestroy {
    * Called when sidebar/home button is clicked
    */
   private refreshHomePosts(): void {
-    console.log('🏠 Home Component: refreshHomePosts called!');
-    
     // This method is called when sidebar/mobile header detects new posts and refreshes
     // Since the posts have already been refreshed, we need to reset the new posts state
-    
+
     // Reset the new posts state since posts are already refreshed
     this.hasNewPosts = false;
     this.newPostsCount = 0;
     this.newPostsAuthors = [];
-    
+
     // Update the latest post timestamp to the current posts
     this.updateLatestPostTimestamp();
-    
+
     // Force change detection to hide the "Show new posts" button
     this.cd.markForCheck();
-    
-    console.log('🏠 Home Component: New posts state reset, button hidden');
   }
 
   /**
@@ -911,7 +874,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       // Only detect at the very top of the page
       if (window.scrollY === 0) {
         startY = touchEvent.touches[0].clientY;
-        console.log('🔄 Home: Touch start at top, startY =', startY);
       }
     };
     
@@ -924,7 +886,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         
         // If pulling down more than threshold, trigger refresh
         if (deltaY > threshold && !this.isRefreshing) {
-          console.log('🔄 Home: Pull-to-refresh threshold reached, deltaY =', deltaY);
           this.pullToRefresh();
           startY = 0; // Reset to prevent multiple triggers
         }
@@ -941,7 +902,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       container.addEventListener('touchstart', this.handleTouchStart, { passive: true });
       container.addEventListener('touchmove', this.handleTouchMove, { passive: true });
       container.addEventListener('touchend', this.handleTouchEnd, { passive: true });
-      console.log('🔄 Home: Pull-to-refresh touch events added');
     }
   }
 } 

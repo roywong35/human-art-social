@@ -48,7 +48,7 @@ class DraftViewSet(viewsets.ModelViewSet):
         """
         # Create the draft
         draft = serializer.save(author=self.request.user)
-        print(f"📝 Draft created: {draft.id}")
+
 
         # Handle multiple images
         for key in self.request.FILES:
@@ -61,7 +61,7 @@ class DraftViewSet(viewsets.ModelViewSet):
                     order=order
                 )
 
-        print(f"📝 Draft {draft.id} created with {draft.images.count()} images")
+
 
     @transaction.atomic  
     def perform_update(self, serializer):
