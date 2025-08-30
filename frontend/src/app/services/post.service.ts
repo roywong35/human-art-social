@@ -466,12 +466,15 @@ export class PostService {
     );
   }
 
-  searchPosts(query: string): Observable<Post[]> {
+  searchPosts(query: string, page: number = 1): Observable<{ results: Post[], count: number, next: string | null, previous: string | null }> {
     // For hashtag searches, we'll search in the content field
-    return this.http.get<Post[]>(`${this.baseUrl}/posts/search/`, {
-      params: { q: query }
+    return this.http.get<{ results: Post[], count: number, next: string | null, previous: string | null }>(`${this.baseUrl}/posts/search/`, {
+      params: { q: query, page: page.toString() }
     }).pipe(
-      map(posts => posts.map(post => this.addImageUrls(post)))
+      map(response => ({
+        ...response,
+        results: response.results.map(post => this.addImageUrls(post))
+      }))
     );
   }
 

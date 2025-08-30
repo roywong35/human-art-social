@@ -292,9 +292,9 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
     this.isSearching = true;
     this.userService.searchUsers(this.searchQuery).subscribe({
-      next: (users) => {
+      next: (response) => {
         // Filter out current user
-        this.searchResults = users.filter(user => user.id !== this.currentUser?.id);
+        this.searchResults = response.results.filter((user: User) => user.id !== this.currentUser?.id);
         this.isSearching = false;
       },
       error: (error) => {

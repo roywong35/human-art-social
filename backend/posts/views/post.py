@@ -803,7 +803,7 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'])
     def search(self, request):
         """
-        Search posts by content, hashtags, or user
+        Search posts by content, hashtags, or user with pagination
         """
         query = request.query_params.get('q', '').strip()
         if not query:
@@ -868,6 +868,14 @@ class PostViewSet(viewsets.ModelViewSet):
         if posts_with_invalid_chains:
             posts = posts.exclude(id__in=posts_with_invalid_chains)
         
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(posts, request)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        # Fallback for when pagination is not applied
         serializer = self.get_serializer(posts, many=True)
         return Response(serializer.data)
 

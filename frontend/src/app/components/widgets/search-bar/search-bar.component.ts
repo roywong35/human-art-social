@@ -167,8 +167,8 @@ export class SearchBarComponent implements OnInit, OnDestroy, OnChanges {
       // User search (remove @ if present)
       const searchQuery = query.startsWith('@') ? query.substring(1) : query;
       this.userService.searchUsers(searchQuery).subscribe({
-        next: (users: User[]) => {
-          this.results = users.map(user => ({
+        next: (response) => {
+          this.results = response.results.map((user: User) => ({
             type: 'user',
             data: user
           }));

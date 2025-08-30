@@ -170,6 +170,19 @@
                       class="block"></app-post>
           </div>
         </div>
+        
+        <!-- Load More Posts Button -->
+        <div *ngIf="hasMorePosts && !isLoadingMorePosts" class="flex justify-center py-4 bg-white dark:bg-black">
+          <button (click)="loadMorePosts()" 
+                  class="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors">
+            Load More Posts
+          </button>
+        </div>
+        
+        <!-- Loading More Posts Indicator -->
+        <div *ngIf="isLoadingMorePosts" class="flex justify-center py-4 bg-white dark:bg-black">
+          <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+        </div>
       </div>
     </div>
 
@@ -220,6 +233,19 @@
               <span *ngIf="!user.is_following">Follow</span>
             </span>
           </button>
+        </div>
+        
+        <!-- Load More Users Button -->
+        <div *ngIf="hasMoreUsers && !isLoadingMoreUsers" class="flex justify-center py-4 bg-white dark:bg-black">
+          <button (click)="loadMoreUsers()" 
+                  class="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors">
+            Load More Users
+          </button>
+        </div>
+        
+        <!-- Loading More Users Indicator -->
+        <div *ngIf="isLoadingMoreUsers" class="flex justify-center py-4 bg-white dark:bg-black">
+          <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
         </div>
       </div>
     </div>

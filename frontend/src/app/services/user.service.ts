@@ -89,11 +89,14 @@ export class UserService {
     );
   }
 
-  searchUsers(query: string): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/search/`, {
-      params: { q: query }
+  searchUsers(query: string, page: number = 1): Observable<PaginatedResponse<User>> {
+    return this.http.get<PaginatedResponse<User>>(`${this.apiUrl}/search/`, {
+      params: { q: query, page: page.toString() }
     }).pipe(
-      map(users => users.map(user => this.addImageUrls(user)!))
+      map(response => ({
+        ...response,
+        results: response.results.map(user => this.addImageUrls(user)!)
+      }))
     );
   }
 

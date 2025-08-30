@@ -43,6 +43,14 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoadingPosts: boolean = false;
   isLoadingUsers: boolean = false;
 
+  // Pagination properties
+  currentPostsPage: number = 1;
+  currentUsersPage: number = 1;
+  hasMorePosts: boolean = true;
+  hasMoreUsers: boolean = true;
+  isLoadingMorePosts: boolean = false;
+  isLoadingMoreUsers: boolean = false;
+
   // Current user tracking
   currentUser: User | null = null;
 
@@ -406,6 +414,13 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.isRefreshing) {
       this.posts = [];
       this.users = [];
+      // Reset pagination for new search
+      this.currentPostsPage = 1;
+      this.currentUsersPage = 1;
+      this.hasMorePosts = true;
+      this.hasMoreUsers = true;
+      this.isLoadingMorePosts = false;
+      this.isLoadingMoreUsers = false;
     }
     
     this.hasSearched = true;
@@ -431,13 +446,19 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       
       forkJoin({
-        users: this.userService.searchUsers(userSearchTerm),
-        posts: this.postService.searchPosts(postSearchTerm)
+        users: this.userService.searchUsers(userSearchTerm, 1),
+        posts: this.postService.searchPosts(postSearchTerm, 1)
       }).subscribe({
         next: (results) => {
-          this.users = results.users;
+          this.users = results.users.results;
           // Filter out reposted posts from search results
-          this.posts = results.posts.filter(post => post.post_type !== 'repost');
+          this.posts = results.posts.results.filter((post: Post) => post.post_type !== 'repost');
+          
+          // Update pagination state
+          this.currentUsersPage = 1;
+          this.currentPostsPage = 1;
+          this.hasMoreUsers = !!results.users.next;
+          this.hasMorePosts = !!results.posts.next;
           
           this.hasSearched = true;
           
@@ -479,12 +500,21 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     // Only clear results on initial search, not on refresh
     if (!this.isRefreshing) {
       this.posts = [];
+      // Reset pagination for new search
+      this.currentPostsPage = 1;
+      this.hasMorePosts = true;
+      this.isLoadingMorePosts = false;
     }
     
-    this.postService.searchPosts(query).subscribe({
-      next: (posts) => {
+    this.postService.searchPosts(query, 1).subscribe({
+      next: (response) => {
         // Filter out reposted posts from search results
-        this.posts = posts.filter(post => post.post_type !== 'repost');
+        this.posts = response.results.filter((post: Post) => post.post_type !== 'repost');
+        
+        // Update pagination state
+        this.currentPostsPage = 1;
+        this.hasMorePosts = !!response.next;
+        
         this.hasSearched = true;
         this.isLoading = false;
         this.isLoadingPosts = false;
@@ -716,5 +746,88 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   private openSidebar(): void {
     // Open the mobile sidebar via the service
     this.sidebarService.openSidebar();
+  }
+
+  /**
+   * Load more posts for search results
+   */
+  loadMorePosts(): void {
+    if (!this.hasMorePosts || this.isLoadingMorePosts || !this.searchQuery) {
+      return;
+    }
+
+    this.isLoadingMorePosts = true;
+    this.currentPostsPage++;
+
+    this.postService.searchPosts(this.searchQuery, this.currentPostsPage).subscribe({
+      next: (response) => {
+        // Filter out reposted posts and append to existing results
+        const newPosts = response.results.filter((post: Post) => post.post_type !== 'repost');
+        this.posts = [...this.posts, ...newPosts];
+        
+        // Update pagination state
+        this.hasMorePosts = !!response.next;
+        this.isLoadingMorePosts = false;
+        
+        this.cd.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading more posts:', error);
+        this.currentPostsPage--; // Revert page number on error
+        this.isLoadingMorePosts = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * Load more users for search results
+   */
+  loadMoreUsers(): void {
+    if (!this.hasMoreUsers || this.isLoadingMoreUsers || !this.searchQuery) {
+      return;
+    }
+
+    this.isLoadingMoreUsers = true;
+    this.currentUsersPage++;
+
+    this.userService.searchUsers(this.searchQuery, this.currentUsersPage).subscribe({
+      next: (response) => {
+        // Append new users to existing results
+        this.users = [...this.users, ...response.results];
+        
+        // Update pagination state
+        this.hasMoreUsers = !!response.next;
+        this.isLoadingMoreUsers = false;
+        
+        this.cd.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading more users:', error);
+        this.currentUsersPage--; // Revert page number on error
+        this.isLoadingMoreUsers = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * Check if user has scrolled to bottom to trigger load more
+   */
+  @HostListener('window:scroll', ['$event'])
+  onScroll(): void {
+    if (this.hasSearched && this.searchQuery) {
+      const scrollPosition = window.scrollY + window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // Load more when user is near bottom (within 100px)
+      if (documentHeight - scrollPosition < 100) {
+        if (this.activeTab === 'top' && this.hasMorePosts && !this.isLoadingMorePosts) {
+          this.loadMorePosts();
+        } else if (this.activeTab === 'people' && this.hasMoreUsers && !this.isLoadingMoreUsers) {
+          this.loadMoreUsers();
+        }
+      }
+    }
   }
 } 

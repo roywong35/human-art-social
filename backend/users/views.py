@@ -243,6 +243,14 @@ class UserViewSet(viewsets.ModelViewSet):
         # Sort by relevance score (highest first)
         user_list.sort(key=calculate_relevance_score, reverse=True)
         
+        # Apply pagination
+        paginator = UserPagination()
+        page = paginator.paginate_queryset(user_list, request)
+        if page is not None:
+            serializer = UserProfileSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+        
+        # Fallback for when pagination is not applied
         serializer = UserProfileSerializer(user_list, many=True, context={'request': request})
         return Response(serializer.data)
 
