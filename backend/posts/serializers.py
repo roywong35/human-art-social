@@ -526,7 +526,7 @@ class UserPostSerializer(serializers.ModelSerializer):
                  'post_type', 'referenced_post', 'images',
                  'conversation_chain', 'is_human_drawing', 'is_verified',
                  'parent_post_author_handle', 'parent_post_author_username',
-                 'is_removed', 'is_deleted', 'is_conversation_chain_valid', 
+                 'scheduled_time', 'is_removed', 'is_deleted', 'is_conversation_chain_valid', 
                  'conversation_chain_invalid_reason']
 
     def get_likes_count(self, obj):

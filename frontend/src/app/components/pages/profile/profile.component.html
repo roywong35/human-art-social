@@ -106,8 +106,6 @@
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Posts
-      <!-- Static underline for larger screens -->
-      <div *ngIf="activeTab === 'posts'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-11 h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
     </button>
     <button 
       [class.text-blue-500]="activeTab === 'replies'"
@@ -116,8 +114,6 @@
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Replies
-      <!-- Static underline for larger screens -->
-      <div *ngIf="activeTab === 'replies'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[58px] h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
     </button>
     <button 
       [class.text-blue-500]="activeTab === 'media'"
@@ -126,8 +122,6 @@
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Media
-      <!-- Static underline for larger screens -->
-      <div *ngIf="activeTab === 'media'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-12 h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
     </button>
     <button 
       [class.text-blue-500]="activeTab === 'human-art'"
@@ -136,8 +130,6 @@
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Human Art
-      <!-- Static underline for larger screens -->
-      <div *ngIf="activeTab === 'human-art'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[86px] h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
     </button>
     <button 
       [class.text-blue-500]="activeTab === 'likes'"
@@ -146,12 +138,10 @@
     >
       <div class="absolute inset-x-0 -bottom-[1px] h-1 bg-gray-100 dark:bg-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       Likes
-      <!-- Static underline for larger screens -->
-      <div *ngIf="activeTab === 'likes'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-11 h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
     </button>
     
     <!-- Animated Underline (Mobile only) -->
-    <div class="absolute bottom-0 h-1 bg-blue-500 rounded-full transition-all duration-300 ease-out max-[499px]:block min-[500px]:hidden"
+    <div class="absolute bottom-0 h-1 bg-blue-500 rounded-full transition-all duration-300 ease-out"
          [ngClass]="{
            'w-11': activeTab === 'posts' || activeTab === 'likes',
            'w-[58px]': activeTab === 'replies',

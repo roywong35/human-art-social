@@ -32,19 +32,15 @@
               [class.text-blue-500]="activeTab === 'top'"
               class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors dark:[color:var(--color-text)] relative">
         Top
-        <!-- Static underline for larger screens -->
-        <div *ngIf="activeTab === 'top'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-7 h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
       </button>
       <button (click)="switchTab('people')"
               [class.text-blue-500]="activeTab === 'people'"
               class="flex-1 py-4 text-center font-bold hover:bg-gray-100 dark:hover:[background-color:var(--color-border)] transition-colors dark:[color:var(--color-text)] relative">
         People
-        <!-- Static underline for larger screens -->
-        <div *ngIf="activeTab === 'people'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-[54px] h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
       </button>
       
       <!-- Animated Underline (Mobile only) -->
-      <div class="absolute bottom-0 h-1 bg-blue-500 rounded-full transition-all duration-300 ease-out max-[499px]:block min-[500px]:hidden"
+      <div class="absolute bottom-0 h-1 bg-blue-500 rounded-full transition-all duration-300 ease-out"
            [ngClass]="{
              'w-7': activeTab === 'top',
              'w-[54px]': activeTab === 'people'
