@@ -36,7 +36,7 @@
         "/api/users/search/**"
       ],
       "cacheConfig": {
-        "strategy": "cacheFirst",
+        "strategy": "freshness",
         "maxSize": 200,
         "maxAge": "1h",
         "timeout": "10s"
@@ -68,7 +68,7 @@
         "/api/posts/*/*/quote/**"
       ],
       "cacheConfig": {
-        "strategy": "networkOnly",
+        "strategy": "freshness",
         "maxSize": 0,
         "maxAge": "0s"
       }
