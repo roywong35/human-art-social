@@ -17,6 +17,7 @@ import { MobileHeaderComponent } from './components/layout/mobile-header/mobile-
 import { FloatingChatComponent } from './components/shared/floating-chat/floating-chat.component';
 import { UserPreviewModalComponent } from './components/shared/user-preview-modal/user-preview-modal.component';
 import { GlobalModalService } from './services/global-modal.service';
+import { OfflineIndicatorComponent } from './components/shared/offline-indicator/offline-indicator.component';
 
 @Component({
   selector: 'app-root',
@@ -32,7 +33,8 @@ import { GlobalModalService } from './services/global-modal.service';
     EmojiPickerComponent,
     MobileHeaderComponent,
     FloatingChatComponent,
-    UserPreviewModalComponent
+    UserPreviewModalComponent,
+    OfflineIndicatorComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

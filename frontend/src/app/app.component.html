@@ -1,4 +1,7 @@
 <div class="relative">
+  <!-- Offline Indicator -->
+  <app-offline-indicator></app-offline-indicator>
+  
   <!-- Global Overlay -->
   <div *ngIf="overlayService.showOverlay$ | async" 
        class="fixed inset-0 z-[99999]"

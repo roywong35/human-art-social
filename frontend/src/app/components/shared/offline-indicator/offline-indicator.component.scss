@@ -1,0 +1,33 @@
+.offline-banner {
+  background: #f59e0b;
+  color: white;
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 14px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.offline-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.offline-content i {
+  font-size: 16px;
+}
+
+.offline-content span {
+  font-weight: 500;
+}
+
+/* Dark mode support */
+:host-context(.dark) .offline-banner {
+  background: #d97706;
+}

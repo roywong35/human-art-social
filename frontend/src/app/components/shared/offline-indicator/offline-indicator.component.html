@@ -1,0 +1,7 @@
+<div *ngIf="offlineService.isOffline$ | async" 
+     class="offline-banner">
+  <div class="offline-content">
+    <i class="fas fa-wifi-slash"></i>
+    <span>You're offline. Viewing cached content.</span>
+  </div>
+</div>

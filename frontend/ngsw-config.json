@@ -29,6 +29,20 @@
   ],
   "dataGroups": [
     {
+      "name": "posts-cache",
+      "urls": [
+        "/api/posts/feed/**",
+        "/api/posts/search/**",
+        "/api/users/search/**"
+      ],
+      "cacheConfig": {
+        "strategy": "cacheFirst",
+        "maxSize": 200,
+        "maxAge": "1h",
+        "timeout": "10s"
+      }
+    },
+    {
       "name": "read-only-api",
       "urls": [
         "/api/posts/public/**",
