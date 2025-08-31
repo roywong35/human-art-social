@@ -42,9 +42,8 @@ import Hammer from 'hammerjs';
 export class HomeComponent implements OnInit, OnDestroy {
   @ViewChildren(PostComponent) postComponents!: QueryList<PostComponent>;
   
-  // Tab content caching system - separate arrays for each tab
-  private forYouPostsCache: Post[] = [];
-  private humanArtPostsCache: Post[] = [];
+  // Tab content caching system - now handled by PostService to prevent corruption
+  // Removed local cache arrays - using PostService.homeTabCache instead
   
   posts: Post[] = [];
   isInitialLoading = true;
@@ -92,33 +91,23 @@ export class HomeComponent implements OnInit, OnDestroy {
    * Check if a tab has cached content
    */
   private hasCachedContent(tab: 'for-you' | 'human-drawing'): boolean {
-    if (tab === 'for-you') {
-      return this.forYouPostsCache.length > 0;
-    } else {
-      return this.humanArtPostsCache.length > 0;
-    }
+    return this.postService.hasCachedHomeTabContent(tab);
   }
 
   /**
    * Get cached content for a tab
    */
   private getCachedContent(tab: 'for-you' | 'human-drawing'): Post[] {
-    if (tab === 'for-you') {
-      return this.forYouPostsCache;
-    } else {
-      return this.humanArtPostsCache;
-    }
+    const cached = this.postService.getCachedHomeTabPosts(tab);
+    return cached || [];
   }
 
   /**
    * Cache content for the current tab
    */
   private cacheCurrentTabContent(): void {
-    if (this.activeTab === 'for-you') {
-      this.forYouPostsCache = [...this.posts];
-    } else {
-      this.humanArtPostsCache = [...this.posts];
-    }
+    // Use PostService to cache the content (this prevents corruption)
+    this.postService.cacheHomeTabPosts(this.activeTab, this.posts);
   }
 
 

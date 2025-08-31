@@ -31,6 +31,39 @@ export class PostService {
   public getCurrentPosts(): Post[] {
     return this.posts.getValue();
   }
+
+  /**
+   * Cache posts for a specific home tab
+   */
+  public cacheHomeTabPosts(tab: 'for-you' | 'human-drawing', posts: Post[]): void {
+    this.homeTabCache.set(tab, {
+      posts: [...posts],
+      timestamp: Date.now()
+    });
+  }
+
+  /**
+   * Get cached posts for a specific home tab
+   */
+  public getCachedHomeTabPosts(tab: 'for-you' | 'human-drawing'): Post[] | null {
+    const cached = this.homeTabCache.get(tab);
+    return cached ? cached.posts : null;
+  }
+
+  /**
+   * Check if a home tab has cached content
+   */
+  public hasCachedHomeTabContent(tab: 'for-you' | 'human-drawing'): boolean {
+    const cached = this.homeTabCache.get(tab);
+    return Boolean(cached && cached.posts.length > 0);
+  }
+
+  /**
+   * Clear cache for a specific home tab
+   */
+  public clearHomeTabCache(tab: 'for-you' | 'human-drawing'): void {
+    this.homeTabCache.delete(tab);
+  }
   
   // Cache for different tabs and following preferences
   private postsCache = new Map<string, {
@@ -38,6 +71,12 @@ export class PostService {
     timestamp: number;
     hasMore: boolean;
     currentPage: number;
+  }>();
+
+  // Cache for home component tabs (separate from postsCache to prevent corruption)
+  private homeTabCache = new Map<'for-you' | 'human-drawing', {
+    posts: Post[];
+    timestamp: number;
   }>();
 
   // Cache for search results and trending content
@@ -278,6 +317,7 @@ export class PostService {
   clearAllCaches(): void {
     this.postsCache.clear();
     this.searchCache.clear();
+    this.homeTabCache.clear();
   }
 
   private getFeed(activeTab?: string): Observable<PaginatedResponse> {
