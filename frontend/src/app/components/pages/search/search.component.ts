@@ -94,8 +94,8 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     // Subscribe to follow status changes for real-time sync
     this.setupFollowStatusSync();
 
-    // Load trending hashtags and recommended users
-    this.loadTrending(true);
+    // Load trending hashtags and recommended users with caching
+    this.loadTrending(false); // Use cache if available
     this.loadRecommendedUsers();
 
     // Subscribe to route parameter changes to handle navigation to search page
@@ -166,6 +166,13 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       this.isLoadingTrending = true;
     }
     
+    // Check if we have cached trending data and don't need to force refresh
+    if (!forceRefresh && this.trendingTopics.length > 0) {
+      // Use cached data, no need to make API call
+      this.isLoadingTrending = false;
+      return;
+    }
+    
     // Add cache-busting parameter if forcing refresh
     const params = forceRefresh ? { _t: Date.now() } : {};
     
@@ -226,6 +233,13 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       this.isLoadingUsers = true;
     }
     
+    // Check if we have cached recommended users and don't need to refresh
+    if (this.recommendedUsers.length > 0) {
+      // Use cached data, no need to make API call
+      this.isLoadingUsers = false;
+      return;
+    }
+    
     this.userService.getRecommendedUsersPaginated(1).subscribe({
       next: (response) => {
         this.recommendedUsers = response.results;
@@ -246,6 +260,14 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }
     });
+  }
+
+  /**
+   * Force refresh trending content (used for pull-to-refresh)
+   */
+  forceRefreshTrending(): void {
+    this.loadTrending(true);
+    this.loadRecommendedUsers(); // This will also refresh users
   }
 
   goBack() {
@@ -447,7 +469,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       
       forkJoin({
         users: this.userService.searchUsers(userSearchTerm, 1),
-        posts: this.postService.searchPosts(postSearchTerm, 1)
+        posts: this.postService.searchPosts(postSearchTerm, 1, this.activeTab)
       }).subscribe({
         next: (results) => {
           this.users = results.users.results;
@@ -506,7 +528,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       this.isLoadingMorePosts = false;
     }
     
-    this.postService.searchPosts(query, 1).subscribe({
+    this.postService.searchPosts(query, 1, this.activeTab).subscribe({
       next: (response) => {
         // Filter out reposted posts from search results
         this.posts = response.results.filter((post: Post) => post.post_type !== 'repost');
@@ -733,9 +755,8 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isRefreshing = true;
     this.cd.markForCheck(); // Trigger change detection
     
-    // Refresh trending and recommended users
-    this.loadTrending();
-    this.loadRecommendedUsers();
+    // Force refresh trending and recommended users
+    this.forceRefreshTrending();
     
     // If there's an active search, refresh those results too
     if (this.hasSearched) {
@@ -759,7 +780,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoadingMorePosts = true;
     this.currentPostsPage++;
 
-    this.postService.searchPosts(this.searchQuery, this.currentPostsPage).subscribe({
+    this.postService.searchPosts(this.searchQuery, this.currentPostsPage, this.activeTab).subscribe({
       next: (response) => {
         // Filter out reposted posts and append to existing results
         const newPosts = response.results.filter((post: Post) => post.post_type !== 'repost');

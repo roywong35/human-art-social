@@ -32,6 +32,23 @@ export class PostService {
     return this.posts.getValue();
   }
   
+  // Cache for different tabs and following preferences
+  private postsCache = new Map<string, {
+    posts: Post[];
+    timestamp: number;
+    hasMore: boolean;
+    currentPage: number;
+  }>();
+
+  // Cache for search results and trending content
+  private searchCache = new Map<string, {
+    posts: Post[];
+    users: User[];
+    timestamp: number;
+    hasMore: boolean;
+    currentPage: number;
+  }>();
+  
   private currentPage = 1;
   private hasMore = true;
   private loading = false;
@@ -112,6 +129,17 @@ export class PostService {
   }
 
   loadPosts(refresh: boolean = false, activeTab?: string): void {
+    const cacheKey = this.getCacheKey(activeTab);
+    
+    // Check if we have valid cached data and don't need to refresh
+    if (!refresh && this.isCacheValid(cacheKey)) {
+      const cached = this.postsCache.get(cacheKey)!;
+      this.posts.next(cached.posts);
+      this.hasMore = cached.hasMore;
+      this.currentPage = cached.currentPage;
+      return; // Use cached data, no need to make HTTP request
+    }
+    
     // Always reset page number when loading posts initially
     this.currentPage = 1;
     this.hasMore = true;
@@ -144,6 +172,14 @@ export class PostService {
         // Always emit new posts array to force change detection
         const newPosts = [...response.results];
         this.posts.next(newPosts);
+        
+        // Cache the posts for this tab and following preference
+        this.postsCache.set(cacheKey, {
+          posts: newPosts,
+          timestamp: Date.now(),
+          hasMore: this.hasMore,
+          currentPage: this.currentPage
+        });
         
         // Only increment page number if there are more posts to load
         if (this.hasMore) {
@@ -180,6 +216,68 @@ export class PostService {
         }
       })
     ).subscribe();
+  }
+
+  /**
+   * Generate cache key for posts based on tab and following preference
+   */
+  private getCacheKey(activeTab?: string): string {
+    const tab = activeTab || localStorage.getItem('activeTab') || 'for-you';
+    const followingOnly = localStorage.getItem('following_only_preference') === 'true';
+    return `${tab}_${followingOnly}`;
+  }
+
+  /**
+   * Check if cached posts are still valid (less than 5 minutes old)
+   */
+  private isCacheValid(cacheKey: string): boolean {
+    const cached = this.postsCache.get(cacheKey);
+    if (!cached) return false;
+    
+    const cacheAge = Date.now() - cached.timestamp;
+    const maxAge = 5 * 60 * 1000; // 5 minutes
+    return cacheAge < maxAge;
+  }
+
+  /**
+   * Clear all cached posts (useful for logout, etc.)
+   */
+  clearPostsCache(): void {
+    this.postsCache.clear();
+  }
+
+  /**
+   * Generate cache key for search results
+   */
+  private getSearchCacheKey(query: string, activeTab: string): string {
+    return `search_${activeTab}_${query}`;
+  }
+
+  /**
+   * Check if search cache is still valid (less than 10 minutes old)
+   */
+  private isSearchCacheValid(cacheKey: string): boolean {
+    const cached = this.searchCache.get(cacheKey);
+    if (!cached) return false;
+    
+    const cacheAge = Date.now() - cached.timestamp;
+    const maxAge = 10 * 60 * 1000; // 10 minutes for search results
+    return cacheAge < maxAge;
+  }
+
+  /**
+   * Clear all search cache (useful for logout, etc.)
+   */
+  clearSearchCache(): void {
+    this.searchCache.clear();
+  }
+
+  /**
+   * Clear all caches (useful for logout, etc.)
+   */
+  clearAllCaches(): void {
+    this.postsCache.clear();
+    this.searchCache.clear();
   }
 
   private getFeed(activeTab?: string): Observable<PaginatedResponse> {
@@ -466,7 +564,65 @@ export class PostService {
     );
   }
 
-  searchPosts(query: string, page: number = 1): Observable<{ results: Post[], count: number, next: string | null, previous: string | null }> {
+  /**
+   * Get trending posts with caching
+   */
+  getTrendingPosts(activeTab: string = 'posts'): Observable<{ results: Post[], count: number, next: string | null, previous: string | null }> {
+    const cacheKey = this.getSearchCacheKey('trending', activeTab);
+    
+    // Check if we have valid cached trending data
+    if (this.isSearchCacheValid(cacheKey)) {
+      const cached = this.searchCache.get(cacheKey)!;
+      return of({
+        results: cached.posts,
+        count: cached.posts.length,
+        next: cached.hasMore ? 'next' : null,
+        previous: null
+      });
+    }
+    
+    // Get trending posts from the feed endpoint
+    const postType = activeTab === 'human-drawing' ? 'human_drawing' : 'all';
+    const url = `${this.baseUrl}/posts/feed/?page=1&post_type=${postType}&following_only=false`;
+    
+    return this.http.get<PaginatedResponse>(url).pipe(
+      map(response => ({
+        results: response.results,
+        count: response.count,
+        next: response.next,
+        previous: response.previous
+      })),
+      map(response => ({
+        ...response,
+        results: this.enrichAuthorsSync(response.results.map(post => this.addImageUrls(post)))
+      })),
+      tap(response => {
+        // Cache the trending posts
+        this.searchCache.set(cacheKey, {
+          posts: response.results,
+          users: [],
+          timestamp: Date.now(),
+          hasMore: !!response.next,
+          currentPage: 1
+        });
+      })
+    );
+  }
+
+  searchPosts(query: string, page: number = 1, activeTab: string = 'posts'): Observable<{ results: Post[], count: number, next: string | null, previous: string | null }> {
+    const cacheKey = this.getSearchCacheKey(query, activeTab);
+    
+    // Check if we have valid cached data for the first page
+    if (page === 1 && this.isSearchCacheValid(cacheKey)) {
+      const cached = this.searchCache.get(cacheKey)!;
+      return of({
+        results: cached.posts,
+        count: cached.posts.length,
+        next: cached.hasMore ? 'next' : null,
+        previous: null
+      });
+    }
+    
     // For hashtag searches, we'll search in the content field
     return this.http.get<{ results: Post[], count: number, next: string | null, previous: string | null }>(`${this.baseUrl}/posts/search/`, {
       params: { q: query, page: page.toString() }
@@ -474,7 +630,19 @@ export class PostService {
       map(response => ({
         ...response,
         results: response.results.map(post => this.addImageUrls(post))
-      }))
+      })),
+      tap(response => {
+        // Cache the first page results
+        if (page === 1) {
+          this.searchCache.set(cacheKey, {
+            posts: response.results,
+            users: [], // Posts search doesn't return users
+            timestamp: Date.now(),
+            hasMore: !!response.next,
+            currentPage: 1
+          });
+        }
+      })
     );
   }
 

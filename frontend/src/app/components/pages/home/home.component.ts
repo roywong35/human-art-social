@@ -270,7 +270,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   loadPosts(refresh: boolean = false): void {
     this.error = null;
     
-    // Always show loading state when loading posts
+    // Only show loading state when actually refreshing from server
     if (refresh) {
       this.isInitialLoading = true;
     }
@@ -281,7 +281,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.cd.markForCheck();
     }
     
-    // Just trigger the load - we're already subscribed to posts$ for updates
+    // Use smart loading - will use cache if available and not refreshing
+    this.postService.loadPosts(refresh, this.activeTab);
+  }
+
+  /**
+   * Force refresh posts from server (used for check new posts button)
+   */
+  forceRefreshPosts(): void {
     this.postService.loadPosts(true, this.activeTab);
   }
 
@@ -294,8 +301,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.activeTab = (tabFromParams || savedTab || 'for-you') as 'for-you' | 'human-drawing';
     localStorage.setItem('activeTab', this.activeTab);
     
-    // Initial load of posts
-    this.loadPosts(true);
+    // Initial load of posts - will use cache if available
+    this.loadPosts(false);
     
     // Subscribe to future tab changes
     this.subscriptions.add(
@@ -304,7 +311,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (this.activeTab !== newTab) {
           this.activeTab = newTab as 'for-you' | 'human-drawing';
           localStorage.setItem('activeTab', this.activeTab);
-          this.loadPosts(true);
+          // Use cache when switching tabs - only refresh if no cached data
+          this.loadPosts(false);
         }
       })
     );
@@ -819,8 +827,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.newPostsAuthors = [];
     this.cd.markForCheck();
 
-    // Refresh only the posts, not the entire component
-    this.loadPosts(true);
+    // Force refresh posts from server when user clicks "Show new posts"
+    this.forceRefreshPosts();
     
     // Wait for posts to load, then reset latest post ID and restart timer
     setTimeout(() => {
@@ -845,10 +853,10 @@ export class HomeComponent implements OnInit, OnDestroy {
    * Called when sidebar/home button is clicked
    */
   private refreshHomePosts(): void {
-    // This method is called when sidebar/mobile header detects new posts and refreshes
-    // Since the posts have already been refreshed, we need to reset the new posts state
-
-    // Reset the new posts state since posts are already refreshed
+    // Force refresh posts from server when home button is clicked
+    this.forceRefreshPosts();
+    
+    // Reset the new posts state
     this.hasNewPosts = false;
     this.newPostsCount = 0;
     this.newPostsAuthors = [];
