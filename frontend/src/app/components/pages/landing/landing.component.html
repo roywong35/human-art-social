@@ -93,8 +93,6 @@
                   (click)="setActiveTab('for-you')"
                 >
                   For You
-                  <!-- Static underline for larger screens -->
-                  <div *ngIf="activeTab === 'for-you'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-14 h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
                 </button>
                 <button 
                   [ngClass]="{
@@ -104,12 +102,10 @@
                   (click)="setActiveTab('human-drawing')"
                 >
                   Human Art
-                  <!-- Static underline for larger screens -->
-                  <div *ngIf="activeTab === 'human-drawing'" class="absolute bottom-0 rounded-full left-1/2 transform -translate-x-1/2 w-20 h-1 bg-blue-500 min-[500px]:block max-[499px]:hidden"></div>
                 </button>
                 
                 <!-- Animated underline for mobile only -->
-                <div class="absolute bottom-0 h-1 bg-blue-500 rounded-full transition-all duration-300 ease-out max-[499px]:block min-[500px]:hidden"
+                <div class="absolute bottom-0 h-1 bg-blue-500 rounded-full transition-all duration-300 ease-out"
                      [ngClass]="{
                        'w-14': activeTab === 'for-you',
                        'w-20': activeTab === 'human-drawing'
