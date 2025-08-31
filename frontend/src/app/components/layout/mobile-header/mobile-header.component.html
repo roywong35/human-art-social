@@ -59,8 +59,9 @@
     <!-- Navigation items -->
     <div class="flex-1 overflow-y-auto">
       <nav class="p-2">
-        <!-- Following/All Posts Toggle -->
-        <div class="w-full flex items-center justify-between px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                 <!-- Following/All Posts Toggle - Only visible on homepage -->
+         <div class="w-full flex items-center justify-between px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+              *ngIf="isHomepage">
           <div class="flex items-center gap-3">
             <i class="fas fa-user-friends text-xl w-6 flex justify-center text-black dark:text-white"></i>
             <span class="text-lg text-black dark:text-white">{{ isFollowingOnly ? 'Following' : 'All Posts' }}</span>

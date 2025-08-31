@@ -85,3 +85,27 @@
 .more-menu-overlay {
   z-index: 1000000 !important;
 }
+
+// Toggle animation styles
+.toggle-container {
+  will-change: transform, opacity, height;
+  transform: translateZ(0); // Hardware acceleration
+  overflow: hidden;
+}
+
+// Ensure proper layout flow for navigation items
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+nav > * {
+  flex-shrink: 0;
+}
+
+// Move elements below toggle up when toggle is hidden
+.toggle-container.hidden + * {
+  margin-top: -6px;
+  transition: margin-top 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}

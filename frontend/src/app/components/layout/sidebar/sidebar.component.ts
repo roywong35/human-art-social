@@ -1,6 +1,7 @@
 import { Component, OnInit, HostListener, ElementRef, Input, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
 import { RouterModule, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AuthService } from '../../../services/auth.service';
 import { NewArtPostModalComponent } from '../../features/posts/new-art-post-modal/new-art-post-modal';
 import { MatDialog } from '@angular/material/dialog';
@@ -25,7 +26,26 @@ import { Subscription } from 'rxjs';
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
   standalone: true,
-  imports: [CommonModule, RouterModule, OverlayModule, PortalModule]
+  imports: [CommonModule, RouterModule, OverlayModule, PortalModule],
+  animations: [
+    trigger('toggleAnimation', [
+      state('visible', style({
+        opacity: 1,
+        height: '*',
+        transform: 'translateY(0)',
+        overflow: 'hidden'
+      })),
+      state('hidden', style({
+        opacity: 0,
+        height: '0',
+        transform: 'translateY(-6px)',
+        overflow: 'hidden'
+      })),
+      transition('visible <=> hidden', [
+        animate('200ms cubic-bezier(0.4, 0.0, 0.2, 1)')
+      ])
+    ])
+  ]
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   @Input() isMobile = false;
@@ -34,6 +54,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   isHumanArtTab = false;
   isFollowingOnly = false;
   isTogglingFollowingOnly = false;
+  isHomepage = false;
   isRefreshing = false;
   isDarkMode = false;
   isPWAMode = false;
@@ -85,14 +106,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private chatService: ChatService,
     private homeRefreshService: HomeRefreshService
   ) {
-    // Subscribe to route changes to detect Human Art tab
+    // Subscribe to route changes to detect Human Art tab and homepage
     this.router.events.pipe(
       filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       // Check both URL and query params for human art tab
       this.route.queryParams.pipe(take(1)).subscribe(params => {
         this.isHumanArtTab = event.url.includes('human-art') || params['tab'] === 'human-drawing';
-
+        this.isHomepage = event.url === '/' || event.url.startsWith('/home');
       });
     });
   }
@@ -110,6 +131,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const darkMode = localStorage.getItem('darkMode');
     this.isDarkMode = darkMode === 'true';
     this.updateDarkMode(this.isDarkMode);
+    
+    // Set initial homepage status
+    this.isHomepage = this.router.url === '/' || this.router.url.startsWith('/home');
     
     // Add scroll listener for mobile bottom nav transparency
     if (this.isMobile) {

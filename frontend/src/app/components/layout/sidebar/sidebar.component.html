@@ -243,8 +243,10 @@
           </a>
         </li>
 
-        <!-- Following/All Posts Toggle - Hidden on smaller heights -->
-        <li class="secondary-item secondary-item-medium">
+        <!-- Following/All Posts Toggle - Hidden on smaller heights and only visible on homepage -->
+        <li class="secondary-item secondary-item-medium toggle-container" 
+            [@toggleAnimation]="isHomepage ? 'visible' : 'hidden'"
+            [class.hidden]="!isHomepage">
           <button (click)="toggleFollowingOnly()" 
                   [disabled]="isTogglingFollowingOnly"
                   [title]="isFollowingOnly ? 'Click here to see posts recommended for you' : 'Click here to see posts from following users only'"
