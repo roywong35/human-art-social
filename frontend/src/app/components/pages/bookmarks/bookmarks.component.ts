@@ -93,46 +93,16 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   }
 
   loadBookmarks() {
-    // Only set loading to true if this is not a refresh operation
-    if (!this.isRefreshing) {
+    // Only set loading to true if this is not a refresh operation and no cached content
+    if (!this.isRefreshing && !this.bookmarkService.hasCachedProcessedBookmarkedItems()) {
       this.loading = true;
     }
     this.error = null;
     
-    this.bookmarkService.getBookmarkedPosts().subscribe({
-      next: (posts) => {
-        // Create a combined list of bookmarked items
-        this.bookmarkedItems = [];
-        
-        posts.forEach(post => {
-          // Only add posts that are explicitly bookmarked by the user
-          if (post.is_bookmarked === true) {
-            this.bookmarkedItems.push({
-              type: 'post',
-              item: post,
-              bookmarked_at: (post as any).bookmarked_at || post.created_at
-            });
-          }
-          
-          // Add bookmarked comments
-          const comments = (post as any).bookmarked_comments || [];
-          if (comments.length > 0) {
-            comments.forEach((comment: any) => {
-              // Ensure the comment has the post ID
-              comment.post_id = post.id;
-              this.bookmarkedItems.push({
-                type: 'comment',
-                item: comment,
-                bookmarked_at: comment.bookmarked_at || comment.created_at
-              });
-            });
-          }
-        });
-        
-        // Sort all items by bookmark time
-        this.bookmarkedItems.sort((a, b) => 
-          new Date(b.bookmarked_at).getTime() - new Date(a.bookmarked_at).getTime()
-        );
+    this.bookmarkService.getProcessedBookmarkedItems().subscribe({
+      next: (bookmarkedItems) => {
+        // Use the pre-processed items directly
+        this.bookmarkedItems = bookmarkedItems;
         
         this.loading = false;
         this.isRefreshing = false;
@@ -151,6 +121,31 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   refreshContent() {
     this.loadBookmarks();
   }
+
+  forceRefreshBookmarks() {
+    // Force refresh bookmarks (for pull-to-refresh)
+    this.isRefreshing = true;
+    this.loading = true;
+    this.bookmarkService.getProcessedBookmarkedItems(true).subscribe({
+      next: (bookmarkedItems) => {
+        // Use the pre-processed items directly
+        this.bookmarkedItems = bookmarkedItems;
+        
+        this.loading = false;
+        this.isRefreshing = false;
+        this.cd.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading bookmarks:', error);
+        this.error = 'Failed to load bookmarks. Please try again later.';
+        this.loading = false;
+        this.isRefreshing = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+
 
   onLike(post: Post): void {
     const originalPost = post.post_type === 'repost' ? post.referenced_post! : post;
@@ -387,7 +382,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.isRefreshing = true;
     this.cd.markForCheck();
     
-    // Refresh the bookmarks
-    this.loadBookmarks();
+    // Force refresh the bookmarks
+    this.forceRefreshBookmarks();
   }
 } 
