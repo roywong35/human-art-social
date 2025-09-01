@@ -41,12 +41,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private userPostsSubscription: Subscription | undefined;
   private subscriptions = new Subscription();
   
-  // Tab content caching system - separate arrays for each tab
-  private postsCache: Post[] = [];
-  private repliesCache: Post[] = [];
-  private mediaCache: { image: string; postId: number }[] = [];
-  private humanArtCache: Post[] = [];
-  private likesCache: Post[] = [];
+  // Note: Removed component-level caching arrays
+  // Now using service-level caching for persistence across page navigation
   
   user: User | null = null;
   posts: Post[] = [];
@@ -56,7 +52,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   humanArtPosts: Post[] = [];
   likedPosts: Post[] = [];
   activeTab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes' = 'posts';
-  isLoading = true;
+  isLoading = false;
   isLoadingPosts = false;
   isLoadingMorePosts = false;
   isLoadingReplies = false;
@@ -87,91 +83,102 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private handleTouchMove!: (e: Event) => void;
   private handleTouchEnd!: () => void;
   
+  // Note: Removed old component-level caching methods
+  // Now using service-level caching for persistence across page navigation
+
   /**
-   * Check if a tab has cached content
+   * Check if service has cached content for a specific tab
    */
-  private hasCachedContent(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): boolean {
+  private checkServiceCache(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): boolean {
+    if (!this.user?.handle) return false;
+    
+    let hasCache = false;
+    
     switch (tab) {
       case 'posts':
-        return this.postsCache.length > 0;
+        // Posts and replies use different caching mechanism in PostService
+        // Check if we have current posts loaded OR if the service has cached posts
+        hasCache = this.posts.length > 0 || this.postService.hasCachedUserPosts();
+        return hasCache;
       case 'replies':
-        return this.repliesCache.length > 0;
+        hasCache = this.replies.length > 0 || this.postService.hasCachedUserReplies();
+        return hasCache;
       case 'media':
-        return this.mediaCache.length > 0;
+        hasCache = this.postService.hasCachedProfileData(this.user.handle, 'media');
+        return hasCache;
       case 'human-art':
-        return this.humanArtCache.length > 0;
+        hasCache = this.postService.hasCachedProfileData(this.user.handle, 'humanArt');
+        return hasCache;
       case 'likes':
-        return this.likesCache.length > 0;
+        hasCache = this.postService.hasCachedProfileData(this.user.handle, 'likes');
+        return hasCache;
       default:
         return false;
     }
   }
 
   /**
-   * Get cached content for a tab
+   * Load content from service cache for a specific tab
    */
-  private getCachedContent(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): any {
+  private loadFromServiceCache(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): void {
+    if (!this.user?.handle) return;
+    
     switch (tab) {
       case 'posts':
-        return this.postsCache;
+        // Posts are already loaded via subscription in constructor
+        // If we have cached posts but they're not loaded yet, trigger a load
+        if (this.posts.length === 0 && this.postService.hasCachedUserPosts()) {
+          this.postService.getUserPosts(this.user.handle);
+        }
+        // Set loading state to false since we're using cache
+        this.isLoadingPosts = false;
+        this.cd.markForCheck();
+        break;
       case 'replies':
-        return this.repliesCache;
+        // Replies are already loaded via subscription in constructor
+        // If we have cached replies but they're not loaded yet, trigger a load
+        if (this.replies.length === 0 && this.postService.hasCachedUserReplies()) {
+          this.postService.getUserReplies(this.user.handle);
+        }
+        // Set loading state to false since we're using cache
+        this.isLoadingReplies = false;
+        this.cd.markForCheck();
+        break;
       case 'media':
-        return this.mediaCache;
+        // Load from service cache
+        this.postService.getUserMedia(this.user.handle).subscribe(posts => {
+          this.mediaItems = posts.reduce((acc: { image: string; postId: number }[], post: Post) => {
+            const images = post.images?.map(img => ({
+              image: img.image,
+              postId: post.id
+            })) || [];
+            return [...acc, ...images];
+          }, []);
+          // Set loading state to false after loading from cache
+          this.isLoadingMedia = false;
+          this.cd.markForCheck();
+        });
+        break;
       case 'human-art':
-        return this.humanArtCache;
+        this.postService.getUserHumanArt(this.user.handle).subscribe(posts => {
+          this.humanArtPosts = posts.filter(post => post.is_verified);
+          // Set loading state to false after loading from cache
+          this.isLoadingHumanArt = false;
+          this.cd.markForCheck();
+        });
+        break;
       case 'likes':
-        return this.likesCache;
-      default:
-        return [];
+        this.postService.getUserLikes(this.user.handle).subscribe(posts => {
+          this.likedPosts = posts;
+          // Set loading state to false after loading from cache
+          this.isLoadingLikes = false;
+          this.cd.markForCheck();
+        });
+        break;
     }
   }
 
-  /**
-   * Cache content for the current tab
-   */
-  private cacheCurrentTabContent(): void {
-    switch (this.activeTab) {
-      case 'posts':
-        this.postsCache = [...this.posts];
-        break;
-      case 'replies':
-        this.repliesCache = [...this.replies];
-        break;
-      case 'media':
-        this.mediaCache = [...this.mediaItems];
-        break;
-      case 'human-art':
-        this.humanArtCache = [...this.humanArtPosts];
-        break;
-      case 'likes':
-        this.likesCache = [...this.likedPosts];
-        break;
-    }
-  }
-
-  /**
-   * Show cached content for a specific tab
-   */
-  private showCachedContent(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): void {
-    switch (tab) {
-      case 'posts':
-        this.posts = this.postsCache;
-        break;
-      case 'replies':
-        this.replies = this.repliesCache;
-        break;
-      case 'media':
-        this.mediaItems = this.mediaCache;
-        break;
-      case 'human-art':
-        this.humanArtPosts = this.humanArtCache;
-        break;
-      case 'likes':
-        this.likedPosts = this.likesCache;
-        break;
-    }
-  }
+  // Note: Removed showCachedContent method - no longer needed with service-level caching
   
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
   editForm = {
@@ -205,9 +212,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
           } else {
             // Always replace posts array to ensure change detection
             this.posts = [...posts];
-            
-            // Cache the content for the current tab
-            this.cacheCurrentTabContent();
           }
           
           this.isLoadingPosts = false;
@@ -241,9 +245,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
                 await this.buildParentChain(reply);
               }
             }
-            
-            // Cache the content for the current tab
-            this.cacheCurrentTabContent();
           }
           
           this.isLoadingReplies = false;
@@ -267,7 +268,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.route.queryParamMap.subscribe(params => {
       const tab = params.get('tab') as 'posts' | 'replies' | 'media' | 'human-art' | 'likes';
       if (tab && tab !== this.activeTab) {
-        this.activeTab = tab;
+        this.setActiveTab(tab);
       }
     });
 
@@ -309,9 +310,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       document.body.removeEventListener('touchend', this.handleTouchEnd);
     }
     
-    // Clear user posts and replies when leaving profile
-    this.postService.clearUserPosts();
-    this.postService.clearUserReplies();
+    // Note: We don't clear any caches here anymore
+    // All caches (user posts, replies, media, human art, likes) will persist across page navigation
+    // This allows for instant loading when returning to the profile page
+    // Caches will only expire after their respective timeouts (10 minutes for profile data)
   }
 
   private setupFollowStatusSync(): void {
@@ -342,13 +344,27 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserProfile(handle: string): void {
-    this.isLoading = true;
+    // Only set loading if we don't have cached user data
+    if (!this.user || this.user.handle !== handle) {
+      // Use a shorter delay to avoid race conditions with fast-loading user data
+      setTimeout(() => {
+        this.isLoading = true;
+        this.cd.markForCheck();
+      }, 50); // Reduced to 50ms for better responsiveness
+    }
     this.error = null;
 
     this.userService.getUserByHandle(handle).subscribe({
       next: (user) => {
         this.user = user;
         this.isLoading = false;
+        this.cd.markForCheck();
+        this.cd.detectChanges(); // Force immediate change detection
+        // Force isLoading to false again after change detection
+        setTimeout(() => {
+          this.isLoading = false;
+          this.cd.markForCheck();
+        }, 0);
         this.loadTabContent(handle);
         
         // Initialize gesture support after content loads
@@ -369,10 +385,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   setActiveTab(tab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes'): void {
     this.activeTab = tab;
     
-    // Check if the target tab already has cached content
-    if (this.hasCachedContent(tab)) {
-      // Tab has cached content - show instantly without loading
-      this.showCachedContent(tab);
+    // Check if the target tab has service-level cached content
+    const hasServiceCache = this.checkServiceCache(tab);
+    
+    if (hasServiceCache) {
+      // Tab has service-level cached content - show instantly without loading
+      this.loadFromServiceCache(tab);
+      // Set all loading states to false immediately for cached content
       this.isLoadingPosts = false;
       this.isLoadingReplies = false;
       this.isLoadingMedia = false;
@@ -406,7 +425,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
     
     // Only load content if the target tab has no cached content
-    if (!this.hasCachedContent(tab)) {
+    if (!hasServiceCache) {
       this.loadTabContent(this.user?.handle || '');
     }
   }
@@ -414,8 +433,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private loadTabContent(handle: string): void {
     if (!handle) return;
 
+    // Check if we have cached content for the current tab
+    const hasServiceCache = this.checkServiceCache(this.activeTab);
+
+    if (hasServiceCache) {
+      // We have cached content, load it instantly
+      this.loadFromServiceCache(this.activeTab);
+      // Also set main loading state to false since we're using cache
+      this.isLoading = false;
+      return;
+    }
+
     // Only set loading flags if this is not a refresh operation
     if (!this.isRefreshing) {
+      console.log('[Profile] No cache found, loading from API');
       switch (this.activeTab) {
         case 'posts':
           this.isLoadingPosts = true;
@@ -439,7 +470,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           break;
       }
     } else {
-      // For refresh operations, just reload the content without setting loading flags
+      // For refresh operations, use force refresh methods
       switch (this.activeTab) {
         case 'posts':
           this.loadUserPosts(handle);
@@ -448,13 +479,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.loadUserReplies(handle);
           break;
         case 'media':
-          this.loadUserMedia(handle);
+          this.forceRefreshUserMedia(handle);
           break;
         case 'human-art':
-          this.loadUserHumanArt(handle);
+          this.forceRefreshUserHumanArt(handle);
           break;
         case 'likes':
-          this.loadUserLikes(handle);
+          this.forceRefreshUserLikes(handle);
           break;
       }
     }
@@ -534,8 +565,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserMedia(handle: string): void {
-    // Only set loading state if this is not a refresh operation
-    if (!this.isRefreshing) {
+    // Only set loading state if this is not a refresh operation and no cached content
+    if (!this.isRefreshing && !this.postService.hasCachedProfileData(handle, 'media')) {
       this.isLoadingMedia = true;
     }
     this.error = null;
@@ -551,9 +582,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
         }, []);
         this.isLoadingMedia = false;
         
-        // Cache the content for the current tab
-        this.cacheCurrentTabContent();
-        
         this.cd.markForCheck();
       },
       error: (error: Error) => {
@@ -565,9 +593,37 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  private forceRefreshUserMedia(handle: string): void {
+    // Force refresh media (for pull-to-refresh)
+    this.isRefreshing = true;
+    this.isLoadingMedia = true;
+    this.postService.getUserMedia(handle, true).subscribe({
+      next: (posts: Post[]) => {
+        this.mediaItems = posts.reduce((acc: { image: string; postId: number }[], post: Post) => {
+          const images = post.images?.map(img => ({
+            image: img.image,
+            postId: post.id
+          })) || [];
+          return [...acc, ...images];
+        }, []);
+        this.isLoadingMedia = false;
+        this.isRefreshing = false;
+        
+        this.cd.markForCheck();
+      },
+      error: (error: Error) => {
+        console.error('Error loading media:', error);
+        this.error = 'Failed to load media';
+        this.isLoadingMedia = false;
+        this.isRefreshing = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
   private loadUserHumanArt(handle: string): void {
-    // Only set loading state if this is not a refresh operation
-    if (!this.isRefreshing) {
+    // Only set loading state if this is not a refresh operation and no cached content
+    if (!this.isRefreshing && !this.postService.hasCachedProfileData(handle, 'humanArt')) {
       this.isLoadingHumanArt = true;
     }
     this.error = null;
@@ -576,9 +632,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
       next: (posts: Post[]) => {
         this.humanArtPosts = posts.filter(post => post.is_verified);
         this.isLoadingHumanArt = false;
-        
-        // Cache the content for the current tab
-        this.cacheCurrentTabContent();
         
         this.cd.markForCheck();
       },
@@ -592,8 +645,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserLikes(handle: string): void {
-    // Only set loading state if this is not a refresh operation
-    if (!this.isRefreshing) {
+    // Only set loading state if this is not a refresh operation and no cached content
+    if (!this.isRefreshing && !this.postService.hasCachedProfileData(handle, 'likes')) {
       this.isLoadingLikes = true;
     }
     this.error = null;
@@ -603,8 +656,48 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.likedPosts = posts;
         this.isLoadingLikes = false;
         
-        // Cache the content for the current tab
-        this.cacheCurrentTabContent();
+        this.cd.markForCheck();
+      },
+      error: (error: Error) => {
+        console.error('Error loading likes:', error);
+        this.error = 'Failed to load likes';
+        this.isLoadingLikes = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  private forceRefreshUserHumanArt(handle: string): void {
+    // Force refresh human art (for pull-to-refresh)
+    this.isRefreshing = true;
+    this.isLoadingHumanArt = true;
+    this.postService.getUserHumanArt(handle, true).subscribe({
+      next: (posts: Post[]) => {
+        this.humanArtPosts = posts.filter(post => post.is_verified);
+        this.isLoadingHumanArt = false;
+        this.isRefreshing = false;
+        
+        this.cd.markForCheck();
+      },
+      error: (error: Error) => {
+        console.error('Error loading human art:', error);
+        this.error = 'Failed to load human art';
+        this.isLoadingHumanArt = false;
+        this.isRefreshing = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  private forceRefreshUserLikes(handle: string): void {
+    // Force refresh likes (for pull-to-refresh)
+    this.isRefreshing = true;
+    this.isLoadingLikes = true;
+    this.postService.getUserLikes(handle, true).subscribe({
+      next: (posts: Post[]) => {
+        this.likedPosts = posts;
+        this.isLoadingLikes = false;
+        this.isRefreshing = false;
         
         this.cd.markForCheck();
       },
@@ -612,6 +705,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         console.error('Error loading likes:', error);
         this.error = 'Failed to load likes';
         this.isLoadingLikes = false;
+        this.isRefreshing = false;
         this.cd.markForCheck();
       }
     });

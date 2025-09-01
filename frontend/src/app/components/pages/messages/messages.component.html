@@ -119,17 +119,7 @@
     <!-- Chat Room Container with Fixed Width -->
     <div class="w-full h-full bg-white dark:bg-black relative overflow-hidden">
     
-      <!-- Back Button (Mobile Only) -->
-      <div *ngIf="!isDesktop && selectedConversation" 
-           class="absolute top-4 left-4 z-10 mt-[-5px]">
-        <button 
-          (click)="goBackToChatList()"
-          class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-        </button>
-      </div>
+
 
       <!-- Loading View for Conversation -->
       <div *ngIf="isLoadingConversation" class="h-full flex items-center justify-center">

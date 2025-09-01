@@ -87,6 +87,14 @@ export class PostService {
     hasMore: boolean;
     currentPage: number;
   }>();
+
+  // Cache for profile page data
+  private profileCache = new Map<string, {
+    media: Post[];
+    humanArt: Post[];
+    likes: Post[];
+    timestamp: number;
+  }>();
   
   private currentPage = 1;
   private hasMore = true;
@@ -977,16 +985,61 @@ export class PostService {
     });
   }
 
-  getUserMedia(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/media/`);
+  getUserMedia(handle: string, forceRefresh: boolean = false): Observable<Post[]> {
+    const cacheKey = `media_${handle}`;
+    
+    // Check if we have valid cached data and don't need to force refresh
+    if (!forceRefresh && this.isProfileCacheValid(cacheKey)) {
+      const cached = this.profileCache.get(cacheKey);
+      if (cached) {
+        return of(cached.media);
+      }
+    }
+
+    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/media/`).pipe(
+      tap(posts => {
+        // Cache the media posts
+        this.cacheProfileData(cacheKey, { media: posts, humanArt: [], likes: [] });
+      })
+    );
   }
 
-  getUserHumanArt(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/human-art/`);
+  getUserLikes(handle: string, forceRefresh: boolean = false): Observable<Post[]> {
+    const cacheKey = `likes_${handle}`;
+    
+    // Check if we have valid cached data and don't need to force refresh
+    if (!forceRefresh && this.isProfileCacheValid(cacheKey)) {
+      const cached = this.profileCache.get(cacheKey);
+      if (cached) {
+        return of(cached.likes);
+      }
+    }
+
+    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/likes/`).pipe(
+      tap(posts => {
+        // Cache the liked posts
+        this.cacheProfileData(cacheKey, { media: [], humanArt: [], likes: posts });
+      })
+    );
   }
 
-  getUserLikes(handle: string): Observable<Post[]> {
-    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/likes/`);
+  getUserHumanArt(handle: string, forceRefresh: boolean = false): Observable<Post[]> {
+    const cacheKey = `humanArt_${handle}`;
+    
+    // Check if we have valid cached data and don't need to force refresh
+    if (!forceRefresh && this.isProfileCacheValid(cacheKey)) {
+      const cached = this.profileCache.get(cacheKey);
+      if (cached) {
+        return of(cached.humanArt);
+      }
+    }
+
+    return this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/human-art/`).pipe(
+      tap(posts => {
+        // Cache the human art posts
+        this.cacheProfileData(cacheKey, { media: [], humanArt: posts, likes: [] });
+      })
+    );
   }
 
   getPublicPosts(tab: string = 'for-you', page: number = 1): Observable<{ results: Post[], next: string | null, count: number }> {
@@ -1185,7 +1238,69 @@ export class PostService {
     return { ...this.globalLatestPostTimestamps };
   }
 
+  /**
+   * Cache profile data for a specific user and type
+   */
+  private cacheProfileData(cacheKey: string, data: { media: Post[]; humanArt: Post[]; likes: Post[] }): void {
+    this.profileCache.set(cacheKey, {
+      ...data,
+      timestamp: Date.now()
+    });
+  }
 
+  /**
+   * Check if profile cache is still valid (less than 10 minutes old)
+   */
+  private isProfileCacheValid(cacheKey: string): boolean {
+    const cached = this.profileCache.get(cacheKey);
+    if (!cached) return false;
+    
+    const cacheAge = Date.now() - cached.timestamp;
+    const maxAge = 10 * 60 * 1000; // 10 minutes
+    return cacheAge < maxAge;
+  }
 
+  /**
+   * Clear profile cache for a specific user
+   */
+  public clearProfileCache(handle: string): void {
+    const keysToDelete = [
+      `media_${handle}`,
+      `humanArt_${handle}`,
+      `likes_${handle}`
+    ];
+    
+    keysToDelete.forEach(key => {
+      this.profileCache.delete(key);
+    });
+  }
 
+  /**
+   * Clear all profile caches
+   */
+  public clearAllProfileCaches(): void {
+    this.profileCache.clear();
+  }
+
+  /**
+   * Check if profile data has cached content for a specific user and type
+   */
+  public hasCachedProfileData(handle: string, type: 'media' | 'humanArt' | 'likes'): boolean {
+    const cacheKey = `${type}_${handle}`;
+    return this.isProfileCacheValid(cacheKey);
+  }
+
+  /**
+   * Check if user posts are cached
+   */
+  public hasCachedUserPosts(): boolean {
+    return this.allUserPosts.length > 0;
+  }
+
+  /**
+   * Check if user replies are cached
+   */
+  public hasCachedUserReplies(): boolean {
+    return this.allUserReplies.length > 0;
+  }
 } 
