@@ -73,9 +73,6 @@ export class MessagesComponent implements OnInit, OnDestroy {
       this.currentUser = user;
     });
 
-    // Set loading state FIRST before subscribing
-    this.isLoadingConversations = true;
-
     // Subscribe to ChatService conversations directly
     // Use skip(1) to ignore the initial empty emission from BehaviorSubject
     this.chatService.conversations$.pipe(skip(1)).subscribe({
@@ -92,7 +89,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Load conversations
+    // Load conversations with caching
     this.loadConversations();
 
     // Listen for route changes
@@ -170,8 +167,19 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   loadConversations() {
-    // Use ChatService's state management instead of local array
+    // Only set loading state if no cached content
+    if (!this.chatService.hasCachedConversations()) {
+      this.isLoadingConversations = true;
+    }
+    
+    // Use ChatService's state management with caching
     this.chatService.loadConversations();
+  }
+
+  forceRefreshConversations() {
+    // Force refresh conversations (for pull-to-refresh)
+    this.isLoadingConversations = true;
+    this.chatService.loadConversations(true);
   }
 
   loadConversation(conversationId: string) {
@@ -323,7 +331,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
           this.router.navigate(['/messages', conversation.id]);
           
           // Refresh conversations list using ChatService state management
-          this.chatService.loadConversations();
+          this.chatService.loadConversations(true); // Force refresh since new conversation was created
         }, 100);
       }
     } catch (error) {

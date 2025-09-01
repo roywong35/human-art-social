@@ -27,6 +27,12 @@ export class ChatService {
   private messagesCache = new Map<number, Message[]>();
   private preloadingInProgress = new Set<number>();
   
+  // Conversation list cache
+  private conversationsCache: {
+    conversations: Conversation[];
+    timestamp: number;
+  } | null = null;
+  
   // Public observables
   public conversations$ = this.conversationsSubject.asObservable();
   public messages$ = this.messagesSubject.asObservable();
@@ -182,9 +188,19 @@ export class ChatService {
   }
 
   // State management methods
-  loadConversations() {
+  loadConversations(forceRefresh: boolean = false) {
+    // Check if we have valid cached data and don't need to force refresh
+    if (!forceRefresh && this.isConversationsCacheValid()) {
+      // Use cached data, no need to make API call
+      this.conversationsSubject.next(this.conversationsCache!.conversations);
+      return;
+    }
+
     this.getConversations().subscribe({
       next: (conversations) => {
+        // Cache the conversations
+        this.cacheConversations(conversations);
+        
         this.conversationsSubject.next(conversations);
         
         // X-style preloading: Start loading conversation details for all conversations
@@ -433,5 +449,40 @@ export class ChatService {
     const isAuthenticated = this.authService.isAuthenticated();
     
     return { isAuthenticated, hasToken: !!token };
+  }
+
+  /**
+   * Cache conversations data
+   */
+  private cacheConversations(conversations: Conversation[]): void {
+    this.conversationsCache = {
+      conversations: [...conversations],
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * Check if conversations cache is still valid (less than 5 minutes old)
+   */
+  private isConversationsCacheValid(): boolean {
+    if (!this.conversationsCache) return false;
+    
+    const cacheAge = Date.now() - this.conversationsCache.timestamp;
+    const maxAge = 5 * 60 * 1000; // 5 minutes
+    return cacheAge < maxAge;
+  }
+
+  /**
+   * Clear conversations cache
+   */
+  public clearConversationsCache(): void {
+    this.conversationsCache = null;
+  }
+
+  /**
+   * Check if conversations have cached content
+   */
+  public hasCachedConversations(): boolean {
+    return this.isConversationsCacheValid();
   }
 } 
