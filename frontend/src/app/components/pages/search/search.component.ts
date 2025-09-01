@@ -161,16 +161,9 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private loadTrending(forceRefresh: boolean = false) {
     
-    // Only set loading state if NOT refreshing (prevents content from disappearing during refresh)
-    if (!this.isRefreshing) {
+    // Only set loading state if NOT refreshing and no cached content
+    if (!this.isRefreshing && !this.hashtagService.hasCachedTrending()) {
       this.isLoadingTrending = true;
-    }
-    
-    // Check if we have cached trending data and don't need to force refresh
-    if (!forceRefresh && this.trendingTopics.length > 0) {
-      // Use cached data, no need to make API call
-      this.isLoadingTrending = false;
-      return;
     }
     
     // Add cache-busting parameter if forcing refresh
@@ -228,16 +221,9 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private loadRecommendedUsers() {
     
-    // Only set loading state if NOT refreshing (prevents content from disappearing during refresh)
-    if (!this.isRefreshing) {
+    // Only set loading state if NOT refreshing and no cached content
+    if (!this.isRefreshing && !this.userService.hasCachedRecommendedUsers()) {
       this.isLoadingUsers = true;
-    }
-    
-    // Check if we have cached recommended users and don't need to refresh
-    if (this.recommendedUsers.length > 0) {
-      // Use cached data, no need to make API call
-      this.isLoadingUsers = false;
-      return;
     }
     
     this.userService.getRecommendedUsersPaginated(1).subscribe({

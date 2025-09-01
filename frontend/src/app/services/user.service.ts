@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { User } from '../models/user.model';
@@ -17,6 +17,12 @@ interface PaginatedResponse<T> {
 })
 export class UserService {
   private apiUrl = `${environment.apiUrl}/api/users`;
+
+  // Cache for recommended users
+  private recommendedUsersCache: {
+    users: User[];
+    timestamp: number;
+  } | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -75,11 +81,27 @@ export class UserService {
   }
 
   getRecommendedUsersPaginated(page: number = 1): Observable<PaginatedResponse<User>> {
+    // Check if we have valid cached data for first page
+    if (page === 1 && this.isRecommendedUsersCacheValid()) {
+      return of({
+        count: this.recommendedUsersCache!.users.length,
+        next: null,
+        previous: null,
+        results: this.recommendedUsersCache!.users
+      });
+    }
+
     return this.http.get<PaginatedResponse<User>>(`${this.apiUrl}/suggested/?page=${page}&page_size=20`).pipe(
       map(response => ({
         ...response,
         results: response.results.map(user => this.addImageUrls(user)!)
-      }))
+      })),
+      tap(response => {
+        // Cache the first page results
+        if (page === 1) {
+          this.cacheRecommendedUsers(response.results);
+        }
+      })
     );
   }
 
@@ -98,6 +120,41 @@ export class UserService {
         results: response.results.map(user => this.addImageUrls(user)!)
       }))
     );
+  }
+
+  /**
+   * Cache recommended users data
+   */
+  private cacheRecommendedUsers(users: User[]): void {
+    this.recommendedUsersCache = {
+      users: [...users],
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * Check if recommended users cache is still valid (less than 10 minutes old)
+   */
+  private isRecommendedUsersCacheValid(): boolean {
+    if (!this.recommendedUsersCache) return false;
+    
+    const cacheAge = Date.now() - this.recommendedUsersCache.timestamp;
+    const maxAge = 10 * 60 * 1000; // 10 minutes
+    return cacheAge < maxAge;
+  }
+
+  /**
+   * Clear recommended users cache
+   */
+  public clearRecommendedUsersCache(): void {
+    this.recommendedUsersCache = null;
+  }
+
+  /**
+   * Check if recommended users have cached content
+   */
+  public hasCachedRecommendedUsers(): boolean {
+    return this.isRecommendedUsersCacheValid();
   }
 
   getUserFollowers(handle: string): Observable<User[]> {
