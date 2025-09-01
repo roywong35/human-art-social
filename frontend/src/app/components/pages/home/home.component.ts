@@ -53,15 +53,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   activeTab: 'for-you' | 'human-drawing' = 'for-you';
   protected defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NFMxNC42NyAxNC42OCAxMiAxNC42OHMtNC44NC0yLjE3LTQuODQtNC44NFM5LjMzIDUgMTIgNXptMCAxM2MtMi4yMSAwLTQuMi45NS01LjU4IDIuNDhDNy42MyAxOS4yIDkuNzEgMjAgMTIgMjBzNC4zNy0uOCA1LjU4LTIuNTJDMTYuMiAxOC45NSAxNC4yMSAxOCAxMiAxOHoiLz48L3N2Zz4=';
 
-  // New posts check properties
+  // New posts check properties - now using global service
   hasNewPosts = false;
   newPostsCount = 0;
   newPostsAuthors: Array<{ avatar?: string, username: string }> = [];
-  private newPostsCheckInterval: any;
-  private latestPostTimestamps: { [key: string]: string | null } = {
-    'for-you': null,
-    'human-drawing': null
-  };
 
   // Scroll-based hiding properties
   isTabHidden = false;
@@ -139,8 +134,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.cacheCurrentTabContent();
           }
           
-          // Update latest post ID for new posts check
-          this.updateLatestPostTimestamp();
+                     // Update latest post ID for new posts check (now handled by global service)
           
           // Only stop loading if we're not in initial loading state
           // This prevents the subscription from immediately hiding the loading state
@@ -281,16 +275,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.postService.loadPosts(true, this.activeTab);
   }
 
-  ngOnInit(): void {
+    ngOnInit(): void {
 
-    
+     
     // Get initial tab state from URL params or localStorage
     const tabFromParams = this.route.snapshot.queryParams['tab'];
     const savedTab = localStorage.getItem('activeTab');
     this.activeTab = (tabFromParams || savedTab || 'for-you') as 'for-you' | 'human-drawing';
     localStorage.setItem('activeTab', this.activeTab);
     
-    // Initial load of posts - will use cache if available
+    // Initial load of posts - will use cache if available, but don't force refresh
     this.loadPosts(false);
     
     // Subscribe to future tab changes
@@ -313,10 +307,17 @@ export class HomeComponent implements OnInit, OnDestroy {
       })
     );
 
-    // Start checking for new posts after initial load
-    setTimeout(() => {
-      this.startNewPostsCheck();
-    }, 5000); // Start after 5 seconds to avoid immediate check
+    // Subscribe to global new posts state
+    this.subscriptions.add(
+      this.postService.newPostsState$.subscribe(state => {
+        this.hasNewPosts = state.hasNewPosts;
+        this.newPostsCount = state.newPostsCount;
+        this.newPostsAuthors = state.newPostsAuthors;
+        this.cd.markForCheck();
+      })
+    );
+
+    // Global new posts checking is now handled by PostService when user logs in
 
     // Don't initialize swipe gestures here - wait for posts to load
 
@@ -633,12 +634,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       clearTimeout(this.scrollThrottleTimeout);
     }
     
-    // Clean up new posts check timer
-    if (this.newPostsCheckInterval) {
-      clearInterval(this.newPostsCheckInterval);
-      this.newPostsCheckInterval = null;
-    }
-    
     // Clean up Hammer manager
     if (this.hammerManager) {
       this.hammerManager.destroy();
@@ -745,71 +740,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.postService.loadPosts(true, this.activeTab);
   }
 
-  // New posts check methods
-  private startNewPostsCheck(): void {
-    // Clear any existing interval
-    if (this.newPostsCheckInterval) {
-      clearInterval(this.newPostsCheckInterval);
-      this.newPostsCheckInterval = null; // Add this line
-    }
-    
-    // Start checking every 20 seconds
-    this.newPostsCheckInterval = setInterval(() => {
-      this.checkForNewPosts();
-    }, 20000); // 20 seconds
-  }
-
-  private checkForNewPosts(): void {
-    const currentLatestTimestamp = this.latestPostTimestamps[this.activeTab];
-    if (!currentLatestTimestamp || this.posts.length === 0) {
-      return;
-    }
-
-    // Don't check for new posts if we just refreshed
-    if (this.isInitialLoading) {
-      return;
-    }
-
-    // Call backend to check for new posts
-    this.postService.checkNewPosts(currentLatestTimestamp, this.activeTab).subscribe({
-      next: (response: any) => {
-        if (response.has_new_posts) {
-          this.hasNewPosts = true;
-          this.newPostsCount = response.new_posts_count;
-          
-          // Get author information from the posts service
-          // We'll get the most recent posts to show their authors
-          const currentPosts = this.postService.getCurrentPosts();
-          if (currentPosts && currentPosts.length > 0) {
-            // Get unique authors from the most recent posts (up to 3)
-            const recentAuthors = currentPosts
-              .slice(0, Math.min(3, currentPosts.length))
-              .map(post => ({
-                username: post.author.username,
-                avatar: post.author.profile_picture
-              }))
-              .filter((author, index, arr) => 
-                arr.findIndex(a => a.username === author.username) === index
-              )
-              .slice(0, 3);
-            
-            this.newPostsAuthors = recentAuthors;
-          } else {
-            // Fallback if no posts available
-            this.newPostsAuthors = [
-              { username: 'New posts', avatar: undefined }
-            ];
-          }
-          this.cd.markForCheck();
-        }
-      },
-      error: (error) => {
-        console.error('Error checking for new posts:', error);
-      }
-    });
-  }
-
+  // New posts check methods - now using global service
   showNewPosts(): void {
+    // Clear global new posts state
+    this.postService.clearGlobalNewPostsState();
+    
     // Hide the button immediately
     this.hasNewPosts = false;
     this.newPostsCount = 0;
@@ -818,24 +753,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Force refresh posts from server when user clicks "Show new posts"
     this.forceRefreshPosts();
-    
-    // Wait for posts to load, then reset latest post ID and restart timer
-    setTimeout(() => {
-      // Reset latest post ID to current posts after refresh
-      this.updateLatestPostTimestamp();
-      // Restart the timer
-      this.startNewPostsCheck();
-    }, 2000); // Wait 2 seconds for posts to fully load
   }
 
-  private updateLatestPostTimestamp(): void {
-    if (this.posts.length > 0) {
-      const latestPost = this.posts[0];
-      // Use effective publication time: scheduled_time if exists, otherwise created_at
-      const effectiveTime = latestPost.scheduled_time || latestPost.created_at;
-      this.latestPostTimestamps[this.activeTab] = effectiveTime;
-    }
-  }
+
 
   /**
    * Refresh home posts and check for new posts
@@ -850,8 +770,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.newPostsCount = 0;
     this.newPostsAuthors = [];
 
-    // Update the latest post timestamp to the current posts
-    this.updateLatestPostTimestamp();
+    // Update the latest post timestamp to the current posts (now handled by global service)
 
     // Force change detection to hide the "Show new posts" button
     this.cd.markForCheck();

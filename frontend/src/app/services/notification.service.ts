@@ -97,6 +97,14 @@ export class NotificationService {
   private notifications = new BehaviorSubject<GroupedNotification[]>([]);
   notifications$ = this.notifications.asObservable();
 
+  // Cache for notifications page
+  private notificationsCache: {
+    notifications: GroupedNotification[];
+    timestamp: number;
+    hasMore: boolean;
+    currentPage: number;
+  } | null = null;
+
   constructor(
     private http: HttpClient,
     private authService: AuthService
@@ -108,6 +116,8 @@ export class NotificationService {
         this.loadUnreadCount();
       } else {
         this.disconnectWebSocket();
+        // Clear cache when user logs out
+        this.clearNotificationsCache();
       }
     });
   }
@@ -215,7 +225,20 @@ export class NotificationService {
     }
   }
 
-  getNotifications(page: number = 1): Observable<{ results: GroupedNotification[], count: number }> {
+  getNotifications(page: number = 1, refresh: boolean = false): Observable<{ results: GroupedNotification[], count: number }> {
+    // Check cache first (only for first page and if not refreshing)
+    if (page === 1 && !refresh && this.isCacheValid()) {
+      const cached = this.notificationsCache!;
+      this.notifications.next(cached.notifications);
+      return new Observable(observer => {
+        observer.next({
+          results: cached.notifications,
+          count: cached.notifications.length
+        });
+        observer.complete();
+      });
+    }
+
     const url = `${this.apiUrl}/?page=${page}&page_size=20`;
     
     return this.http.get<{ results: GroupedNotification[], count: number }>(url).pipe(
@@ -226,12 +249,16 @@ export class NotificationService {
       }),
       tap(response => {
         if (page === 1) {
-          // First page - replace notifications list
+          // First page - replace notifications list and cache
           this.notifications.next(response.results);
+          this.cacheNotifications(response.results, response.results.length === 20, page);
         } else {
           // Subsequent pages - append to existing list
           const currentNotifications = this.notifications.getValue();
-          this.notifications.next([...currentNotifications, ...response.results]);
+          const updatedNotifications = [...currentNotifications, ...response.results];
+          this.notifications.next(updatedNotifications);
+          // Update cache with combined results
+          this.cacheNotifications(updatedNotifications, response.results.length === 20, 1);
         }
       })
     );
@@ -307,11 +334,45 @@ export class NotificationService {
     this.getUnreadCount().subscribe({
       next: (count) => {
         this.unreadCount.next(count);
-      },
-      error: (error) => {
-        console.error('Error refreshing unread count:', error);
       }
     });
+  }
+
+  /**
+   * Cache notifications data
+   */
+  private cacheNotifications(notifications: GroupedNotification[], hasMore: boolean, currentPage: number): void {
+    this.notificationsCache = {
+      notifications: [...notifications],
+      timestamp: Date.now(),
+      hasMore,
+      currentPage
+    };
+  }
+
+  /**
+   * Check if cache is still valid (less than 5 minutes old)
+   */
+  private isCacheValid(): boolean {
+    if (!this.notificationsCache) return false;
+    
+    const cacheAge = Date.now() - this.notificationsCache.timestamp;
+    const maxAge = 5 * 60 * 1000; // 5 minutes
+    return cacheAge < maxAge;
+  }
+
+  /**
+   * Clear notifications cache
+   */
+  public clearNotificationsCache(): void {
+    this.notificationsCache = null;
+  }
+
+  /**
+   * Check if notifications have cached content
+   */
+  public hasCachedNotifications(): boolean {
+    return this.isCacheValid();
   }
 
   getFormattedMessage(notification: GroupedNotification): string {

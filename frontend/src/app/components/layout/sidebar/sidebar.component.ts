@@ -385,53 +385,21 @@ export class SidebarComponent implements OnInit, OnDestroy {
   navigateToHome(): void {
 
     
-    // If already on home page, check if we need to refresh or just scroll to top
+    // If already on home page, just scroll to top
     if (this.router.url === '/home') {
       this.scrollToTop();
-      // Only refresh if there are new posts detected
-      this.checkAndRefreshIfNeeded();
     } else {
-      // Navigate to home and then refresh posts (always refresh when coming from different page)
+      // Navigate to home and use cached posts (don't force refresh)
       this.router.navigate(['/home'])
         .then(() => {
-          this.postService.loadPosts(true);
+          // Use cached posts, don't force refresh
+          // The "Show new posts" button will appear if there are new posts
+          this.postService.loadPosts(false);
         });
     }
   }
 
-  /**
-   * Check if there are new posts and refresh only if needed
-   */
-  private checkAndRefreshIfNeeded(): void {
-    // Get the current latest post ID from the post service
-    const currentPosts = this.postService.getCurrentPosts();
 
-    if (currentPosts && currentPosts.length > 0) {
-      const latestPost = currentPosts[0];
-      // Use effective publication time: scheduled_time if exists, otherwise created_at
-      const currentLatestTimestamp = latestPost.scheduled_time || latestPost.created_at;
-
-      // Get the current active tab from localStorage (same as home component)
-      const activeTab = localStorage.getItem('activeTab') || 'for-you';
-
-      // Check for new posts without refreshing the entire feed
-      this.postService.checkNewPosts(currentLatestTimestamp, activeTab).subscribe({
-        next: (response: any) => {
-          if (response.has_new_posts) {
-            // There are new posts - refresh the feed
-            this.postService.loadPosts(true, activeTab);
-            this.refreshHomeComponent();
-          } else {
-          }
-        },
-        error: (error) => {
-          console.error('❌ Sidebar: Error checking for new posts:', error);
-          // On error, just stay at top without refreshing
-        }
-      });
-    } else {
-    }
-  }
 
   /**
    * Refresh the home component to show latest posts and new posts button

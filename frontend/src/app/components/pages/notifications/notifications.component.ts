@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService, GroupedNotification } from '../../../services/notification.service';
 import { Router, RouterModule } from '@angular/router';
@@ -25,7 +25,7 @@ declare var Hammer: any;
   templateUrl: './notifications.component.html',
   styleUrls: ['./notifications.component.scss']
 })
-export class NotificationsComponent implements OnInit, OnDestroy {
+export class NotificationsComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('notificationsContainer', { static: false }) notificationsContainer!: ElementRef;
   
   notifications: GroupedNotification[] = [];
@@ -73,17 +73,16 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     // Check if mobile
     this.isMobile = window.innerWidth < 500;
     
-    // Only load notifications if user is authenticated
-    this.notificationService.unreadCount$.subscribe(count => {
-      if (count !== undefined) {
-        this.loadNotifications();
-      }
-    });
+    // Set loading to false initially so layout shows immediately
+    this.loading = false;
     
-    // Initialize gesture support after a short delay to ensure DOM is ready
-    setTimeout(() => {
-      this.initializeGestureSupport();
-    }, 100);
+    // Load notifications asynchronously - layout will show immediately
+    this.loadNotifications(false);
+  }
+
+  ngAfterViewInit() {
+    // Initialize gesture support after view is ready (no delay needed)
+    this.initializeGestureSupport();
   }
 
   private initializeGestureSupport() {
@@ -138,9 +137,9 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     this.isRefreshing = true;
     this.cd.markForCheck();
     
-    // Reset to first page and reload
+    // Reset to first page and reload with refresh flag
     this.currentPage = 1;
-    this.loadNotifications();
+    this.loadNotifications(true);
   }
 
   private handleSwipeRight() {
@@ -163,9 +162,21 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadNotifications() {
-    this.loading = true;
-    this.notificationService.getNotifications(this.currentPage).subscribe({
+  loadNotifications(refresh: boolean = false) {
+    // Check if we have cached content and don't need to refresh
+    if (!refresh && this.currentPage === 1 && this.notificationService.hasCachedNotifications()) {
+      // Use cached content - no loading state needed
+      this.loading = false;
+      this.cd.markForCheck();
+      return;
+    }
+
+    // Only show loading state if we don't have cached content
+    if (!this.notificationService.hasCachedNotifications()) {
+      this.loading = true;
+    }
+    
+    this.notificationService.getNotifications(this.currentPage, refresh).subscribe({
       next: (response) => {
         // Update local notifications array as fallback
         if (this.currentPage === 1) {

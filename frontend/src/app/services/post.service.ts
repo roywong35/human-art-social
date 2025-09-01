@@ -119,6 +119,19 @@ export class PostService {
     private notificationService: NotificationService,
     private userService: UserService
   ) {
+    // Subscribe to authentication state changes
+    this.authService.currentUser$.subscribe((user: any) => {
+      if (user) {
+        // User logged in - start global new posts checking
+        this.startGlobalNewPostsCheck();
+      } else {
+        // User logged out - stop global new posts checking
+        this.stopGlobalNewPostsCheck();
+        // Clear all caches
+        this.clearAllCaches();
+      }
+    });
+    
     // Listen for appeal_approved notifications to refresh timeline
     this.notificationService.notificationEvents$.subscribe(notification => {
       if (notification.notification_type === 'appeal_approved') {
@@ -171,6 +184,7 @@ export class PostService {
     const cacheKey = this.getCacheKey(activeTab);
     
     // Check if we have valid cached data and don't need to refresh
+    // Always use cache when not explicitly refreshing, even if there are new posts
     if (!refresh && this.isCacheValid(cacheKey)) {
       const cached = this.postsCache.get(cacheKey)!;
       this.posts.next(cached.posts);
@@ -219,6 +233,10 @@ export class PostService {
           hasMore: this.hasMore,
           currentPage: this.currentPage
         });
+        
+        // Update global latest post timestamp for new posts checking
+        const tab = activeTab || localStorage.getItem('activeTab') || 'for-you';
+        this.updateGlobalLatestPostTimestamp(tab as 'for-you' | 'human-drawing', newPosts);
         
         // Only increment page number if there are more posts to load
         if (this.hasMore) {
@@ -1004,6 +1022,170 @@ export class PostService {
       .set('tab', tab);
     return this.http.get<any>(`${this.baseUrl}/posts/check_new_posts/`, { params });
   }
+
+  // Global new posts state
+  private globalHasNewPosts = false;
+  private globalNewPostsCount = 0;
+  private globalNewPostsAuthors: Array<{ avatar?: string, username: string }> = [];
+  private globalLatestPostTimestamps: { [key: string]: string | null } = {
+    'for-you': null,
+    'human-drawing': null
+  };
+  private globalNewPostsCheckInterval: any;
+  private newPostsState = new BehaviorSubject<{
+    hasNewPosts: boolean;
+    newPostsCount: number;
+    newPostsAuthors: Array<{ avatar?: string, username: string }>;
+  }>({
+    hasNewPosts: false,
+    newPostsCount: 0,
+    newPostsAuthors: []
+  });
+
+  newPostsState$ = this.newPostsState.asObservable();
+
+  /**
+   * Start global new posts checking (runs continuously regardless of current page)
+   */
+  public startGlobalNewPostsCheck(): void {
+    // Clear any existing interval
+    if (this.globalNewPostsCheckInterval) {
+      clearInterval(this.globalNewPostsCheckInterval);
+      this.globalNewPostsCheckInterval = null;
+    }
+    
+    // Start checking every 20 seconds
+    this.globalNewPostsCheckInterval = setInterval(() => {
+      this.performGlobalNewPostsCheck();
+    }, 20000); // 20 seconds
+  }
+
+  /**
+   * Stop global new posts checking
+   */
+  public stopGlobalNewPostsCheck(): void {
+    if (this.globalNewPostsCheckInterval) {
+      clearInterval(this.globalNewPostsCheckInterval);
+      this.globalNewPostsCheckInterval = null;
+    }
+  }
+
+  /**
+   * Perform the actual check for new posts globally
+   */
+  private performGlobalNewPostsCheck(): void {
+    // Check both tabs for new posts
+    const tabs: ('for-you' | 'human-drawing')[] = ['for-you', 'human-drawing'];
+    
+    tabs.forEach(tab => {
+      const currentLatestTimestamp = this.globalLatestPostTimestamps[tab];
+      
+      if (!currentLatestTimestamp) {
+        return; // No timestamp to compare against
+      }
+
+      this.checkNewPosts(currentLatestTimestamp, tab).subscribe({
+        next: (response: any) => {
+          if (response.has_new_posts) {
+            this.globalHasNewPosts = true;
+            this.globalNewPostsCount = response.new_posts_count;
+            
+            // Get author information from the current posts
+            const currentPosts = this.getCurrentPosts();
+            if (currentPosts && currentPosts.length > 0) {
+              // Get unique authors from the most recent posts (up to 3)
+              const recentAuthors = currentPosts
+                .slice(0, Math.min(3, currentPosts.length))
+                .map(post => ({
+                  username: post.author.username,
+                  avatar: post.author.profile_picture
+                }))
+                .filter((author, index, arr) => 
+                  arr.findIndex(a => a.username === author.username) === index
+                )
+                .slice(0, 3);
+              
+              this.globalNewPostsAuthors = recentAuthors;
+            } else {
+              // Fallback if no posts available
+              this.globalNewPostsAuthors = [
+                { username: 'New posts', avatar: undefined }
+              ];
+            }
+            
+            // Update the observable
+            this.newPostsState.next({
+              hasNewPosts: this.globalHasNewPosts,
+              newPostsCount: this.globalNewPostsCount,
+              newPostsAuthors: this.globalNewPostsAuthors
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Error checking for new posts globally:', error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Update the latest post timestamp for a specific tab
+   */
+  public updateGlobalLatestPostTimestamp(tab: 'for-you' | 'human-drawing', posts: Post[]): void {
+    if (posts.length > 0) {
+      const latestPost = posts[0];
+      // Use effective publication time: scheduled_time if exists, otherwise created_at
+      const effectiveTime = latestPost.scheduled_time || latestPost.created_at;
+      this.globalLatestPostTimestamps[tab] = effectiveTime;
+    }
+  }
+
+  /**
+   * Clear global new posts state (called when user clicks "Show new posts")
+   */
+  public clearGlobalNewPostsState(): void {
+    this.globalHasNewPosts = false;
+    this.globalNewPostsCount = 0;
+    this.globalNewPostsAuthors = [];
+    
+    // Update the observable
+    this.newPostsState.next({
+      hasNewPosts: false,
+      newPostsCount: 0,
+      newPostsAuthors: []
+    });
+  }
+
+  /**
+   * Get current global new posts state
+   */
+  public getGlobalNewPostsState(): {
+    hasNewPosts: boolean;
+    newPostsCount: number;
+    newPostsAuthors: Array<{ avatar?: string, username: string }>;
+  } {
+    return {
+      hasNewPosts: this.globalHasNewPosts,
+      newPostsCount: this.globalNewPostsCount,
+      newPostsAuthors: this.globalNewPostsAuthors
+    };
+  }
+
+  /**
+   * Check if global new posts checking is currently running
+   */
+  public isGlobalNewPostsCheckRunning(): boolean {
+    return this.globalNewPostsCheckInterval !== null;
+  }
+
+  /**
+   * Get the current global latest post timestamps
+   */
+  public getGlobalLatestPostTimestamps(): { [key: string]: string | null } {
+    return { ...this.globalLatestPostTimestamps };
+  }
+
+
 
 
 } 
