@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { SidebarComponent } from './components/layout/sidebar/sidebar.component';
 import { ToastComponent } from './components/shared/toast/toast.component';
 import { AuthService } from './services/auth.service';
+import { PostService } from './services/post.service';
 import { RouterOutlet } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
 import { EmojiPickerComponent } from './components/shared/emoji-picker/emoji-picker.component';
@@ -49,6 +50,7 @@ export class AppComponent implements OnInit {
 
   constructor(
     public authService: AuthService,
+    private postService: PostService,
     private router: Router,
     private titleService: Title,
     private userService: UserService,
@@ -130,6 +132,16 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Subscribe to authentication state changes to ensure global new posts checking starts
+    this.authService.currentUser$.subscribe((user: any) => {
+      if (user) {
+        // User is authenticated - start global new posts checking
+        this.postService.startGlobalNewPostsCheck();
+      } else {
+        // User is not authenticated - stop global new posts checking
+        this.postService.stopGlobalNewPostsCheck();
+      }
+    });
 
     // Wait for both Angular initialization AND stylesheet loading
     Promise.all([

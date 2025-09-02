@@ -78,7 +78,9 @@ export class MobileHeaderComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private checkDarkMode(): void {
-    this.isDarkMode = document.documentElement.classList.contains('dark');
+    // Use the same localStorage key as sidebar component
+    const darkMode = localStorage.getItem('darkMode');
+    this.isDarkMode = darkMode === 'true';
   }
 
   ngOnInit() {
@@ -184,18 +186,17 @@ export class MobileHeaderComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   toggleDarkMode() {
-    const htmlElement = document.documentElement;
-    const isDark = htmlElement.classList.contains('dark');
-    
+    this.isDarkMode = !this.isDarkMode;
+    localStorage.setItem('darkMode', this.isDarkMode.toString());
+    this.updateDarkMode(this.isDarkMode);
+  }
+
+  private updateDarkMode(isDark: boolean): void {
     if (isDark) {
-      htmlElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      document.documentElement.classList.add('dark');
     } else {
-      htmlElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      document.documentElement.classList.remove('dark');
     }
-    
-    this.isDarkMode = !isDark;
   }
 
   logout() {

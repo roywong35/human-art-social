@@ -1076,6 +1076,16 @@ export class PostService {
     return this.http.get<any>(`${this.baseUrl}/posts/check_new_posts/`, { params });
   }
 
+  /**
+   * Check for new posts across both tabs in a single request
+   */
+  checkNewPostsBothTabs(forYouTimestamp: string, humanArtTimestamp: string): Observable<any> {
+    const params = new HttpParams()
+      .set('for_you_timestamp', forYouTimestamp)
+      .set('human_art_timestamp', humanArtTimestamp);
+    return this.http.get<any>(`${this.baseUrl}/posts/check_new_posts_both/`, { params });
+  }
+
   // Global new posts state
   private globalHasNewPosts = false;
   private globalNewPostsCount = 0;
@@ -1127,7 +1137,111 @@ export class PostService {
    * Perform the actual check for new posts globally
    */
   private performGlobalNewPostsCheck(): void {
-    // Check both tabs for new posts
+    const forYouTimestamp = this.globalLatestPostTimestamps['for-you'];
+    const humanArtTimestamp = this.globalLatestPostTimestamps['human-drawing'];
+    
+    // If we don't have timestamps for both tabs, load them first
+    if (!forYouTimestamp || !humanArtTimestamp) {
+      this.loadBothTabTimestamps().then(() => {
+        // After loading timestamps, try the combined request again
+        this.performGlobalNewPostsCheck();
+      });
+      return;
+    }
+
+    // Make a single request to check both tabs
+    this.checkNewPostsBothTabs(forYouTimestamp, humanArtTimestamp).subscribe({
+      next: (response: any) => {
+        if (response.has_new_posts) {
+          this.globalHasNewPosts = true;
+          this.globalNewPostsCount = response.new_posts_count;
+          
+          // Get author information from the current posts
+          const currentPosts = this.getCurrentPosts();
+          if (currentPosts && currentPosts.length > 0) {
+            // Get unique authors from the most recent posts (up to 3)
+            const recentAuthors = currentPosts
+              .slice(0, Math.min(3, currentPosts.length))
+              .map(post => ({
+                username: post.author.username,
+                avatar: post.author.profile_picture
+              }))
+              .filter((author, index, arr) => 
+                arr.findIndex(a => a.username === author.username) === index
+              )
+              .slice(0, 3);
+            
+            this.globalNewPostsAuthors = recentAuthors;
+          } else {
+            // Fallback if no posts available
+            this.globalNewPostsAuthors = [
+              { username: 'New posts', avatar: undefined }
+            ];
+          }
+          
+          // Update the observable
+          this.newPostsState.next({
+            hasNewPosts: this.globalHasNewPosts,
+            newPostsCount: this.globalNewPostsCount,
+            newPostsAuthors: this.globalNewPostsAuthors
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error checking for new posts globally (both tabs):', error);
+        // Fallback to individual requests on error
+        this.performIndividualTabChecks();
+      }
+    });
+  }
+
+  /**
+   * Load timestamps for both tabs to enable combined checking
+   */
+  private async loadBothTabTimestamps(): Promise<void> {
+    const tabs: ('for-you' | 'human-drawing')[] = ['for-you', 'human-drawing'];
+    
+    // Load timestamps for any missing tabs
+    for (const tab of tabs) {
+      if (!this.globalLatestPostTimestamps[tab]) {
+        await this.loadTabTimestamp(tab);
+      }
+    }
+  }
+
+  /**
+   * Load timestamp for a specific tab
+   */
+  private loadTabTimestamp(tab: 'for-you' | 'human-drawing'): Promise<void> {
+    return new Promise((resolve) => {
+      // Get fresh data directly from the API, not using cached methods
+      const postType = tab === 'human-drawing' ? 'human_drawing' : 'all';
+      const followingOnly = localStorage.getItem('following_only_preference') === 'true';
+      const url = `${this.baseUrl}/posts/feed/?page=1&post_type=${postType}&following_only=${followingOnly}`;
+      
+      this.http.get<PaginatedResponse>(url).pipe(
+        take(1),
+        map((response: PaginatedResponse) => {
+          if (response && response.results && response.results.length > 0) {
+            // Update the timestamp with the latest post from the user's actual timeline
+            // But don't update the posts cache - this is just for timestamp baseline
+            this.updateGlobalLatestPostTimestamp(tab, response.results);
+          }
+          resolve();
+        }),
+        catchError((error) => {
+          console.error(`Error loading user timeline for timestamp (${tab}):`, error);
+          resolve(); // Continue even if one tab fails
+          return of(undefined);
+        })
+      ).subscribe();
+    });
+  }
+
+  /**
+   * Fallback method to check tabs individually
+   */
+  private performIndividualTabChecks(): void {
     const tabs: ('for-you' | 'human-drawing')[] = ['for-you', 'human-drawing'];
     
     tabs.forEach(tab => {
@@ -1175,7 +1289,7 @@ export class PostService {
           }
         },
         error: (error) => {
-          console.error('Error checking for new posts globally:', error);
+          console.error(`Error checking for new posts globally (${tab}):`, error);
         }
       });
     });

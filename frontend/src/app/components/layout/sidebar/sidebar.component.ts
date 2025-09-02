@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef, Input, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, Input, ViewChild, ViewContainerRef, TemplateRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { RouterModule, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { trigger, state, style, transition, animate } from '@angular/animations';
@@ -62,8 +62,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private overlayRef: OverlayRef | null = null;
   unreadNotifications = 0;
   unreadMessages = 0;
+  hasNewPosts = false;
   private notificationSubscription?: Subscription;
   private conversationsSubscription?: Subscription;
+  private newPostsSubscription?: Subscription;
   
   // Scroll-based transparency for mobile bottom nav
   isScrolled = false;
@@ -85,6 +87,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.isScrolled = window.scrollY > this.scrollThreshold;
     }
   }
+
+  // Window resize listener to update dot positioning
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    // Trigger change detection to update dot positioning
+    // This will cause getNewPostsDotClasses() to be called again with new window width
+    this.cdr.markForCheck();
+  }
   
   private addScrollListener() {
     // Initial check
@@ -104,7 +114,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private viewContainerRef: ViewContainerRef,
     private notificationService: NotificationService,
     private chatService: ChatService,
-    private homeRefreshService: HomeRefreshService
+    private homeRefreshService: HomeRefreshService,
+    private cdr: ChangeDetectorRef
   ) {
     // Subscribe to route changes to detect Human Art tab and homepage
     this.router.events.pipe(
@@ -165,6 +176,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.unreadMessages = conversations.reduce((total, conversation) => total + conversation.unread_count, 0);
     });
 
+    // Subscribe to global new posts state for Home icon indicator
+    this.newPostsSubscription = this.postService.newPostsState$.subscribe(state => {
+      this.hasNewPosts = state.hasNewPosts;
+    });
+
     // Load conversations to get initial unread counts
     this.chatService.loadConversations();
 
@@ -176,6 +192,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
     if (this.conversationsSubscription) {
       this.conversationsSubscription.unsubscribe();
+    }
+    if (this.newPostsSubscription) {
+      this.newPostsSubscription.unsubscribe();
     }
     
     // Clean up overlays
@@ -246,6 +265,24 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   getDesktopTextClasses(): string {
     return 'ml-4 xl:block hidden';
+  }
+
+  // Check if we're in icon-only mode (text hidden) or icon+text mode
+  isIconOnlyMode(): boolean {
+    // Text is hidden by default and only shows on xl: screens
+    // We can use window.innerWidth to determine this
+    return window.innerWidth < 1280; // xl breakpoint is 1280px
+  }
+
+  // Get appropriate positioning classes for the new posts dot
+  getNewPostsDotClasses(): string {
+    if (this.isIconOnlyMode()) {
+      // Icon-only mode: position relative to the icon
+      return 'absolute top-[10px] right-[10px] w-[9px] h-[9px] bg-blue-500 rounded-full border border-white dark:border-gray-800';
+    } else {
+      // Icon+text mode: position relative to the icon (not the text)
+      return 'absolute top-[8px] right-[208px] w-[9px] h-[9px] bg-blue-500 rounded-full border border-white dark:border-gray-800';
+    }
   }
 
   getUserMenuClasses(): string {

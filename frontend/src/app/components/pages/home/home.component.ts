@@ -285,6 +285,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     localStorage.setItem('activeTab', this.activeTab);
     
     // Initial load of posts - will use cache if available, but don't force refresh
+    // This ensures new posts don't show automatically after navigation
     this.loadPosts(false);
     
     // Subscribe to future tab changes
@@ -751,8 +752,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.newPostsAuthors = [];
     this.cd.markForCheck();
 
-    // Force refresh posts from server when user clicks "Show new posts"
-    this.forceRefreshPosts();
+    // Force refresh both tabs from server when user clicks "Show new posts"
+    // This ensures new posts appear in both For You and Human Art tabs
+    this.postService.loadPosts(true, 'for-you');
+    this.postService.loadPosts(true, 'human-drawing');
+    
+    // Also refresh the current active tab to ensure it shows new posts immediately
+    this.postService.loadPosts(true, this.activeTab);
   }
 
 

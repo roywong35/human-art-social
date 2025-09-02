@@ -31,7 +31,7 @@
           <div *ngIf="router.url === '/home'; else mobileHomeLink" 
                (click)="navigateToHome()" 
                title="Go to top of page"
-               [class]="'flex items-center p-2 rounded-full transition-all duration-300 ease-out cursor-pointer text-lg'"
+               [class]="'flex items-center p-2 rounded-full transition-all duration-300 ease-out cursor-pointer text-lg relative'"
                [ngClass]="{
                  'text-blue-500/60': isMobile && isScrolled && router.url === '/home',
                  'text-gray-600/50 dark:text-gray-300/50': isMobile && isScrolled && router.url !== '/home',
@@ -40,11 +40,14 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
+            <!-- New posts indicator dot -->
+            <div *ngIf="hasNewPosts"
+                 class="absolute top-[7px] right-[8px] w-[8px] h-[8px] bg-blue-500 rounded-full border border-white dark:border-gray-800"></div>
           </div>
           <ng-template #mobileHomeLink>
             <a (click)="navigateToHome()" 
                title="Home"
-               [class]="'flex items-center p-2 rounded-full transition-all duration-300 ease-out cursor-pointer text-lg'"
+               [class]="'flex items-center p-2 rounded-full transition-all duration-300 ease-out cursor-pointer text-lg relative'"
                [ngClass]="{
                  'text-blue-500/60': isMobile && isScrolled && router.url === '/home',
                  'text-gray-600/50 dark:text-gray-300/50': isMobile && isScrolled && router.url !== '/home',
@@ -53,6 +56,9 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
+              <!-- New posts indicator dot -->
+              <div *ngIf="hasNewPosts"  
+                   class="absolute top-[7px] right-[8px] w-[8px] h-[8px] bg-blue-500 rounded-full border border-white dark:border-gray-800"></div>
             </a>
           </ng-template>
         </li>
@@ -155,20 +161,26 @@
           <div *ngIf="router.url === '/home'; else homeLink" 
                (click)="navigateToHome()" 
                title="Go to top of page"
-               [class]="getDesktopLinkClasses()">
+               [class]="getDesktopLinkClasses() + ' relative'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" [ngClass]="{'text-blue-500 stroke-2': router.url.startsWith('/home')}" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span [class]="getDesktopTextClasses()" [ngClass]="{'font-bold text-blue-500': router.url.startsWith('/home')}">Home</span>
+            <!-- New posts indicator dot -->
+            <div *ngIf="hasNewPosts" 
+                 [class]="getNewPostsDotClasses()"></div>
           </div>
           <ng-template #homeLink>
             <a (click)="navigateToHome()" 
                title="Home"
-               [class]="getDesktopLinkClasses()">
+               [class]="getDesktopLinkClasses() + ' relative'">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" [ngClass]="{'text-blue-500 stroke-2': router.url.startsWith('/home')}" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
               <span [class]="getDesktopTextClasses()" [ngClass]="{'font-bold text-blue-500': router.url.startsWith('/home')}">Home</span>
+              <!-- New posts indicator dot -->
+              <div *ngIf="hasNewPosts" 
+                   [class]="getNewPostsDotClasses()"></div>
             </a>
           </ng-template>
         </li>
