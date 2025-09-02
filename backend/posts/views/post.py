@@ -1588,11 +1588,11 @@ class PostViewSet(viewsets.ModelViewSet):
                     is_verified=True
                 )
             elif post_type == 'for-you':
-                # Show all non-human drawings AND verified human drawings
+                # Show all non-human drawings AND all human drawings (both verified and unverified)
                 # Exclude replies from the For You tab
                 user_queryset = user_queryset.filter(
                     Q(is_human_drawing=False) |  # Regular posts
-                    Q(is_human_drawing=True, is_verified=True)  # Verified human drawings
+                    Q(is_human_drawing=True)     # All human drawings (both verified and unverified)
                 ).exclude(post_type='reply')  # Exclude replies
 
             # Note: effective_published_at annotation is already added in get_queryset()
@@ -1617,6 +1617,84 @@ class PostViewSet(viewsets.ModelViewSet):
             
         except Exception as e:
             print(f"❌ Error in check_new_posts: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while checking for new posts'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['GET'])
+    def check_new_posts_both(self, request):
+        """
+        Check if there are new posts available for both tabs in a single request.
+        More efficient than making two separate requests.
+        """
+        try:
+            # Get the timestamps for both tabs
+            for_you_timestamp = request.query_params.get('for_you_timestamp')
+            human_art_timestamp = request.query_params.get('human_art_timestamp')
+
+            if not for_you_timestamp or not human_art_timestamp:
+                return Response(
+                    {'error': 'Both for_you_timestamp and human_art_timestamp parameters are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                # Parse the timestamps
+                from django.utils.dateparse import parse_datetime
+                for_you_timestamp = parse_datetime(for_you_timestamp)
+                human_art_timestamp = parse_datetime(human_art_timestamp)
+                
+                if not for_you_timestamp or not human_art_timestamp:
+                    raise ValueError("Invalid timestamp format")
+            except ValueError:
+                return Response(
+                    {'error': 'Both timestamps must be valid ISO datetime strings'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get the user's base queryset (respecting following preferences)
+            base_queryset = self.get_queryset()
+            
+            # Check For You tab
+            for_you_queryset = base_queryset.filter(
+                Q(is_human_drawing=False) |  # Regular posts
+                Q(is_human_drawing=True)     # All human drawings (both verified and unverified)
+            ).exclude(post_type='reply')  # Exclude replies
+            
+            for_you_count = for_you_queryset.filter(
+                effective_published_at__gt=for_you_timestamp
+            ).count()
+            
+            # Check Human Art tab
+            human_art_queryset = base_queryset.filter(
+                is_human_drawing=True,
+                is_verified=True
+            )
+            
+            human_art_count = human_art_queryset.filter(
+                effective_published_at__gt=human_art_timestamp
+            ).count()
+            
+            # Cap at 35 posts maximum for each tab
+            for_you_count = min(for_you_count, 35)
+            human_art_count = min(human_art_count, 35)
+            
+            # Use For You count as the total since it includes all posts
+            # (Human Art posts also appear in For You tab, so no double counting)
+            total_new_posts = for_you_count
+            
+            return Response({
+                'has_new_posts': total_new_posts > 0,
+                'new_posts_count': total_new_posts,
+                'for_you_count': for_you_count,
+                'human_art_count': human_art_count,
+                'for_you_timestamp': for_you_timestamp.isoformat(),
+                'human_art_timestamp': human_art_timestamp.isoformat()
+            })
+            
+        except Exception as e:
+            print(f"❌ Error in check_new_posts_both: {str(e)}")
             return Response(
                 {'error': 'An error occurred while checking for new posts'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
