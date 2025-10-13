@@ -704,6 +704,15 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], url_path='user/(?P<handle>[^/.]+)/posts')
     def user_posts(self, request, handle=None):
         posts = self.get_user_posts(handle)
+        
+        # Apply pagination
+        page = self.paginate_queryset(posts)
+        if page is not None:
+            # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
+            from ..serializers import UserPostSerializer
+            serializer = UserPostSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
         serializer = UserPostSerializer(posts, many=True, context={'request': request})
@@ -1193,6 +1202,14 @@ class PostViewSet(viewsets.ModelViewSet):
         if posts_with_invalid_chains:
             replies = replies.exclude(id__in=posts_with_invalid_chains)
         
+        # Apply pagination
+        page = self.paginate_queryset(replies)
+        if page is not None:
+            # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
+            from ..serializers import UserPostSerializer
+            serializer = UserPostSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
         # Use secure UserPostSerializer instead of PostSerializer to exclude evidence_files
         from ..serializers import UserPostSerializer
         serializer = UserPostSerializer(replies, many=True, context={'request': request})

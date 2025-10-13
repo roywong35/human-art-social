@@ -158,12 +158,12 @@
     <!-- Posts Tab -->
     <div *ngSwitchCase="'posts'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
       <!-- Initial loading for posts (only when not refreshing) -->
-      <div *ngIf="isLoadingPosts && !isRefreshing" class="p-8 flex justify-center w-full">
+      <div *ngIf="postService.isLoadingUserPosts && !isRefreshing" class="p-8 flex justify-center w-full">
         <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Posts list -->
-      <ng-container *ngIf="!isLoadingPosts || isRefreshing">
+      <ng-container *ngIf="!postService.isLoadingUserPosts || isRefreshing">
         <app-post *ngFor="let post of posts"
           [post]="post"
           [showReplyContext]="post.post_type === 'reply' || (post.post_type === 'repost' && post.referenced_post?.post_type === 'reply')"
@@ -187,7 +187,7 @@
         </div>
         
         <!-- Empty state -->
-        <div *ngIf="posts.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
+        <div *ngIf="posts.length === 0 && !postService.isLoadingUserPosts" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
           No posts yet.
         </div>
       </ng-container>
@@ -196,12 +196,12 @@
     <!-- Replies Tab -->
     <div *ngSwitchCase="'replies'" class="divide-y divide-gray-200 dark:divide-gray-800 w-full">
       <!-- Loading spinner for replies (only when not refreshing) -->
-      <div *ngIf="isLoadingReplies && !isRefreshing" class="p-8 flex justify-center w-full">
+      <div *ngIf="postService.isLoadingUserReplies && !isRefreshing" class="p-8 flex justify-center w-full">
         <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
       </div>
       
       <!-- Replies list -->
-      <ng-container *ngIf="!isLoadingReplies || isRefreshing">
+      <ng-container *ngIf="!postService.isLoadingUserReplies || isRefreshing">
         <div *ngFor="let reply of replies" class="relative">
         <!-- Parent Chain -->
         <ng-container *ngIf="replyParentChains && replyParentChains[reply.id] && replyParentChains[reply.id].length > 0">
@@ -259,7 +259,7 @@
       </div>
       
       <!-- Empty state for replies -->
-      <div *ngIf="replies.length === 0" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
+      <div *ngIf="replies.length === 0 && !postService.isLoadingUserReplies" class="p-4 text-center text-gray-500 dark:[color:var(--color-text-secondary)] w-full">
         No replies yet.
       </div>
       </ng-container>

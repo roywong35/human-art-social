@@ -53,9 +53,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   likedPosts: Post[] = [];
   activeTab: 'posts' | 'replies' | 'media' | 'human-art' | 'likes' = 'posts';
   isLoading = false;
-  isLoadingPosts = false;
   isLoadingMorePosts = false;
-  isLoadingReplies = false;
   isLoadingMoreReplies = false;
   isLoadingMedia = false;
   isLoadingHumanArt = false;
@@ -130,8 +128,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         if (this.posts.length === 0 && this.postService.hasCachedUserPosts()) {
           this.postService.getUserPosts(this.user.handle);
         }
-        // Set loading state to false since we're using cache
-        this.isLoadingPosts = false;
+        // Loading state is managed by service
         this.cd.markForCheck();
         break;
       case 'replies':
@@ -140,8 +137,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         if (this.replies.length === 0 && this.postService.hasCachedUserReplies()) {
           this.postService.getUserReplies(this.user.handle);
         }
-        // Set loading state to false since we're using cache
-        this.isLoadingReplies = false;
+        // Loading state is managed by service
         this.cd.markForCheck();
         break;
       case 'media':
@@ -214,7 +210,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
             this.posts = [...posts];
           }
           
-          this.isLoadingPosts = false;
           this.isLoadingMorePosts = false;
           this.cd.markForCheck();
         },
@@ -222,7 +217,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
           console.error('Error loading posts:', error);
           this.error = 'Failed to load posts';
           this.posts = [];
-          this.isLoadingPosts = false;
           this.isLoadingMorePosts = false;
           this.cd.markForCheck();
         }
@@ -247,7 +241,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
             }
           }
           
-          this.isLoadingReplies = false;
           this.isLoadingMoreReplies = false;
           this.cd.markForCheck();
         },
@@ -255,7 +248,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
           console.error('Error loading replies:', error);
           this.error = 'Failed to load replies';
           this.replies = [];
-          this.isLoadingReplies = false;
           this.isLoadingMoreReplies = false;
           this.cd.markForCheck();
         }
@@ -392,20 +384,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
       // Tab has service-level cached content - show instantly without loading
       this.loadFromServiceCache(tab);
       // Set all loading states to false immediately for cached content
-      this.isLoadingPosts = false;
-      this.isLoadingReplies = false;
       this.isLoadingMedia = false;
       this.isLoadingHumanArt = false;
       this.isLoadingLikes = false;
     } else {
       // Tab has no cached content - show loading state
       switch (tab) {
-        case 'posts':
-          this.isLoadingPosts = true;
-          break;
-        case 'replies':
-          this.isLoadingReplies = true;
-          break;
         case 'media':
           this.isLoadingMedia = true;
           break;
@@ -449,11 +433,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
       console.log('[Profile] No cache found, loading from API');
       switch (this.activeTab) {
         case 'posts':
-          this.isLoadingPosts = true;
           this.loadUserPosts(handle);
           break;
         case 'replies':
-          this.isLoadingReplies = true;
           this.loadUserReplies(handle);
           break;
         case 'media':
@@ -505,10 +487,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserPosts(handle: string): void {
-    // Only set loading state if this is not a refresh operation
-    if (!this.isRefreshing) {
-      this.isLoadingPosts = true;
-    }
     this.error = null;
     
     // Only clear posts if switching users
@@ -524,10 +502,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private loadUserReplies(handle: string): void {
-    // Only set loading state if this is not a refresh operation
-    if (!this.isRefreshing) {
-      this.isLoadingReplies = true;
-    }
     this.error = null;
     
     // Only clear replies if switching users
@@ -1512,8 +1486,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.isRefreshing = true;
     
     // Reset all loading flags to prevent duplicate loading states
-    this.isLoadingPosts = false;
-    this.isLoadingReplies = false;
     this.isLoadingMedia = false;
     this.isLoadingHumanArt = false;
     this.isLoadingLikes = false;

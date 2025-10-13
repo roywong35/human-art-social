@@ -109,16 +109,12 @@ export class PostService {
   private userPostsHasMore = true;
   private userPostsLoading = false;
   private currentUserHandle: string | null = null;
-  private allUserPosts: Post[] = []; // Store all posts for client-side pagination
-  private readonly postsPerPage = 20;
-
   // User profile replies pagination
   private userReplies = new BehaviorSubject<Post[]>([]);
   public userReplies$ = this.userReplies.asObservable();
   private userRepliesCurrentPage = 1;
   private userRepliesHasMore = true;
   private userRepliesLoading = false;
-  private allUserReplies: Post[] = []; // Store all replies for client-side pagination
 
   constructor(
     private http: HttpClient,
@@ -417,44 +413,39 @@ export class PostService {
       this.userPostsCurrentPage = 1;
       this.userPostsHasMore = true;
       this.currentUserHandle = handle;
-      this.allUserPosts = []; // Clear cached posts
-      // Don't clear userPosts immediately - let it stay until we have new data
-    }
-
-    // If we already have all posts cached, do client-side pagination
-    if (this.allUserPosts.length > 0) {
-      this.loadMoreFromCache();
-      return;
+      this.userPosts.next([]); // Clear current posts
     }
 
     this.userPostsLoading = true;
     
-    const params = new HttpParams();
+    const params = new HttpParams().set('page', this.userPostsCurrentPage.toString());
 
-    this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/posts/`, { params }).subscribe({
-      next: (rawPosts) => {
-        // FAST PATH: Process and show first 20 posts immediately
-        const firstBatch = rawPosts.slice(0, this.postsPerPage);
-        const processedFirstBatch = firstBatch.map((post: Post) => this.addImageUrls(post));
+    this.http.get<PaginatedResponse>(`${this.apiUrl}/api/posts/user/${handle}/posts/`, { params }).subscribe({
+      next: (response) => {
+        if (!response || !response.results) {
+          this.userPosts.next([]);
+          this.userPostsLoading = false;
+          this.userPostsHasMore = false;
+          return;
+        }
+
+        const processedPosts = response.results.map((post: Post) => this.addImageUrls(post));
         
-        // Show first batch immediately
-        this.userPosts.next(processedFirstBatch);
-        this.userPostsLoading = false;
-        this.userPostsHasMore = rawPosts.length > this.postsPerPage;
-        
-        // BACKGROUND: Process remaining posts asynchronously
-        if (rawPosts.length > this.postsPerPage) {
-          // Use setTimeout to process remaining posts without blocking UI
-          setTimeout(() => {
-            const remainingPosts = rawPosts.slice(this.postsPerPage);
-            const processedRemaining = remainingPosts.map((post: Post) => this.addImageUrls(post));
-            
-            // Store all processed posts for pagination
-            this.allUserPosts = [...processedFirstBatch, ...processedRemaining];
-          }, 100); // Small delay to let UI render
+        if (this.userPostsCurrentPage === 1) {
+          // First page - replace posts
+          this.userPosts.next(processedPosts);
         } else {
-          // All posts fit in first batch
-          this.allUserPosts = processedFirstBatch;
+          // Subsequent pages - append to existing posts
+          const currentPosts = this.userPosts.getValue();
+          this.userPosts.next([...currentPosts, ...processedPosts]);
+        }
+        
+        this.userPostsLoading = false;
+        this.userPostsHasMore = !!response.next;
+        
+        // Increment page for next load
+        if (this.userPostsHasMore) {
+          this.userPostsCurrentPage++;
         }
       },
       error: (error) => {
@@ -465,35 +456,9 @@ export class PostService {
     });
   }
 
-  private loadMoreFromCache(): void {
-    if (this.userPostsLoading || !this.userPostsHasMore) {
-      return;
-    }
-
-    this.userPostsLoading = true;
-
-    // Simulate network delay for better UX
-    setTimeout(() => {
-      const currentPosts = this.userPosts.getValue();
-      const startIndex = currentPosts.length;
-      const endIndex = startIndex + this.postsPerPage;
-      const nextPagePosts = this.allUserPosts.slice(startIndex, endIndex);
-      
-      const newPosts = [...currentPosts, ...nextPagePosts];
-      this.userPosts.next(newPosts);
-      
-      // Check if there are more posts to show
-      this.userPostsHasMore = newPosts.length < this.allUserPosts.length;
-      this.userPostsLoading = false;
-      
-
-    }, 300); // Small delay to show loading state
-  }
-
   loadMoreUserPosts(): void {
-    if (!this.userPostsLoading && this.userPostsHasMore) {
-      this.userPostsCurrentPage++;
-      this.loadMoreFromCache();
+    if (!this.userPostsLoading && this.userPostsHasMore && this.currentUserHandle) {
+      this.getUserPosts(this.currentUserHandle);
     }
   }
 
@@ -503,36 +468,11 @@ export class PostService {
     this.userPostsHasMore = true;
     this.userPostsLoading = false;
     this.currentUserHandle = null;
-    this.allUserPosts = [];
-  }
-
-  private loadMoreRepliesFromCache(): void {
-    if (this.userRepliesLoading || !this.userRepliesHasMore) {
-      return;
-    }
-
-    this.userRepliesLoading = true;
-
-    // Simulate network delay for better UX
-    setTimeout(() => {
-      const currentReplies = this.userReplies.getValue();
-      const startIndex = currentReplies.length;
-      const endIndex = startIndex + this.postsPerPage;
-      const nextPageReplies = this.allUserReplies.slice(startIndex, endIndex);
-      
-      const newReplies = [...currentReplies, ...nextPageReplies];
-      this.userReplies.next(newReplies);
-      
-      // Check if there are more replies to show
-      this.userRepliesHasMore = newReplies.length < this.allUserReplies.length;
-      this.userRepliesLoading = false;
-    }, 300);
   }
 
   loadMoreUserReplies(): void {
-    if (!this.userRepliesLoading && this.userRepliesHasMore) {
-      this.userRepliesCurrentPage++;
-      this.loadMoreRepliesFromCache();
+    if (!this.userRepliesLoading && this.userRepliesHasMore && this.currentUserHandle) {
+      this.getUserReplies(this.currentUserHandle);
     }
   }
 
@@ -541,7 +481,6 @@ export class PostService {
     this.userRepliesCurrentPage = 1;
     this.userRepliesHasMore = true;
     this.userRepliesLoading = false;
-    this.allUserReplies = [];
   }
 
   createPostWithFormData(formData: FormData, isReply: boolean = false, handle?: string, postId?: number, scheduledTime?: Date): Observable<Post> {
@@ -950,32 +889,41 @@ export class PostService {
     if (refresh || this.currentUserHandle !== handle) {
       this.userRepliesCurrentPage = 1;
       this.userRepliesHasMore = true;
-      this.allUserReplies = [];
-    }
-
-    // If we already have all replies cached, do client-side pagination
-    if (this.allUserReplies.length > 0) {
-      this.loadMoreRepliesFromCache();
-      return;
+      this.currentUserHandle = handle;
+      this.userReplies.next([]); // Clear current replies
     }
 
     this.userRepliesLoading = true;
 
-    this.http.get<Post[]>(`${this.apiUrl}/api/posts/user/${handle}/replies/`).pipe(
-      map((replies: Post[]) => replies.map((reply: Post) => this.addImageUrls(reply)))
-    ).subscribe({
-      next: (replies) => {
-        // Store all replies for client-side pagination  
-        this.allUserReplies = replies.filter(post => post.post_type === 'reply');
+    const params = new HttpParams().set('page', this.userRepliesCurrentPage.toString());
+
+    this.http.get<PaginatedResponse>(`${this.apiUrl}/api/posts/user/${handle}/replies/`, { params }).subscribe({
+      next: (response) => {
+        if (!response || !response.results) {
+          this.userReplies.next([]);
+          this.userRepliesLoading = false;
+          this.userRepliesHasMore = false;
+          return;
+        }
+
+        const processedReplies = response.results.map((reply: Post) => this.addImageUrls(reply));
         
-        // Load first page (20 replies)
-        const firstPageReplies = this.allUserReplies.slice(0, this.postsPerPage);
+        if (this.userRepliesCurrentPage === 1) {
+          // First page - replace replies
+          this.userReplies.next(processedReplies);
+        } else {
+          // Subsequent pages - append to existing replies
+          const currentReplies = this.userReplies.getValue();
+          this.userReplies.next([...currentReplies, ...processedReplies]);
+        }
         
-        this.userReplies.next(firstPageReplies);
-        
-        // Set hasMore based on whether there are more replies to show
-        this.userRepliesHasMore = this.allUserReplies.length > this.postsPerPage;
         this.userRepliesLoading = false;
+        this.userRepliesHasMore = !!response.next;
+        
+        // Increment page for next load
+        if (this.userRepliesHasMore) {
+          this.userRepliesCurrentPage++;
+        }
       },
       error: (error) => {
         console.error('Error loading user replies:', error);
@@ -1408,13 +1356,13 @@ export class PostService {
    * Check if user posts are cached
    */
   public hasCachedUserPosts(): boolean {
-    return this.allUserPosts.length > 0;
+    return this.userPosts.getValue().length > 0;
   }
 
   /**
    * Check if user replies are cached
    */
   public hasCachedUserReplies(): boolean {
-    return this.allUserReplies.length > 0;
+    return this.userReplies.getValue().length > 0;
   }
 } 
