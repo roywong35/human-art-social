@@ -368,6 +368,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading user profile:', error);
+        // If user not found (404), redirect to home
+        if (error.status === 404) {
+          this.router.navigate(['/home']);
+          return;
+        }
+        // For other errors, show error message
         this.error = 'Failed to load profile';
         this.isLoading = false;
       }
