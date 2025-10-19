@@ -28,6 +28,7 @@
       <!-- User avatar -->
       <img [src]="selectedConversation.other_participant.profile_picture || defaultAvatar" 
            [alt]="selectedConversation.other_participant.username || 'User'"
+           loading="lazy"
            class="w-8 h-8 rounded-full object-cover flex-shrink-0">
       
       <!-- User info -->
@@ -94,6 +95,7 @@
             <div class="relative">
               <img [src]="getConversationAvatar(conversation)" 
                    [alt]="getConversationDisplayName(conversation)"
+                   loading="lazy"
                    class="avatar-glow w-10 h-10 rounded-full object-cover">
               <!-- Unread count badge -->
               <div *ngIf="conversation.unread_count && conversation.unread_count > 0"
@@ -185,6 +187,7 @@
            class="flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg cursor-pointer">
         <img [src]="user.profile_picture || defaultAvatar" 
              [alt]="user.username"
+             loading="lazy"
              class="w-10 h-10 rounded-full object-cover">
         <div>
           <p class="font-semibold text-gray-900 dark:text-white">{{ user.username }}</p>

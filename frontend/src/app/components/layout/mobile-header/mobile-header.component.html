@@ -22,10 +22,12 @@
             <img *ngIf="(authService.currentUser$ | async)?.profile_picture" 
                  [src]="(authService.currentUser$ | async)?.profile_picture" 
                  alt="Profile picture" 
+                 loading="lazy"
                  class="w-full h-full object-cover">
             <img *ngIf="!(authService.currentUser$ | async)?.profile_picture" 
                  [src]="defaultAvatar" 
                  alt="Default avatar" 
+                 loading="lazy"
                  class="w-full h-full object-cover">
           </div>
           <!-- User info below avatar -->
@@ -139,10 +141,12 @@
       <img *ngIf="(authService.currentUser$ | async)?.profile_picture" 
            [src]="(authService.currentUser$ | async)?.profile_picture" 
            alt="Profile picture" 
+           loading="lazy"
            class="w-full h-full object-cover">
       <img *ngIf="!(authService.currentUser$ | async)?.profile_picture" 
            [src]="defaultAvatar" 
            alt="Default avatar" 
+           loading="lazy"
            class="w-full h-full object-cover">
     </button>
   </div>
@@ -152,11 +156,11 @@
     <div *ngIf="router.url === '/home'; else mobileHeaderSiteIconLink" 
          (click)="navigateToHome()" 
          class="flex items-center justify-center cursor-pointer">
-      <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-8 w-8 object-contain">
+      <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" loading="lazy" class="h-8 w-8 object-contain">
     </div>
     <ng-template #mobileHeaderSiteIconLink>
       <a (click)="navigateToHome()" class="flex items-center justify-center cursor-pointer">
-        <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-8 w-8 object-contain">
+        <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" loading="lazy" class="h-8 w-8 object-contain">
       </a>
     </ng-template>
   </div>

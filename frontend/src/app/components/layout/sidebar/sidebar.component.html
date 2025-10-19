@@ -7,13 +7,13 @@
          title="Go to top of page" 
          class="flex items-center">
       <div class="flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer">
-        <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">
+        <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" loading="lazy" class="h-7 w-7 object-contain">
       </div>
     </div>
     <ng-template #siteIconLink>
       <a (click)="navigateToHome()" title="Go to Home" class="flex items-center cursor-pointer">
         <div class="flex items-center justify-center w-14 h-14 rounded-full hover:bg-gray-100 dark:hover:[background-color:var(--color-surface-hover)] transition-colors cursor-pointer">
-          <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" class="h-7 w-7 object-contain">
+          <img [src]="isDarkMode ? 'assets/Site_icon_dark.png' : 'assets/Site_icon.png'" alt="Site Icon" loading="lazy" class="h-7 w-7 object-contain">
         </div>
       </a>
     </ng-template>
@@ -331,10 +331,12 @@
           <img *ngIf="(authService.currentUser$ | async)?.profile_picture" 
                [src]="(authService.currentUser$ | async)?.profile_picture" 
                alt="Profile picture" 
+               loading="lazy"
                class="w-full h-full object-cover">
           <img *ngIf="!(authService.currentUser$ | async)?.profile_picture" 
                [src]="defaultAvatar" 
                alt="Default avatar" 
+               loading="lazy"
                class="w-full h-full object-cover">
         </div>
         <div class="ml-4 text-left xl:block hidden">

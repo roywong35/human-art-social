@@ -29,6 +29,7 @@
       <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
         <img [src]="getDisplayAuthor().profile_picture || defaultAvatar" 
              [alt]="getDisplayAuthor().username" 
+             loading="lazy"
              class="w-full h-full object-cover cursor-pointer relative z-10"
              (click)="navigateToProfile($event)"
              (mouseenter)="onUserHover($event, getDisplayAuthor())"
@@ -166,6 +167,7 @@
             <div class="flex items-center space-x-2 mb-2">
               <img [src]="getReferencedPostForDisplay()!.author.profile_picture || defaultAvatar" 
                    [alt]="getReferencedPostForDisplay()!.author.username" 
+                   loading="lazy"
                    class="h-6 w-6 rounded-full relative z-10">
               <div class="flex items-center space-x-1">
                 <p class="text-[16px] font-extrabold text-gray-900 dark:[color:var(--color-text)]">{{ getReferencedPostForDisplay()!.author.username }}</p>
@@ -205,6 +207,7 @@
                        (click)="onPhotoClick($event, 0, post.referenced_post)">
                     <img [src]="getReferencedPostImages()?.[0]?.image" 
                          [alt]="'Post image 1'"
+                         loading="lazy"
                          class="w-full h-full object-contain rounded-xl"
                          (error)="onImageError($event)">
                   </div>
@@ -216,6 +219,7 @@
                          (click)="onPhotoClick($event, 0, post.referenced_post)">
                       <img [src]="getReferencedPostImages()?.[0]?.image" 
                            [alt]="'Post image 1'"
+                           loading="lazy"
                            class="w-full h-full object-cover rounded-lg"
                            (error)="onImageError($event)">
                     </div>
@@ -228,6 +232,7 @@
                              (click)="onPhotoClick($event, i, post.referenced_post)">
                           <img [src]="image.image" 
                                [alt]="'Post image ' + (i + 1)"
+                               loading="lazy"
                                class="w-full h-full object-cover rounded-lg"
                                (error)="onImageError($event)">
                         </div>
@@ -258,6 +263,7 @@
                    (click)="onPhotoClick($event, 0)">
                 <img [src]="getDisplayImages()?.[0]?.image" 
                      [alt]="'Post image 1'"
+                     loading="lazy"
                      class="w-full h-full object-contain rounded-2xl"
                      (error)="onImageError($event)">
               </div>
@@ -269,6 +275,7 @@
                      (click)="onPhotoClick($event, 0)">
                   <img [src]="getDisplayImages()?.[0]?.image" 
                        [alt]="'Post image 1'"
+                       loading="lazy"
                        class="w-full h-full object-cover rounded-lg"
                        (error)="onImageError($event)">
                 </div>
@@ -281,6 +288,7 @@
                          (click)="onPhotoClick($event, i)">
                       <img [src]="image.image" 
                            [alt]="'Post image ' + (i + 1)"
+                           loading="lazy"
                            class="w-full h-full object-cover rounded-lg"
                            (error)="onImageError($event)">
                     </div>

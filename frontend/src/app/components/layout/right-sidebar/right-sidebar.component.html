@@ -74,6 +74,7 @@
               <div class="flex items-center">
                 <img [src]="user.profile_picture || defaultAvatar" 
                      [alt]="user.username + ' avatar'" 
+                     loading="lazy"
                      class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 object-cover hover:opacity-80 transition-opacity cursor-pointer"
                      (mouseenter)="onUserHover($event, user)"
                      (mouseleave)="onUserHoverLeave()">

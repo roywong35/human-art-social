@@ -34,6 +34,7 @@
         <div class="relative flex flex-col items-center">
           <img [src]="data.post.author.profile_picture || defaultAvatar" 
                alt="Author avatar" 
+               loading="lazy"
                class="w-10 h-10 rounded-full">
           <div class="w-0.5 bg-gray-300 dark:bg-gray-700 flex-1 mt-1"></div>
         </div>
@@ -56,7 +57,7 @@
           <div *ngIf="data.post.post_type === 'quote' && data.post.referenced_post" class="mt-2 text-sm text-gray-500">
             <div class="border border-gray-200 dark:[border-color:var(--color-border)] rounded-xl p-3 bg-gray-50 dark:bg-gray-900/20">
               <div class="flex items-center gap-2 mb-1">
-                <img [src]="data.post.referenced_post.author.profile_picture || defaultAvatar" class="h-5 w-5 rounded-full" />
+                <img [src]="data.post.referenced_post.author.profile_picture || defaultAvatar" loading="lazy" class="h-5 w-5 rounded-full" />
                 <span class="font-semibold dark:[color:var(--color-text)]">{{ data.post.referenced_post.author.username }}</span>
                 <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">{{'@'}}{{ data.post.referenced_post.author.handle }}</span>
                 <span class="text-gray-500 dark:[color:var(--color-text-secondary)]">·</span>
@@ -88,6 +89,7 @@
             <div *ngIf="data.post.images.length === 1" class="flex h-full">
               <div class="w-full h-full relative p-0.5">
                 <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
+                     loading="lazy"
                      class="w-full h-full object-cover rounded-lg">
               </div>
             </div>
@@ -96,10 +98,12 @@
             <div *ngIf="data.post.images.length === 2" class="flex w-full h-full">
               <div class="w-1/2 h-full p-0.5 relative">
                 <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
+                     loading="lazy"
                      class="w-full h-full object-cover rounded-lg">
               </div>
               <div class="w-1/2 h-full p-0.5 relative">
                 <img [src]="data.post.images[1].image_url || data.post.images[1].image" 
+                     loading="lazy"
                      class="w-full h-full object-cover rounded-lg">
               </div>
             </div>
@@ -109,6 +113,7 @@
               <!-- Left side -->
               <div class="w-1/2 h-full p-0.5 relative">
                 <img [src]="data.post.images[0].image_url || data.post.images[0].image" 
+                     loading="lazy"
                      class="w-full h-full object-cover rounded-lg">
               </div>
 
@@ -122,6 +127,7 @@
                 <!-- Bottom right -->
                 <div class="h-1/2 p-0.5 relative">
                   <img [src]="data.post.images[2].image_url || data.post.images[2].image" 
+                       loading="lazy"
                        class="w-full h-full object-cover rounded-lg">
                 </div>
               </div>
@@ -142,6 +148,7 @@
               <div class="w-1/2 h-full flex flex-col">
                 <div class="h-1/2 p-0.5 relative">
                   <img [src]="data.post.images[2].image_url || data.post.images[2].image" 
+                       loading="lazy"
                        class="w-full h-full object-cover rounded-lg">
                 </div>
                 <div class="h-1/2 p-0.5 relative">
