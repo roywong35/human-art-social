@@ -6,6 +6,7 @@ import { Post } from '../../../../models/post.model';
 import { PostService } from '../../../../services/post.service';
 import { AuthService } from '../../../../services/auth.service';
 import { CommentService } from '../../../../services/comment.service';
+import { ImageCompressionService } from '../../../../services/image-compression.service';
 import { PostComponent } from '../post/post.component';
 import { User } from '../../../../models/user.model';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
@@ -58,6 +59,7 @@ export class PostDetailComponent implements OnInit, OnDestroy {
     private postService: PostService,
     private commentService: CommentService,
     public authService: AuthService,
+    private imageCompressionService: ImageCompressionService,
     private location: Location,
     private emojiPickerService: EmojiPickerService,
     private hashtagService: HashtagService,
@@ -469,14 +471,19 @@ export class PostDetailComponent implements OnInit, OnDestroy {
     input.accept = 'image/*';
     input.multiple = true;
     
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const target = e.target as HTMLInputElement;
       const files = target.files;
       
       if (files) {
-
         const newFiles = Array.from(files).slice(0, 4 - this.images.length);
-        newFiles.forEach(file => {
+        
+        // Compress images before adding
+        const compressedFiles = await Promise.all(
+          newFiles.map(file => this.imageCompressionService.compressImage(file, 'POST'))
+        );
+        
+        compressedFiles.forEach(file => {
           const id = Math.random().toString(36).substring(7);
           this.images.push({
             id,
@@ -484,7 +491,6 @@ export class PostDetailComponent implements OnInit, OnDestroy {
             preview: URL.createObjectURL(file)
           });
         });
-
       }
     };
     

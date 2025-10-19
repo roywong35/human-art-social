@@ -6,6 +6,7 @@ import { ChatService } from '../../../services/chat.service';
 import { AuthService } from '../../../services/auth.service';
 import { ImageUploadService } from '../../../services/image-upload.service';
 import { EmojiPickerService } from '../../../services/emoji-picker.service';
+import { ImageCompressionService } from '../../../services/image-compression.service';
 // Avatar cache service removed since we're not using message avatars anymore
 import { ConversationDetail, Message, User } from '../../../models';
 import { Subscription } from 'rxjs';
@@ -58,6 +59,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
     private authService: AuthService,
     private imageUploadService: ImageUploadService,
     private emojiPickerService: EmojiPickerService,
+    private imageCompressionService: ImageCompressionService,
     private cd: ChangeDetectorRef,
     private router: Router
   ) {}
@@ -301,16 +303,19 @@ export class ChatRoomComponent implements OnInit, OnDestroy, OnChanges, AfterVie
         return;
       }
 
-      // Validate file size
+      // Validate file size (before compression)
       if (file.size > this.MAX_FILE_SIZE) {
         console.error('File too large:', file.size);
         return;
       }
 
-      // Generate preview
-      const preview = await this.generatePreview(file);
+      // Compress image
+      const compressedFile = await this.imageCompressionService.compressImage(file, 'CHAT');
       
-      this.selectedImages = [file];
+      // Generate preview
+      const preview = await this.generatePreview(compressedFile);
+      
+      this.selectedImages = [compressedFile];
       this.imagePreviews = [preview];
       
     } catch (error) {

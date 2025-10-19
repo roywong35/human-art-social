@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { PostService } from '../../../../services/post.service';
 import { AuthService } from '../../../../services/auth.service';
+import { ImageCompressionService } from '../../../../services/image-compression.service';
 import { Router } from '@angular/router';
 import { MatDialogModule } from '@angular/material/dialog';
 import { ScheduleModalComponent } from '../../../shared/schedule-modal/schedule-modal.component';
@@ -48,6 +49,7 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
   constructor(
     private postService: PostService,
     public authService: AuthService,
+    private imageCompressionService: ImageCompressionService,
     private router: Router,
     private dialog: MatDialog,
     @Optional() private dialogRef: MatDialogRef<NewArtPostModalComponent>
@@ -99,7 +101,7 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  onArtSelected(event: any): void {
+  async onArtSelected(event: any): Promise<void> {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -108,14 +110,25 @@ export class NewArtPostModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.artFile = file;
-    // Create preview URL for image files
+    // Compress image if it's an image file
     if (file.type.startsWith('image/')) {
+      try {
+        this.artFile = await this.imageCompressionService.compressImage(file, 'POST');
+      } catch (error) {
+        console.error('Error compressing art file:', error);
+        this.artFile = file; // Fallback to original file
+      }
+    } else {
+      this.artFile = file; // Non-image files don't need compression
+    }
+
+    // Create preview URL for image files
+    if (this.artFile && this.artFile.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.artPreview = e.target.result;
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(this.artFile);
     } else {
       // For non-image files (like PSD), show a placeholder
       this.artPreview = 'assets/file-preview-placeholder.png';

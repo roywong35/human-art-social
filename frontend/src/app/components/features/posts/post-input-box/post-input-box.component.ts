@@ -8,6 +8,7 @@ import { ScheduleIconComponent } from '../../../../components/shared/schedule-ic
 import { MatDialog } from '@angular/material/dialog';
 import { DraftModalComponent } from '../draft-modal/draft-modal.component';
 import { HashtagService, HashtagResult } from '../../../../services/hashtag.service';
+import { ImageCompressionService } from '../../../../services/image-compression.service';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
@@ -58,6 +59,7 @@ export class PostInputBoxComponent {
     private emojiPickerService: EmojiPickerService,
     private dialog: MatDialog,
     private hashtagService: HashtagService,
+    private imageCompressionService: ImageCompressionService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -144,13 +146,19 @@ export class PostInputBoxComponent {
     input.accept = 'image/*';
     input.multiple = true;
     
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const target = e.target as HTMLInputElement;
       const files = target.files;
       
       if (files) {
         const newFiles = Array.from(files).slice(0, 4 - this.images.length);
-        newFiles.forEach(file => {
+        
+        // Compress images before adding
+        const compressedFiles = await Promise.all(
+          newFiles.map(file => this.imageCompressionService.compressImage(file, 'POST'))
+        );
+        
+        compressedFiles.forEach(file => {
           const id = Math.random().toString(36).substring(7);
           this.images.push({
             id,

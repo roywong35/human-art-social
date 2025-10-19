@@ -11,6 +11,7 @@ import { PostService } from '../../../services/post.service';
 import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
 import { SidebarService } from '../../../services/sidebar.service';
+import { ImageCompressionService } from '../../../services/image-compression.service';
 import { PostComponent } from '../../features/posts/post/post.component';
 import { take } from 'rxjs/operators';
 import { MatDialog, MatDialogModule} from '@angular/material/dialog';
@@ -195,6 +196,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private authService: AuthService,
     private sidebarService: SidebarService,
+    private imageCompressionService: ImageCompressionService,
     private dialog: MatDialog,
     private cd: ChangeDetectorRef,
     private ngZone: NgZone
@@ -691,19 +693,29 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
-  onBannerImageSelected(event: Event): void {
+  async onBannerImageSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      this.editForm.banner_image = input.files[0];
-      this.editForm.banner_image_preview = URL.createObjectURL(input.files[0]);
+      const originalFile = input.files[0];
+      
+      // Compress banner image
+      const compressedFile = await this.imageCompressionService.compressImage(originalFile, 'BANNER');
+      
+      this.editForm.banner_image = compressedFile;
+      this.editForm.banner_image_preview = URL.createObjectURL(compressedFile);
     }
   }
 
-  onProfilePictureSelected(event: Event): void {
+  async onProfilePictureSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      this.editForm.profile_picture = input.files[0];
-      this.editForm.profile_picture_preview = URL.createObjectURL(input.files[0]);
+      const originalFile = input.files[0];
+      
+      // Compress profile picture
+      const compressedFile = await this.imageCompressionService.compressImage(originalFile, 'PROFILE_PICTURE');
+      
+      this.editForm.profile_picture = compressedFile;
+      this.editForm.profile_picture_preview = URL.createObjectURL(compressedFile);
     }
   }
 

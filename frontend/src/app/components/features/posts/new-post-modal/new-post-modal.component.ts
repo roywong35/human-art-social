@@ -6,6 +6,7 @@ import { PostService } from '../../../../services/post.service';
 import { AuthService } from '../../../../services/auth.service';
 import { TimeAgoPipe } from '../../../../pipes/time-ago.pipe';
 import { ImageUploadService, ImageFile } from '../../../../services/image-upload.service';
+import { ImageCompressionService } from '../../../../services/image-compression.service';
 import { Subscription } from 'rxjs';
 import { Post } from '../../../../models/post.model';
 import { EmojiPickerService } from '../../../../services/emoji-picker.service';
@@ -76,6 +77,7 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
     private emojiPickerService: EmojiPickerService,
     public authService: AuthService,
     private imageUploadService: ImageUploadService,
+    private imageCompressionService: ImageCompressionService,
     private dialog: MatDialog,
     private draftService: DraftService,
     private toastService: ToastService,
@@ -252,7 +254,15 @@ export class NewPostModalComponent implements OnInit, OnDestroy {
   async onImageSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      await this.imageUploadService.addImages(input.files);
+      // Compress images before adding to service
+      const files = Array.from(input.files);
+      const compressedFiles = await this.imageCompressionService.compressImages(files, 'POST');
+      
+      // Create FileList from compressed files
+      const compressedFileList = new DataTransfer();
+      compressedFiles.forEach(file => compressedFileList.items.add(file));
+      
+      await this.imageUploadService.addImages(compressedFileList.files);
       // Clear the input so the same file can be selected again
       input.value = '';
     }
