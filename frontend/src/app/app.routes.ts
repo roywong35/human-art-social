@@ -1,95 +1,82 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './components/pages/home/home.component';
-import { ProfileComponent } from './components/pages/profile/profile.component';
 import { AuthGuard } from './guards/auth.guard';
 import { publicGuard } from './guards/public.guard';
-import { LandingComponent } from './components/pages/landing/landing.component';
-import { NotificationsComponent } from './components/pages/notifications/notifications.component';
-import { SearchComponent } from './components/pages/search/search.component';
-import { PostDetailComponent } from './components/features/posts/post-detail/post-detail.component';
-import { BookmarksComponent } from './components/pages/bookmarks/bookmarks.component';
-import { ConnectionsComponent } from './components/pages/connections/connections.component';
-import { RecommendedUsersComponent } from './components/widgets/recommended-users/recommended-users.component';
-import { MessagesComponent } from './components/pages/messages/messages.component';
-import { AppealSubmissionComponent } from './components/pages/appeal-submission/appeal-submission.component';
-import { AppealsComponent } from './components/pages/appeals/appeals.component';
 
 
 export const routes: Routes = [
   {
     path: '',
-    component: LandingComponent,
+    loadComponent: () => import('./components/pages/landing/landing.component').then(m => m.LandingComponent),
     canActivate: [publicGuard]
   },
   {
     path: 'home',
-    component: HomeComponent,
+    loadComponent: () => import('./components/pages/home/home.component').then(m => m.HomeComponent),
     canActivate: [AuthGuard]
   },
-
   {
     path: 'notifications',
-    component: NotificationsComponent,
+    loadComponent: () => import('./components/pages/notifications/notifications.component').then(m => m.NotificationsComponent),
     canActivate: [AuthGuard]
   },
   {
     path: 'bookmarks',
-    component: BookmarksComponent,
+    loadComponent: () => import('./components/pages/bookmarks/bookmarks.component').then(m => m.BookmarksComponent),
     canActivate: [AuthGuard]
   },
   {
     path: 'search',
-    component: SearchComponent,
+    loadComponent: () => import('./components/pages/search/search.component').then(m => m.SearchComponent),
     canActivate: [AuthGuard]
   },
   {
     path: 'messages',
-    component: MessagesComponent,
+    loadComponent: () => import('./components/pages/messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [AuthGuard]
   },
   {
     path: 'messages/:conversationId',
-    component: MessagesComponent,
+    loadComponent: () => import('./components/pages/messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [AuthGuard]
   },
   {
     path: 'recommended-users',
-    component: RecommendedUsersComponent,
+    loadComponent: () => import('./components/widgets/recommended-users/recommended-users.component').then(m => m.RecommendedUsersComponent),
     canActivate: [AuthGuard]
   },
   {
     path: 'appeals',
-    component: AppealsComponent,
+    loadComponent: () => import('./components/pages/appeals/appeals.component').then(m => m.AppealsComponent),
     canActivate: [AuthGuard]
   },
   {
     path: 'appeal/:handle/:postId',
-    component: AppealSubmissionComponent,
+    loadComponent: () => import('./components/pages/appeal-submission/appeal-submission.component').then(m => m.AppealSubmissionComponent),
     canActivate: [AuthGuard]
   },
   {
     path: ':handle/post/:id',
-    component: PostDetailComponent,
+    loadComponent: () => import('./components/features/posts/post-detail/post-detail.component').then(m => m.PostDetailComponent),
     canActivate: [AuthGuard]
   },
   {
     path: ':handle/followers',
-    component: ConnectionsComponent,
+    loadComponent: () => import('./components/pages/connections/connections.component').then(m => m.ConnectionsComponent),
     canActivate: [AuthGuard]
   },
   {
     path: ':handle/following',
-    component: ConnectionsComponent,
+    loadComponent: () => import('./components/pages/connections/connections.component').then(m => m.ConnectionsComponent),
     canActivate: [AuthGuard]
   },
   {
     path: ':handle/connections',
-    component: ConnectionsComponent,
+    loadComponent: () => import('./components/pages/connections/connections.component').then(m => m.ConnectionsComponent),
     canActivate: [AuthGuard]
   },
   {
     path: ':handle',
-    component: ProfileComponent,
+    loadComponent: () => import('./components/pages/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [AuthGuard]
   },
   {
