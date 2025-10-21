@@ -47,14 +47,12 @@ from notifications.consumers import NotificationConsumer
 from chat.consumers import ChatConsumer
 from chat.chat_notification_consumer import ChatNotificationConsumer
 from chat.middleware import TokenAuthMiddlewareStack
-from .test_websocket import TestWebSocketConsumer
 
 # Get the Django ASGI application (for HTTP)
 django_asgi_app = get_asgi_application()
 
 print("🚀 ASGI Application Starting...")
 print("   WebSocket Routes:")
-print("   - /ws/test/ (TEST ROUTE)")
 print("   - /ws/notifications/")
 print("   - /ws/chat/<int:conversation_id>/")
 print("   - /ws/chat_notifications/")
@@ -63,7 +61,6 @@ application = ProtocolTypeRouter({
     "http": django_asgi_app,
     "websocket": AllowedHostsOriginValidator(
         URLRouter([
-            path('ws/test/', TestWebSocketConsumer.as_asgi()),  # Test route - NO authentication
             path('ws/notifications/', TokenAuthMiddlewareStack(NotificationConsumer.as_asgi())),
             path('ws/chat/<int:conversation_id>/', TokenAuthMiddlewareStack(ChatConsumer.as_asgi())),
             path('ws/chat_notifications/', TokenAuthMiddlewareStack(ChatNotificationConsumer.as_asgi())),

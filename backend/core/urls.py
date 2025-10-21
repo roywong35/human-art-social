@@ -20,15 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.http import JsonResponse
 
-def test_websocket(request):
-    """Test endpoint to verify basic connectivity"""
-    return JsonResponse({
-        'status': 'success',
-        'message': 'Backend is working!',
-        'websocket_support': 'Testing...'
-    })
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -38,7 +30,6 @@ urlpatterns = [
     path('api/chat/', include('chat.urls')),  # Include chat app URLs
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('test/', test_websocket),  # Test endpoint
     
     # Serve media files directly
     re_path(r'^media/(?P<path>.*)$', serve, {
