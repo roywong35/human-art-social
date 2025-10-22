@@ -22,6 +22,7 @@ from notifications.models import Notification
 from notifications.serializers import NotificationSerializer
 from django.utils import timezone
 from datetime import timedelta
+from django.core.cache import cache
 
 User = get_user_model()
 
@@ -57,8 +58,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, handle=None):
         user = get_object_or_404(User, handle=handle)
+        
+        # Try cache first
+        cache_key = f'user_profile_{user.id}'
+        cached_profile = cache.get(cache_key)
+        if cached_profile:
+            # Update is_following status (user-specific)
+            cached_profile['is_following'] = request.user in user.followers.all()
+            return Response(cached_profile)
+        
+        # Fallback to database
         serializer = self.get_serializer(user)
-        return Response(serializer.data)
+        profile_data = serializer.data
+        
+        # Cache for 5 minutes
+        cache.set(cache_key, profile_data, 300)
+        
+        return Response(profile_data)
 
     def follow(self, request, handle=None):
         """
@@ -73,8 +89,12 @@ class UserViewSet(viewsets.ModelViewSet):
             user.followers.add(request.user)
             # Create notification for the follow
             create_follow_notification(request.user, user)
-            
-        # Refresh the user instance to get updated counts
+        
+        # Invalidate cache for both users
+        cache.delete(f'user_profile_{user.id}')
+        cache.delete(f'user_profile_{request.user.id}')
+        
+        # Refresh and return updated data
         user.refresh_from_db()
         serializer = UserProfileSerializer(user, context={'request': request})
         return Response({
