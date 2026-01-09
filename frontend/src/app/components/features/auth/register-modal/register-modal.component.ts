@@ -92,7 +92,13 @@ export class RegisterModalComponent implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
-        if (error.error?.handle) {
+        if (error.error?.password) {
+          // Django returns password errors as an array
+          const passwordErrors = Array.isArray(error.error.password) 
+            ? error.error.password.join(' ') 
+            : error.error.password;
+          this.registerError = passwordErrors;
+        } else if (error.error?.handle) {
           this.registerError = 'This handle is already taken';
         } else if (error.error?.email) {
           this.registerError = 'This email is already registered';
